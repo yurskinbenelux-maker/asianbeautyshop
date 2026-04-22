@@ -6,7 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Plus, LayoutPanelTop } from "lucide-react";
 import { listAdminBanners } from "@/lib/queries/admin-banners";
-import { PLACEMENTS, toggleBannerActiveAction } from "./actions";
+import { toggleBannerActiveAction } from "./actions";
+import { PLACEMENTS } from "./placements";
 
 export const dynamic = "force-dynamic";
 

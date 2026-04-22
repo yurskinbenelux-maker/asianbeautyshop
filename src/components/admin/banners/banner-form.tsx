@@ -12,9 +12,9 @@ import { useActionState, useState } from "react";
 import {
   createBannerAction,
   updateBannerAction,
-  PLACEMENTS,
   type ActionState,
 } from "@/app/admin/banners/actions";
+import { PLACEMENTS } from "@/app/admin/banners/placements";
 import { Locale } from "@prisma/client";
 import {
   Field,

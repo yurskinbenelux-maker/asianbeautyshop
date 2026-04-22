@@ -111,14 +111,6 @@ async function loadOrderOrFail(orderId: string) {
   return order;
 }
 
-/** Parse money from a FormData entry. Accepts "12,50" or "12.50". */
-function parseMoney(raw: FormDataEntryValue | null): Prisma.Decimal | null {
-  if (raw === null) return null;
-  const s = String(raw).trim().replace(",", ".");
-  if (s === "") return null;
-  return new Prisma.Decimal(s);
-}
-
 /** Revalidate both the list and this order's detail view. */
 function revalidateOrder(id: string) {
   revalidatePath("/admin/orders");
@@ -809,7 +801,3 @@ export async function bulkMarkFulfillingAction(
   };
 }
 
-// ──────── re-export for convenience (silence unused-warning) ──────────
-// parseMoney is exported from the product actions file too; kept here
-// available for future refund-from-line-items logic.
-export { parseMoney };

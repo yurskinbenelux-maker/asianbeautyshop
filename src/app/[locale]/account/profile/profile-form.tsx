@@ -8,12 +8,8 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
-import {
-  updateProfileAction,
-  updatePasswordAction,
-  INITIAL_PROFILE_STATE,
-  type ActionState,
-} from "./actions";
+import { updateProfileAction, updatePasswordAction } from "./actions";
+import { INITIAL_PROFILE_STATE, type ActionState } from "./form-state";
 
 type ProfileDefaults = {
   email: string;

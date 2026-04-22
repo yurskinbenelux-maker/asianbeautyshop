@@ -23,16 +23,11 @@ import {
   deleteMyAddress,
   setMyDefaultAddress,
 } from "@/lib/queries/addresses";
+import type { ActionState } from "./form-state";
 
-// Shared shape for all forms on the page.
-export type ActionState = {
-  ok: boolean;
-  message: string;
-  fieldErrors?: Record<string, string>;
-};
-
-const INITIAL: ActionState = { ok: false, message: "" };
-export const INITIAL_ADDRESS_STATE = INITIAL;
+// NB: `ActionState` type and `INITIAL_ADDRESS_STATE` live in ./form-state.
+// Next 15 "use server" files can only export async functions, so the form
+// imports those directly from ./form-state rather than re-exporting here.
 
 // Empty string → null so "optional" inputs don't save as blanks.
 const emptyToNull = (v: unknown) =>

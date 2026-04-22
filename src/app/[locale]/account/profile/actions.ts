@@ -12,18 +12,14 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { Locale } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireCustomer, toPrismaLocale } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { ActionState } from "./form-state";
 
-export type ActionState = {
-  ok: boolean;
-  message: string;
-  fieldErrors?: Record<string, string>;
-};
-
-export const INITIAL_PROFILE_STATE: ActionState = { ok: false, message: "" };
+// NB: `ActionState` type and `INITIAL_PROFILE_STATE` live in ./form-state.
+// Next 15 "use server" files can only export async functions, so the form
+// imports those directly from ./form-state rather than re-exporting here.
 
 const emptyToNull = (v: unknown) =>
   typeof v === "string" && v.trim() === "" ? null : v;
@@ -156,6 +152,3 @@ export async function updatePasswordAction(
   revalidatePath(`/${locale}/account/profile`);
   return { ok: true, message: "password_saved" };
 }
-
-// Re-export Locale for form consumers that render radio options.
-export { Locale };

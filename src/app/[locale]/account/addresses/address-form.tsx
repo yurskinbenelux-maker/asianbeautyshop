@@ -11,12 +11,8 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
-import {
-  createAddressAction,
-  updateAddressAction,
-  INITIAL_ADDRESS_STATE,
-  type ActionState,
-} from "./actions";
+import { createAddressAction, updateAddressAction } from "./actions";
+import { INITIAL_ADDRESS_STATE, type ActionState } from "./form-state";
 
 export type AddressFormDefaults = {
   id?: string;

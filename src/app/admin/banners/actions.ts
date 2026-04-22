@@ -15,6 +15,7 @@ import { z } from "zod";
 import { Locale } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { PLACEMENT_IDS } from "./placements";
 
 export type ActionState = {
   ok: boolean;
@@ -34,20 +35,6 @@ function refresh(id?: string) {
   // Homepage pulls banners by placement; revalidate the public tree too.
   revalidatePath("/", "layout");
 }
-
-// ──────── valid placements ──────────────────────────────────────────────
-// Defined here (not free-text) so Sofia can't invent a placement the
-// frontend doesn't render yet. Add new slots here AND in the frontend
-// banner lookup when needed.
-
-export const PLACEMENTS = [
-  { id: "home.hero", label: "Homepage · hero" },
-  { id: "home.announcement", label: "Homepage · announcement strip" },
-  { id: "home.promo", label: "Homepage · promo card" },
-  { id: "shop.top", label: "Shop · top banner" },
-] as const;
-
-const PLACEMENT_IDS = PLACEMENTS.map((p) => p.id) as [string, ...string[]];
 
 // ──────── schema ────────────────────────────────────────────────────────
 

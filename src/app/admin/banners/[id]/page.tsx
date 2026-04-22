@@ -11,7 +11,7 @@ import {
 } from "@/lib/queries/admin-banners";
 import { BannerForm } from "@/components/admin/banners/banner-form";
 import { BannerDangerZone } from "@/components/admin/banners/banner-danger-zone";
-import { PLACEMENTS } from "../actions";
+import { PLACEMENTS } from "../placements";
 
 export const dynamic = "force-dynamic";
 
