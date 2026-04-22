@@ -70,7 +70,6 @@ export default async function CheckoutSuccessPage({
       grandTotal: true,
       currency: true,
       molliePaymentUrl: true,
-      createdAt: true,
     },
   });
 
