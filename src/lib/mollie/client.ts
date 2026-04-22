@@ -16,7 +16,10 @@
 //     isn't reinventing error shapes.
 // ─────────────────────────────────────────────────────────────────────────
 
-import createMollieClient, { type MollieClient } from "@mollie/api-client";
+import createMollieClient, {
+  type MollieClient,
+  Locale,
+} from "@mollie/api-client";
 
 let cached: MollieClient | null = null;
 
@@ -59,15 +62,15 @@ export function getMollieProfileId(): string | null {
 // match for the shop's EN/NL/FR/RU locales so the hosted pay page matches
 // what the visitor already saw on the site.
 
-const MOLLIE_LOCALE: Record<string, string> = {
-  en: "en_US",
-  nl: "nl_NL",
-  fr: "fr_FR",
-  ru: "en_US", // Mollie has no ru_* locale — English is closest.
+const MOLLIE_LOCALE: Record<string, Locale> = {
+  en: Locale.en_US,
+  nl: Locale.nl_NL,
+  fr: Locale.fr_FR,
+  ru: Locale.en_US, // Mollie has no ru_* locale — English is closest.
 };
 
-export function mapLocaleToMollie(locale: string): string {
-  return MOLLIE_LOCALE[locale.toLowerCase()] ?? "en_US";
+export function mapLocaleToMollie(locale: string): Locale {
+  return MOLLIE_LOCALE[locale.toLowerCase()] ?? Locale.en_US;
 }
 
 // ────────── Terminal-state helpers ──────────────────────────────────────
