@@ -36,7 +36,15 @@ export async function POST(request: NextRequest) {
       ? redirectTo
       : "/sign-in";
 
-  return NextResponse.redirect(new URL(safeTarget, request.url), {
+  // Build the absolute URL from NEXT_PUBLIC_SITE_URL, NOT request.url.
+  // On Hostinger the Node process binds to 0.0.0.0:3000 and request.url
+  // reflects that internal address — using it here leaks "0.0.0.0:3000"
+  // into the browser redirect.
+  const site =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    "http://localhost:3000";
+
+  return NextResponse.redirect(new URL(safeTarget, site), {
     status: 303, // See Other — tells the browser to switch POST → GET
   });
 }

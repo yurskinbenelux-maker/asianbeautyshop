@@ -9,12 +9,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = request.nextUrl;
+  const { searchParams } = request.nextUrl;
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/admin";
 
+  // Absolute origin comes from env, NOT request.nextUrl.origin.
+  // Behind Hostinger's reverse proxy the Node process sees 0.0.0.0:3000,
+  // which would leak into client-facing redirects.
+  const site =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    "http://localhost:3000";
+
   if (!code) {
-    return NextResponse.redirect(`${origin}/sign-in?error=missing_code`);
+    return NextResponse.redirect(`${site}/sign-in?error=missing_code`);
   }
 
   const supabase = await createSupabaseServerClient();
@@ -22,7 +29,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return NextResponse.redirect(
-      `${origin}/sign-in?error=${encodeURIComponent(error.message)}`,
+      `${site}/sign-in?error=${encodeURIComponent(error.message)}`,
     );
   }
 
@@ -31,5 +38,5 @@ export async function GET(request: NextRequest) {
     ? next
     : "/admin";
 
-  return NextResponse.redirect(`${origin}${safeNext}`);
+  return NextResponse.redirect(`${site}${safeNext}`);
 }
