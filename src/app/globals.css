@@ -1,0 +1,150 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   YU.R Skin Solution — globals.css
+   Rice-paper base, sumi-ink type, vermilion accent.
+   Font CSS variables are injected by next/font in layout.tsx:
+     --font-display  Fraunces (display serif)
+     --font-kr       Noto Serif KR (Hangul + CJK)
+     --font-body     Inter (UI / body)
+   ───────────────────────────────────────────────────────────────────────── */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base tokens ──────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    color-scheme: light;
+    --radius: 4px;
+
+    /* hanji grain – paper texture overlay used site-wide */
+    --hanji-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.07  0 0 0 0 0.06  0 0 0 0 0.05  0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-rice text-ink font-sans antialiased;
+    background-image: var(--hanji-grain);
+    background-repeat: repeat;
+    background-size: 160px 160px;
+  }
+
+  /* Display type defaults — Fraunces with optical weight */
+  h1, h2, h3 {
+    @apply font-display;
+    font-feature-settings: "ss01", "ss02";
+  }
+
+  /* Korean text uses Noto Serif KR — opt-in via .font-kr */
+  :lang(ko), .font-kr {
+    font-family: var(--font-kr), "Noto Serif KR", serif;
+  }
+
+  /* Selection — vermilion ink on rice */
+  ::selection {
+    background: #C8102E;
+    color: #F8F4EC;
+  }
+
+  /* Focus — vermilion ring, no blue browser default */
+  :focus-visible {
+    outline: 2px solid #C8102E;
+    outline-offset: 3px;
+  }
+
+  /* Scrollbar — slim, ink, on rice */
+  ::-webkit-scrollbar          { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track    { background: transparent; }
+  ::-webkit-scrollbar-thumb    { background: rgba(18,17,16,0.18); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(18,17,16,0.32); }
+}
+
+/* ─── Components: reusable atoms ──────────────────────────────────────── */
+@layer components {
+  /* Eyebrow — tiny uppercase label used above section titles */
+  .eyebrow {
+    @apply text-[11px] uppercase tracking-eyebrow text-ink-mid;
+  }
+
+  /* Rule — the single hairline we use as section separator */
+  .rule {
+    @apply h-px w-full bg-ink/10;
+  }
+
+  /* Korean seal — small square red block with white char, used as accent */
+  .seal {
+    @apply inline-flex h-7 w-7 items-center justify-center bg-vermilion text-rice font-kr text-[13px] leading-none;
+    letter-spacing: 0;
+  }
+
+  /* Admin form input — used across the admin panel for consistency.
+     Applies to <input>, <select>, <textarea>. */
+  .input {
+    @apply w-full border border-ink/15 bg-white px-3 py-2 text-[13px] text-ink placeholder:text-ink-mid/60 focus:border-ink focus:outline-none;
+  }
+  textarea.input { @apply leading-relaxed; }
+
+  /* Glass surface — used for concierge orb popover + nav backdrop */
+  .glass {
+    background: rgba(250, 247, 240, 0.72);
+    backdrop-filter: saturate(140%) blur(14px);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+    border: 1px solid rgba(18,17,16,0.06);
+  }
+
+  /* Editorial rich-text styling — for product descriptions, journal
+     entries, and anything coming out of the Tiptap editor in admin.
+     Deliberately plain (no framed cards, no bullets with accents) —
+     the type itself is the hierarchy. */
+  .prose-editorial p         { @apply mb-4 last:mb-0; }
+  .prose-editorial p + p     { @apply mt-0; }
+  .prose-editorial strong    { @apply font-medium text-ink; }
+  .prose-editorial em        { @apply italic; }
+  .prose-editorial a         { @apply text-ink underline decoration-vermilion underline-offset-4 transition-colors hover:text-vermilion; }
+  .prose-editorial h2        { @apply mt-10 font-display text-[24px] leading-tight text-ink; }
+  .prose-editorial h3        { @apply mt-8 font-display text-[18px] leading-tight text-ink; }
+  .prose-editorial ul        { @apply my-4 list-disc pl-5; }
+  .prose-editorial ol        { @apply my-4 list-decimal pl-5; }
+  .prose-editorial li        { @apply mb-1; }
+  .prose-editorial blockquote { @apply my-6 border-l-2 border-vermilion pl-5 italic text-ink; }
+  .prose-editorial hr        { @apply my-8 border-ink/15; }
+}
+
+/* ─── Utilities: motion helpers ───────────────────────────────────────── */
+@layer utilities {
+  /* Respect user motion preferences everywhere */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Moon-jar glow — soft radial wash behind hero */
+  .moonjar-glow {
+    background: radial-gradient(60% 60% at 50% 45%,
+      rgba(255, 246, 226, 0.9) 0%,
+      rgba(255, 241, 210, 0.6) 35%,
+      rgba(248, 244, 236, 0) 70%);
+  }
+
+  /* Vermilion ink-drop shadow for the concierge orb */
+  .ink-drop {
+    box-shadow: 0 30px 60px -20px rgba(200,16,46,0.45);
+  }
+
+  /* Slide-up entrance — used by the cookie banner. Kept as a named
+     keyframe so arbitrary utilities (animate-[slide-up_300ms_…]) work. */
+  @keyframes slide-up {
+    from { transform: translateY(120%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+}

@@ -1,0 +1,312 @@
+"use client";
+
+// ─────────────────────────────────────────────────────────────────────────
+// JournalForm — shared create/edit form for journal posts.
+//
+// Locale tabs switch the per-language panels (title / slug / excerpt / body
+// / SEO). Master fields (status, publish date, cover, author) sit above
+// the tabs. Body is a plain HTML textarea for now — swap in Tiptap later.
+// ─────────────────────────────────────────────────────────────────────────
+
+import { useActionState, useState } from "react";
+import {
+  createJournalPostAction,
+  updateJournalPostAction,
+  type ActionState,
+} from "@/app/admin/journal/actions";
+import { Locale, PostStatus } from "@prisma/client";
+import {
+  Field,
+  SaveBar,
+  StatusBanner,
+} from "@/components/admin/settings/settings-chrome";
+import { cn } from "@/lib/utils";
+
+const LOCALES: Locale[] = [Locale.EN, Locale.NL, Locale.FR, Locale.RU];
+
+const INITIAL_STATE: ActionState = { ok: false };
+
+type Translation = {
+  locale: Locale;
+  title: string;
+  slug: string;
+  excerpt: string;
+  body: string;
+  seoTitle: string;
+  seoDescription: string;
+};
+
+export type JournalFormInitial = {
+  id?: string;
+  status: PostStatus;
+  publishedAt: Date | null;
+  coverUrl: string | null;
+  authorName: string | null;
+  translations: Record<Locale, Translation>;
+};
+
+const EMPTY_TRANSLATION = (locale: Locale): Translation => ({
+  locale,
+  title: "",
+  slug: "",
+  excerpt: "",
+  body: "",
+  seoTitle: "",
+  seoDescription: "",
+});
+
+const EMPTY: JournalFormInitial = {
+  status: "DRAFT",
+  publishedAt: null,
+  coverUrl: null,
+  authorName: null,
+  translations: {
+    EN: EMPTY_TRANSLATION("EN"),
+    NL: EMPTY_TRANSLATION("NL"),
+    FR: EMPTY_TRANSLATION("FR"),
+    RU: EMPTY_TRANSLATION("RU"),
+  },
+};
+
+export function JournalForm({
+  mode,
+  initial,
+}: {
+  mode: "create" | "edit";
+  initial?: JournalFormInitial;
+}) {
+  const data = initial ?? EMPTY;
+  const action =
+    mode === "create" ? createJournalPostAction : updateJournalPostAction;
+  const [state, dispatch] = useActionState(action, INITIAL_STATE);
+  const err = state.fieldErrors ?? {};
+
+  const [activeLocale, setActiveLocale] = useState<Locale>("EN");
+  const [status, setStatus] = useState<PostStatus>(data.status);
+
+  const needsPublishDate = status === "SCHEDULED" || status === "PUBLISHED";
+
+  return (
+    <form action={dispatch} className="max-w-3xl space-y-6">
+      {mode === "edit" && data.id && (
+        <input type="hidden" name="id" value={data.id} />
+      )}
+
+      {/* master fields */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Field
+          label="Status"
+          hint="Drafts stay hidden. Scheduled posts appear at the date below."
+          error={err.status?.[0]}
+        >
+          <select
+            name="status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value as PostStatus)}
+            className="input"
+          >
+            <option value="DRAFT">Draft</option>
+            <option value="PUBLISHED">Published</option>
+            <option value="SCHEDULED">Scheduled</option>
+          </select>
+        </Field>
+
+        <Field
+          label={
+            status === "SCHEDULED"
+              ? "Publish at (future)"
+              : "Published at"
+          }
+          hint={
+            status === "DRAFT"
+              ? "Ignored while status is Draft."
+              : status === "SCHEDULED"
+              ? "Required — must be in the future."
+              : "Leave blank to publish now."
+          }
+          error={err.publishedAt?.[0]}
+        >
+          <input
+            name="publishedAt"
+            type="datetime-local"
+            defaultValue={toLocalInput(data.publishedAt)}
+            disabled={!needsPublishDate}
+            className="input disabled:bg-ink/5 disabled:text-ink-mid"
+          />
+        </Field>
+
+        <Field label="Author name" hint="Shown below the title.">
+          <input
+            name="authorName"
+            defaultValue={data.authorName ?? ""}
+            className="input"
+            placeholder="Sofia"
+            maxLength={120}
+          />
+        </Field>
+      </div>
+
+      <Field
+        label="Cover image URL"
+        hint="Paste a URL from /admin/media. Shown at the top of the post."
+        error={err.coverUrl?.[0]}
+      >
+        <input
+          name="coverUrl"
+          defaultValue={data.coverUrl ?? ""}
+          className="input"
+          placeholder="https://…"
+          maxLength={2000}
+        />
+      </Field>
+
+      {/* per-locale copy */}
+      <div className="space-y-3 border-t border-ink/10 pt-6">
+        <div className="text-[11px] uppercase tracking-label text-ink-mid">
+          Copy · by language
+        </div>
+        <div className="flex flex-wrap gap-1 border-b border-ink/10">
+          {LOCALES.map((l) => {
+            const on = activeLocale === l;
+            const filled =
+              data.translations[l]?.title.trim().length > 0;
+            return (
+              <button
+                key={l}
+                type="button"
+                onClick={() => setActiveLocale(l)}
+                className={cn(
+                  "border-b-2 px-3 py-1.5 text-[12px] uppercase tracking-label transition-colors",
+                  on
+                    ? "border-ink text-ink"
+                    : "border-transparent text-ink-mid hover:text-ink",
+                )}
+              >
+                {l}
+                {l === "EN" && <span className="ml-1 text-vermilion">*</span>}
+                {l !== "EN" && !filled && (
+                  <span
+                    className="ml-1 inline-block h-1 w-1 rounded-full bg-ink-mid/40"
+                    aria-hidden
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {LOCALES.map((l) => {
+          const t = data.translations[l];
+          const on = activeLocale === l;
+          return (
+            <div
+              key={l}
+              className={on ? "space-y-3" : "hidden"}
+              aria-hidden={!on}
+            >
+              <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
+                <Field
+                  label={l === "EN" ? "Title (required)" : "Title"}
+                  hint={
+                    l === "EN"
+                      ? "Shown as the post headline."
+                      : `${l} — falls back to EN if blank.`
+                  }
+                  error={err[`translations.${l}.title`]?.[0]}
+                >
+                  <input
+                    name={`translations.${l}.title`}
+                    defaultValue={t.title}
+                    className="input"
+                    maxLength={200}
+                  />
+                </Field>
+                <Field
+                  label="Slug"
+                  hint="Auto-filled from the title if left blank."
+                  error={err[`translations.${l}.slug`]?.[0]}
+                >
+                  <input
+                    name={`translations.${l}.slug`}
+                    defaultValue={t.slug}
+                    className="input font-mono tracking-label"
+                    maxLength={200}
+                    placeholder="lowercase-with-hyphens"
+                  />
+                </Field>
+              </div>
+
+              <Field
+                label="Excerpt"
+                hint="One or two lines shown on the journal index and in metadata."
+              >
+                <textarea
+                  name={`translations.${l}.excerpt`}
+                  defaultValue={t.excerpt}
+                  rows={2}
+                  className="input"
+                  maxLength={400}
+                />
+              </Field>
+
+              <Field
+                label={l === "EN" ? "Body (required)" : "Body"}
+                hint="HTML is supported (<p>, <h2>, <strong>, <ul>, <img>…). A WYSIWYG editor is coming."
+                error={err[`translations.${l}.body`]?.[0]}
+              >
+                <textarea
+                  name={`translations.${l}.body`}
+                  defaultValue={t.body}
+                  rows={14}
+                  className="input font-mono text-[12px] leading-relaxed"
+                />
+              </Field>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="SEO title" hint="Falls back to the post title.">
+                  <input
+                    name={`translations.${l}.seoTitle`}
+                    defaultValue={t.seoTitle}
+                    className="input"
+                    maxLength={160}
+                  />
+                </Field>
+                <Field
+                  label="SEO description"
+                  hint="Shown in Google search results."
+                >
+                  <input
+                    name={`translations.${l}.seoDescription`}
+                    defaultValue={t.seoDescription}
+                    className="input"
+                    maxLength={300}
+                  />
+                </Field>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <StatusBanner state={state} />
+      <SaveBar />
+    </form>
+  );
+}
+
+function toLocalInput(d: Date | null): string {
+  if (!d) return "";
+  // datetime-local wants "YYYY-MM-DDTHH:MM" in local time.
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    d.getFullYear() +
+    "-" +
+    pad(d.getMonth() + 1) +
+    "-" +
+    pad(d.getDate()) +
+    "T" +
+    pad(d.getHours()) +
+    ":" +
+    pad(d.getMinutes())
+  );
+}

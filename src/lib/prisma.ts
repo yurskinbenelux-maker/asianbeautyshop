@@ -1,0 +1,22 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Prisma client singleton.
+// Next.js dev re-imports modules on every save — without this guard we'd
+// open a new pool every time and exhaust Supabase connections.
+// ─────────────────────────────────────────────────────────────────────────
+
+import { PrismaClient } from "@prisma/client";
+
+declare global {
+  // eslint-disable-next-line no-var
+  var prismaGlobal: PrismaClient | undefined;
+}
+
+export const prisma =
+  globalThis.prismaGlobal ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  globalThis.prismaGlobal = prisma;
+}

@@ -1,0 +1,375 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Order confirmation email — sent the moment paymentStatus flips to PAID.
+//
+// Customer-facing. Written in Sofia's voice: warm, understated, editorial.
+// All copy localised (EN / NL / FR / RU) based on the order's locale.
+//
+// Exported helpers:
+//   • buildOrderConfirmationEmail(order)  — pure builder (no side effects)
+//   • sendOrderConfirmationEmail(orderId) — fetches order, sends via Resend
+//
+// The builder is kept pure so the admin panel can preview the rendered
+// HTML later, and so we can snapshot-test the markup.
+//
+// We deliberately tolerate missing optional data (no shipping address, no
+// product images, absent variant label). A failed email must never block
+// the payment flow that triggered it — callers catch and log.
+// ─────────────────────────────────────────────────────────────────────────
+
+import { Locale } from "@prisma/client";
+import {
+  getResend,
+  fromTransactional,
+  replyToAddress,
+} from "./resend";
+import { EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
+import {
+  formatEmailMoney,
+  getOrderForEmail,
+  type EmailOrder,
+} from "./order-query";
+
+// ────────── per-locale copy ─────────────────────────────────────────────
+
+type Strings = {
+  subject: (orderNo: string) => string;
+  preheader: string;
+  heading: (firstName: string | null) => string;
+  lede: string;
+  orderLabel: string;
+  itemsLabel: string;
+  subtotalLabel: string;
+  discountLabel: string;
+  shippingLabel: string;
+  taxLabel: string;
+  totalLabel: string;
+  shippingAddressLabel: string;
+  nextLabel: string;
+  nextBody: string;
+  cta: string;
+  signoff: string;
+  footer: string;
+};
+
+const STRINGS: Record<Locale, Strings> = {
+  EN: {
+    subject: (n) => `Your order ${n} is confirmed — YU.R Skin Solution`,
+    preheader: "Thank you for your order. A ritual is on its way to you.",
+    heading: (f) => (f ? `Thank you, ${f}.` : "Thank you."),
+    lede:
+      "Your order has been received and payment confirmed. We'll begin preparing it carefully — you'll hear from us again the moment it ships.",
+    orderLabel: "Order",
+    itemsLabel: "Your ritual",
+    subtotalLabel: "Subtotal",
+    discountLabel: "Discount",
+    shippingLabel: "Shipping",
+    taxLabel: "Tax",
+    totalLabel: "Total",
+    shippingAddressLabel: "Shipping to",
+    nextLabel: "What happens next",
+    nextBody:
+      "We hand-pack every order in our studio in Brussels. Once your parcel is on the way, a tracking link will arrive here.",
+    cta: "View your order",
+    signoff: "With care,\nSofia · YU.R Skin Solution",
+    footer: "K'Elmus Group BV · Brussels, Belgium",
+  },
+  NL: {
+    subject: (n) => `Je bestelling ${n} is bevestigd — YU.R Skin Solution`,
+    preheader: "Bedankt voor je bestelling. Je ritueel is onderweg.",
+    heading: (f) => (f ? `Bedankt, ${f}.` : "Bedankt."),
+    lede:
+      "Je bestelling is ontvangen en de betaling is bevestigd. We beginnen haar zorgvuldig klaar te maken — zodra ze verstuurd is, hoor je opnieuw van ons.",
+    orderLabel: "Bestelling",
+    itemsLabel: "Jouw ritueel",
+    subtotalLabel: "Subtotaal",
+    discountLabel: "Korting",
+    shippingLabel: "Verzending",
+    taxLabel: "Btw",
+    totalLabel: "Totaal",
+    shippingAddressLabel: "Verzending naar",
+    nextLabel: "Wat nu",
+    nextBody:
+      "We pakken elk pakket met zorg in in ons atelier in Brussel. Zodra je pakket onderweg is, ontvang je hier een tracking-link.",
+    cta: "Bestelling bekijken",
+    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    footer: "K'Elmus Group BV · Brussel, België",
+  },
+  FR: {
+    subject: (n) => `Votre commande ${n} est confirmée — YU.R Skin Solution`,
+    preheader: "Merci pour votre commande. Un rituel est en route.",
+    heading: (f) => (f ? `Merci, ${f}.` : "Merci."),
+    lede:
+      "Votre commande a bien été reçue et le paiement est confirmé. Nous allons la préparer avec soin — nous vous écrirons à nouveau dès qu'elle sera expédiée.",
+    orderLabel: "Commande",
+    itemsLabel: "Votre rituel",
+    subtotalLabel: "Sous-total",
+    discountLabel: "Remise",
+    shippingLabel: "Livraison",
+    taxLabel: "TVA",
+    totalLabel: "Total",
+    shippingAddressLabel: "Livraison à",
+    nextLabel: "Et ensuite",
+    nextBody:
+      "Chaque commande est emballée à la main dans notre atelier à Bruxelles. Dès que le colis est en route, un lien de suivi vous parviendra ici.",
+    cta: "Voir ma commande",
+    signoff: "Avec soin,\nSofia · YU.R Skin Solution",
+    footer: "K'Elmus Group BV · Bruxelles, Belgique",
+  },
+  RU: {
+    subject: (n) => `Ваш заказ ${n} подтверждён — YU.R Skin Solution`,
+    preheader: "Спасибо за заказ. Ваш ритуал уже в пути.",
+    heading: (f) => (f ? `Спасибо, ${f}.` : "Спасибо."),
+    lede:
+      "Мы получили ваш заказ, оплата подтверждена. Начинаем бережно его собирать — как только посылка отправится, вы получите от нас сообщение.",
+    orderLabel: "Заказ",
+    itemsLabel: "Ваш ритуал",
+    subtotalLabel: "Сумма",
+    discountLabel: "Скидка",
+    shippingLabel: "Доставка",
+    taxLabel: "Налог",
+    totalLabel: "Итого",
+    shippingAddressLabel: "Доставка по адресу",
+    nextLabel: "Что дальше",
+    nextBody:
+      "Каждый заказ мы вручную упаковываем в нашем ателье в Брюсселе. Как только посылка отправится, вы получите здесь трек-ссылку.",
+    cta: "Посмотреть заказ",
+    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    footer: "K'Elmus Group BV · Брюссель, Бельгия",
+  },
+};
+
+// ────────── builder ─────────────────────────────────────────────────────
+
+export type OrderConfirmationEmail = {
+  subject: string;
+  html: string;
+  text: string;
+};
+
+function siteUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    "https://yurskinsolution.eu"
+  );
+}
+
+function accountOrderUrl(order: EmailOrder): string {
+  const locale = order.locale.toLowerCase();
+  return `${siteUrl()}/${locale}/account/orders/${encodeURIComponent(order.publicNumber)}`;
+}
+
+/**
+ * Render the order confirmation for one order. Pure: no DB, no network.
+ */
+export function buildOrderConfirmationEmail(
+  order: EmailOrder,
+): OrderConfirmationEmail {
+  const s = STRINGS[order.locale] ?? STRINGS.EN;
+  const subject = s.subject(order.publicNumber);
+  const money = (n: number) =>
+    formatEmailMoney(n, order.currency, order.locale);
+
+  // ── items block ──
+  const itemsRows = order.items
+    .map((it) => {
+      const thumb = it.imageUrl
+        ? `<img src="${esc(it.imageUrl)}" width="56" height="56" alt="" style="display:block;width:56px;height:56px;border:1px solid rgba(26,26,26,0.08);object-fit:cover;" />`
+        : `<div style="width:56px;height:56px;background:#EFE8DB;border:1px solid rgba(26,26,26,0.08);"></div>`;
+      return /* html */ `
+        <tr>
+          <td style="padding:12px 0;vertical-align:top;">${thumb}</td>
+          <td style="padding:12px 0 12px 14px;vertical-align:top;">
+            <div style="font-size:14px;line-height:1.4;color:#1A1A1A;">${esc(it.productName)}</div>
+            <div style="margin-top:2px;font-size:12px;color:#8A8A8A;">× ${it.quantity}</div>
+          </td>
+          <td align="right" style="padding:12px 0;vertical-align:top;font-size:14px;color:#1A1A1A;white-space:nowrap;">
+            ${esc(money(it.lineTotal))}
+          </td>
+        </tr>`;
+    })
+    .join("");
+
+  // ── totals block ──
+  const totalRow = (
+    label: string,
+    value: string,
+    emphasised = false,
+  ) => /* html */ `
+    <tr>
+      <td style="padding:6px 0;font-size:13px;color:${emphasised ? "#1A1A1A" : "#5E5751"};${emphasised ? "font-weight:500;" : ""}">${esc(label)}</td>
+      <td align="right" style="padding:6px 0;font-size:13px;color:${emphasised ? "#1A1A1A" : "#5E5751"};${emphasised ? "font-weight:500;" : ""}">${esc(value)}</td>
+    </tr>`;
+
+  const totalsRows = [
+    totalRow(s.subtotalLabel, money(order.subtotal)),
+    order.discountTotal > 0
+      ? totalRow(s.discountLabel, `− ${money(order.discountTotal)}`)
+      : "",
+    totalRow(s.shippingLabel, money(order.shippingTotal)),
+    order.taxTotal > 0 ? totalRow(s.taxLabel, money(order.taxTotal)) : "",
+    totalRow(s.totalLabel, money(order.grandTotal), true),
+  ]
+    .filter(Boolean)
+    .join("");
+
+  // ── shipping address block (optional) ──
+  const addr = order.shippingAddress;
+  const addressBlock = addr
+    ? /* html */ `
+      <div style="margin-top:24px;font-size:13px;line-height:1.6;color:#1A1A1A;">
+        <div style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8A8A8A;margin-bottom:8px;">
+          ${esc(s.shippingAddressLabel)}
+        </div>
+        ${esc([addr.firstName, addr.lastName].filter(Boolean).join(" "))}<br />
+        ${esc(addr.line1)}${addr.line2 ? "<br />" + esc(addr.line2) : ""}<br />
+        ${esc(addr.postcode)} ${esc(addr.city)}${addr.region ? ", " + esc(addr.region) : ""}<br />
+        ${esc(addr.country)}
+      </div>`
+    : "";
+
+  // ── body assembly ──
+  const body = /* html */ `
+    <h1 style="margin:28px 0 18px 0;font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:26px;line-height:1.25;color:#1A1A1A;">
+      ${esc(s.heading(order.customerFirstName))}
+    </h1>
+
+    <p style="margin:0 0 12px 0;font-size:15px;line-height:1.65;color:#1A1A1A;">
+      ${esc(s.lede)}
+    </p>
+
+    <p style="margin:0 0 24px 0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8A8A8A;">
+      ${esc(s.orderLabel)} · ${esc(order.publicNumber)}
+    </p>
+
+    ${EMAIL_HR}
+
+    <div style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8A8A8A;margin:0 0 8px 0;">
+      ${esc(s.itemsLabel)}
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      ${itemsRows}
+    </table>
+
+    ${EMAIL_HR}
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      ${totalsRows}
+    </table>
+
+    ${addressBlock}
+
+    ${EMAIL_HR}
+
+    <div style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8A8A8A;margin:0 0 8px 0;">
+      ${esc(s.nextLabel)}
+    </div>
+    <p style="margin:0 0 22px 0;font-size:14px;line-height:1.65;color:#1A1A1A;">
+      ${esc(s.nextBody)}
+    </p>
+
+    ${renderCtaButton(accountOrderUrl(order), s.cta)}
+
+    <p style="margin:20px 0 0 0;font-size:14px;line-height:1.65;color:#1A1A1A;white-space:pre-line;">
+      ${esc(s.signoff)}
+    </p>
+  `;
+
+  const html = renderEmailShell({
+    title: subject,
+    preheader: s.preheader,
+    lang: order.locale.toLowerCase(),
+    body,
+    footerNote: s.footer,
+  });
+
+  // Plain-text counterpart — every transactional mail should ship one.
+  const text = [
+    s.heading(order.customerFirstName),
+    "",
+    s.lede,
+    "",
+    `${s.orderLabel}: ${order.publicNumber}`,
+    "",
+    s.itemsLabel.toUpperCase(),
+    ...order.items.map(
+      (it) =>
+        `  ${it.productName} × ${it.quantity}   ${money(it.lineTotal)}`,
+    ),
+    "",
+    `${s.subtotalLabel}: ${money(order.subtotal)}`,
+    order.discountTotal > 0
+      ? `${s.discountLabel}: − ${money(order.discountTotal)}`
+      : null,
+    `${s.shippingLabel}: ${money(order.shippingTotal)}`,
+    order.taxTotal > 0 ? `${s.taxLabel}: ${money(order.taxTotal)}` : null,
+    `${s.totalLabel}: ${money(order.grandTotal)}`,
+    "",
+    addr
+      ? `${s.shippingAddressLabel}:\n  ${[addr.firstName, addr.lastName].filter(Boolean).join(" ")}\n  ${addr.line1}${addr.line2 ? "\n  " + addr.line2 : ""}\n  ${addr.postcode} ${addr.city}${addr.region ? ", " + addr.region : ""}\n  ${addr.country}`
+      : null,
+    "",
+    `${s.nextLabel}: ${s.nextBody}`,
+    "",
+    `${s.cta}: ${accountOrderUrl(order)}`,
+    "",
+    s.signoff,
+  ]
+    .filter((line) => line !== null)
+    .join("\n");
+
+  return { subject, html, text };
+}
+
+// ────────── sender ──────────────────────────────────────────────────────
+
+/**
+ * Fetch + render + send the confirmation email for an order.
+ * Returns `{ sent: true }` on success, `{ sent: false, reason }` otherwise.
+ *
+ * Never throws — the payment/status pipelines upstream must keep flowing
+ * even if email transport is down.
+ */
+export async function sendOrderConfirmationEmail(
+  orderId: string,
+): Promise<{ sent: boolean; reason?: string }> {
+  const order = await getOrderForEmail(orderId);
+  if (!order) {
+    return { sent: false, reason: "order-not-found" };
+  }
+
+  const { subject, html, text } = buildOrderConfirmationEmail(order);
+
+  const client = getResend();
+  if (!client) {
+    // Dev / key not configured — log so we can still see what would have
+    // been sent, but don't explode.
+    console.warn(
+      `[email] order confirmation not sent (no RESEND_API_KEY) for order ${order.publicNumber}`,
+    );
+    return { sent: false, reason: "resend-not-configured" };
+  }
+
+  try {
+    await client.emails.send({
+      from: fromTransactional(),
+      to: order.email,
+      subject,
+      html,
+      text,
+      replyTo: replyToAddress(),
+      // Tag outbound so we can filter bounces/complaints by email type
+      // in the Resend dashboard (and in our webhook later).
+      tags: [
+        { name: "type", value: "order_confirmation" },
+        { name: "order", value: order.publicNumber },
+      ],
+    });
+    return { sent: true };
+  } catch (err) {
+    console.error(
+      `[email] Resend send failed for order confirmation ${order.publicNumber}`,
+      err,
+    );
+    return { sent: false, reason: "resend-send-failed" };
+  }
+}

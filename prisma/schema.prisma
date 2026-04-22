@@ -1,0 +1,890 @@
+// YU.R Skin Solution — Prisma schema
+// Database: PostgreSQL (Supabase)
+// Strategy: core scalar fields on the main models; localised fields live in
+// *Translation child tables keyed by (parentId, locale) so Sofia can translate
+// EN/NL/FR/RU side-by-side in the admin without schema changes.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL") // for migrations via Supabase pooler
+  extensions = [pgcrypto]
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  LOCALES
+// ────────────────────────────────────────────────────────────────────────────
+
+enum Locale {
+  EN
+  NL
+  FR
+  RU
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  USERS / CUSTOMERS / ADMIN
+// ────────────────────────────────────────────────────────────────────────────
+//  `User.id` matches Supabase `auth.users.id` (UUID). We don't duplicate
+//  passwords — Supabase Auth handles that. We keep profile + role + shop data.
+
+enum Role {
+  CUSTOMER
+  STAFF
+  ADMIN
+}
+
+model User {
+  id            String     @id @default(uuid()) @db.Uuid
+  email         String     @unique
+  role          Role       @default(CUSTOMER)
+  firstName     String?
+  lastName      String?
+  phone         String?
+  preferredLocale Locale   @default(EN)
+  marketingOptIn Boolean   @default(false)
+  marketingOptInAt DateTime?
+  acceptsTermsAt DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  deletedAt     DateTime?  // GDPR soft-delete
+
+  addresses     Address[]
+  orders        Order[]
+  reviews       Review[]
+  wishlist      WishlistItem[]
+  carts         Cart[]
+  conversations AiConversation[]
+  contactMessages ContactMessage[]
+
+  @@index([role])
+  @@index([deletedAt])
+}
+
+model Address {
+  id         String   @id @default(uuid()) @db.Uuid
+  // null = guest-checkout address (snapshot for the order; no account to
+  // attach it to yet). Logged-in checkouts + addresses saved from the
+  // account area always carry a userId.
+  userId     String?  @db.Uuid
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isDefault  Boolean  @default(false)
+  type       AddressType @default(SHIPPING)
+  firstName  String
+  lastName   String
+  company    String?
+  line1      String
+  line2      String?
+  city       String
+  postcode   String
+  region     String?
+  country    String   // ISO 3166-1 alpha-2 (BE, NL, FR, DE, …)
+  phone      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  orderShipments Order[] @relation("shipping")
+  orderBilling   Order[] @relation("billing")
+
+  @@index([userId])
+}
+
+enum AddressType {
+  SHIPPING
+  BILLING
+  BOTH
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  CATALOGUE — brands, categories, products, variants, media
+// ────────────────────────────────────────────────────────────────────────────
+
+model Brand {
+  id         String             @id @default(uuid()) @db.Uuid
+  slug       String             @unique
+  name       String
+  isActive   Boolean            @default(true)
+  logoUrl    String?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  translations BrandTranslation[]
+  products   Product[]
+}
+
+model BrandTranslation {
+  id        String  @id @default(uuid()) @db.Uuid
+  brandId   String  @db.Uuid
+  brand     Brand   @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  locale    Locale
+  tagline   String?
+  story     String? // rich HTML
+  @@unique([brandId, locale])
+}
+
+model Category {
+  id         String   @id @default(uuid()) @db.Uuid
+  slug       String   @unique
+  parentId   String?  @db.Uuid
+  parent     Category? @relation("CategoryTree", fields: [parentId], references: [id])
+  children   Category[] @relation("CategoryTree")
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+  iconUrl    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  translations CategoryTranslation[]
+  products   ProductCategory[]
+}
+
+model CategoryTranslation {
+  id         String   @id @default(uuid()) @db.Uuid
+  categoryId String   @db.Uuid
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  locale     Locale
+  name       String
+  description String?  // rich HTML for category landing page
+  seoTitle   String?
+  seoDescription String?
+  @@unique([categoryId, locale])
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Product {
+  id              String          @id @default(uuid()) @db.Uuid
+  sku             String          @unique           // human-friendly SKU e.g. "YUR-SUN-SPF50"
+  brandId         String?         @db.Uuid
+  brand           Brand?          @relation(fields: [brandId], references: [id])
+  status          ProductStatus   @default(DRAFT)
+  isFeatured      Boolean         @default(false)
+  isBestseller    Boolean         @default(false)
+  isAvailableForAi Boolean        @default(true)    // admin toggle: can the AI concierge recommend this?
+  hideFromSearch  Boolean         @default(false)
+  price           Decimal         @db.Decimal(10, 2) // base price in EUR
+  comparePrice    Decimal?        @db.Decimal(10, 2) // "was" price for sale display
+  cost            Decimal?        @db.Decimal(10, 2) // cost of goods (for margin reports)
+  weightGrams     Int?                               // for Sendcloud shipping quote
+  volumeMl        Int?                               // for the PDP "50 ml" badge
+  launchedAt      DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
+
+  translations    ProductTranslation[]
+  variants        ProductVariant[]
+  categories      ProductCategory[]
+  ingredients     ProductIngredient[]
+  benefits        ProductBenefit[]
+  concerns        ProductConcern[]
+  skinTypes       ProductSkinType[]
+  media           Media[]
+  ritualSteps     RitualStep[]
+  relatedFrom     ProductRelated[] @relation("related_from")
+  relatedTo       ProductRelated[] @relation("related_to")
+  reviews         Review[]
+  orderItems      OrderItem[]
+  wishlistedBy    WishlistItem[]
+  cartItems       CartItem[]
+
+  @@index([status])
+  @@index([brandId])
+  @@index([isFeatured])
+  @@index([isBestseller])
+}
+
+model ProductTranslation {
+  id               String   @id @default(uuid()) @db.Uuid
+  productId        String   @db.Uuid
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  locale           Locale
+  name             String
+  slug             String
+  shortDescription String?
+  description      String   // rich HTML from Tiptap
+  howToUse         String?  // rich HTML
+  seoTitle         String?
+  seoDescription   String?
+  @@unique([productId, locale])
+  @@unique([locale, slug])
+  @@index([locale])
+}
+
+model ProductVariant {
+  id          String   @id @default(uuid()) @db.Uuid
+  productId   String   @db.Uuid
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku         String   @unique
+  label       String   // "50 ml", "100 ml", "Travel size"
+  price       Decimal? @db.Decimal(10, 2) // null = inherit from Product.price
+  comparePrice Decimal? @db.Decimal(10, 2)
+  stock       Int      @default(0)
+  isDefault   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  weightGrams Int?
+  barcode     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+
+  @@index([productId])
+}
+
+model ProductCategory {
+  productId  String   @db.Uuid
+  categoryId String   @db.Uuid
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  @@id([productId, categoryId])
+}
+
+model ProductRelated {
+  fromId  String   @db.Uuid
+  toId    String   @db.Uuid
+  reason  String?  // "same ritual", "complementary", "upgrade"
+  sortOrder Int    @default(0)
+  from    Product  @relation("related_from", fields: [fromId], references: [id], onDelete: Cascade)
+  to      Product  @relation("related_to", fields: [toId], references: [id], onDelete: Cascade)
+  @@id([fromId, toId])
+}
+
+// media (images, video) attached to products or used on homepage banners
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+}
+
+model Media {
+  id         String    @id @default(uuid()) @db.Uuid
+  productId  String?   @db.Uuid
+  product    Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  kind       MediaKind @default(IMAGE)
+  url        String    // Supabase storage public URL
+  alt        String?
+  width      Int?
+  height     Int?
+  isPrimary  Boolean   @default(false)
+  sortOrder  Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  banners    Banner[]
+
+  @@index([productId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  INGREDIENTS · BENEFITS · SKIN TYPES · CONCERNS
+// ────────────────────────────────────────────────────────────────────────────
+
+model Ingredient {
+  id           String   @id @default(uuid()) @db.Uuid
+  slug         String   @unique
+  inciName     String   // INCI-standard name, e.g. "Centella Asiatica Extract"
+  isKeyAsset   Boolean  @default(false) // highlight on PDP with a separate card
+  isAllergen   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  translations IngredientTranslation[]
+  productLinks ProductIngredient[]
+}
+
+model IngredientTranslation {
+  id           String   @id @default(uuid()) @db.Uuid
+  ingredientId String   @db.Uuid
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  locale       Locale
+  displayName  String
+  description  String?  // rich HTML — used on /ingredients/[slug]
+  @@unique([ingredientId, locale])
+}
+
+model ProductIngredient {
+  productId    String     @db.Uuid
+  ingredientId String     @db.Uuid
+  isKey        Boolean    @default(false)
+  percentage   Float?
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  @@id([productId, ingredientId])
+}
+
+model Benefit {
+  id        String              @id @default(uuid()) @db.Uuid
+  slug      String              @unique
+  icon      String?             // icon key from the design system
+  translations BenefitTranslation[]
+  productLinks ProductBenefit[]
+}
+
+model BenefitTranslation {
+  id        String   @id @default(uuid()) @db.Uuid
+  benefitId String   @db.Uuid
+  benefit   Benefit  @relation(fields: [benefitId], references: [id], onDelete: Cascade)
+  locale    Locale
+  label     String
+  @@unique([benefitId, locale])
+}
+
+model ProductBenefit {
+  productId String  @db.Uuid
+  benefitId String  @db.Uuid
+  sortOrder Int     @default(0)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  benefit   Benefit @relation(fields: [benefitId], references: [id], onDelete: Cascade)
+  @@id([productId, benefitId])
+}
+
+model SkinType {
+  id        String              @id @default(uuid()) @db.Uuid
+  slug      String              @unique   // "dry" | "oily" | "combo" | "sensitive" | "mature"
+  translations SkinTypeTranslation[]
+  productLinks ProductSkinType[]
+}
+model SkinTypeTranslation {
+  id         String   @id @default(uuid()) @db.Uuid
+  skinTypeId String   @db.Uuid
+  skinType   SkinType @relation(fields: [skinTypeId], references: [id], onDelete: Cascade)
+  locale     Locale
+  label      String
+  @@unique([skinTypeId, locale])
+}
+model ProductSkinType {
+  productId  String   @db.Uuid
+  skinTypeId String   @db.Uuid
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  skinType   SkinType @relation(fields: [skinTypeId], references: [id], onDelete: Cascade)
+  @@id([productId, skinTypeId])
+}
+
+model Concern {
+  id        String              @id @default(uuid()) @db.Uuid
+  slug      String              @unique // "hyperpigmentation" | "fine-lines" | "sun-damage" | …
+  translations ConcernTranslation[]
+  productLinks ProductConcern[]
+}
+model ConcernTranslation {
+  id        String   @id @default(uuid()) @db.Uuid
+  concernId String   @db.Uuid
+  concern   Concern  @relation(fields: [concernId], references: [id], onDelete: Cascade)
+  locale    Locale
+  label     String
+  @@unique([concernId, locale])
+}
+model ProductConcern {
+  productId String   @db.Uuid
+  concernId String   @db.Uuid
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  concern   Concern  @relation(fields: [concernId], references: [id], onDelete: Cascade)
+  @@id([productId, concernId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  RITUAL STEPS (on PDP: 01 Cleanse / 02 Treat / 03 Protect)
+// ────────────────────────────────────────────────────────────────────────────
+
+model RitualStep {
+  id         String    @id @default(uuid()) @db.Uuid
+  productId  String    @db.Uuid
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stepNumber Int       // 1, 2, 3…
+  timeOfDay  TimeOfDay @default(ANY)
+  translations RitualStepTranslation[]
+  @@unique([productId, stepNumber])
+}
+
+enum TimeOfDay {
+  ANY
+  MORNING
+  EVENING
+}
+
+model RitualStepTranslation {
+  id           String     @id @default(uuid()) @db.Uuid
+  ritualStepId String     @db.Uuid
+  ritualStep   RitualStep @relation(fields: [ritualStepId], references: [id], onDelete: Cascade)
+  locale       Locale
+  title        String
+  body         String     // rich HTML
+  @@unique([ritualStepId, locale])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  CART (session-based, recoverable, works for guests + logged-in users)
+// ────────────────────────────────────────────────────────────────────────────
+
+model Cart {
+  id         String   @id @default(uuid()) @db.Uuid
+  token      String   @unique                // stored in an HTTP-only cookie
+  userId     String?  @db.Uuid
+  user       User?    @relation(fields: [userId], references: [id])
+  currency   String   @default("EUR")
+  locale     Locale   @default(EN)
+  notes      String?
+  // Abandoned-cart reminders: stamped when the cron sends the nudge so
+  // we don't re-send to the same cart. Null = never nudged.
+  lastAbandonEmailSentAt DateTime?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  items      CartItem[]
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model CartItem {
+  id         String          @id @default(uuid()) @db.Uuid
+  cartId     String          @db.Uuid
+  cart       Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId  String          @db.Uuid
+  product    Product         @relation(fields: [productId], references: [id])
+  variantId  String?         @db.Uuid
+  variant    ProductVariant? @relation(fields: [variantId], references: [id])
+  quantity   Int             @default(1)
+  unitPrice  Decimal         @db.Decimal(10, 2) // snapshot at add-to-cart
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  @@unique([cartId, productId, variantId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  ORDERS
+// ────────────────────────────────────────────────────────────────────────────
+
+enum OrderStatus {
+  PENDING        // created, not yet paid
+  PAID
+  FULFILLING     // paid, waiting to ship
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentStatus {
+  UNPAID
+  AUTHORIZED
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+model Order {
+  id                String        @id @default(uuid()) @db.Uuid
+  publicNumber      String        @unique            // "YUR-1042" shown to customer
+  userId            String?       @db.Uuid          // null = guest checkout
+  user              User?         @relation(fields: [userId], references: [id])
+  email             String                            // always captured, even for guests
+  locale            Locale        @default(EN)
+  currency          String        @default("EUR")
+  status            OrderStatus   @default(PENDING)
+  paymentStatus     PaymentStatus @default(UNPAID)
+
+  shippingAddressId String?       @db.Uuid
+  billingAddressId  String?       @db.Uuid
+  shippingAddress   Address?      @relation("shipping", fields: [shippingAddressId], references: [id])
+  billingAddress    Address?      @relation("billing",  fields: [billingAddressId],  references: [id])
+
+  // price breakdown in cents/decimal
+  subtotal          Decimal       @db.Decimal(10, 2)
+  discountTotal     Decimal       @db.Decimal(10, 2) @default(0)
+  shippingTotal     Decimal       @db.Decimal(10, 2) @default(0)
+  taxTotal          Decimal       @db.Decimal(10, 2) @default(0)
+  grandTotal        Decimal       @db.Decimal(10, 2)
+
+  // payment + fulfilment references
+  mollieId          String?       @unique   // Mollie payment id (tr_xxxx)
+  molliePaymentUrl  String?
+  sendcloudParcelId String?
+  trackingNumber    String?
+  trackingUrl       String?
+  invoiceUrl        String?                 // PDF in Supabase storage
+
+  couponCode        String?
+  coupon            Coupon?       @relation(fields: [couponCode], references: [code])
+  notes             String?                 // customer's order note
+  adminNotes        String?                 // internal
+
+  placedAt          DateTime      @default(now())
+  paidAt            DateTime?
+  shippedAt         DateTime?
+  deliveredAt       DateTime?
+  cancelledAt       DateTime?
+
+  items             OrderItem[]
+  events            OrderEvent[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([placedAt])
+}
+
+model OrderItem {
+  id           String           @id @default(uuid()) @db.Uuid
+  orderId      String           @db.Uuid
+  order        Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String           @db.Uuid
+  product      Product          @relation(fields: [productId], references: [id])
+  variantId    String?          @db.Uuid
+  variant      ProductVariant?  @relation(fields: [variantId], references: [id])
+  nameSnapshot String           // product name at time of order (so renames don't rewrite history)
+  skuSnapshot  String
+  quantity     Int
+  unitPrice    Decimal          @db.Decimal(10, 2)
+  lineTotal    Decimal          @db.Decimal(10, 2)
+  taxRate      Decimal?         @db.Decimal(5, 4)  // e.g. 0.2100 for 21%
+  @@index([orderId])
+}
+
+model OrderEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  orderId   String   @db.Uuid
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind      String   // "status.changed", "email.sent.confirmation", "refund.issued", …
+  message   String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  @@index([orderId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  COUPONS / DISCOUNTS
+// ────────────────────────────────────────────────────────────────────────────
+
+enum DiscountKind {
+  PERCENT          // "10% off"
+  FIXED            // "€5 off"
+  FREE_SHIPPING
+}
+
+model Coupon {
+  code          String        @id
+  kind          DiscountKind
+  value         Decimal       @db.Decimal(10, 2) // percent (0-100) or fixed EUR
+  minSubtotal   Decimal?      @db.Decimal(10, 2)
+  maxRedemptions Int?
+  redemptionsUsed Int         @default(0)
+  startsAt      DateTime?
+  endsAt        DateTime?
+  isActive      Boolean       @default(true)
+  firstOrderOnly Boolean      @default(false)
+  createdAt     DateTime      @default(now())
+  orders        Order[]
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  REVIEWS / WISHLIST
+// ────────────────────────────────────────────────────────────────────────────
+
+model Review {
+  id         String   @id @default(uuid()) @db.Uuid
+  productId  String   @db.Uuid
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId     String?  @db.Uuid
+  user       User?    @relation(fields: [userId], references: [id])
+  rating     Int      // 1-5
+  title      String?
+  body       String
+  isVerified Boolean  @default(false) // true if tied to an order of this product
+  isPublished Boolean @default(false) // admin moderation
+  locale     Locale   @default(EN)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([productId])
+  @@index([isPublished])
+}
+
+model WishlistItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String   @db.Uuid
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([userId, productId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  JOURNAL (editorial posts) + STATIC PAGES
+// ────────────────────────────────────────────────────────────────────────────
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+}
+
+model JournalPost {
+  id          String      @id @default(uuid()) @db.Uuid
+  status      PostStatus  @default(DRAFT)
+  publishedAt DateTime?
+  coverUrl    String?
+  authorName  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  translations JournalPostTranslation[]
+}
+
+model JournalPostTranslation {
+  id          String      @id @default(uuid()) @db.Uuid
+  postId      String      @db.Uuid
+  post        JournalPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  locale      Locale
+  title       String
+  slug        String
+  excerpt     String?
+  body        String      // rich HTML
+  seoTitle    String?
+  seoDescription String?
+  @@unique([postId, locale])
+  @@unique([locale, slug])
+}
+
+model Page {
+  id         String  @id @default(uuid()) @db.Uuid
+  key        String  @unique   // "about" | "faq" | "shipping" | "terms" | "privacy" | "cookies" | "imprint"
+  isActive   Boolean @default(true)
+  updatedAt  DateTime @updatedAt
+  translations PageTranslation[]
+}
+model PageTranslation {
+  id     String @id @default(uuid()) @db.Uuid
+  pageId String @db.Uuid
+  page   Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  locale Locale
+  title  String
+  body   String  // rich HTML
+  seoTitle String?
+  seoDescription String?
+  @@unique([pageId, locale])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  HOMEPAGE — banners + seasonal campaigns (admin-editable)
+// ────────────────────────────────────────────────────────────────────────────
+
+model Banner {
+  id         String   @id @default(uuid()) @db.Uuid
+  placement  String   // "home.hero" | "home.announcement" | "shop.top" | …
+  mediaId    String?  @db.Uuid
+  media      Media?   @relation(fields: [mediaId], references: [id])
+  ctaHref    String?
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+  startsAt   DateTime?
+  endsAt     DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  translations BannerTranslation[]
+  @@index([placement, isActive])
+}
+model BannerTranslation {
+  id       String @id @default(uuid()) @db.Uuid
+  bannerId String @db.Uuid
+  banner   Banner @relation(fields: [bannerId], references: [id], onDelete: Cascade)
+  locale   Locale
+  headline String?
+  subhead  String?
+  ctaLabel String?
+  @@unique([bannerId, locale])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  SITE COPY — admin-editable text across the public site
+// ────────────────────────────────────────────────────────────────────────────
+//  Any row here OVERRIDES the corresponding key in the JSON message catalogue.
+//  `section` groups related keys (e.g. "home.hero", "footer"), `field` is the
+//  specific slot ("eyebrow", "title_pre", "lede", …). The full taxonomy of
+//  allowed (section, field) pairs lives in code as SITE_COPY_SCHEMA so the
+//  admin UI can render the right form without introspecting the table.
+//
+//  Empty DB = defaults from messages/{locale}.json. Sofia can fill rows
+//  locale-by-locale without blowing away fallbacks.
+
+model SiteCopy {
+  id        String   @id @default(uuid()) @db.Uuid
+  section   String   // "home.hero" | "home.bestsellers" | "footer" | …
+  field     String   // "eyebrow" | "title_pre" | "lede" | "cta_primary" | …
+  locale    Locale
+  value     String
+  updatedAt DateTime @updatedAt
+  updatedBy String?  @db.Uuid
+
+  @@unique([section, field, locale])
+  @@index([section, locale])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  TESTIMONIALS — homepage "Voices" strip, admin-editable
+// ────────────────────────────────────────────────────────────────────────────
+//  Independent of product Reviews — these are editorial quotes Sofia curates
+//  for the homepage. Translations are per-locale so the same testimonial can
+//  be rewritten idiomatically in EN/NL/FR/RU.
+
+model Testimonial {
+  id         String   @id @default(uuid()) @db.Uuid
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+  rating     Int      @default(5)   // 1-5, rendered as stars
+  verified   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  translations TestimonialTranslation[]
+
+  @@index([isActive, sortOrder])
+}
+
+model TestimonialTranslation {
+  id            String      @id @default(uuid()) @db.Uuid
+  testimonialId String      @db.Uuid
+  testimonial   Testimonial @relation(fields: [testimonialId], references: [id], onDelete: Cascade)
+  locale        Locale
+  quote         String
+  authorName    String
+  productName   String?     // optional "— on Ginseng Serum"
+
+  @@unique([testimonialId, locale])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  NEWSLETTER — subscribers, double opt-in, GDPR consent
+// ────────────────────────────────────────────────────────────────────────────
+
+model NewsletterSubscriber {
+  id            String    @id @default(uuid()) @db.Uuid
+  email         String    @unique
+  locale        Locale    @default(EN)
+  source        String?   // "footer", "checkout", "popup", …
+  confirmedAt   DateTime?
+  unsubscribedAt DateTime?
+  tokenHash     String?   // double-opt-in token (hashed)
+  createdAt     DateTime  @default(now())
+  @@index([confirmedAt])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  AI CONCIERGE — conversations, messages, tool calls (for analytics)
+// ────────────────────────────────────────────────────────────────────────────
+
+model AiConversation {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String?   @db.Uuid
+  user       User?     @relation(fields: [userId], references: [id])
+  sessionId  String                              // set for guests via cookie
+  locale     Locale    @default(EN)
+  startedAt  DateTime  @default(now())
+  endedAt    DateTime?
+  rating     Int?                                // thumbs up/down feedback
+  ledToPurchase Boolean @default(false)
+  orderId    String?   @db.Uuid
+  messages   AiMessage[]
+  @@index([sessionId])
+}
+
+enum AiRole {
+  USER
+  ASSISTANT
+  SYSTEM
+  TOOL
+}
+
+model AiMessage {
+  id             String         @id @default(uuid()) @db.Uuid
+  conversationId String         @db.Uuid
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           AiRole
+  content        String
+  toolName       String?
+  toolArgs       Json?
+  toolResult     Json?
+  tokensIn       Int?
+  tokensOut      Int?
+  createdAt      DateTime       @default(now())
+  @@index([conversationId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  CONTACT — inbound messages from the public contact form
+// ────────────────────────────────────────────────────────────────────────────
+//  Saved for audit even if Resend delivery fails.  Sofia reads/archives in
+//  /admin/contact; replies happen out-of-band in her normal email client.
+
+enum ContactSubject {
+  GENERAL         // "I have a question"
+  ORDER           // order enquiry, tracking, amend
+  RETURN          // return or refund
+  WHOLESALE       // partnership / wholesale / press
+  TECHNICAL       // site bug / account issue
+}
+
+enum ContactStatus {
+  NEW
+  READ
+  REPLIED
+  ARCHIVED
+}
+
+model ContactMessage {
+  id          String          @id @default(uuid()) @db.Uuid
+  locale      Locale          @default(EN)
+  name        String
+  email       String
+  phone       String?
+  subject     ContactSubject  @default(GENERAL)
+  orderNumber String?                         // free-text reference, e.g. "YUR-20260422-0001"
+  message     String          @db.Text
+  status      ContactStatus   @default(NEW)
+  ipHash      String?                          // GDPR-minimised
+  userAgent   String?
+  userId      String?         @db.Uuid         // if logged-in, link to their account
+  user        User?           @relation(fields: [userId], references: [id])
+  notifiedAt  DateTime?                        // admin email actually sent
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  @@index([status, createdAt])
+  @@index([email])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  SETTINGS — simple key/value for shop config the admin can edit
+// ────────────────────────────────────────────────────────────────────────────
+//  Examples: "ai.systemPrompt", "shipping.freeThreshold", "checkout.allowedCountries"
+
+model Setting {
+  key       String   @id
+  valueJson Json
+  updatedAt DateTime @updatedAt
+  updatedBy String?  @db.Uuid
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  GDPR — consent log (cookies, marketing opt-ins) for audit trail
+// ────────────────────────────────────────────────────────────────────────────
+
+model ConsentLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @db.Uuid
+  sessionId String?
+  ipHash    String?                 // hashed IP for GDPR minimisation
+  userAgent String?
+  purpose   String                  // "necessary" | "analytics" | "marketing"
+  granted   Boolean
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@index([sessionId])
+}
