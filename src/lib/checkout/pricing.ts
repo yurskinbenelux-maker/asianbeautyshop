@@ -129,9 +129,13 @@ export function computeOrderTotals(input: PricingInput): PricingResult {
   // 5. Taxable base + VAT.
   //    We apply the coupon discount to the product subtotal (not shipping)
   //    before tax — this matches the EU "price you actually paid" rule.
-  const ratePercent =
-    (shippingCountry && tax.overrides[shippingCountry.toUpperCase()]) ??
-    tax.ratePercent;
+  // NB: `shippingCountry && x` would widen to `string | number` when the
+  // country is an empty string, which TS then refuses to divide. Split
+  // it into a plain ternary so the result is always `number`.
+  const overrideRate = shippingCountry
+    ? tax.overrides[shippingCountry.toUpperCase()]
+    : undefined;
+  const ratePercent = overrideRate ?? tax.ratePercent;
   const rate = ratePercent / 100;
 
   const netSubtotal = Math.max(0, subtotalEur - discountEur);
