@@ -15,7 +15,7 @@
 // naturally over a few runs.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const REVIEW_REQUEST_DELAY_DAYS = 14;
@@ -66,13 +66,13 @@ export async function findOrdersDueForReviewRequest(
  */
 export async function markReviewRequestSent(
   orderId: string,
-  metadata?: Record<string, unknown>,
+  metadata?: Prisma.InputJsonValue,
 ): Promise<void> {
   await prisma.orderEvent.create({
     data: {
       orderId,
       kind: REVIEW_REQUEST_EVENT_KIND,
-      metadata: metadata ?? undefined,
+      metadata,
     },
   });
 }
