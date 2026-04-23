@@ -1,7 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Role granularity for the admin panel.
+// Role granularity for the admin panel — server half.
 //
-// Context — why this file exists:
+// Pure types + the capability matrix + `hasCapability()` live in
+// `./auth-roles-shared.ts` so client components (like the admin
+// sidebar) can import them without dragging `next/headers` through
+// the webpack graph. Everything in *this* file needs `getCurrentUser`
+// / `redirect`, i.e. it is server-only.
+//
+// Context — why roles + capabilities exist:
 //   The original `requireAdmin()` had a single allow-list
 //   (ADMIN_ALLOWED_EMAILS). That's fine when it's just Sofia, but as soon
 //   as a freelancer helps with content or a VA helps with fulfilment, we
@@ -18,18 +24,16 @@
 //   OWNER      — full access (the original ADMIN_ALLOWED_EMAILS list).
 //                Sofia + the dev-of-record (Max).
 //   EDITOR     — content work: products, categories, banners, journal,
-//                homepage copy, static pages, testimonials, media.
-//                Can still read orders + customers (to check context) but
+//                homepage copy, static pages, testimonials, ingredients,
+//                media. Can read orders + customers (for context) but
 //                cannot refund, export, or change financial settings.
 //   FULFILMENT — operations work: orders, returns, inventory, contact
 //                messages. Cannot edit products, content, or settings.
 //
-//   A user in multiple lists gets the *union* of capabilities — i.e. the
-//   highest-privilege identity. Practically, "OWNER also in EDITOR list"
-//   is just OWNER.
+//   A user in multiple lists gets the *union* of capabilities.
 //
 // Env vars consumed:
-//   ADMIN_ALLOWED_EMAILS      — owners (existing)
+//   ADMIN_ALLOWED_EMAILS      — owners (existing, parsed in ./auth)
 //   EDITOR_ALLOWED_EMAILS     — NEW
 //   FULFILMENT_ALLOWED_EMAILS — NEW
 //
@@ -41,94 +45,29 @@
 //   // capability-level guard inside a specific page/action:
 //   await requireCapability("products.edit");
 //
-//   // UI-level filtering (sidebar, buttons):
+//   // UI-level filtering (sidebar, buttons) — import from -shared:
+//   import { hasCapability } from "@/lib/auth-roles-shared";
 //   hasCapability(role, "settings.edit")
 // ─────────────────────────────────────────────────────────────────────────
 
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { getCurrentUser, isAdminEmail } from "./auth";
+import {
+  hasCapability,
+  type AdminCapability,
+  type AdminRole,
+} from "./auth-roles-shared";
 
-// ─── types ───────────────────────────────────────────────────────────────
-
-export type AdminRole = "OWNER" | "EDITOR" | "FULFILMENT";
-
-/**
- * Every gated action in the admin is keyed by one of these. Use short,
- * noun.verb strings — kept as a union so a typo trips the compiler.
- */
-export type AdminCapability =
-  // products + content
-  | "products.view"
-  | "products.edit"
-  | "products.delete"
-  | "categories.edit"
-  | "banners.edit"
-  | "journal.edit"
-  | "pages.edit"
-  | "homepage.edit"
-  | "testimonials.edit"
-  | "ingredients.edit"
-  | "media.edit"
-  | "reviews.moderate"
-  // operations
-  | "orders.view"
-  | "orders.edit"
-  | "orders.export"
-  | "returns.view"
-  | "returns.edit"
-  | "contact.view"
-  | "contact.reply"
-  | "inventory.adjust"
-  // customer data
-  | "customers.view"
-  | "customers.export"
-  | "customers.edit"
-  // platform
-  | "settings.view"
-  | "settings.edit"
-  | "coupons.edit"
-  | "emails.send"
-  | "redirects.edit"
-  | "audit.view";
-
-// ─── capability matrix ───────────────────────────────────────────────────
-//
-// Source of truth. When you add a new capability above, add it to every
-// role here (even if only as `false`) so the compiler forces the decision.
-
-const CAPS: Record<AdminRole, Set<AdminCapability>> = {
-  OWNER: new Set<AdminCapability>([
-    "products.view", "products.edit", "products.delete",
-    "categories.edit", "banners.edit", "journal.edit", "pages.edit",
-    "homepage.edit", "testimonials.edit", "ingredients.edit", "media.edit", "reviews.moderate",
-    "orders.view", "orders.edit", "orders.export",
-    "returns.view", "returns.edit",
-    "contact.view", "contact.reply",
-    "inventory.adjust",
-    "customers.view", "customers.export", "customers.edit",
-    "settings.view", "settings.edit",
-    "coupons.edit", "emails.send", "redirects.edit", "audit.view",
-  ]),
-  EDITOR: new Set<AdminCapability>([
-    "products.view", "products.edit",
-    "categories.edit", "banners.edit", "journal.edit", "pages.edit",
-    "homepage.edit", "testimonials.edit", "ingredients.edit", "media.edit", "reviews.moderate",
-    // read-only view of orders/customers so the editor can proof descriptions
-    // against real order data without touching it
-    "orders.view", "returns.view", "contact.view",
-    // no customers.view — customer list leaks PII; editors don't need it
-    "inventory.adjust", // small stock corrections are content-ish
-  ]),
-  FULFILMENT: new Set<AdminCapability>([
-    "products.view", // read-only — needed to check product copy vs order
-    "orders.view", "orders.edit", "orders.export",
-    "returns.view", "returns.edit",
-    "contact.view", "contact.reply",
-    "inventory.adjust",
-    "customers.view", // fulfilment sees addresses/phone — that's the job
-  ]),
-};
+// Re-export the shared surface so existing callers that import from
+// `@/lib/auth-roles` keep working — only client components need to
+// switch to the -shared path to avoid the server bundle.
+export {
+  hasCapability,
+  CAPS,
+  type AdminRole,
+  type AdminCapability,
+} from "./auth-roles-shared";
 
 // ─── env parsing ─────────────────────────────────────────────────────────
 
@@ -161,27 +100,12 @@ export function resolveAdminRole(
   return null;
 }
 
-/**
- * Typed capability check. Use from React components + inline guards.
- * Takes an optional/null role so you can call `hasCapability(role, "x")`
- * without narrowing first.
- */
-export function hasCapability(
-  role: AdminRole | null | undefined,
-  cap: AdminCapability,
-): boolean {
-  if (!role) return false;
-  return CAPS[role].has(cap);
-}
-
 // ─── server guards ───────────────────────────────────────────────────────
 
 /**
  * Admin layout guard that also returns the resolved role. The layout
  * already gates "is this email in any admin list" via requireAdmin(); we
- * just look up the role. Falls back to OWNER for back-compat: if a user
- * is on the admin list but not any new list, they're treated as OWNER —
- * matching the pre-role-granularity behaviour.
+ * just look up the role.
  */
 export async function requireAdminWithRole(
   redirectPath = "/admin",

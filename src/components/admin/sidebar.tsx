@@ -38,7 +38,7 @@ import {
   hasCapability,
   type AdminCapability,
   type AdminRole,
-} from "@/lib/auth-roles";
+} from "@/lib/auth-roles-shared";
 
 type Section = {
   href: string;
