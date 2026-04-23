@@ -51,9 +51,13 @@ export function Nav() {
         {/* ── Wordmark ─────────────────────────────────────────────── */}
         {/* Real brand logo — wordmark variant (tagline cropped off for nav).
             The 유 seal that used to sit beside it has been retired; the
-            vector wordmark carries the brand on its own now. */}
+            vector wordmark carries the brand on its own now.
+            Height is generous — the stretched letterforms need vertical
+            room to read as a luxury mark rather than a tiny smudge. */}
         <Link href="/" className="flex items-center" aria-label={t("brand.name")}>
-          <Logo variant="wordmark" height={32} alt={t("brand.name")} />
+          {/* height=48 reads comfortably inside the h-16 mobile nav (64px)
+              and h-20 desktop nav (80px) without overwhelming either. */}
+          <Logo variant="wordmark" height={48} alt={t("brand.name")} />
         </Link>
 
         {/* ── Primary navigation ───────────────────────────────────── */}

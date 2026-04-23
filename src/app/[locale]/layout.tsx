@@ -85,15 +85,19 @@ export async function generateMetadata({
       siteName: "YU.R Skin Solution",
     },
     robots: { index: true, follow: true },
-    // Brand favicon + social icons. Points at the real vector logo so
-    // any future logo swap only needs to touch /public/brand/ — no icon
-    // regeneration required. Modern browsers render the SVG directly;
-    // older ones fall through to apple-touch-icon.png if present.
+    // Brand favicon + social icons.
+    //  · favicon.svg — tightly cropped yu·r wordmark (no tagline) so it
+    //    reads at 16×16 in browser tabs. The full logo with tagline turns
+    //    into an unreadable smudge at that size.
+    //  · logo-lockup.svg — the full mark, offered as a fallback for
+    //    large-icon contexts (Safari pinned tabs, some RSS readers).
+    //  · apple-touch-icon.png — slot reserved for the 180×180 PNG
+    //    export; exists as a placeholder path until we rasterise it.
     icons: {
       icon: [
-        { url: "/brand/logo-lockup.svg", type: "image/svg+xml" },
+        { url: "/brand/favicon.svg", type: "image/svg+xml" },
       ],
-      shortcut: "/brand/logo-lockup.svg",
+      shortcut: "/brand/favicon.svg",
       apple: "/brand/apple-touch-icon.png",
     },
     formatDetection: {

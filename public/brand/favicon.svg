@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Favicon — yu·r wordmark only, tightly cropped to read at 16×16.
+  The four paths are extracted directly from logo-lockup.svg (original
+  Illustrator coordinates preserved) but the viewBox crops away every-
+  thing outside the letterforms so the whole 16×16 tab-icon slot is
+  occupied by ink.
+
+  Matches the wordmark crop used by <Logo variant="wordmark" />, just
+  as a standalone file so browsers don't have to follow a nested SVG
+  <image> reference (which some favicon renderers skip).
+
+  If Sofia ever redraws the logo, re-export the new paths from the
+  updated .ai / .svg into this file — keep the viewBox numbers in sync
+  with the Logo component (see src/components/brand/logo.tsx → VIEWBOX).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="400 110 820 550">
+  <g transform="translate(0,23.044674)">
+    <path
+      fill="#231f20"
+      d="m 0,0 v -181.831 c 0.289,-5.32 -1.067,-9.412 -3.945,-12.127 -3.15,-3.001 -8.253,-4.63 -15.329,-4.777 -7.04,0.147 -12.271,1.811 -15.437,4.777 -2.896,2.79 -4.363,6.844 -4.164,12.237 V 0 h -24.359 v -181.793 c 0.434,-22.407 15.184,-34.133 43.815,-34.823 28.215,0.69 42.965,12.489 43.797,35.074 V -0.263 L 0.397,0 Z"
+      transform="matrix(1.3333333,0,0,-1.3333333,812.4336,369.5232)"
+    />
+    <path
+      fill="#231f20"
+      d="m 0,0 c -1.086,0.056 -22.586,0.09 -22.768,0.09 -30.675,0 -43.834,-13.554 -43.834,-45.271 V -263.37 h 24.344 v 218.189 c 0,19.736 5.319,27.056 19.49,27.056 0.291,0 2.227,0 4.924,-0.055 l 3.873,-0.045 c 5.283,0 13.176,-0.116 13.735,-0.116 l 1.738,-0.118 v 18.424 z"
+      transform="matrix(1.3333333,0,0,-1.3333333,1027.5104,313.8904)"
+    />
+    <path
+      fill="#231f20"
+      d="m 0,0 -27.021,181.524 -0.182,1.076 h -24.34 l 39.054,-233.129 0.073,-0.109 -22.042,-127.699 -0.237,-1.34 h 24.323 l 60.195,360.929 0.253,1.348 H 25.771 Z"
+      transform="matrix(1.3333333,0,0,-1.3333333,621.63347,551.686)"
+    />
+    <path
+      fill="#231f20"
+      d="m 0,0 c -7.076,0 -12.83,-5.066 -12.83,-11.293 0,-6.262 5.754,-11.328 12.83,-11.328 7.041,0 12.74,5.066 12.74,11.328 C 12.74,-5.066 7.041,0 0,0"
+      transform="matrix(1.3333333,0,0,-1.3333333,888.9036,503.90733)"
+    />
+  </g>
+</svg>
