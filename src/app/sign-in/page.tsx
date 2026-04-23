@@ -4,6 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { SignInForm } from "./sign-in-form";
+import { Logo } from "@/components/brand/logo";
 
 type Props = {
   searchParams: Promise<{ next?: string }>;
@@ -15,14 +16,11 @@ export default async function SignInPage({ searchParams }: Props) {
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-20">
       <div className="w-full max-w-sm">
-        {/* masthead */}
-        <div className="mb-12 flex items-center gap-3">
-          <span className="font-display text-[22px] tracking-tight text-ink">
-            YU.R
-          </span>
-          <span className="seal" aria-hidden>
-            유
-          </span>
+        {/* masthead — real logo, wordmark variant (tagline cropped for
+            this compact context). The 유 seal that used to sit beside
+            the text wordmark has been retired. */}
+        <div className="mb-12">
+          <Logo variant="wordmark" height={34} alt="YU.R" />
         </div>
 
         <div className="eyebrow">Admin</div>

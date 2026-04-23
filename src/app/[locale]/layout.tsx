@@ -85,6 +85,17 @@ export async function generateMetadata({
       siteName: "YU.R Skin Solution",
     },
     robots: { index: true, follow: true },
+    // Brand favicon + social icons. Points at the real vector logo so
+    // any future logo swap only needs to touch /public/brand/ — no icon
+    // regeneration required. Modern browsers render the SVG directly;
+    // older ones fall through to apple-touch-icon.png if present.
+    icons: {
+      icon: [
+        { url: "/brand/logo-lockup.svg", type: "image/svg+xml" },
+      ],
+      shortcut: "/brand/logo-lockup.svg",
+      apple: "/brand/apple-touch-icon.png",
+    },
     formatDetection: {
       // Prevent iOS from auto-linking phone numbers / addresses — they
       // conflict with our editorial typography.

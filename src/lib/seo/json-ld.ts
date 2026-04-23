@@ -47,7 +47,7 @@ export function organizationJsonLd() {
     name: siteName(),
     legalName: "K'Elmus Group BV",
     url: origin,
-    logo: `${origin}/brand/logo.svg`,
+    logo: `${origin}/brand/logo-lockup.svg`,
     // schema.org recognises vatID + taxID for business identity. Feeding
     // these in helps Google's Knowledge Graph match the YU.R brand to
     // the actual legal entity — useful for B2B trust + rich results.

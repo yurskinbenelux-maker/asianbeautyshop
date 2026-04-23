@@ -12,6 +12,7 @@ import { Link } from "@/i18n/routing";
 import { MaehwaBranch } from "@/components/home/maehwa-branch";
 import { CookiePreferencesLink } from "@/components/consent/cookie-preferences-link";
 import { getSiteCopy } from "@/lib/queries/site-copy";
+import { Logo } from "@/components/brand/logo";
 
 export async function Footer() {
   const locale = await getLocale();
@@ -39,12 +40,14 @@ export async function Footer() {
 
       <div className="container">
         {/* ── masthead ─────────────────────────────────────────── */}
-        <div className="mb-16 flex flex-col items-start gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <div className="font-display text-[28px] leading-none text-ink">YU.R</div>
-            <div className="mt-2 text-[13px] text-ink-mid">{tagline}</div>
-          </div>
-          <div className="font-kr text-[20px] text-ink-mid">{t("brand.mark")}</div>
+        {/* Real logo in lockup variant (shows "SKIN SOLUTION" tagline too,
+            because there's room here). The 유 CJK mark that used to sit
+            on the right has been retired along with the seal — the vector
+            wordmark now speaks for itself. Tagline text stays below the
+            mark for translated marketing copy (not part of the logo). */}
+        <div className="mb-16 flex flex-col items-start gap-4">
+          <Logo variant="lockup" height={72} alt={t("brand.name")} />
+          <div className="text-[13px] text-ink-mid">{tagline}</div>
         </div>
 
         {/* ── columns ──────────────────────────────────────────── */}

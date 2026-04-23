@@ -39,6 +39,7 @@ import {
   type AdminCapability,
   type AdminRole,
 } from "@/lib/auth-roles-shared";
+import { Logo } from "@/components/brand/logo";
 
 type Section = {
   href: string;
@@ -100,14 +101,12 @@ export function AdminSidebar({
 
   return (
     <aside className="hidden w-64 flex-shrink-0 border-r border-ink/10 bg-white/40 md:flex md:flex-col">
-      {/* masthead */}
+      {/* masthead — real brand logo (wordmark variant, no tagline at this
+          size) + "Admin" chip pushed to the right. The 유 CJK seal that
+          used to sit beside the wordmark has been retired along with the
+          .seal class; the vector logo carries the brand alone now. */}
       <div className="flex h-16 items-center gap-3 border-b border-ink/10 px-6">
-        <span className="font-display text-[20px] tracking-tight text-ink">
-          YU.R
-        </span>
-        <span className="seal" aria-hidden>
-          유
-        </span>
+        <Logo variant="wordmark" height={28} alt="YU.R" />
         <span className="ml-auto text-[10px] uppercase tracking-label text-ink-mid">
           Admin
         </span>

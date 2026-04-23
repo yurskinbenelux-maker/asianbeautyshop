@@ -15,6 +15,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { resolveAdminRole } from "@/lib/auth-roles";
+import { Logo } from "@/components/brand/logo";
 
 const ROLE_LABEL: Record<string, string> = {
   OWNER: "Owner",
@@ -29,13 +30,9 @@ export default async function NoAccessPage() {
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-20">
       <div className="w-full max-w-sm">
-        <div className="mb-12 flex items-center gap-3">
-          <span className="font-display text-[22px] tracking-tight text-ink">
-            YU.R
-          </span>
-          <span className="seal" aria-hidden>
-            유
-          </span>
+        {/* Real logo — wordmark variant. The 유 seal has been retired. */}
+        <div className="mb-12">
+          <Logo variant="wordmark" height={34} alt="YU.R" />
         </div>
 
         <div className="eyebrow">Restricted</div>

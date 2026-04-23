@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { LocaleSwitcher } from "./locale-switcher";
 import { CartButton } from "@/components/cart/cart-button";
 import { SearchOverlay } from "./search-overlay";
+import { Logo } from "@/components/brand/logo";
 
 export function Nav() {
   const t = useTranslations();
@@ -48,13 +49,11 @@ export function Nav() {
     >
       <div className="container flex h-16 items-center justify-between gap-6 md:h-20">
         {/* ── Wordmark ─────────────────────────────────────────────── */}
-        <Link href="/" className="flex items-center gap-3" aria-label={t("brand.name")}>
-          <span className="font-display text-[22px] tracking-tight text-ink">
-            YU.R
-          </span>
-          <span className="seal" aria-hidden>
-            유
-          </span>
+        {/* Real brand logo — wordmark variant (tagline cropped off for nav).
+            The 유 seal that used to sit beside it has been retired; the
+            vector wordmark carries the brand on its own now. */}
+        <Link href="/" className="flex items-center" aria-label={t("brand.name")}>
+          <Logo variant="wordmark" height={32} alt={t("brand.name")} />
         </Link>
 
         {/* ── Primary navigation ───────────────────────────────────── */}
