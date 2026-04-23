@@ -49,7 +49,7 @@ export default async function QuizPage({ params }: Props) {
       {/* Soft decorative wash — echoes the hero treatment without the video */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,theme(colors.vermilion/6),transparent_60%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,#C8102E0F,transparent_60%)]"
       />
 
       <div className="container relative py-16 md:py-24">
