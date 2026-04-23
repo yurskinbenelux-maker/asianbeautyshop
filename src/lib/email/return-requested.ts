@@ -72,7 +72,7 @@ const STRINGS: Record<Locale, Strings> = {
       "If you'd like to add a reason, a photo of a damaged product, or another item to the return, just reply to this email.",
     cta: "View my order",
     signoff: "With care,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussels, Belgium",
+    footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
     subject: (r) => `We hebben je retouraanvraag ontvangen — ${r}`,
@@ -89,7 +89,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Wil je een reden, een foto van een beschadigd product of een extra artikel toevoegen? Antwoord gewoon op deze mail.",
     cta: "Bestelling bekijken",
     signoff: "Met zorg,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussel, België",
+    footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
     subject: (r) => `Nous avons bien reçu votre demande de retour — ${r}`,
@@ -108,7 +108,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Souhaitez-vous ajouter un motif, la photo d'un produit endommagé ou un autre article à la demande ? Répondez simplement à cet e-mail.",
     cta: "Voir ma commande",
     signoff: "Avec attention,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Bruxelles, Belgique",
+    footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
     subject: (r) => `Мы получили вашу заявку на возврат — ${r}`,
@@ -127,7 +127,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Хотите добавить причину, фото повреждённого товара или ещё один товар к возврату? Просто ответьте на это письмо.",
     cta: "Посмотреть заказ",
     signoff: "С заботой,\nСофия · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Брюссель, Бельгия",
+    footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
 

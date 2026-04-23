@@ -20,6 +20,31 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { PRODUCT_MEDIA_BUCKET, supabaseAdmin } from "@/lib/supabase/admin";
 import { ALL_LOCALES } from "@/lib/queries/admin-taxonomies";
+import { upsertAutoRedirect } from "@/lib/redirects/db";
+
+// Locales that need a redirect row per slug change — category + brand
+// slugs are NOT translated per locale, so the same rename affects all 4.
+const LOCALE_SEGMENTS = ["en", "nl", "fr", "ru"] as const;
+
+async function fanOutSlugRedirect(
+  base: "shop/category" | "shop/brand",
+  oldSlug: string,
+  newSlug: string,
+  source: string,
+) {
+  if (!oldSlug || oldSlug === newSlug) return;
+  await Promise.all(
+    LOCALE_SEGMENTS.map((loc) =>
+      upsertAutoRedirect({
+        fromPath: `/${loc}/${base}/${oldSlug}`,
+        toPath: `/${loc}/${base}/${newSlug}`,
+        source,
+      }).catch(() => {
+        /* fire-and-forget, never block the save */
+      }),
+    ),
+  );
+}
 
 export type ActionState = {
   ok: boolean;
@@ -187,15 +212,17 @@ export async function updateCategoryAction(
   const seoTitles = readLocaleField(formData, "translations", "seoTitle");
   const seoDescs = readLocaleField(formData, "translations", "seoDescription");
 
+  // Capture the old slug first so we can fan out a redirect after the update.
+  const existing = await prisma.category.findUnique({
+    where: { id },
+    select: { slug: true },
+  });
+
   // Slug: only change if admin explicitly typed one different from the existing.
   let slug: string | undefined;
-  if (basic.data.slug) {
+  if (basic.data.slug && existing) {
     const desired = slugify(basic.data.slug);
-    const current = await prisma.category.findUnique({
-      where: { id },
-      select: { slug: true },
-    });
-    if (current && desired !== current.slug) {
+    if (desired !== existing.slug) {
       const taken = new Set(
         (await prisma.category.findMany({
           where: { NOT: { id } },
@@ -248,6 +275,17 @@ export async function updateCategoryAction(
       });
     }
   });
+
+  // Slug changed: fan out `/{locale}/shop/category/{old}` -> new, across all
+  // 4 locales. Category slug is global (not translated).
+  if (slug && existing && existing.slug !== slug) {
+    await fanOutSlugRedirect(
+      "shop/category",
+      existing.slug,
+      slug,
+      "auto:category-slug",
+    );
+  }
 
   refresh();
   return OK_SAVED;
@@ -475,14 +513,16 @@ export async function updateBrandAction(
   const taglines = readLocaleField(formData, "translations", "tagline");
   const stories = readLocaleField(formData, "translations", "story");
 
+  // Capture old slug first so we can fan out a redirect after the update.
+  const existing = await prisma.brand.findUnique({
+    where: { id },
+    select: { slug: true },
+  });
+
   let slug: string | undefined;
-  if (basic.data.slug) {
+  if (basic.data.slug && existing) {
     const desired = slugify(basic.data.slug);
-    const current = await prisma.brand.findUnique({
-      where: { id },
-      select: { slug: true },
-    });
-    if (current && desired !== current.slug) {
+    if (desired !== existing.slug) {
       const taken = new Set(
         (await prisma.brand.findMany({
           where: { NOT: { id } },
@@ -524,6 +564,16 @@ export async function updateBrandAction(
       });
     }
   });
+
+  // Slug changed: fan out `/{locale}/shop/brand/{old}` -> new across all locales.
+  if (slug && existing && existing.slug !== slug) {
+    await fanOutSlugRedirect(
+      "shop/brand",
+      existing.slug,
+      slug,
+      "auto:brand-slug",
+    );
+  }
 
   refresh();
   return OK_SAVED;

@@ -11,7 +11,7 @@
 
 import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 
 import { getCurrentCustomer } from "@/lib/auth";
 import { ContactForm } from "./contact-form";
@@ -81,25 +81,22 @@ export default async function ContactPage({ params }: Props) {
                 </a>
               </ContactRow>
 
-              <ContactRow icon={<Phone className="h-4 w-4" aria-hidden />} term={t("label_phone")}>
-                <a
-                  href="tel:+32000000000"
-                  className="underline decoration-vermilion underline-offset-4 transition-colors hover:text-vermilion"
-                >
-                  +32 (0)0 000 00 00
-                </a>
-                <div className="mt-1 text-[12px] text-ink-mid">
-                  {t("phone_hours")}
-                </div>
-              </ContactRow>
+              {/*
+                Phone row intentionally omitted until K'Elmus has a
+                customer-service line to put here. All contact routes
+                through email, and the response SLA below sets
+                expectations so SR/ops don't get chased. Re-enable by
+                restoring the <ContactRow icon={<Phone…}> block and
+                importing Phone from lucide-react.
+              */}
 
               <ContactRow icon={<MapPin className="h-4 w-4" aria-hidden />} term={t("label_address")}>
                 <address className="not-italic text-[14px] leading-relaxed text-ink">
                   K&apos;Elmus Group BV
                   <br />
-                  Rue de la Clinique 10
+                  Boomsesteenweg 41/4b
                   <br />
-                  1070 Anderlecht, {t("country_be")}
+                  2630 Aartselaar, {t("country_be")}
                 </address>
               </ContactRow>
             </dl>
@@ -111,8 +108,8 @@ export default async function ContactPage({ params }: Props) {
             <div className="eyebrow">{t("company_details")}</div>
             <dl className="mt-4 space-y-2 text-[13px] text-ink-mid">
               <DetailRow label={t("label_company")}>K&apos;Elmus Group BV</DetailRow>
-              <DetailRow label={t("label_vat")}>BE 1015.XXX.XXX</DetailRow>
-              <DetailRow label={t("label_kbo")}>1015.XXX.XXX</DetailRow>
+              <DetailRow label={t("label_vat")}>BE 1031.312.116</DetailRow>
+              <DetailRow label={t("label_kbo")}>1031.312.116</DetailRow>
               <DetailRow label={t("label_registered")}>
                 {t("value_registered")}
               </DetailRow>

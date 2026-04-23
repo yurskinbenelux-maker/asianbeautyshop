@@ -15,7 +15,7 @@ import {
   fromTransactional,
   replyToAddress,
 } from "./resend";
-import { EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
+import { BUSINESS_LEGAL_LINE, EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
 import { getOrderForEmail, type EmailOrder } from "./order-query";
 
 // ────────── per-locale copy ─────────────────────────────────────────────
@@ -44,7 +44,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Your order has just been handed to the carrier. A tracking link will follow as soon as it's scanned into the network.",
     cta: "Track my parcel",
     signoff: "See you soon,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussels, Belgium",
+    footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
     subject: (n) => `Je bestelling ${n} is onderweg — YU.R Skin Solution`,
@@ -57,7 +57,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Je bestelling is zojuist overhandigd aan de vervoerder. Een track-link volgt zodra het pakket is gescand in hun netwerk.",
     cta: "Pakket volgen",
     signoff: "Tot binnenkort,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussel, België",
+    footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
     subject: (n) => `Votre commande ${n} est en route — YU.R Skin Solution`,
@@ -70,7 +70,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Votre commande vient d'être remise au transporteur. Un lien de suivi vous parviendra dès qu'elle sera scannée dans leur réseau.",
     cta: "Suivre mon colis",
     signoff: "À très bientôt,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Bruxelles, Belgique",
+    footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
     subject: (n) => `Ваш заказ ${n} в пути — YU.R Skin Solution`,
@@ -83,7 +83,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Мы только что передали ваш заказ перевозчику. Ссылка для отслеживания появится, как только посылку зарегистрируют в сети.",
     cta: "Отследить посылку",
     signoff: "До скорого,\nСофия · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Брюссель, Бельгия",
+    footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
 
@@ -161,6 +161,7 @@ export function buildOrderShippedEmail(order: EmailOrder): OrderShippedEmail {
     lang: order.locale.toLowerCase(),
     body,
     footerNote: s.footer,
+    legalLine: BUSINESS_LEGAL_LINE,
   });
 
   const text = [

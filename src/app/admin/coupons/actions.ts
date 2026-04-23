@@ -20,6 +20,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { logAudit } from "@/lib/audit/log";
 
 export type ActionState = {
   ok: boolean;
@@ -94,7 +95,7 @@ export async function createCouponAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const parsed = BaseSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -140,6 +141,20 @@ export async function createCouponAction(
           : Math.round(data.maxRedemptions),
       startsAt: data.startsAt ?? null,
       endsAt: data.endsAt ?? null,
+      isActive: data.isActive,
+      firstOrderOnly: data.firstOrderOnly,
+    },
+  });
+
+  await logAudit({
+    actor: admin,
+    action: "coupon.create",
+    entityType: "Coupon",
+    entityId: code,
+    summary: `Created coupon ${code} (${data.kind}, ${valueCheck.storedValue})`,
+    meta: {
+      kind: data.kind,
+      value: valueCheck.storedValue,
       isActive: data.isActive,
       firstOrderOnly: data.firstOrderOnly,
     },
@@ -225,13 +240,20 @@ export async function updateCouponAction(
 
 /** Single-field "toggle active" action from the list page. */
 export async function toggleCouponActiveAction(formData: FormData): Promise<void> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const code = String(formData.get("code") ?? "").toUpperCase();
   const nextActive = formData.get("nextActive") === "true";
   if (!code) return;
   await prisma.coupon.update({
     where: { code },
     data: { isActive: nextActive },
+  });
+  await logAudit({
+    actor: admin,
+    action: nextActive ? "coupon.enable" : "coupon.disable",
+    entityType: "Coupon",
+    entityId: code,
+    summary: `${nextActive ? "Enabled" : "Disabled"} coupon ${code}`,
   });
   refresh(code);
 }
@@ -242,7 +264,7 @@ export async function deleteCouponAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const code = String(formData.get("code") ?? "").toUpperCase();
   const confirm = String(formData.get("confirm") ?? "");
@@ -255,6 +277,13 @@ export async function deleteCouponAction(
   }
 
   await prisma.coupon.delete({ where: { code } });
+  await logAudit({
+    actor: admin,
+    action: "coupon.delete",
+    entityType: "Coupon",
+    entityId: code,
+    summary: `Deleted coupon ${code}`,
+  });
   refresh();
   redirect("/admin/coupons");
 }

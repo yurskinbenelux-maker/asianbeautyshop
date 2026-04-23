@@ -1,8 +1,25 @@
 {
+  "a11y": {
+    "skip_to_content": "Naar hoofdinhoud"
+  },
+  "notFound": {
+    "title": "Deze pagina is niet gevonden.",
+    "lede": "Het adres leidt nergens naartoe — mogelijk is het verplaatst of bevat de link een typefout. Begin hieronder opnieuw.",
+    "cta_home": "Naar de homepage",
+    "cta_shop": "Bekijk de shop",
+    "cta_journal": "Lees het journal"
+  },
+  "error500": {
+    "title": "Er ging iets mis.",
+    "lede": "Een onverwachte fout onderbrak deze pagina. Ons team is op de hoogte. Probeer het opnieuw — of keer terug naar bekend terrein.",
+    "cta_retry": "Opnieuw proberen",
+    "cta_home": "Naar de homepage",
+    "cta_contact": "Contact"
+  },
   "brand": {
     "name": "YU.R Skin Solution",
     "mark": "유알",
-    "tagline": "Koreaanse huidverzorging, met aandacht."
+    "tagline": "You Are the Skin Solution."
   },
   "nav": {
     "shop": "Shop",
@@ -45,6 +62,58 @@
     "treat": "Verzorgen",
     "moisturise": "Hydrateren",
     "protect": "Beschermen"
+  },
+  "ingredients": {
+    "meta_title": "Ingrediënten — YU.R Skin Solution",
+    "meta_description": "Elk actief ingrediënt waarmee we werken — alfabetisch, vertaald, met de producten waar het in zit. Blader per key asset of doorzoek de volledige INCI-lijst.",
+    "eyebrow": "Ingrediënten",
+    "title": "Wat er in de pot zit, uitgelegd.",
+    "lede": "Je moet precies weten wat je huid raakt. Elk ingrediënt dat we gebruiken staat hier — met INCI-naam, hoe het werkt en in welke YU.R producten het voorkomt.",
+    "crumb": "Ingrediënten",
+    "key_heading": "Key-actieven",
+    "all_heading": "Alle ingrediënten",
+    "az_nav": "Spring naar letter",
+    "flag_key": "Key-actief",
+    "flag_allergen": "Mogelijke allergeen",
+    "product_flag_key": "Hero-ingrediënt",
+    "products_heading": "Zit in",
+    "product_count": "{count, plural, =0 {nog in geen product} one {# product} other {# producten}}",
+    "product_count_short": "{count, plural, =0 {—} one {# product} other {# producten}}",
+    "no_description": "Een volledig profiel van dit ingrediënt is onderweg.",
+    "no_products": "Momenteel in geen gepubliceerd product.",
+    "back_to_index": "Terug naar alle ingrediënten",
+    "empty_title": "Ingrediëntenbibliotheek binnenkort",
+    "empty_body": "We bereiden de volledige ingrediëntenindex nu voor. Elk actief waarmee we formuleren krijgt hier een eigen profiel — inclusief hoe het werkt en welke producten het bevatten.",
+    "empty_cta": "Shop het assortiment"
+  },
+  "rituals": {
+    "meta_title": "Rituelen — YU.R Skin Solution",
+    "meta_description": "Een Koreaans ritueel in vier stappen — reinigen, verzorgen, hydrateren, beschermen. Bedachtzame producten, een stille routine, zichtbaar resultaat.",
+    "eyebrow": "Het ritueel",
+    "title": "Vier stappen, rustig herhaald.",
+    "lede": "Koreaanse huidverzorging is een praktijk, geen aankoop. Het ritueel is bewust kort — vier doordachte momenten, 's ochtends en 's avonds, die zich over weken opstapelen tot een huid die meer zichzelf voelt.",
+    "cta_quiz": "Bouw mijn ritueel",
+    "cta_shop": "Bekijk alles",
+    "shop_cta": "Shop deze stap",
+    "shop_step": "Shop {step}",
+    "product_count": "{count, plural, =0 {Binnenkort beschikbaar} one {# product} other {# producten}}",
+    "steps": {
+      "cleanse": {
+        "body": "Een zachte eerste passage om de dag los te laten — SPF, vervuiling, wat huidolie — zonder de barrière uit te drogen. Lauw water, dertig seconden, zonder haast."
+      },
+      "treat": {
+        "body": "De stap die het zware werk doet. Een serum of essence gekozen voor wat je huid nú vraagt: hydratatie, rust, glans of barrièreherstel."
+      },
+      "moisturise": {
+        "body": "Sluit de verzorgende stap af. Een moisturiser die past bij het humeur van je huid — lichter in de zomer, rijker in de winter — houdt vocht vast en bindt de routine samen."
+      },
+      "protect": {
+        "body": "Alleen 's ochtends. Een breedspectrum-SPF is de meest effectieve anti-aging stap die we kennen. Alles hierboven rust hierop."
+      }
+    },
+    "closing_eyebrow": "Niet zeker waar te beginnen?",
+    "closing_title": "Laat ons het ritueel samen met jou bouwen.",
+    "closing_body": "Een huidquiz van vier vragen beperkt de keuzes tot een routine die echt bij je huid past — met een paar notities waarom we elk product kozen."
   },
   "product": {
     "add_to_cart": "In winkelmand",
@@ -247,6 +316,8 @@
     "chat_greeting": "Hoi — ik ben je huidconcierge. Stel gerust je vraag.",
     "chat_thinking": "Even denken…",
     "chat_error": "Er ging iets mis. Probeer het opnieuw of doe de quiz voor een snel ritueel.",
+    "chat_log_label": "Gesprek met je huidconcierge",
+    "chat_input_hint": "Druk op Enter om je bericht te versturen.",
     "quiz": {
       "skinType": {
         "question": "Hoe voelt je huid meestal?",
@@ -296,6 +367,22 @@
         }
       }
     }
+  },
+  "quizPage": {
+    "meta_title": "Huidquiz — YU.R Skin Solution",
+    "meta_description": "Vijf korte vragen en wij stellen een Koreaans huidritueel in vier stappen samen, afgestemd op jouw huidtype, zorgen en tijd.",
+    "eyebrow": "Huidquiz",
+    "title": "Jouw ritueel in vijf antwoorden.",
+    "lede": "Een rustig gesprek over jouw huid — daarna een viertraps routine uit de Koreaanse huizen die wij vertrouwen.",
+    "back": "Terug",
+    "privacy_note": "Je antwoorden blijven op dit toestel. Wij gebruiken ze alleen om producten te kiezen die bij jou passen.",
+    "loading_hint": "We stemmen ingrediënten, texturen en ritueelduur af op jouw antwoorden.",
+    "result_title": "Jouw ritueel in vier stappen.",
+    "result_lede": "Een reiniging, een essence, een moisturiser en een dagelijkse beschermer — gekozen voor de huid die je net beschreef.",
+    "add_to_cart": "In winkelmand",
+    "adding": "Toevoegen…",
+    "added": "Toegevoegd",
+    "view_product": "Meer lezen"
   },
   "footer": {
     "shop": "Shop",
@@ -415,9 +502,11 @@
     "overview_empty_address_cta": "Adres toevoegen",
     "nav_overview": "Overzicht",
     "nav_orders": "Bestellingen",
+    "nav_returns": "Retour",
     "nav_addresses": "Adressen",
     "nav_wishlist": "Verlanglijst",
     "nav_profile": "Profiel",
+    "nav_privacy": "Privacy",
     "nav_sign_out": "Uitloggen",
     "orders_title": "Je bestellingen",
     "orders_lede": "Een rustige registratie van alles wat je hebt gekozen, met tracking en facturen.",
@@ -449,6 +538,7 @@
     "order_tracking_number": "Tracking",
     "order_track_shipment": "Volg zending",
     "order_download_invoice": "Factuur downloaden",
+    "order_request_return": "Retour aanvragen",
     "order_totals_heading": "Totalen",
     "order_subtotal": "Subtotaal",
     "order_discount": "Korting",
@@ -552,6 +642,109 @@
       "save": "Bewaren",
       "saved": "Bewaard"
     }
+  },
+  "privacy": {
+    "meta_title": "Jouw gegevens & privacy — YU.R Skin Solution",
+    "eyebrow": "Account",
+    "title": "Jouw gegevens, jouw keuze",
+    "lede": "Alles wat we van je bewaren, blijft van jou. Download wanneer je wilt een kopie van je gegevens, of verwijder je account als je liever hebt dat we je vergeten.",
+    "banner_scheduled_title": "Accountverwijdering staat gepland",
+    "banner_scheduled_body": "Als je het niet annuleert, worden je persoonlijke gegevens op {date} gewist. Log vóór die datum opnieuw in om je account te behouden.",
+    "banner_scheduled_cta": "Account behouden",
+    "cancelled_notice": "Je verzoek tot verwijdering is geannuleerd.",
+    "export_heading": "Download je gegevens",
+    "export_lede": "Een JSON-archief met elk record dat we van je hebben — handig om over te stappen naar een andere dienst of om een persoonlijk kopie te bewaren.",
+    "export_list_profile": "Profiel (naam, e-mail, taal, voorkeuren)",
+    "export_list_orders": "Bestellingen, facturen, verzendadressen",
+    "export_list_returns": "Retouraanvragen en terugbetalingen",
+    "export_list_wishlist": "Producten op je verlanglijst",
+    "export_list_reviews": "Beoordelingen die je hebt geschreven",
+    "export_list_messages": "Contactberichten en nieuwsbriefstatus",
+    "export_cta": "Download mijn gegevens (JSON)",
+    "export_format_hint": "Altijd beschikbaar — geen wachtrij.",
+    "delete_heading": "Verwijder je account",
+    "delete_lede": "We markeren je account direct voor verwijdering, loggen je uit en anonimiseren je persoonlijke gegevens definitief na {days} dagen. Binnen die periode kun je opnieuw inloggen om het verzoek te annuleren.",
+    "delete_keeps_orders": "Om fiscale redenen bewaren we geanonimiseerde facturen voor de termijn die de Belgische wet voorschrijft — je naam, e-mailadres, telefoon en adres worden daarvan verwijderd.",
+    "delete_confirm_label": "Typ DELETE om te bevestigen",
+    "delete_confirm_hint": "Een kleine veiligheid tegen per ongeluk tikken.",
+    "delete_error_confirm": "Typ DELETE (in hoofdletters) om te bevestigen.",
+    "delete_error_server": "We konden de verwijdering niet inplannen. Probeer het over een moment opnieuw.",
+    "delete_cta": "Mijn account verwijderen",
+    "more_heading": "Iets anders nodig?",
+    "more_body": "Wil je gegevens laten corrigeren, een specifieke verwerking laten stoppen, of heb je een andere privacyvraag? Mail naar hello@yurskinsolution.eu en we reageren binnen één werkdag."
+  },
+  "returns": {
+    "meta_title": "Retour — YU.R Skin Solution",
+    "eyebrow": "Account",
+    "title": "Jouw retourzendingen",
+    "lede": "Een overzicht van elk retourverzoek dat je naar ons stuurt — vanaf het moment dat het binnenkomt tot de terugbetaling op je kaart verschijnt.",
+    "empty_eyebrow": "Alles rustig hier",
+    "empty_title": "Nog geen retourzendingen.",
+    "empty_body": "Als een product niet bij je paste, open dan de betreffende bestelling en tik op \"Retour aanvragen\" — wij nemen het over.",
+    "empty_cta": "Naar je bestellingen",
+    "row_order": "Bestelling {number}",
+    "row_requested_on": "aangevraagd op {date}",
+    "row_view": "Bekijk details",
+    "status": {
+      "REQUESTED": "Aangevraagd",
+      "APPROVED": "Goedgekeurd",
+      "RECEIVED": "Ontvangen",
+      "REFUNDED": "Terugbetaald",
+      "REJECTED": "Afgewezen",
+      "CANCELLED": "Geannuleerd"
+    },
+    "reason": {
+      "CHANGED_MIND": "Ik heb me bedacht",
+      "WRONG_ITEM": "Verkeerd product ontvangen",
+      "DAMAGED": "Beschadigd aangekomen",
+      "DEFECTIVE": "Product is defect",
+      "ARRIVED_LATE": "Te laat aangekomen",
+      "ALLERGIC_REACTION": "Ik kreeg een reactie",
+      "OTHER": "Iets anders"
+    },
+    "form_meta_title": "Retour aanvragen — YU.R Skin Solution",
+    "form_back_to_order": "Terug naar bestelling {number}",
+    "form_eyebrow": "Retourverzoek",
+    "form_title": "Laten we dit rechtzetten.",
+    "form_lede": "Vertel ons welke producten je wilt retourneren en waarom. We lezen elk verzoek persoonlijk en antwoorden binnen één werkdag.",
+    "form_items_heading": "Producten om te retourneren",
+    "form_sku_price": "{sku} · {price}",
+    "form_ordered_qty": "Besteld: {qty}",
+    "form_qty_decrease": "Aantal verlagen",
+    "form_qty_increase": "Aantal verhogen",
+    "form_qty_for_item": "Retouraantal voor {name}",
+    "form_items_hint": "Gebruik de + en − knoppen om aan te geven hoeveel je van elk wilt retourneren.",
+    "form_reason_heading": "Reden",
+    "form_details_heading": "Vertel ons meer (optioneel)",
+    "form_details_placeholder": "Is er iets dat we moeten weten — een probleem met de batch, schade bij aankomst, hoe je huid reageerde — deel het hier.",
+    "form_details_hint": "Maximaal 2 000 tekens. We antwoorden op het e-mailadres van je account.",
+    "form_summary": "{count, plural, =0 {Nog geen producten gekozen} one {# product gekozen} other {# producten gekozen}}",
+    "form_submit": "Verzoek versturen",
+    "form_submitting": "Versturen…",
+    "form_field_err_invalid": "Vul een geldig aantal in.",
+    "form_field_err_exceeds": "Dat is meer dan je hebt besteld.",
+    "form_error": {
+      "invalid_order": "We konden die bestelling niet vinden in je account.",
+      "no_items": "Kies ten minste één product om te retourneren.",
+      "invalid_reason": "Kies een reden.",
+      "server_error": "Er ging iets mis aan onze kant — probeer het over een moment opnieuw.",
+      "order_not_returnable": "Deze bestelling komt nog niet in aanmerking voor retour."
+    },
+    "detail_meta_title": "Retour {number} — YU.R Skin Solution",
+    "detail_back": "Terug naar je retourzendingen",
+    "detail_eyebrow": "Retourverzoek",
+    "detail_for_order": "Voor bestelling {number}",
+    "detail_items_heading": "Producten",
+    "detail_qty": "× {qty}",
+    "detail_reason_heading": "Reden",
+    "detail_status_heading": "Status & tracking",
+    "detail_tracking_number": "Tracknummer",
+    "detail_received_on": "Ontvangen op",
+    "detail_refund_amount": "Terugbetaald bedrag",
+    "detail_refunded_on": "Terugbetaald op",
+    "detail_track_cta": "Volg het pakket",
+    "detail_cancel_hint": "Van gedachten veranderd? Je kunt dit verzoek annuleren totdat we het goedkeuren.",
+    "detail_cancel_cta": "Dit verzoek annuleren"
   },
   "seo": {
     "title_template": "%s · YU.R Skin Solution",

@@ -1,8 +1,25 @@
 {
+  "a11y": {
+    "skip_to_content": "Skip to main content"
+  },
+  "notFound": {
+    "title": "This page slipped away.",
+    "lede": "The address doesn't lead anywhere — it may have moved, or the link you followed may be mistyped. Start again below.",
+    "cta_home": "Back home",
+    "cta_shop": "Browse the shop",
+    "cta_journal": "Read the journal"
+  },
+  "error500": {
+    "title": "Something stopped short.",
+    "lede": "An unexpected error interrupted this page. The team has been notified. You can try again — or head back to familiar ground.",
+    "cta_retry": "Try again",
+    "cta_home": "Back home",
+    "cta_contact": "Contact us"
+  },
   "brand": {
     "name": "YU.R Skin Solution",
     "mark": "유알",
-    "tagline": "Korean skincare, considered."
+    "tagline": "You Are the Skin Solution."
   },
   "nav": {
     "shop": "Shop",
@@ -45,6 +62,58 @@
     "treat": "Treat",
     "moisturise": "Moisturise",
     "protect": "Protect"
+  },
+  "ingredients": {
+    "meta_title": "Ingredients — YU.R Skin Solution",
+    "meta_description": "Every active we formulate with — alphabetised, translated, with the products they live in. Browse by key asset or search the full INCI list.",
+    "eyebrow": "Ingredients",
+    "title": "What's in the jar, explained.",
+    "lede": "We believe you should know exactly what's touching your skin. Every ingredient we use is listed here with its INCI name, how it works, and which YU.R products contain it.",
+    "crumb": "Ingredients",
+    "key_heading": "Key actives",
+    "all_heading": "All ingredients",
+    "az_nav": "Jump to letter",
+    "flag_key": "Key active",
+    "flag_allergen": "Potential allergen",
+    "product_flag_key": "Hero ingredient",
+    "products_heading": "Used in",
+    "product_count": "{count, plural, =0 {not yet in any product} one {# product} other {# products}}",
+    "product_count_short": "{count, plural, =0 {—} one {# product} other {# products}}",
+    "no_description": "A full profile of this ingredient is on the way.",
+    "no_products": "Not currently in any published product.",
+    "back_to_index": "Back to all ingredients",
+    "empty_title": "Ingredient library coming soon",
+    "empty_body": "We're preparing the full ingredient index now. Every active we formulate with will have its own profile here — including how it works and which products contain it.",
+    "empty_cta": "Shop the range"
+  },
+  "rituals": {
+    "meta_title": "Rituals — YU.R Skin Solution",
+    "meta_description": "A four-step Korean ritual — cleanse, treat, moisturise, protect. Considered products, quiet routine, visible results.",
+    "eyebrow": "The ritual",
+    "title": "Four steps, quietly repeated.",
+    "lede": "Korean skincare is a practice, not a purchase. The ritual is short on purpose — four considered moments, morning and night, that compound over weeks into skin that feels more itself.",
+    "cta_quiz": "Build my ritual",
+    "cta_shop": "Browse everything",
+    "shop_cta": "Shop the step",
+    "shop_step": "Shop {step}",
+    "product_count": "{count, plural, =0 {Curating soon} one {# product} other {# products}}",
+    "steps": {
+      "cleanse": {
+        "body": "A gentle first pass to lift the day — SPF, pollution, a little skin oil — without stripping the barrier. Lukewarm water, thirty seconds, no rush."
+      },
+      "treat": {
+        "body": "The step that does the heavy lifting. A serum or essence chosen for what your skin is asking for right now: hydration, calm, brightening, or barrier repair."
+      },
+      "moisturise": {
+        "body": "Seal the treat step in. A moisturiser that suits your skin's current mood — lighter in summer, richer through winter — locks water in and holds the routine together."
+      },
+      "protect": {
+        "body": "Mornings only. A broad-spectrum SPF is the single most effective anti-ageing step we know of. Everything above rests on this."
+      }
+    },
+    "closing_eyebrow": "Not sure where to start?",
+    "closing_title": "Let us build the ritual with you.",
+    "closing_body": "A four-question skin quiz narrows the choices down to a routine that actually fits your skin — plus a few editor's notes on why each product was picked."
   },
   "product": {
     "add_to_cart": "Add to cart",
@@ -247,6 +316,8 @@
     "chat_greeting": "Hi — I'm your skin concierge. Ask me anything.",
     "chat_thinking": "Thinking…",
     "chat_error": "Something went wrong. Try again or take the quiz for a quick routine.",
+    "chat_log_label": "Conversation with your skin concierge",
+    "chat_input_hint": "Press Enter to send your message.",
     "quiz": {
       "skinType": {
         "question": "How does your skin usually feel?",
@@ -296,6 +367,22 @@
         }
       }
     }
+  },
+  "quizPage": {
+    "meta_title": "Skin quiz — YU.R Skin Solution",
+    "meta_description": "Five quick questions and we'll compose a four-step Korean skincare ritual tailored to your skin type, concerns, and routine depth.",
+    "eyebrow": "Skin quiz",
+    "title": "Build your ritual in five answers.",
+    "lede": "A quiet, considered conversation about your skin — then a four-step routine sourced from the Korean houses we trust.",
+    "back": "Back",
+    "privacy_note": "Your answers stay on this device. We only use them to pick products you'll love.",
+    "loading_hint": "Matching ingredients, textures, and step depth to your answers.",
+    "result_title": "Your four-step ritual.",
+    "result_lede": "A cleanse, an essence, a moisturiser, and a daily protector — chosen for the skin you just described.",
+    "add_to_cart": "Add to cart",
+    "adding": "Adding…",
+    "added": "Added",
+    "view_product": "Read more"
   },
   "footer": {
     "shop": "Shop",
@@ -415,9 +502,11 @@
     "overview_empty_address_cta": "Add address",
     "nav_overview": "Overview",
     "nav_orders": "Orders",
+    "nav_returns": "Returns",
     "nav_addresses": "Addresses",
     "nav_wishlist": "Wishlist",
     "nav_profile": "Profile",
+    "nav_privacy": "Privacy",
     "nav_sign_out": "Sign out",
     "orders_title": "Your orders",
     "orders_lede": "A quiet record of everything you've chosen, with tracking and invoices.",
@@ -449,6 +538,7 @@
     "order_tracking_number": "Tracking",
     "order_track_shipment": "Track shipment",
     "order_download_invoice": "Download invoice",
+    "order_request_return": "Request a return",
     "order_totals_heading": "Totals",
     "order_subtotal": "Subtotal",
     "order_discount": "Discount",
@@ -552,6 +642,109 @@
       "save": "Save",
       "saved": "Saved"
     }
+  },
+  "privacy": {
+    "meta_title": "Your data & privacy — YU.R Skin Solution",
+    "eyebrow": "Account",
+    "title": "Your data, your choice",
+    "lede": "You own everything we hold on you. Download a copy of your data whenever you like, and delete your account if you'd rather we forget.",
+    "banner_scheduled_title": "Account deletion is scheduled",
+    "banner_scheduled_body": "Unless you cancel, your personal data will be erased on {date}. You can sign back in any time before then to keep your account.",
+    "banner_scheduled_cta": "Keep my account",
+    "cancelled_notice": "Your deletion request has been cancelled.",
+    "export_heading": "Download your data",
+    "export_lede": "A JSON archive of every record we hold on you — useful for moving to another service or for keeping a personal copy.",
+    "export_list_profile": "Profile (name, e-mail, language, preferences)",
+    "export_list_orders": "Orders, invoices, shipping addresses",
+    "export_list_returns": "Return requests and refunds",
+    "export_list_wishlist": "Saved products on your wishlist",
+    "export_list_reviews": "Reviews you've written",
+    "export_list_messages": "Contact-form messages and newsletter status",
+    "export_cta": "Download my data (JSON)",
+    "export_format_hint": "Opens any time — no queue, no waiting.",
+    "delete_heading": "Delete your account",
+    "delete_lede": "We'll flag your account for deletion immediately, sign you out, and permanently anonymise your personal data after {days} days. Within that window you can sign back in to cancel the request.",
+    "delete_keeps_orders": "For tax and accounting reasons we keep anonymised invoices for the period required by Belgian law — your name, e-mail, phone, and address are removed from them.",
+    "delete_confirm_label": "Type DELETE to confirm",
+    "delete_confirm_hint": "This is a small safeguard against accidental taps.",
+    "delete_error_confirm": "Please type DELETE (in uppercase) to confirm.",
+    "delete_error_server": "We couldn't schedule the deletion. Please try again in a moment.",
+    "delete_cta": "Delete my account",
+    "more_heading": "Need something else?",
+    "more_body": "If you'd like us to correct data, stop processing it for a specific purpose, or you have any other privacy question, write to hello@yurskinsolution.eu and we'll handle it within one business day."
+  },
+  "returns": {
+    "meta_title": "Returns — YU.R Skin Solution",
+    "eyebrow": "Account",
+    "title": "Your returns",
+    "lede": "A record of every return request you've sent us — from the moment it arrives in our inbox to the refund landing back on your card.",
+    "empty_eyebrow": "All quiet here",
+    "empty_title": "No returns yet.",
+    "empty_body": "If a product didn't suit you, open the relevant order and tap \"Request a return\" — we'll take it from there.",
+    "empty_cta": "Go to your orders",
+    "row_order": "Order {number}",
+    "row_requested_on": "requested {date}",
+    "row_view": "View details",
+    "status": {
+      "REQUESTED": "Requested",
+      "APPROVED": "Approved",
+      "RECEIVED": "Received",
+      "REFUNDED": "Refunded",
+      "REJECTED": "Declined",
+      "CANCELLED": "Cancelled"
+    },
+    "reason": {
+      "CHANGED_MIND": "Changed my mind",
+      "WRONG_ITEM": "Received the wrong item",
+      "DAMAGED": "Arrived damaged",
+      "DEFECTIVE": "Product is defective",
+      "ARRIVED_LATE": "Arrived too late",
+      "ALLERGIC_REACTION": "I had a reaction",
+      "OTHER": "Something else"
+    },
+    "form_meta_title": "Request a return — YU.R Skin Solution",
+    "form_back_to_order": "Back to order {number}",
+    "form_eyebrow": "Return request",
+    "form_title": "Let's make this right.",
+    "form_lede": "Tell us which items you'd like to return and why. We read every request by hand and reply within one business day.",
+    "form_items_heading": "Items to return",
+    "form_sku_price": "{sku} · {price}",
+    "form_ordered_qty": "Ordered: {qty}",
+    "form_qty_decrease": "Decrease quantity",
+    "form_qty_increase": "Increase quantity",
+    "form_qty_for_item": "Return quantity for {name}",
+    "form_items_hint": "Use the + and − buttons to choose how many of each you'd like to return.",
+    "form_reason_heading": "Reason",
+    "form_details_heading": "Tell us more (optional)",
+    "form_details_placeholder": "If there's anything we should know — a batch issue, damage on arrival, how your skin reacted — please share it here.",
+    "form_details_hint": "Up to 2 000 characters. We'll reply to the email on your account.",
+    "form_summary": "{count, plural, =0 {No items selected yet} one {# item selected} other {# items selected}}",
+    "form_submit": "Send request",
+    "form_submitting": "Sending…",
+    "form_field_err_invalid": "Please enter a valid quantity.",
+    "form_field_err_exceeds": "That's more than you ordered.",
+    "form_error": {
+      "invalid_order": "We couldn't find that order on your account.",
+      "no_items": "Please select at least one item to return.",
+      "invalid_reason": "Please choose a reason.",
+      "server_error": "Something went wrong on our side — please try again in a moment.",
+      "order_not_returnable": "This order isn't eligible for a return yet."
+    },
+    "detail_meta_title": "Return {number} — YU.R Skin Solution",
+    "detail_back": "Back to your returns",
+    "detail_eyebrow": "Return request",
+    "detail_for_order": "For order {number}",
+    "detail_items_heading": "Items",
+    "detail_qty": "× {qty}",
+    "detail_reason_heading": "Reason",
+    "detail_status_heading": "Status & tracking",
+    "detail_tracking_number": "Tracking number",
+    "detail_received_on": "Received on",
+    "detail_refund_amount": "Refund amount",
+    "detail_refunded_on": "Refunded on",
+    "detail_track_cta": "Track the parcel",
+    "detail_cancel_hint": "Changed your mind? You can cancel this request until we approve it.",
+    "detail_cancel_cta": "Cancel this request"
   },
   "seo": {
     "title_template": "%s · YU.R Skin Solution",

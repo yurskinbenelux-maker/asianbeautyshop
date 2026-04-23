@@ -21,6 +21,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { notFound } from "next/navigation";
+import { maybeRedirect } from "@/lib/redirects/maybe-redirect";
 import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
@@ -125,7 +126,13 @@ export default async function ProductDetailPage({
     slug,
     allowUnpublished: previewMode,
   });
-  if (!product) notFound();
+  if (!product) {
+    // Renamed slugs land here — if the admin created a redirect row
+    // (either manually or auto-inserted via updateTranslation), send
+    // the visitor there with a 301 instead of a cold 404.
+    await maybeRedirect(locale, `/shop/${slug}`);
+    notFound();
+  }
 
   // Fire every PDP-extras query in parallel. They're independent reads
   // keyed on productId, so one round-trip is plenty.

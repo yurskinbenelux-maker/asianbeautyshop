@@ -11,10 +11,15 @@ import { Plus, BadgePercent } from "lucide-react";
 import { listAdminCoupons } from "@/lib/queries/admin-coupons";
 import { toggleCouponActiveAction } from "./actions";
 import { formatDiscount, formatMinSubtotal, formatWindow } from "./format";
+import { requireCapability } from "@/lib/auth-roles";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminCouponsPage() {
+  // Coupons are money-coded: free-shipping + percent-off codes can be
+  // minted by anyone with access. Owner-only.
+  await requireCapability("coupons.edit");
+
   const { rows, total } = await listAdminCoupons();
 
   return (

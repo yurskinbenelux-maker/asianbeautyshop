@@ -66,7 +66,7 @@ const STRINGS: Record<Locale, Strings> = {
       "As soon as inspection is complete we file the refund to your original payment method. EU law gives us 14 days — in practice it's almost always within two working days. You'll get a separate email the moment the refund is issued.",
     cta: "View my order",
     signoff: "With care,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussels, Belgium",
+    footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
     subject: (r) => `Je retour is aangekomen — ${r}`,
@@ -82,7 +82,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Zodra de controle klaar is, starten we de terugbetaling via je oorspronkelijke betaalmethode. De Europese wet geeft ons 14 dagen — in de praktijk is het bijna altijd binnen twee werkdagen. Je krijgt een aparte mail zodra de terugbetaling is uitgevoerd.",
     cta: "Bestelling bekijken",
     signoff: "Met zorg,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussel, België",
+    footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
     subject: (r) => `Votre retour est arrivé — ${r}`,
@@ -98,7 +98,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Dès que l'inspection est terminée, nous lançons le remboursement sur votre moyen de paiement initial. La loi européenne nous laisse 14 jours — en pratique c'est presque toujours sous deux jours ouvrés. Vous recevrez un e-mail distinct dès l'émission du remboursement.",
     cta: "Voir ma commande",
     signoff: "Avec attention,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Bruxelles, Belgique",
+    footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
     subject: (r) => `Ваш возврат прибыл — ${r}`,
@@ -114,7 +114,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Как только проверка будет завершена, мы запустим возврат средств на исходный способ оплаты. По европейскому закону у нас есть 14 дней — на практике это почти всегда в течение двух рабочих дней. Вы получите отдельное письмо в момент оформления возврата.",
     cta: "Посмотреть заказ",
     signoff: "С заботой,\nСофия · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Брюссель, Бельгия",
+    footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
 

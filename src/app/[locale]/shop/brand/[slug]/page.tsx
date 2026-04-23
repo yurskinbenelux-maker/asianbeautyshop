@@ -14,6 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { notFound } from "next/navigation";
+import { maybeRedirect } from "@/lib/redirects/maybe-redirect";
 import Image from "next/image";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
@@ -97,7 +98,10 @@ export default async function BrandLandingPage({
   setRequestLocale(locale);
 
   const brand = await getShopBrandBySlug(locale, slug);
-  if (!brand) notFound();
+  if (!brand) {
+    await maybeRedirect(locale, `/shop/brand/${slug}`);
+    notFound();
+  }
 
   const sort = parseSort(sp.sort);
   const categorySlug = sp.category;

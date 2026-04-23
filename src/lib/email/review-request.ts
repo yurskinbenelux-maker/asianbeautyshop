@@ -44,7 +44,7 @@ const STRINGS: Record<Locale, Strings> = {
       "A few honest lines is plenty. No forms, no pressure — just your words.",
     cta: "Leave a review",
     signoff: "Thank you,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussels, Belgium",
+    footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
     subject: (n) => `Hoe bevielen de producten uit ${n}? — YU.R Skin Solution`,
@@ -57,7 +57,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Een paar eerlijke zinnen is ruim voldoende. Geen formulieren, geen druk — gewoon jouw woorden.",
     cta: "Review achterlaten",
     signoff: "Bedankt,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussel, België",
+    footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
     subject: (n) => `Comment s'est passé votre rituel ${n} ? — YU.R Skin Solution`,
@@ -70,7 +70,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Quelques mots sincères suffisent. Pas de formulaire, aucune pression — juste votre ressenti.",
     cta: "Laisser un avis",
     signoff: "Merci,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Bruxelles, Belgique",
+    footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
     subject: (n) => `Как прошёл ваш ритуал по заказу ${n}? — YU.R Skin Solution`,
@@ -83,7 +83,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Достаточно нескольких искренних строк. Без форм и давления — просто ваши слова.",
     cta: "Оставить отзыв",
     signoff: "Благодарю,\nСофия · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Брюссель, Бельгия",
+    footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
 

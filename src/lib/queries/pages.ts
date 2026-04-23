@@ -102,3 +102,60 @@ export async function getLegalPage({
     updatedAt: page.updatedAt,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// getStaticPage — same contract as getLegalPage, but for editorial /
+// content pages that aren't in the fixed LEGAL_PAGE_KEYS union (e.g.
+// "about", "faq", "shipping"). Used by /[locale]/about and any future
+// content routes.
+//
+// EN fallback kicks in for locales Sofia hasn't translated yet — the UI
+// surfaces this via `isFallback` so users know they're seeing the EN copy.
+// ─────────────────────────────────────────────────────────────────────────
+export type StaticPageView = Omit<PageView, "key"> & { key: string };
+
+export async function getStaticPage({
+  key,
+  locale,
+}: {
+  key: string;
+  locale: string;
+}): Promise<StaticPageView | null> {
+  const prismaLocale = urlLocaleToPrisma(locale);
+
+  const page = await prisma.page.findUnique({
+    where: { key },
+    select: {
+      key: true,
+      isActive: true,
+      updatedAt: true,
+      translations: {
+        where: { locale: { in: [prismaLocale, Locale.EN] } },
+        select: {
+          locale: true,
+          title: true,
+          body: true,
+          seoTitle: true,
+          seoDescription: true,
+        },
+      },
+    },
+  });
+
+  if (!page || !page.isActive) return null;
+
+  const requested = page.translations.find((t) => t.locale === prismaLocale);
+  const fallback = page.translations.find((t) => t.locale === Locale.EN);
+  const chosen = requested ?? fallback;
+  if (!chosen) return null;
+
+  return {
+    key: page.key,
+    title: chosen.title,
+    bodyHtml: chosen.body,
+    seoTitle: chosen.seoTitle,
+    seoDescription: chosen.seoDescription,
+    isFallback: !requested && !!fallback,
+    updatedAt: page.updatedAt,
+  };
+}

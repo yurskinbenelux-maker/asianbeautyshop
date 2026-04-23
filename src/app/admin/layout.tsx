@@ -15,7 +15,7 @@ import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "../globals.css";
 
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminWithRole } from "@/lib/auth-roles";
 import { AdminSidebar } from "@/components/admin/sidebar";
 
 const fraunces = Fraunces({
@@ -40,14 +40,18 @@ export default async function AdminLayout({
   children: ReactNode;
 }) {
   // Auth guard: not signed in → /sign-in?next=/admin
-  //             signed in but not on allow-list → /no-access
-  const user = await requireAdmin();
+  //             signed in but not on any admin allow-list → /no-access
+  // The resolved role is passed to the sidebar so it can hide nav items
+  // the current user doesn't have capability for. Page-level guards
+  // (requireCapability) are the actual access-control layer — the sidebar
+  // is just UX polish.
+  const { user, role } = await requireAdminWithRole();
 
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
       <body className="min-h-screen bg-rice text-ink antialiased">
         <div className="flex min-h-screen">
-          <AdminSidebar userEmail={user.email ?? ""} />
+          <AdminSidebar userEmail={user.email ?? ""} role={role} />
           <main className="flex-1">{children}</main>
         </div>
       </body>

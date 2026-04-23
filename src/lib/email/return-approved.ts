@@ -105,7 +105,7 @@ const STRINGS: Record<Locale, Strings> = {
     ctaLabel: "Download return label",
     ctaAccount: "View my order",
     signoff: "With care,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussels, Belgium",
+    footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
     subject: (r) => `Je retour is goedgekeurd — ${r}`,
@@ -145,7 +145,7 @@ const STRINGS: Record<Locale, Strings> = {
     ctaLabel: "Retourlabel downloaden",
     ctaAccount: "Bestelling bekijken",
     signoff: "Met zorg,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussel, België",
+    footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
     subject: (r) => `Votre retour est approuvé — ${r}`,
@@ -185,7 +185,7 @@ const STRINGS: Record<Locale, Strings> = {
     ctaLabel: "Télécharger l'étiquette",
     ctaAccount: "Voir ma commande",
     signoff: "Avec attention,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Bruxelles, Belgique",
+    footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
     subject: (r) => `Ваш возврат одобрен — ${r}`,
@@ -225,7 +225,7 @@ const STRINGS: Record<Locale, Strings> = {
     ctaLabel: "Скачать этикетку",
     ctaAccount: "Посмотреть заказ",
     signoff: "С заботой,\nСофия · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Брюссель, Бельгия",
+    footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
 

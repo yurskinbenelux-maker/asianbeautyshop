@@ -21,6 +21,7 @@ import { useChat } from "ai/react";
 import type { Message } from "ai";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useId, useRef } from "react";
 import { Loader2, Send } from "lucide-react";
 
 import { Link } from "@/i18n/routing";
@@ -31,6 +32,14 @@ export function ConciergeChat() {
   const t = useTranslations("concierge");
   const locale = useLocale();
   const currencyLocale = priceLocale(locale);
+
+  // When the chat mode mounts (after user picks "free chat" from the
+  // picker, or quiz results pipe back here) we want to drop the user
+  // straight into the input so they can type without a Tab detour.
+  const inputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  // sr-only hint announcing Enter-to-send, referenced via aria-describedby.
+  const hintId = useId();
 
   const {
     messages,
@@ -53,26 +62,72 @@ export function ConciergeChat() {
     ],
   });
 
+  // Focus the composer on mount. Tiny deferral so AnimatePresence's
+  // opening transition doesn't steal focus back on us.
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      inputRef.current?.focus();
+    }, 80);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  // Auto-scroll to the latest message as new streaming tokens arrive so
+  // sighted users keep pace; SR users get it via aria-live.
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
+  }, [messages, isLoading]);
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      {/* messages */}
-      <div className="flex-1 space-y-3 overflow-y-auto px-5 py-5 text-[13px] text-ink">
+      {/*
+        Messages log.
+
+        role="log" + aria-live="polite" + aria-atomic="false" tells screen
+        readers: "this region updates over time; announce additions as
+        they come in, but don't re-read the whole transcript on each
+        update." aria-relevant="additions text" scopes announcements to
+        new nodes + text so styling-only re-renders stay quiet.
+        aria-busy flips while the model is streaming so assistive tech
+        can hold off on re-announcing partial content.
+      */}
+      <div
+        role="log"
+        aria-live="polite"
+        aria-atomic="false"
+        aria-relevant="additions text"
+        aria-busy={isLoading}
+        aria-label={t("chat_log_label")}
+        className="flex-1 space-y-3 overflow-y-auto px-5 py-5 text-[13px] text-ink"
+      >
         {messages.map((m) => (
           <ChatBubble key={m.id} message={m} currencyLocale={currencyLocale} />
         ))}
 
         {isLoading && (
-          <div className="flex items-center gap-2 text-[12px] text-ink-mid">
+          <div
+            className="flex items-center gap-2 text-[12px] text-ink-mid"
+            // Tell SR this is a status indicator, not another message
+            role="status"
+          >
             <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
             <span>{t("chat_thinking")}</span>
           </div>
         )}
 
         {error && (
-          <div className="border border-vermilion/30 bg-vermilion/5 px-3 py-3 text-[12px] text-vermilion">
+          <div
+            className="border border-vermilion/30 bg-vermilion/5 px-3 py-3 text-[12px] text-vermilion"
+            role="alert"
+          >
             {t("chat_error")}
           </div>
         )}
+
+        {/* Sentinel for auto-scroll; never announced. */}
+        <div ref={messagesEndRef} aria-hidden />
       </div>
 
       {/* composer */}
@@ -81,21 +136,26 @@ export function ConciergeChat() {
         className="flex items-center gap-2 border-t border-ink/10 px-3 py-3"
       >
         <input
+          ref={inputRef}
           type="text"
           value={input}
           onChange={handleInputChange}
           placeholder={t("placeholder")}
           className="flex-1 bg-transparent px-2 py-2 text-[14px] text-ink placeholder:text-ink-mid/70 focus:outline-none"
           aria-label={t("placeholder")}
+          aria-describedby={hintId}
           disabled={isLoading}
         />
+        <span id={hintId} className="sr-only">
+          {t("chat_input_hint")}
+        </span>
         <button
           type="submit"
           aria-label={t("send")}
           disabled={isLoading || input.trim().length === 0}
           className="grid h-9 w-9 place-items-center bg-vermilion text-rice transition-colors hover:bg-vermilion-2 disabled:opacity-40"
         >
-          <Send className="h-3.5 w-3.5" />
+          <Send className="h-3.5 w-3.5" aria-hidden />
         </button>
       </form>
     </div>

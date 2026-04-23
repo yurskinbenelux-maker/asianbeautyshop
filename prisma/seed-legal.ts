@@ -29,9 +29,11 @@ const prisma = new PrismaClient();
 
 type PageCopy = {
   key: string;
-  translations: Record<
-    Locale,
-    { title: string; body: string; seoTitle?: string; seoDescription?: string }
+  translations: Partial<
+    Record<
+      Locale,
+      { title: string; body: string; seoTitle?: string; seoDescription?: string }
+    >
   >;
 };
 
@@ -191,7 +193,7 @@ const PAGES: PageCopy[] = [
         body: `
 <p><em>Last updated: 21 April 2026.</em></p>
 
-<p>These terms apply to every purchase made on yurskinsolution.eu. By placing an order you confirm that you have read, understood, and accepted them. The site is operated by <strong>K'Elmus Group BV</strong>, VAT BE&nbsp;0800.000.000, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgium.</p>
+<p>These terms apply to every purchase made on yurskinsolution.eu. By placing an order you confirm that you have read, understood, and accepted them. The site is operated by <strong>K'Elmus Group BV</strong>, VAT BE&nbsp;1031.312.116, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgium.</p>
 
 <h2>1. Orders &amp; contract</h2>
 <p>A contract is formed when we send you the order confirmation email. Before that point we may refuse an order — for example if a product is unexpectedly out of stock, a pricing error is detected, or the delivery address is outside our shipping zone.</p>
@@ -223,7 +225,7 @@ const PAGES: PageCopy[] = [
         body: `
 <p><em>Laatst bijgewerkt: 21 april 2026.</em></p>
 
-<p>Deze voorwaarden gelden voor elke bestelling op yurskinsolution.eu. Door te bestellen bevestig je dat je ze hebt gelezen, begrepen en aanvaard. De website wordt uitgebaat door <strong>K'Elmus Group BV</strong>, BTW BE&nbsp;0800.000.000, Boomsesteenweg 41/4b, 2630 Aartselaar, België.</p>
+<p>Deze voorwaarden gelden voor elke bestelling op yurskinsolution.eu. Door te bestellen bevestig je dat je ze hebt gelezen, begrepen en aanvaard. De website wordt uitgebaat door <strong>K'Elmus Group BV</strong>, BTW BE&nbsp;1031.312.116, Boomsesteenweg 41/4b, 2630 Aartselaar, België.</p>
 
 <h2>1. Bestelling &amp; overeenkomst</h2>
 <p>De overeenkomst komt tot stand wanneer wij je de bevestigingsmail sturen. Tot dat moment kunnen we een bestelling weigeren — bijvoorbeeld bij onverwachte voorraadproblemen, een prijsfout of een adres buiten onze verzendzone.</p>
@@ -255,7 +257,7 @@ const PAGES: PageCopy[] = [
         body: `
 <p><em>Dernière mise à jour : 21 avril 2026.</em></p>
 
-<p>Les présentes conditions s'appliquent à tout achat effectué sur yurskinsolution.eu. En passant commande, vous confirmez les avoir lues, comprises et acceptées. Le site est exploité par <strong>K'Elmus Group BV</strong>, TVA BE&nbsp;0800.000.000, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgique.</p>
+<p>Les présentes conditions s'appliquent à tout achat effectué sur yurskinsolution.eu. En passant commande, vous confirmez les avoir lues, comprises et acceptées. Le site est exploité par <strong>K'Elmus Group BV</strong>, TVA BE&nbsp;1031.312.116, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgique.</p>
 
 <h2>1. Commande &amp; contrat</h2>
 <p>Le contrat est formé à l'envoi de notre e-mail de confirmation de commande. Jusqu'à ce point nous pouvons refuser une commande — par exemple en cas de rupture de stock inattendue, d'erreur de prix ou d'adresse hors zone de livraison.</p>
@@ -287,7 +289,7 @@ const PAGES: PageCopy[] = [
         body: `
 <p><em>Последнее обновление: 21 апреля 2026 г.</em></p>
 
-<p>Настоящие условия применяются к каждой покупке на yurskinsolution.eu. Оформляя заказ, вы подтверждаете, что прочли и приняли их. Сайтом владеет <strong>K'Elmus Group BV</strong>, НДС BE&nbsp;0800.000.000, Boomsesteenweg 41/4b, 2630 Aartselaar, Бельгия.</p>
+<p>Настоящие условия применяются к каждой покупке на yurskinsolution.eu. Оформляя заказ, вы подтверждаете, что прочли и приняли их. Сайтом владеет <strong>K'Elmus Group BV</strong>, НДС BE&nbsp;1031.312.116, Boomsesteenweg 41/4b, 2630 Aartselaar, Бельгия.</p>
 
 <h2>1. Заказ и договор</h2>
 <p>Договор заключается в момент, когда мы отправляем вам подтверждение заказа. До этого мы можем отказаться от заказа — например, если товар закончился, обнаружена ошибка в цене или адрес за пределами нашей зоны доставки.</p>
@@ -478,7 +480,7 @@ Belgium</p>
 <p>If your parcel arrives damaged or you receive the wrong product, email <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> with a photo and your order number within 14 days. We'll send a replacement or issue a full refund — including return shipping — at no cost to you.</p>
 
 <h2>Questions?</h2>
-<p>Write to <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> or call +32 (0)3 000 00 00 between 10:00 and 17:00 CET on working days.</p>
+<p>Write to <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a>. We reply within one working day (Mon–Fri).</p>
 
 <h2>Model withdrawal form</h2>
 <p>You aren't required to use this form — any clear statement of your decision to withdraw is enough — but you can copy, fill in and send the lines below if you prefer.</p>
@@ -534,7 +536,7 @@ België</p>
 <p>Is je pakket beschadigd aangekomen of heb je het verkeerde product ontvangen? Mail binnen 14 dagen naar <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> met een foto en je bestelnummer. We sturen een vervanging of betalen alles terug — inclusief retourkosten — kosteloos.</p>
 
 <h2>Vragen?</h2>
-<p>Schrijf naar <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> of bel +32 (0)3 000 00 00 tussen 10:00 en 17:00 (CET) op werkdagen.</p>
+<p>Schrijf naar <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a>. We antwoorden binnen één werkdag (ma–vr).</p>
 
 <h2>Modelformulier voor herroeping</h2>
 <p>Je bent niet verplicht dit formulier te gebruiken — elke duidelijke verklaring dat je de overeenkomst wilt herroepen volstaat — maar je mag onderstaande tekst kopiëren, invullen en opsturen als je dat prettig vindt.</p>
@@ -590,7 +592,7 @@ Belgique</p>
 <p>Si votre colis arrive endommagé ou que vous recevez un produit incorrect, écrivez-nous sous 14 jours à <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> avec une photo et votre numéro de commande. Nous envoyons un remplacement ou remboursons l'intégralité — frais de retour inclus — sans frais pour vous.</p>
 
 <h2>Des questions ?</h2>
-<p>Écrivez à <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> ou appelez le +32 (0)3 000 00 00 entre 10h00 et 17h00 (CET) les jours ouvrés.</p>
+<p>Écrivez à <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a>. Nous répondons sous un jour ouvré (lun–ven).</p>
 
 <h2>Formulaire type de rétractation</h2>
 <p>Vous n'êtes pas tenu d'utiliser ce formulaire — toute déclaration claire de votre décision de vous rétracter suffit — mais vous pouvez copier, remplir et envoyer le texte ci-dessous si vous préférez.</p>
@@ -646,7 +648,7 @@ Boomsesteenweg 41/4b<br>
 <p>Если посылка пришла повреждённой или вы получили не тот товар — напишите в течение 14 дней на <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> с фотографией и номером заказа. Мы бесплатно отправим замену или вернём полную сумму, включая стоимость обратной доставки.</p>
 
 <h2>Вопросы?</h2>
-<p>Пишите на <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> или звоните +32 (0)3 000 00 00 с 10:00 до 17:00 CET в рабочие дни.</p>
+<p>Пишите на <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a>. Мы отвечаем в течение одного рабочего дня (пн–пт).</p>
 
 <h2>Типовая форма отказа</h2>
 <p>Использовать эту форму не обязательно — достаточно любого ясного заявления о вашем намерении отказаться — но вы можете скопировать, заполнить и отправить приведённый ниже текст, если так удобнее.</p>
@@ -685,13 +687,17 @@ Boomsesteenweg 41/4b<br>
 Belgium</p>
 
 <h2>Registration</h2>
-<p>Enterprise number (KBO/BCE): <strong>BE 0800.000.000</strong><br>
-VAT: <strong>BE 0800.000.000</strong><br>
+<p>Enterprise number (KBO/BCE): <strong>BE 1031.312.116</strong><br>
+VAT: <strong>BE 1031.312.116</strong><br>
 Registered at the Crossroads Bank for Enterprises, Brussels.</p>
 
+<h2>Bank</h2>
+<p>K'Elmus Group BV<br>
+IBAN: <strong>BE96 0689 5761 0905</strong><br>
+BIC/SWIFT: GKCCBEBB</p>
+
 <h2>Contact</h2>
-<p>Email: <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a><br>
-Phone: +32 &nbsp;(0)3 &nbsp;000&nbsp;00&nbsp;00</p>
+<p>Email: <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a></p>
 
 <h2>Responsible for content</h2>
 <p>Sofia &mdash; Founder, K'Elmus Group BV.</p>
@@ -713,13 +719,17 @@ Boomsesteenweg 41/4b<br>
 België</p>
 
 <h2>Registratie</h2>
-<p>Ondernemingsnummer (KBO): <strong>BE 0800.000.000</strong><br>
-BTW: <strong>BE 0800.000.000</strong><br>
+<p>Ondernemingsnummer (KBO): <strong>BE 1031.312.116</strong><br>
+BTW: <strong>BE 1031.312.116</strong><br>
 Ingeschreven bij de Kruispuntbank van Ondernemingen, Brussel.</p>
 
+<h2>Bank</h2>
+<p>K'Elmus Group BV<br>
+IBAN: <strong>BE96 0689 5761 0905</strong><br>
+BIC/SWIFT: GKCCBEBB</p>
+
 <h2>Contact</h2>
-<p>E-mail: <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a><br>
-Telefoon: +32 &nbsp;(0)3 &nbsp;000&nbsp;00&nbsp;00</p>
+<p>E-mail: <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a></p>
 
 <h2>Verantwoordelijk voor de inhoud</h2>
 <p>Sofia &mdash; Oprichtster, K'Elmus Group BV.</p>
@@ -741,13 +751,17 @@ Boomsesteenweg 41/4b<br>
 Belgique</p>
 
 <h2>Enregistrement</h2>
-<p>Numéro d'entreprise (BCE) : <strong>BE 0800.000.000</strong><br>
-TVA : <strong>BE 0800.000.000</strong><br>
+<p>Numéro d'entreprise (BCE) : <strong>BE 1031.312.116</strong><br>
+TVA : <strong>BE 1031.312.116</strong><br>
 Inscrite à la Banque-Carrefour des Entreprises, Bruxelles.</p>
 
+<h2>Banque</h2>
+<p>K'Elmus Group BV<br>
+IBAN : <strong>BE96 0689 5761 0905</strong><br>
+BIC/SWIFT : GKCCBEBB</p>
+
 <h2>Contact</h2>
-<p>E-mail : <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a><br>
-Téléphone : +32 &nbsp;(0)3 &nbsp;000&nbsp;00&nbsp;00</p>
+<p>E-mail : <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a></p>
 
 <h2>Responsable du contenu</h2>
 <p>Sofia &mdash; Fondatrice, K'Elmus Group BV.</p>
@@ -769,19 +783,205 @@ Boomsesteenweg 41/4b<br>
 Бельгия</p>
 
 <h2>Регистрация</h2>
-<p>Регистрационный номер предприятия (KBO): <strong>BE 0800.000.000</strong><br>
-НДС: <strong>BE 0800.000.000</strong><br>
+<p>Регистрационный номер предприятия (KBO): <strong>BE 1031.312.116</strong><br>
+НДС: <strong>BE 1031.312.116</strong><br>
 Зарегистрировано в Crossroads Bank for Enterprises, Брюссель.</p>
 
+<h2>Банк</h2>
+<p>K'Elmus Group BV<br>
+IBAN: <strong>BE96 0689 5761 0905</strong><br>
+BIC/SWIFT: GKCCBEBB</p>
+
 <h2>Контакты</h2>
-<p>E-mail: <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a><br>
-Телефон: +32 &nbsp;(0)3 &nbsp;000&nbsp;00&nbsp;00</p>
+<p>E-mail: <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a></p>
 
 <h2>Ответственный за содержание</h2>
 <p>София &mdash; основательница, K'Elmus Group BV.</p>
 
 <h2>Разрешение споров</h2>
 <p>Еврокомиссия предоставляет онлайн-платформу для разрешения споров: <a href="https://ec.europa.eu/consumers/odr">ec.europa.eu/consumers/odr</a>. Мы не обязаны участвовать в процедуре потребительского арбитража, но готовы это делать.</p>
+`,
+      },
+    },
+  },
+
+  // ── About ───────────────────────────────────────────────────────────────
+  // Seeded from the HQ brand materials doc (2026-04-23). EN only for now;
+  // NL / FR / RU translations to follow after Sofia's sign-off on the copy.
+  // Structure mirrors the HQ doc: philosophy → story → mission → values
+  // → production → certifications.
+  {
+    key: "about",
+    translations: {
+      [Locale.EN]: {
+        title: "About YU.R Skin Solution",
+        seoTitle: "About — YU.R Skin Solution",
+        seoDescription:
+          "The brand, story, and philosophy behind YU.R Skin Solution — Korean skincare built on 30 years of expertise, made for skin that wants to work with it, not against it.",
+        body: `
+<p class="lede"><em>You Are the Skin Solution.</em> YU.R Skin Solution is dedicated to high-performance skincare that blends traditional Korean beauty wisdom with modern cosmetic science. Founded on innovation and uncompromising quality, we create products that deliver visible results — and that respect the skin's long-term health while they do it.</p>
+
+<h2>Our story</h2>
+<p>Founded by Mr. and Mrs. Jung — renowned experts with over thirty years of experience in Korean skincare manufacturing — YU.R Skin Solution launched in South Korea in 2017, bringing together deep expertise, innovation, and a refined approach to skin health.</p>
+<p>Initially growing across the Commonwealth of Independent States, the brand has been expanding its global presence since 2023, entering and captivating international markets.</p>
+<p>YU.R was created in response to the growing need for effective, science-driven skincare that goes beyond surface-level results. The brand was founded with a clear vision: to deliver targeted solutions that address the root causes of skin concerns rather than simply concealing them.</p>
+<p>At the heart of YU.R lies its philosophy — <strong>"You Are the Skin Solution"</strong> — emphasising the importance of personalised care and the belief that healthy skin begins with understanding its unique needs.</p>
+
+<h2>Our mission</h2>
+<p>To create intelligent, science-driven skincare that delivers visible and lasting results. We aim to provide targeted solutions that address individual skin concerns while supporting the skin's natural health, balance, and radiance.</p>
+
+<h2>Our values</h2>
+<ul>
+  <li><strong>Innovation.</strong> We continuously develop advanced formulations based on cutting-edge cosmetic science.</li>
+  <li><strong>Effectiveness.</strong> Every product is designed to deliver real, visible improvements to the skin.</li>
+  <li><strong>Personalised care.</strong> Skincare should adapt to individual skin needs and conditions.</li>
+  <li><strong>Skin health first.</strong> Long-term skin wellness is always our top priority.</li>
+  <li><strong>Trust &amp; quality.</strong> We are committed to high standards, safety, and transparency in every product we create.</li>
+</ul>
+
+<h2>Production</h2>
+<p>Our products are manufactured at two advanced facilities in South Korea — <strong>ECIS</strong> and <strong>CIT</strong> — both recognised for their innovation and uncompromising quality standards.</p>
+<p>Located in the heart of South Korea, ECIS is a state-of-the-art production facility dedicated to crafting premium skincare through advanced technologies and strict quality control. Every formula undergoes rigorous testing to ensure both safety and proven efficacy.</p>
+<p>Alongside ECIS, the CIT factory plays a key role in our production process, upholding equally high standards. With cutting-edge technology and modern manufacturing practices, CIT ensures consistency, performance, and reliability across every product.</p>
+<p>Sustainability remains a core part of our philosophy. Across both facilities, we prioritise eco-conscious processes, reducing waste and incorporating environmentally friendly materials wherever possible.</p>
+
+<h2>Certifications &amp; compliance</h2>
+<p>YU.R products are certified and compliant with international safety and cosmetic regulations, including <strong>CPNP</strong> (EU Cosmetic Notification), <strong>ECAS</strong> (Emirates Conformity Assessment Scheme), <strong>Montaji</strong> (Dubai Municipality Authority), and <strong>GMP</strong> (Good Manufacturing Practice).</p>
+
+<h2>A note on pregnancy &amp; breastfeeding</h2>
+<p>Our products are formulated with carefully selected ingredients and are designed to be gentle on the skin. During pregnancy and breastfeeding, skin can become more sensitive — we advise consulting a healthcare professional before introducing any new skincare into your routine during this period.</p>
+`,
+      },
+      // NL / FR / RU translations are deliberately omitted. The Page
+      // query layer falls back to EN if a locale is missing, so /nl/about
+      // etc. will render the EN copy (with a small fallback banner) until
+      // Sofia ships proper translations via /admin/pages.
+    },
+  },
+
+  // ── Shipping ────────────────────────────────────────────────────────────
+  // Public pre-contractual shipping info. Mandatory under Belgian Code of
+  // Economic Law Art. VI.45 (delivery time + cost must be disclosed before
+  // the customer is bound). EN-first; other locales fall back until Sofia
+  // translates them via /admin/pages.
+  {
+    key: "shipping",
+    translations: {
+      [Locale.EN]: {
+        title: "Shipping",
+        seoTitle: "Shipping — YU.R Skin Solution",
+        seoDescription:
+          "Where we ship, how long it takes, and how much it costs. Flat-rate across Belgium, the Netherlands, France, Luxembourg and Germany — free above €75.",
+        body: `
+<p class="lede">We ship from our studio in Aartselaar, Belgium, by local carrier. Orders placed before 14:00 CET on working days are handed to the carrier the same day. We aim to confirm dispatch within one working day and will always email you a tracking link the moment your parcel is on the way.</p>
+
+<h2>Where we ship</h2>
+<p>We currently ship across Belgium, the Netherlands, Luxembourg, France, and Germany. If you'd like us to reach further, <a href="/contact">write to us</a> — we're expanding carefully, country by country.</p>
+
+<h2>Rates &amp; delivery times</h2>
+<p>Flat-rate shipping of €5.95 on every order, with free delivery above €75. Typical carrier times from dispatch:</p>
+<ul>
+  <li><strong>Belgium &amp; Luxembourg</strong> — 1–2 working days</li>
+  <li><strong>Netherlands</strong> — 2–3 working days</li>
+  <li><strong>France &amp; Germany</strong> — 3–5 working days</li>
+</ul>
+<p>Delivery times are indicative; they can stretch around public holidays and Belgian postal strike days. If a parcel takes longer than a week beyond the upper estimate, email <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> with your order number and we'll trace it together.</p>
+
+<h2>Tracking</h2>
+<p>Once your parcel ships you'll receive an email with a tracking link. You can also find it inside your <a href="/account/orders">account</a> under the order details.</p>
+
+<h2>VAT, duties &amp; taxes</h2>
+<p>All prices on the site include Belgian VAT (21% on finished cosmetics). No customs duties apply inside the EU. If we expand outside the EU in future, any import duties would be the recipient's responsibility — we'll flag it clearly at checkout when that time comes.</p>
+
+<h2>Failed delivery &amp; re-shipment</h2>
+<p>If your parcel is returned to us as undeliverable — wrong address, missed collection, refused delivery — we'll email you for the correct details. A re-shipment is covered by our flat-rate fee; we'll confirm the total before anything leaves the studio a second time.</p>
+
+<h2>Damaged in transit</h2>
+<p>If your parcel arrives damaged, email <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> with a photo and your order number within 14 days. We'll replace the affected items or issue a full refund at no cost to you — see our <a href="/legal/returns">returns policy</a> for full details.</p>
+
+<h2>Packaging</h2>
+<p>Glass and ceramic go out in recycled moulded-pulp trays. The outer carton is FSC-certified cardboard, sealed with paper tape. No plastic void-fill. Everything we send is curb-side recyclable.</p>
+
+<h2>Questions</h2>
+<p>Anything we haven't covered? Write to <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> — we reply within one working day, Monday to Friday.</p>
+`,
+      },
+    },
+  },
+
+  // ── FAQ ─────────────────────────────────────────────────────────────────
+  // Q&A-style page covering the top questions Sofia gets over email, so
+  // we deflect the obvious ones and leave her time for real skincare
+  // conversations. Structure mirrors Google's FAQ schema (each <h3> is a
+  // question, each <p>/<ul> after it is the answer) so we can attach
+  // FAQPage JSON-LD in a later pass.
+  {
+    key: "faq",
+    translations: {
+      [Locale.EN]: {
+        title: "Frequently asked questions",
+        seoTitle: "FAQ — YU.R Skin Solution",
+        seoDescription:
+          "Answers to the questions we get most often — about ordering, shipping, returns, ingredients, routines, and the YU.R brand.",
+        body: `
+<p class="lede">Before writing to us, have a look below — the answer is probably here. If it isn't, we'd rather hear from you. <a href="/contact">Contact us</a> any time.</p>
+
+<h2>Ordering</h2>
+
+<h3>Do I need an account to order?</h3>
+<p>No — you can check out as a guest. An account is useful if you want to track orders, reorder a ritual, save addresses, or use the wishlist. You can <a href="/sign-up">create one</a> any time, and we'll link past guest orders placed under the same email.</p>
+
+<h3>Which payment methods do you accept?</h3>
+<p>Bancontact, iDEAL, credit card (Visa, Mastercard, Amex), and SEPA bank transfer — all processed securely by Mollie. We don't see or store your card details.</p>
+
+<h3>Can I change or cancel an order after it's placed?</h3>
+<p>If your order hasn't shipped yet, email <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> with your order number and the change you need — we'll help where we can. Once the parcel is with the carrier, you'll need to use our <a href="/legal/returns">returns flow</a> when it arrives.</p>
+
+<h2>Shipping &amp; delivery</h2>
+
+<h3>How long does delivery take?</h3>
+<p>Belgium and Luxembourg: 1–2 working days from dispatch. Netherlands: 2–3. France and Germany: 3–5. Full details on our <a href="/shipping">shipping page</a>.</p>
+
+<h3>How much is shipping?</h3>
+<p>Flat €5.95 across Belgium, the Netherlands, Luxembourg, France and Germany — free above €75.</p>
+
+<h3>Do you ship outside the EU?</h3>
+<p>Not yet. If you'd like us to reach your country, <a href="/contact">let us know</a>.</p>
+
+<h2>Returns &amp; refunds</h2>
+
+<h3>What is your returns policy?</h3>
+<p>14 days from the day you receive your order, under EU right-of-withdrawal rules. Unopened, unused items are fully refundable. Used skincare — for hygiene reasons — we take back only if it's defective or damaged. See the full <a href="/legal/returns">returns policy</a>.</p>
+
+<h3>How do I start a return?</h3>
+<p>Sign in, open the relevant order under <a href="/account/orders">Your orders</a>, and choose <em>Return this order</em>. We'll email an RMA number and the return address. Refunds land within 14 days of us receiving the parcel.</p>
+
+<h2>Products &amp; ingredients</h2>
+
+<h3>Are YU.R products cruelty-free and vegan?</h3>
+<p>All YU.R products are cruelty-free — no animal testing at any stage, as required by EU cosmetic law and by our own standards. Most (not all) of our range is also vegan; check each product's detail page for the specific designation.</p>
+
+<h3>Are your products suitable during pregnancy or breastfeeding?</h3>
+<p>Our formulas are gentle, but the skin can behave differently during pregnancy and breastfeeding. We advise consulting a healthcare professional before introducing any new skincare into your routine during this period.</p>
+
+<h3>Where are YU.R products manufactured?</h3>
+<p>At two advanced facilities in South Korea — ECIS and CIT — both GMP-certified and compliant with EU (CPNP), Emirates (ECAS) and Dubai (Montaji) cosmetic regulations. Read more on our <a href="/about">about page</a>.</p>
+
+<h3>How do I choose the right products for my skin?</h3>
+<p>Take the <a href="/quiz">skin quiz</a> — four short questions and we'll suggest a four-step routine that fits. If you'd rather talk it through, tap the YU.R seal in the bottom-right corner and our concierge will help you narrow it down.</p>
+
+<h2>Account &amp; privacy</h2>
+
+<h3>How do I reset my password?</h3>
+<p>Use the <a href="/forgot-password">forgot password</a> link. We'll email a reset link that stays valid for one hour.</p>
+
+<h3>How do I delete my account or export my data?</h3>
+<p>Under EU GDPR you can request a full export of your data or delete your account any time from <a href="/account/privacy">Privacy &amp; data</a>. Deletion is soft for 30 days — you can undo it if you change your mind — and becomes permanent after that.</p>
+
+<h2>Business &amp; wholesale</h2>
+
+<h3>Do you offer wholesale or professional accounts?</h3>
+<p>Yes — if you run a salon, spa, or retail space and want to stock YU.R, email <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> with a brief description of your business. We'll come back with the wholesale terms and the onboarding steps.</p>
 `,
       },
     },
@@ -830,6 +1030,7 @@ async function main() {
     //    --force or --force=<key> we overwrite in place.
     for (const locale of Object.keys(p.translations) as Locale[]) {
       const t = p.translations[locale];
+      if (!t) continue; // Partial — skip locales the entry deliberately omits
       const existing = await prisma.pageTranslation.findUnique({
         where: { pageId_locale: { pageId: page.id, locale } },
       });

@@ -61,6 +61,7 @@ model User {
   carts         Cart[]
   conversations AiConversation[]
   contactMessages ContactMessage[]
+  returns       ReturnRequest[]
 
   @@index([role])
   @@index([deletedAt])
@@ -236,6 +237,7 @@ model ProductVariant {
 
   orderItems  OrderItem[]
   cartItems   CartItem[]
+  movements   InventoryMovement[]
 
   @@index([productId])
 }
@@ -525,6 +527,7 @@ model Order {
 
   items             OrderItem[]
   events            OrderEvent[]
+  returns           ReturnRequest[]
 
   @@index([userId])
   @@index([status])
@@ -558,6 +561,96 @@ model OrderEvent {
   metadata  Json?
   createdAt DateTime @default(now())
   @@index([orderId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  RETURNS / RMA
+//
+//  The customer-facing return flow.  One ReturnRequest belongs to exactly
+//  one Order but may cover a subset of its lines (ReturnItem rows).
+//  Sofia reviews each request and can move it through the status enum —
+//  the email templates in src/lib/email/return-*.ts are triggered by
+//  those transitions.
+// ────────────────────────────────────────────────────────────────────────────
+
+enum ReturnStatus {
+  REQUESTED     // customer just submitted — awaiting Sofia
+  APPROVED      // Sofia accepted, label/address issued to customer
+  RECEIVED      // parcel arrived at warehouse
+  REFUNDED      // money returned to customer
+  REJECTED      // outside window / damaged beyond policy
+  CANCELLED     // customer withdrew request
+}
+
+enum ReturnReason {
+  CHANGED_MIND
+  WRONG_ITEM
+  DAMAGED
+  DEFECTIVE
+  ARRIVED_LATE
+  ALLERGIC_REACTION
+  OTHER
+}
+
+model ReturnRequest {
+  id              String        @id @default(uuid()) @db.Uuid
+  /// Short code the customer sees, e.g. "YUR-1042-R1".
+  publicNumber    String        @unique
+
+  orderId         String        @db.Uuid
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  /// Set when the requester is a signed-in customer.  Left null for any
+  /// future guest-return flow (which would need email verification).
+  userId          String?       @db.Uuid
+  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  status          ReturnStatus  @default(REQUESTED)
+  reason          ReturnReason  @default(OTHER)
+  /// Customer's free-text explanation (optional).
+  details         String?
+  /// Internal notes from Sofia / admins — never shown to customer.
+  adminNotes      String?
+
+  /// Monetary side (populated after Sofia reviews — not at request time).
+  refundAmount    Decimal?      @db.Decimal(10, 2)
+  refundedAt      DateTime?
+
+  /// Logistics
+  trackingNumber  String?
+  trackingUrl     String?
+  receivedAt      DateTime?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  items           ReturnItem[]
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ReturnItem {
+  id             String         @id @default(uuid()) @db.Uuid
+  returnId       String         @db.Uuid
+  return         ReturnRequest  @relation(fields: [returnId], references: [id], onDelete: Cascade)
+
+  /// Snapshot to the original order line — lets us preserve historical
+  /// quantities and price even if the OrderItem is edited later.
+  orderItemId    String         @db.Uuid
+
+  /// Denormalised so the row survives product renames and OrderItem
+  /// cascades.  Email templates read from here.
+  nameSnapshot   String
+  skuSnapshot    String
+  quantity       Int
+  unitPrice      Decimal        @db.Decimal(10, 2)
+  lineTotal      Decimal        @db.Decimal(10, 2)
+
+  @@index([returnId])
+  @@index([orderItemId])
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -887,4 +980,112 @@ model ConsentLog {
   createdAt DateTime @default(now())
   @@index([userId])
   @@index([sessionId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  REDIRECTS — admin-editable URL aliases, keeps bookmarks + SEO alive when
+//  Sofia renames a product, category, or brand slug.
+// ────────────────────────────────────────────────────────────────────────────
+//  fromPath  → the OLD path the visitor hit (locale-prefixed, e.g. "/en/shop/old-serum")
+//  toPath    → the NEW path to send them to ("/en/shop/new-serum")
+//  code      → PERMANENT (301, SEO-transferring) or TEMPORARY (302)
+//  source    → "auto:product-slug" | "auto:category-slug" | "manual" — lets us
+//              distinguish redirects Sofia typed vs. auto-inserted ones she can
+//              prune later.
+//  hits / lastHitAt — so Sofia can see which ones are still earning their keep.
+
+enum RedirectCode {
+  PERMANENT // HTTP 301 — permanent move, search engines transfer rank
+  TEMPORARY // HTTP 302 — temporary
+}
+
+model Redirect {
+  id         String       @id @default(uuid()) @db.Uuid
+  fromPath   String       @unique             // starts with "/", full locale-prefixed path
+  toPath     String                            // starts with "/"
+  code       RedirectCode @default(PERMANENT)
+  source     String?                           // "auto:product-slug" | "manual" | …
+  note       String?                           // Sofia's own reminder to herself
+  hits       Int          @default(0)
+  lastHitAt  DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([source])
+  @@index([createdAt])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  AUDIT LOG
+// ────────────────────────────────────────────────────────────────────────────
+//  A linear trail of admin mutations so Sofia can see who changed what and
+//  roll back if something goes wrong. Entries are append-only (never edited)
+//  and NOT FK'd to User — we store an `actorEmail` snapshot so the row remains
+//  legible after the User row is tombstoned by GDPR erasure.
+//
+//  `action` convention: "{entity}.{verb}" — e.g. "product.update", "order.refund",
+//  "coupon.delete", "redirect.create". This keeps the list filterable by
+//  simple prefix search.
+//
+//  `meta` is a small JSON blob the caller fills with whatever context helps —
+//  changed fields, before/after snippets, ids, etc. Keep it under a few KB.
+
+model AuditLog {
+  id          String    @id @default(uuid()) @db.Uuid
+  // Actor — null for system actions (cron jobs, webhooks).
+  actorId     String?   @db.Uuid
+  actorEmail  String?   // snapshot so the entry survives user deletion
+  action      String    // "{entity}.{verb}" — e.g. "product.update"
+  entityType  String?   // "Product" | "Order" | "Redirect" | …
+  entityId    String?   // UUID or slug — whatever identifies the row
+  summary     String    // one-line human-readable description
+  meta        Json?     // small structured details (changed fields, etc.)
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+
+  @@index([createdAt])
+  @@index([actorId])
+  @@index([action])
+  @@index([entityType, entityId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  INVENTORY MOVEMENTS
+// ────────────────────────────────────────────────────────────────────────────
+//  Every time a variant's stock changes, append a row here. Lets Sofia see
+//  exactly where stock went — sold, returned, adjusted, imported — so she
+//  can reconcile when the warehouse count disagrees with the system count.
+//
+//  Current stock still lives on ProductVariant.stock (fast reads); this log
+//  is the ledger that explains how it got there.
+
+enum InventoryReason {
+  SALE           // customer placed an order
+  CANCEL         // order cancelled → restock
+  REFUND         // order refunded → restock (full or partial)
+  RETURN         // RMA received → restock
+  ADJUSTMENT     // admin hand-edit from product page
+  CSV_IMPORT     // bulk upload set a new stock number
+  INITIAL        // product/variant just created with initial stock
+  OTHER
+}
+
+model InventoryMovement {
+  id          String   @id @default(uuid()) @db.Uuid
+  variantId   String   @db.Uuid
+  variant     ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  delta       Int      // signed — positive adds stock, negative removes
+  stockAfter  Int      // snapshot for quick charts without recomputing
+  reason      InventoryReason
+  orderId     String?  @db.Uuid   // optional link to the order that caused it
+  actorId     String?  @db.Uuid   // admin who acted (null for automatic)
+  actorEmail  String?
+  note        String?
+  createdAt   DateTime @default(now())
+
+  @@index([variantId, createdAt])
+  @@index([orderId])
+  @@index([reason])
+  @@index([createdAt])
 }

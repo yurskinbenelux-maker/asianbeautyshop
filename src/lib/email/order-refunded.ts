@@ -18,7 +18,7 @@ import {
   fromTransactional,
   replyToAddress,
 } from "./resend";
-import { EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
+import { BUSINESS_LEGAL_LINE, EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
 import {
   formatEmailMoney,
   getOrderForEmail,
@@ -65,7 +65,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Most banks post the refund within 3–5 business days, though some can take a little longer.",
     cta: "View my order",
     signoff: "With care,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussels, Belgium",
+    footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
     subject: (n, k) =>
@@ -91,7 +91,7 @@ const STRINGS: Record<Locale, Strings> = {
       "De meeste banken verwerken terugbetalingen binnen 3–5 werkdagen; in sommige gevallen kan het iets langer duren.",
     cta: "Bestelling bekijken",
     signoff: "Met zorg,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussel, België",
+    footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
     subject: (n, k) =>
@@ -117,7 +117,7 @@ const STRINGS: Record<Locale, Strings> = {
       "La plupart des banques traitent le remboursement sous 3–5 jours ouvrés ; cela peut parfois être un peu plus long.",
     cta: "Voir ma commande",
     signoff: "Avec attention,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Bruxelles, Belgique",
+    footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
     subject: (n, k) =>
@@ -143,7 +143,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Обычно банки зачисляют возврат в течение 3–5 рабочих дней; иногда это занимает чуть больше времени.",
     cta: "Посмотреть заказ",
     signoff: "С заботой,\nСофия · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Брюссель, Бельгия",
+    footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
 
@@ -216,6 +216,7 @@ export function buildOrderRefundedEmail(
     lang: order.locale.toLowerCase(),
     body,
     footerNote: s.footer,
+    legalLine: BUSINESS_LEGAL_LINE,
   });
 
   const text = [

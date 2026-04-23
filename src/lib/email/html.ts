@@ -36,7 +36,21 @@ export type EmailShellInput = {
   body: string;
   /** Optional footer note (appears beneath the card). Plain text, escaped. */
   footerNote?: string;
+  /**
+   * Optional second footer line with business identifiers
+   * (VAT + IBAN) — used on customer receipts to satisfy EU invoice
+   * transparency. Internal admin notifications leave it empty.
+   */
+  legalLine?: string;
 };
+
+/**
+ * Canonical business identifiers that should appear on every customer
+ * receipt (order confirmation, shipped, cancelled, refunded). Kept as a
+ * single exported constant so legal/finance changes live in one place.
+ */
+export const BUSINESS_LEGAL_LINE =
+  "VAT BE 1031.312.116 · IBAN BE96 0689 5761 0905 · BIC GKCCBEBB";
 
 /**
  * Wrap an inner HTML string in the standard YU.R email shell.
@@ -47,7 +61,7 @@ export type EmailShellInput = {
 export function renderEmailShell(input: EmailShellInput): string {
   const footer =
     input.footerNote ??
-    "K'Elmus Group BV · Brussels, Belgium";
+    "K'Elmus Group BV · Aartselaar, Belgium";
 
   return /* html */ `<!doctype html>
 <html lang="${esc(input.lang)}">
@@ -82,6 +96,13 @@ export function renderEmailShell(input: EmailShellInput): string {
           <p style="margin:20px 0 0 0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#8A8A8A;">
             ${esc(footer)}
           </p>
+          ${
+            input.legalLine
+              ? `<p style="margin:6px 0 0 0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:10px;letter-spacing:0.12em;color:#A8A29E;">
+            ${esc(input.legalLine)}
+          </p>`
+              : ""
+          }
         </td>
       </tr>
     </table>

@@ -13,10 +13,14 @@
 import Link from "next/link";
 import { ArrowRight, Mail, ShieldCheck } from "lucide-react";
 import { EMAIL_TEMPLATES, type EmailTemplate } from "./registry";
+import { requireCapability } from "@/lib/auth-roles";
 
 export const dynamic = "force-dynamic";
 
-export default function EmailsIndexPage() {
+export default async function EmailsIndexPage() {
+  // Email template library + test-send is owner-only. Editors can draft
+  // copy in /admin/homepage; transactional email sending lives here.
+  await requireCapability("emails.send");
   const customerTemplates = EMAIL_TEMPLATES.filter(
     (t) => t.audience === "customer",
   );

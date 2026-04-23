@@ -28,42 +28,68 @@ import {
   FileText,
   PenSquare,
   Send,
+  RotateCcw,
+  CornerDownRight,
+  History,
+  Beaker,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  hasCapability,
+  type AdminCapability,
+  type AdminRole,
+} from "@/lib/auth-roles";
 
 type Section = {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  // Capability required to see this section in the sidebar. The nav is
+  // filtered purely for UX — the real access-control happens at the page
+  // level via `requireCapability(...)` in the server component.
+  cap: AdminCapability;
 };
 
-// NB: Each section is a route under /admin.  We'll build the pages
-// in a later session; the links exist now so the IA stays stable.
+// NB: Each section is a route under /admin. Order matters — roughly mirrors
+// the mental model: content first, then operations, then platform.
 const SECTIONS: Section[] = [
-  { href: "/admin",            label: "Overview",   icon: LayoutDashboard },
-  { href: "/admin/products",   label: "Products",   icon: Package },
-  { href: "/admin/categories", label: "Categories", icon: Tag },
-  { href: "/admin/orders",     label: "Orders",     icon: ShoppingBag },
-  { href: "/admin/customers",  label: "Customers",  icon: Users },
-  { href: "/admin/coupons",    label: "Coupons",    icon: BadgePercent },
-  { href: "/admin/reviews",      label: "Reviews",      icon: MessageSquare },
-  { href: "/admin/contact",      label: "Messages",     icon: Mail },
-  { href: "/admin/testimonials", label: "Testimonials", icon: Quote },
-  { href: "/admin/banners",      label: "Banners",      icon: LayoutPanelTop },
-  { href: "/admin/homepage",     label: "Website copy", icon: PenSquare },
-  { href: "/admin/journal",    label: "Journal",    icon: BookOpen },
-  { href: "/admin/pages",      label: "Pages",      icon: FileText },
-  { href: "/admin/media",      label: "Media",      icon: ImageIcon },
-  { href: "/admin/emails",     label: "Emails",     icon: Send },
-  { href: "/admin/settings",   label: "Settings",   icon: Settings },
+  { href: "/admin",            label: "Overview",   icon: LayoutDashboard,  cap: "products.view" },
+  { href: "/admin/products",    label: "Products",    icon: Package,          cap: "products.view" },
+  { href: "/admin/categories",  label: "Categories",  icon: Tag,              cap: "categories.edit" },
+  { href: "/admin/ingredients", label: "Ingredients", icon: Beaker,           cap: "ingredients.edit" },
+  { href: "/admin/orders",     label: "Orders",     icon: ShoppingBag,      cap: "orders.view" },
+  { href: "/admin/returns",    label: "Returns",    icon: RotateCcw,        cap: "returns.view" },
+  { href: "/admin/customers",  label: "Customers",  icon: Users,            cap: "customers.view" },
+  { href: "/admin/coupons",    label: "Coupons",    icon: BadgePercent,     cap: "coupons.edit" },
+  { href: "/admin/reviews",      label: "Reviews",      icon: MessageSquare, cap: "reviews.moderate" },
+  { href: "/admin/contact",      label: "Messages",     icon: Mail,          cap: "contact.view" },
+  { href: "/admin/testimonials", label: "Testimonials", icon: Quote,         cap: "testimonials.edit" },
+  { href: "/admin/banners",      label: "Banners",      icon: LayoutPanelTop, cap: "banners.edit" },
+  { href: "/admin/homepage",     label: "Website copy", icon: PenSquare,     cap: "homepage.edit" },
+  { href: "/admin/journal",    label: "Journal",    icon: BookOpen,         cap: "journal.edit" },
+  { href: "/admin/pages",      label: "Pages",      icon: FileText,         cap: "pages.edit" },
+  { href: "/admin/media",      label: "Media",      icon: ImageIcon,        cap: "media.edit" },
+  { href: "/admin/emails",     label: "Emails",     icon: Send,             cap: "emails.send" },
+  { href: "/admin/redirects",  label: "Redirects",  icon: CornerDownRight,  cap: "redirects.edit" },
+  { href: "/admin/audit",      label: "Audit log",  icon: History,          cap: "audit.view" },
+  { href: "/admin/settings",   label: "Settings",   icon: Settings,         cap: "settings.view" },
 ];
+
+const ROLE_LABEL: Record<AdminRole, string> = {
+  OWNER: "Owner",
+  EDITOR: "Editor",
+  FULFILMENT: "Fulfilment",
+};
 
 export function AdminSidebar({
   userEmail,
+  role,
 }: {
   userEmail: string;
+  role: AdminRole;
 }) {
   const pathname = usePathname();
+  const visible = SECTIONS.filter((s) => hasCapability(role, s.cap));
 
   // Active when the pathname is exactly the href, OR starts with href + "/"
   // (so /admin/products/123 still highlights the Products link).
@@ -90,7 +116,7 @@ export function AdminSidebar({
       {/* nav sections */}
       <nav className="flex-1 px-3 py-6">
         <ul className="space-y-1">
-          {SECTIONS.map((s) => {
+          {visible.map((s) => {
             const Icon = s.icon;
             const active = isActive(s.href);
             return (
@@ -128,8 +154,14 @@ export function AdminSidebar({
 
       {/* user / sign-out */}
       <div className="border-t border-ink/10 px-6 py-4">
-        <div className="text-[11px] uppercase tracking-label text-ink-mid">
-          Signed in
+        <div className="flex items-center justify-between">
+          <div className="text-[11px] uppercase tracking-label text-ink-mid">
+            Signed in
+          </div>
+          {/* Role pill — reassuring for editors/fulfilment to see their scope */}
+          <span className="rounded-full border border-ink/15 px-2 py-[2px] text-[9px] uppercase tracking-label text-ink-mid">
+            {ROLE_LABEL[role]}
+          </span>
         </div>
         <div className="mt-1 truncate text-[13px] text-ink" title={userEmail}>
           {userEmail}

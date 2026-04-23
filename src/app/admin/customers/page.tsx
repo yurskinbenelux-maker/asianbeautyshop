@@ -22,6 +22,7 @@ import {
   listAdminCustomers,
 } from "@/lib/queries/admin-customers";
 import { cn } from "@/lib/utils";
+import { requireCapability } from "@/lib/auth-roles";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,11 @@ export default async function AdminCustomersPage({
 }: {
   searchParams: SearchParams;
 }) {
+  // Editors have no business in the customer list (PII, marketing opt-in
+  // data). Fulfilment staff do, so they can see shipping addresses.
+  // Owner-only export is gated separately in the route handler.
+  await requireCapability("customers.view");
+
   const sp = await searchParams;
 
   const role = isRole(sp.role) ? sp.role : undefined;

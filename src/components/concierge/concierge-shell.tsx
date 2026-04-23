@@ -17,7 +17,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { X, Sparkles, MessageCircle, ArrowLeft } from "lucide-react";
@@ -40,19 +40,98 @@ export function ConciergeShell({
   // the quiz — the user has one option, no point making them click twice.
   const [mode, setMode] = useState<Mode>(chatAvailable ? "picker" : "quiz");
 
+  // Refs for WCAG focus management:
+  //   · orbRef — where to return focus on close (WCAG 2.4.3 Focus Order)
+  //   · panelRef — where to land focus on open (WCAG 2.4.11 Focus Not Obscured)
+  const orbRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
   const close = () => {
     setOpen(false);
     // Reset mode after the exit animation finishes so re-opening shows
     // the picker again, not whatever the user last abandoned.
     setTimeout(() => setMode(chatAvailable ? "picker" : "quiz"), 320);
+    // Return focus to the orb so keyboard users don't lose their place.
+    setTimeout(() => orbRef.current?.focus(), 340);
   };
+
+  // Escape-to-close — required for any modal-like surface per 2.1.2.
+  // Tab-wraparound focus trap — when the panel is open, focus must not
+  // escape into the page behind it (WCAG 2.4.3 Focus Order + ARIA APG
+  // dialog pattern). We compute the tabbable descendants at keydown
+  // time rather than caching them, because the concierge can swap
+  // between picker/quiz/chat modes which changes the tab stops.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        close();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const panel = panelRef.current;
+      if (!panel) return;
+
+      // All focusable descendants. Skip disabled + aria-hidden subtrees.
+      const nodes = Array.from(
+        panel.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => !el.hasAttribute("aria-hidden"));
+
+      if (nodes.length === 0) {
+        // Nothing tabbable — keep focus on the panel itself so Tab
+        // can't escape.
+        e.preventDefault();
+        panel.focus();
+        return;
+      }
+
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (e.shiftKey) {
+        // Shift+Tab from the first element (or the dialog container
+        // itself) → wrap to last.
+        if (active === first || active === panel || !panel.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        // Tab from the last element → wrap to first.
+        if (active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // close is stable enough; refs are excluded
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  // Move focus into the panel when it opens so screen readers announce
+  // the dialog context immediately.
+  useEffect(() => {
+    if (open) {
+      // Timeout lets the entry animation paint first — focusing mid-
+      // animation produces a ghost focus ring in some browsers.
+      const id = setTimeout(() => panelRef.current?.focus(), 60);
+      return () => clearTimeout(id);
+    }
+  }, [open]);
 
   return (
     <>
       {/* ── orb ─────────────────────────────────────────────────── */}
       <button
+        ref={orbRef}
         type="button"
         aria-label={t("open")}
+        aria-haspopup="dialog"
+        aria-expanded={open}
         onClick={() => setOpen(true)}
         className="fixed bottom-6 right-6 z-50 grid h-14 w-14 place-items-center rounded-none bg-vermilion text-rice ink-drop transition-transform hover:scale-105 active:scale-95 md:bottom-8 md:right-8"
       >
@@ -71,14 +150,17 @@ export function ConciergeShell({
       <AnimatePresence>
         {open && (
           <motion.div
+            ref={panelRef}
             key="panel"
             initial={{ opacity: 0, y: 24, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.98 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="glass fixed bottom-24 right-6 z-50 flex max-h-[min(640px,calc(100vh-8rem))] w-[min(92vw,420px)] flex-col shadow-card md:bottom-28 md:right-8"
+            className="glass fixed bottom-24 right-6 z-50 flex max-h-[min(640px,calc(100vh-8rem))] w-[min(92vw,420px)] flex-col shadow-card outline-none md:bottom-28 md:right-8"
             role="dialog"
+            aria-modal="true"
             aria-label={assistantName}
+            tabIndex={-1}
           >
             {/* header */}
             <div className="flex items-center justify-between border-b border-ink/10 px-5 py-4">

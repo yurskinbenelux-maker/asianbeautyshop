@@ -25,19 +25,22 @@ import {
   OrganiseForm,
   type TaxonomyOption,
 } from "@/components/admin/products/organise-form";
+import { InventoryPanel } from "@/components/admin/products/inventory-panel";
+import { listProductMovements } from "@/lib/inventory/db";
 
 export const dynamic = "force-dynamic";
 
 type Params = Promise<{ id: string }>;
 type Search = Promise<{ tab?: string }>;
 
-type TabKey = "basics" | "translations" | "media" | "organise";
+type TabKey = "basics" | "translations" | "media" | "organise" | "inventory";
 
 const TABS: { key: TabKey; label: string; disabled?: boolean }[] = [
   { key: "basics", label: "Basics" },
   { key: "translations", label: "Translations" },
   { key: "media", label: "Media" },
   { key: "organise", label: "Organise" },
+  { key: "inventory", label: "Inventory" },
 ];
 
 export default async function ProductEditPage({
@@ -56,7 +59,9 @@ export default async function ProductEditPage({
         ? "media"
         : rawTab === "organise"
           ? "organise"
-          : "basics";
+          : rawTab === "inventory"
+            ? "inventory"
+            : "basics";
 
   const product = await prisma.product.findUnique({
     where: { id },
@@ -81,6 +86,18 @@ export default async function ProductEditPage({
       concerns: { select: { concernId: true } },
       benefits: { select: { benefitId: true } },
       ingredients: { select: { ingredientId: true } },
+      // Inventory tab — list + stock per variant, ordered by sortOrder
+      // so Sofia sees them in the same order the PDP shows them.
+      variants: {
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        select: {
+          id: true,
+          sku: true,
+          label: true,
+          stock: true,
+          isDefault: true,
+        },
+      },
     },
   });
 
@@ -159,6 +176,11 @@ export default async function ProductEditPage({
     slug: i.slug,
     label: i.translations[0]?.displayName ?? i.inciName,
   }));
+
+  // Inventory timeline — only fetch when the tab is active. 200-row cap
+  // is enforced inside listProductMovements.
+  const movements =
+    tab === "inventory" ? await listProductMovements(product.id) : [];
 
   const enTranslation = product.translations.find((t) => t.locale === "EN");
   const titleForHeader = enTranslation?.name ?? "Untitled product";
@@ -368,6 +390,20 @@ export default async function ProductEditPage({
               benefits: benefitOptions,
               ingredients: ingredientOptions,
             }}
+          />
+        )}
+
+        {tab === "inventory" && (
+          <InventoryPanel
+            productId={product.id}
+            variants={product.variants.map((v) => ({
+              id: v.id,
+              sku: v.sku,
+              label: v.label,
+              stock: v.stock,
+              isDefault: v.isDefault,
+            }))}
+            movements={movements}
           />
         )}
       </div>

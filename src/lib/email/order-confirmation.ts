@@ -22,7 +22,7 @@ import {
   fromTransactional,
   replyToAddress,
 } from "./resend";
-import { EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
+import { BUSINESS_LEGAL_LINE, EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
 import {
   formatEmailMoney,
   getOrderForEmail,
@@ -68,10 +68,10 @@ const STRINGS: Record<Locale, Strings> = {
     shippingAddressLabel: "Shipping to",
     nextLabel: "What happens next",
     nextBody:
-      "We hand-pack every order in our studio in Brussels. Once your parcel is on the way, a tracking link will arrive here.",
+      "We hand-pack every order in our studio in Aartselaar. Once your parcel is on the way, a tracking link will arrive here.",
     cta: "View your order",
     signoff: "With care,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussels, Belgium",
+    footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
     subject: (n) => `Je bestelling ${n} is bevestigd — YU.R Skin Solution`,
@@ -89,10 +89,10 @@ const STRINGS: Record<Locale, Strings> = {
     shippingAddressLabel: "Verzending naar",
     nextLabel: "Wat nu",
     nextBody:
-      "We pakken elk pakket met zorg in in ons atelier in Brussel. Zodra je pakket onderweg is, ontvang je hier een tracking-link.",
+      "We pakken elk pakket met zorg in in ons atelier in Aartselaar. Zodra je pakket onderweg is, ontvang je hier een tracking-link.",
     cta: "Bestelling bekijken",
     signoff: "Met zorg,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussel, België",
+    footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
     subject: (n) => `Votre commande ${n} est confirmée — YU.R Skin Solution`,
@@ -110,10 +110,10 @@ const STRINGS: Record<Locale, Strings> = {
     shippingAddressLabel: "Livraison à",
     nextLabel: "Et ensuite",
     nextBody:
-      "Chaque commande est emballée à la main dans notre atelier à Bruxelles. Dès que le colis est en route, un lien de suivi vous parviendra ici.",
+      "Chaque commande est emballée à la main dans notre atelier à Aartselaar. Dès que le colis est en route, un lien de suivi vous parviendra ici.",
     cta: "Voir ma commande",
     signoff: "Avec soin,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Bruxelles, Belgique",
+    footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
     subject: (n) => `Ваш заказ ${n} подтверждён — YU.R Skin Solution`,
@@ -131,10 +131,10 @@ const STRINGS: Record<Locale, Strings> = {
     shippingAddressLabel: "Доставка по адресу",
     nextLabel: "Что дальше",
     nextBody:
-      "Каждый заказ мы вручную упаковываем в нашем ателье в Брюсселе. Как только посылка отправится, вы получите здесь трек-ссылку.",
+      "Каждый заказ мы вручную упаковываем в нашем ателье в Артселаре. Как только посылка отправится, вы получите здесь трек-ссылку.",
     cta: "Посмотреть заказ",
     signoff: "С заботой,\nСофия · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Брюссель, Бельгия",
+    footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
 
@@ -280,6 +280,7 @@ export function buildOrderConfirmationEmail(
     lang: order.locale.toLowerCase(),
     body,
     footerNote: s.footer,
+    legalLine: BUSINESS_LEGAL_LINE,
   });
 
   // Plain-text counterpart — every transactional mail should ship one.

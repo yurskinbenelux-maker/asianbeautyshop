@@ -15,12 +15,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { PaymentStatus, Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireCapability } from "@/lib/auth-roles";
 
 const MAX_ROWS = 10_000;
 
 export async function GET(req: NextRequest) {
-  await requireAdmin();
+  // Customer-list CSV leaks marketing opt-ins + spend history. Owner-only.
+  await requireCapability("customers.export");
 
   const { searchParams } = new URL(req.url);
 

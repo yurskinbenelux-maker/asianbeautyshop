@@ -15,6 +15,7 @@ import { z } from "zod";
 import { Locale, PostStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { upsertAutoRedirect } from "@/lib/redirects/db";
 
 export type ActionState = {
   ok: boolean;
@@ -256,6 +257,14 @@ export async function updateJournalPostAction(
   const slugCheckError = await ensureSlugsFree(normalised, id);
   if (slugCheckError) return slugCheckError;
 
+  // Capture prior slugs per-locale so we can auto-redirect renamed URLs.
+  const priorRows = await prisma.journalPostTranslation.findMany({
+    where: { postId: id },
+    select: { locale: true, slug: true },
+  });
+  const priorByLocale = new Map<Locale, string>();
+  for (const r of priorRows) priorByLocale.set(r.locale, r.slug);
+
   await prisma.$transaction(async (tx) => {
     await tx.journalPost.update({
       where: { id },
@@ -298,6 +307,28 @@ export async function updateJournalPostAction(
       });
     }
   });
+
+  // For any locale whose slug changed, insert an auto redirect so the old
+  // URL keeps resolving. Journal slugs are per-locale (unlike category/brand),
+  // so we don't fan out across locales.
+  const redirectJobs: Promise<unknown>[] = [];
+  for (const locale of ["EN", "NL", "FR", "RU"] as Locale[]) {
+    const t = normalised[locale];
+    if (!t.title) continue; // translation removed — leave URL dead
+    const prior = priorByLocale.get(locale);
+    if (!prior || prior === t.slug) continue;
+    const loc = locale.toLowerCase();
+    redirectJobs.push(
+      upsertAutoRedirect({
+        fromPath: `/${loc}/journal/${prior}`,
+        toPath: `/${loc}/journal/${t.slug}`,
+        source: "auto:journal-slug",
+      }).catch(() => {
+        /* fire-and-forget */
+      }),
+    );
+  }
+  if (redirectJobs.length) await Promise.all(redirectJobs);
 
   refresh(id);
   return OK_SAVED;

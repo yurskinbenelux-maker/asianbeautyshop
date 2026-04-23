@@ -20,6 +20,7 @@ import { prisma } from "@/lib/prisma";
 import { getMollie, isPaidStatus } from "@/lib/mollie/client";
 import { sendOrderConfirmationEmail } from "@/lib/email/order-confirmation";
 import { sendAdminNewOrderEmail } from "@/lib/email/admin-new-order";
+import { applyMovement } from "@/lib/inventory/movements";
 
 // ────────── types ───────────────────────────────────────────────────────
 
@@ -125,8 +126,19 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
     order.paymentStatus !== PaymentStatus.PAID &&
     nextPayment === PaymentStatus.PAID;
 
-  await prisma.$transaction([
-    prisma.order.update({
+  // On the into-PAID transition, pull the line items so we can decrement
+  // stock for each variant inside the same transaction. On any other
+  // transition we skip — stock already moved on the original paid event.
+  let paidItems: Array<{ variantId: string | null; quantity: number }> = [];
+  if (willFlipToPaid) {
+    paidItems = await prisma.orderItem.findMany({
+      where: { orderId: order.id },
+      select: { variantId: true, quantity: true },
+    });
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.order.update({
       where: { id: order.id },
       data: {
         paymentStatus: nextPayment,
@@ -135,8 +147,8 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
           ? { paidAt: now }
           : {}),
       },
-    }),
-    prisma.orderEvent.create({
+    });
+    await tx.orderEvent.create({
       data: {
         orderId: order.id,
         kind: willFlipToPaid
@@ -151,8 +163,24 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
           orderStatus: nextOrder,
         },
       },
-    }),
-  ]);
+    });
+
+    // Inventory deduction — only on the real into-PAID transition. Runs
+    // inside the same tx so a variant FK miss rolls everything back rather
+    // than marking the order PAID with phantom stock.
+    if (willFlipToPaid) {
+      for (const item of paidItems) {
+        if (!item.variantId) continue; // products without variants: out of scope
+        await applyMovement(tx, {
+          variantId: item.variantId,
+          delta: -item.quantity,
+          reason: "SALE",
+          orderId: order.id,
+          note: "Sold (Mollie paid)",
+        });
+      }
+    }
+  });
 
   // Emails fire AFTER the transaction commits so a Resend outage can't roll
   // back the payment-state write. The helpers already swallow their own

@@ -214,6 +214,14 @@ export default async function OrderDetailPage({ params }: Props) {
                 {t("order_download_invoice")}
               </a>
             )}
+            {(order.status === "DELIVERED" || order.status === "SHIPPED") && (
+              <Link
+                href={`/account/orders/${order.publicNumber}/return`}
+                className="inline-block h-11 border border-ink/20 px-5 text-[12px] uppercase tracking-label text-ink transition-colors hover:border-ink hover:text-vermilion leading-[2.75rem]"
+              >
+                {t("order_request_return")}
+              </Link>
+            )}
           </div>
         </div>
 

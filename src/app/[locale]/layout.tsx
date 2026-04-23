@@ -16,6 +16,7 @@ import { Toaster } from "sonner";
 import { routing } from "@/i18n/routing";
 import { Nav } from "@/components/layout/nav";
 import { Footer } from "@/components/layout/footer";
+import { SkipLink } from "@/components/layout/skip-link";
 import { ConciergeOrb } from "@/components/concierge/orb";
 import { MotionProvider } from "@/components/motion/motion-provider";
 import { CartProvider } from "@/components/cart/cart-provider";
@@ -147,8 +148,10 @@ export default async function LocaleLayout({ children, params }: Props) {
         <NextIntlClientProvider messages={messages}>
           <MotionProvider>
             <CartProvider initialCart={initialCart}>
+              {/* WCAG 2.4.1 — first tabbable, jumps past nav/locale/cart */}
+              <SkipLink />
               <Nav />
-              <main className="relative">{children}</main>
+              <main id="main" className="relative">{children}</main>
               <Footer />
               <ConciergeOrb />
               <CartDrawer />

@@ -22,7 +22,7 @@ import {
   fromTransactional,
   replyToAddress,
 } from "./resend";
-import { EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
+import { BUSINESS_LEGAL_LINE, EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
 import { getOrderForEmail, type EmailOrder } from "./order-query";
 
 // ────────── per-locale copy ─────────────────────────────────────────────
@@ -50,7 +50,7 @@ const STRINGS: Record<Locale, Strings> = {
       "If your payment was already captured, you'll see the refund on your statement within a few business days. If not, no charge has been made.",
     cta: "View my account",
     signoff: "With care,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussels, Belgium",
+    footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
     subject: (n) => `Je bestelling ${n} is geannuleerd — YU.R Skin Solution`,
@@ -63,7 +63,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Als je betaling al was afgeschreven, zie je de terugbetaling binnen enkele werkdagen op je rekening. Zo niet, dan is er niets gedebiteerd.",
     cta: "Mijn account bekijken",
     signoff: "Met zorg,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussel, België",
+    footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
     subject: (n) => `Votre commande ${n} a été annulée — YU.R Skin Solution`,
@@ -76,7 +76,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Si le paiement avait déjà été capturé, vous verrez le remboursement sur votre relevé sous quelques jours ouvrés. Sinon, aucun prélèvement n'a été effectué.",
     cta: "Voir mon compte",
     signoff: "Avec attention,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Bruxelles, Belgique",
+    footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
     subject: (n) => `Ваш заказ ${n} отменён — YU.R Skin Solution`,
@@ -89,7 +89,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Если платёж уже был списан, возврат средств отразится на выписке в течение нескольких рабочих дней. Если нет — списания не было.",
     cta: "Мой аккаунт",
     signoff: "С заботой,\nСофия · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Брюссель, Бельгия",
+    footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
 
@@ -150,6 +150,7 @@ export function buildOrderCancelledEmail(order: EmailOrder): OrderCancelledEmail
     lang: order.locale.toLowerCase(),
     body,
     footerNote: s.footer,
+    legalLine: BUSINESS_LEGAL_LINE,
   });
 
   const text = [

@@ -16,6 +16,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { notFound } from "next/navigation";
+import { maybeRedirect } from "@/lib/redirects/maybe-redirect";
 import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
@@ -66,7 +67,10 @@ export default async function JournalPostPage({ params }: Props) {
   setRequestLocale(locale);
 
   const post = await getJournalPostBySlug(locale, slug);
-  if (!post) notFound();
+  if (!post) {
+    await maybeRedirect(locale, `/journal/${slug}`);
+    notFound();
+  }
 
   const t = await getTranslations("journal");
 

@@ -42,7 +42,7 @@ const STRINGS: Record<Locale, Strings> = {
       "We saved the pieces you were looking at. Whenever you're ready, pick up where you left off — everything is still there.",
     cta: "Return to my bag",
     signoff: "With care,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussels, Belgium",
+    footer: "K'Elmus Group BV · Aartselaar, Belgium",
     andMore: (n) => `and ${n} more`,
   },
   NL: {
@@ -54,7 +54,7 @@ const STRINGS: Record<Locale, Strings> = {
       "We hebben de producten waar je naar keek voor je bewaard. Wanneer je er klaar voor bent, ga je verder waar je was gebleven — alles staat nog klaar.",
     cta: "Terug naar mijn tas",
     signoff: "Met zorg,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Brussel, België",
+    footer: "K'Elmus Group BV · Aartselaar, België",
     andMore: (n) => `en ${n} meer`,
   },
   FR: {
@@ -66,7 +66,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Nous avons gardé les produits que vous regardiez. Quand vous êtes prêt·e, reprenez là où vous en étiez — tout est encore là.",
     cta: "Retour à mon panier",
     signoff: "Avec attention,\nSofia · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Bruxelles, Belgique",
+    footer: "K'Elmus Group BV · Aartselaar, Belgique",
     andMore: (n) => `et ${n} autre(s)`,
   },
   RU: {
@@ -78,7 +78,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Мы сохранили то, что вы смотрели. Когда будет удобно, вернитесь и продолжите — всё на месте.",
     cta: "Вернуться в корзину",
     signoff: "С заботой,\nСофия · YU.R Skin Solution",
-    footer: "K'Elmus Group BV · Брюссель, Бельгия",
+    footer: "K'Elmus Group BV · Артселар, Бельгия",
     andMore: (n) => `и ещё ${n}`,
   },
 };

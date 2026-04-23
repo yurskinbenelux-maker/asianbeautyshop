@@ -29,6 +29,8 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { logAudit } from "@/lib/audit/log";
+import { applyMovement } from "@/lib/inventory/movements";
 import { ALLOWED_TRANSITIONS, canTransition } from "@/lib/orders/transitions";
 import { sendOrderConfirmationEmail } from "@/lib/email/order-confirmation";
 import { sendAdminNewOrderEmail } from "@/lib/email/admin-new-order";
@@ -476,23 +478,56 @@ export async function cancelOrderAction(
     };
   }
 
+  // If the order was PAID (or further along), SALE stock was already
+  // deducted by sync-mollie. Cancelling → restock the line items.
+  const wasPaid = order.paymentStatus === "PAID";
+  const itemsForRestock = wasPaid
+    ? await prisma.orderItem.findMany({
+        where: { orderId: order.id },
+        select: { variantId: true, quantity: true },
+      })
+    : [];
+
   const now = new Date();
-  await prisma.$transaction([
-    prisma.order.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.order.update({
       where: { id: order.id },
       data: { status: "CANCELLED", cancelledAt: now },
-    }),
-    prisma.orderEvent.create({
+    });
+    await tx.orderEvent.create({
       data: {
         orderId: order.id,
         kind: "cancelled",
         message: parsed.data.reason ?? null,
         metadata: { actor: actor.email ?? null },
       },
-    }),
-  ]);
+    });
+
+    // Restock — only for variants we actually deducted.
+    for (const item of itemsForRestock) {
+      if (!item.variantId) continue;
+      await applyMovement(tx, {
+        variantId: item.variantId,
+        delta: item.quantity, // positive: back into stock
+        reason: "CANCEL",
+        orderId: order.id,
+        actorId: actor.id,
+        actorEmail: actor.email ?? null,
+        note: `Restocked on cancel of ${order.publicNumber}`,
+      });
+    }
+  });
 
   revalidateOrder(order.id);
+
+  await logAudit({
+    actor,
+    action: "order.cancel",
+    entityType: "Order",
+    entityId: order.id,
+    summary: `Cancelled order ${order.publicNumber}`,
+    meta: { reason: parsed.data.reason ?? null, previousStatus: order.status },
+  });
 
   // Notify customer after commit. Fire-and-catch so a Resend hiccup
   // doesn't block the admin from seeing "cancelled" in the panel.
@@ -587,15 +622,28 @@ export async function issueRefundAction(
   const nextPaymentStatus: PaymentStatus =
     kind === "full" ? "REFUNDED" : "PARTIALLY_REFUNDED";
 
-  await prisma.$transaction([
-    prisma.order.update({
+  // Stock return policy: only a *full* refund of a previously-PAID order
+  // implies the goods came back. Partial refunds are treated as monetary
+  // adjustments — Sofia can restock via the return flow or an admin
+  // adjustment if the customer actually shipped items back.
+  const wasPaid = order.paymentStatus === "PAID";
+  const shouldRestock = wasPaid && kind === "full";
+  const itemsForRestock = shouldRestock
+    ? await prisma.orderItem.findMany({
+        where: { orderId: order.id },
+        select: { variantId: true, quantity: true },
+      })
+    : [];
+
+  await prisma.$transaction(async (tx) => {
+    await tx.order.update({
       where: { id: order.id },
       data: {
         status: nextOrderStatus,
         paymentStatus: nextPaymentStatus,
       },
-    }),
-    prisma.orderEvent.create({
+    });
+    await tx.orderEvent.create({
       data: {
         orderId: order.id,
         kind: "refund.issued",
@@ -608,10 +656,38 @@ export async function issueRefundAction(
           actor: actor.email ?? null,
         },
       },
-    }),
-  ]);
+    });
+
+    for (const item of itemsForRestock) {
+      if (!item.variantId) continue;
+      await applyMovement(tx, {
+        variantId: item.variantId,
+        delta: item.quantity,
+        reason: "REFUND",
+        orderId: order.id,
+        actorId: actor.id,
+        actorEmail: actor.email ?? null,
+        note: `Restocked on full refund of ${order.publicNumber}`,
+      });
+    }
+  });
 
   revalidateOrder(order.id);
+
+  await logAudit({
+    actor,
+    action: "order.refund",
+    entityType: "Order",
+    entityId: order.id,
+    summary: `Refunded ${amount.toFixed(2)} ${order.currency} on ${order.publicNumber} (${kind})`,
+    meta: {
+      kind,
+      amount: amount.toFixed(2),
+      currency: order.currency,
+      external: Boolean(external),
+      reason: reason ?? null,
+    },
+  });
 
   // Notify customer after commit. Amount + kind come from the validated
   // form — the email template formats the money using the order's locale.

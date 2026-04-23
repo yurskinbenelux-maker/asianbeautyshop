@@ -18,21 +18,32 @@ import {
   Heart,
   User,
   LogOut,
+  RotateCcw,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Section = {
   href: string;
-  key: "overview" | "orders" | "addresses" | "wishlist" | "profile";
+  key:
+    | "overview"
+    | "orders"
+    | "returns"
+    | "addresses"
+    | "wishlist"
+    | "profile"
+    | "privacy";
   icon: React.ComponentType<{ className?: string }>;
 };
 
 const SECTIONS: Section[] = [
   { href: "/account",           key: "overview",  icon: LayoutDashboard },
   { href: "/account/orders",    key: "orders",    icon: Package },
+  { href: "/account/returns",   key: "returns",   icon: RotateCcw },
   { href: "/account/addresses", key: "addresses", icon: MapPin },
   { href: "/account/wishlist",  key: "wishlist",  icon: Heart },
   { href: "/account/profile",   key: "profile",   icon: User },
+  { href: "/account/privacy",   key: "privacy",   icon: Shield },
 ];
 
 export function AccountSidebar({

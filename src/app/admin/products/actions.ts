@@ -24,6 +24,9 @@ import {
   PRODUCT_MEDIA_BUCKET,
   supabaseAdmin,
 } from "@/lib/supabase/admin";
+import { upsertAutoRedirect } from "@/lib/redirects/db";
+import { applyMovement } from "@/lib/inventory/movements";
+import { logAudit } from "@/lib/audit/log";
 
 // ──────── helpers ────────────────────────────────────────────────────────
 
@@ -256,6 +259,13 @@ export async function updateTranslation(
     return { ok: false, fieldErrors: { slug: ["Slug is required"] } };
   }
 
+  // Capture the previous slug BEFORE the upsert so we can auto-insert a
+  // redirect if Sofia is renaming (not creating) the translation.
+  const prior = await prisma.productTranslation.findUnique({
+    where: { productId_locale: { productId, locale } },
+    select: { slug: true },
+  });
+
   try {
     await prisma.productTranslation.upsert({
       where: { productId_locale: { productId, locale } },
@@ -274,6 +284,22 @@ export async function updateTranslation(
       };
     }
     throw err;
+  }
+
+  // If the slug changed, drop a 301 so the old URL still lands its visitor
+  // on the renamed product. Fire-and-forget — failure shouldn't block the
+  // save; the admin can add a manual redirect from /admin/redirects later.
+  if (prior && prior.slug !== normalisedSlug) {
+    const localeSeg = locale.toLowerCase();
+    try {
+      await upsertAutoRedirect({
+        fromPath: `/${localeSeg}/shop/${prior.slug}`,
+        toPath: `/${localeSeg}/shop/${normalisedSlug}`,
+        source: "auto:product-slug",
+      });
+    } catch {
+      // Intentional — logged elsewhere if a central logger exists.
+    }
   }
 
   revalidatePath("/admin/products");
@@ -989,4 +1015,120 @@ export async function moveProductMedia(
 
   revalidatePath(`/admin/products/${media.productId}`);
   revalidatePath("/", "layout");
+}
+
+// ──────── inventory adjustments ─────────────────────────────────────────
+//
+// Sofia's manual stock edit path — used for counts, correcting drift,
+// receiving a fresh shipment, etc. The signed delta is the *change*, not
+// the new total: +10 to add ten units, -1 to burn a tester. We deliberately
+// avoid a "set stock to N" field because it makes the log useless (you
+// can't distinguish "I received 10" from "I corrected a miscount of 10").
+//
+// Reason is ADJUSTMENT for free-form edits. Use CSV_IMPORT when wiring
+// this into a bulk upload path (not yet built).
+// ─────────────────────────────────────────────────────────────────────────
+
+const AdjustStockSchema = z.object({
+  variantId: z.string().uuid(),
+  delta: z
+    .string()
+    .trim()
+    .transform((v) => {
+      const n = Number.parseInt(v.replace(/[^\-0-9]/g, ""), 10);
+      return Number.isFinite(n) ? n : NaN;
+    })
+    .refine((n) => Number.isFinite(n) && n !== 0, {
+      message: "Enter a non-zero whole number (e.g. +10 or -1).",
+    }),
+  note: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .transform((v) => (v ? v : null)),
+});
+
+export async function adjustVariantStockAction(
+  productId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const actor = await requireAdmin();
+
+  const parsed = AdjustStockSchema.safeParse({
+    variantId: formData.get("variantId"),
+    delta: formData.get("delta") ?? "",
+    note: formData.get("note") ?? undefined,
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Please fix the highlighted fields.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const { variantId, delta, note } = parsed.data;
+
+  // Belt-and-braces — confirm the variant lives under this product so the
+  // action can't be CSRF'd across unrelated products.
+  const variant = await prisma.productVariant.findUnique({
+    where: { id: variantId },
+    select: { id: true, productId: true, sku: true, label: true },
+  });
+  if (!variant || variant.productId !== productId) {
+    return { ok: false, message: "Variant not found on this product." };
+  }
+
+  let result: { stockAfter: number; appliedDelta: number };
+  try {
+    result = await prisma.$transaction(async (tx) => {
+      return applyMovement(tx, {
+        variantId,
+        delta,
+        reason: "ADJUSTMENT",
+        actorId: actor.id,
+        actorEmail: actor.email ?? null,
+        note,
+      });
+    });
+  } catch (err) {
+    console.error("[adjustVariantStockAction] apply failed", err);
+    return { ok: false, message: "Couldn't adjust stock. Try again." };
+  }
+
+  // Fire-and-forget audit — never block the admin's save.
+  await logAudit({
+    actor,
+    action: "inventory.adjust",
+    entityType: "ProductVariant",
+    entityId: variantId,
+    summary: `${variant.sku} (${variant.label}) · ${
+      result.appliedDelta > 0 ? "+" : ""
+    }${result.appliedDelta} → ${result.stockAfter}`,
+    meta: {
+      productId,
+      requestedDelta: delta,
+      appliedDelta: result.appliedDelta,
+      stockAfter: result.stockAfter,
+      note,
+    },
+  });
+
+  revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/", "layout");
+
+  if (result.appliedDelta !== delta) {
+    return {
+      ok: true,
+      message: `Stock clamped at 0 — applied ${result.appliedDelta}. Now ${result.stockAfter}.`,
+    };
+  }
+  return {
+    ok: true,
+    message: `Stock ${delta > 0 ? "increased" : "decreased"} by ${Math.abs(
+      delta,
+    )}. Now ${result.stockAfter}.`,
+  };
 }

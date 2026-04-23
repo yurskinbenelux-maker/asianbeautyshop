@@ -48,6 +48,11 @@ export function organizationJsonLd() {
     legalName: "K'Elmus Group BV",
     url: origin,
     logo: `${origin}/brand/logo.svg`,
+    // schema.org recognises vatID + taxID for business identity. Feeding
+    // these in helps Google's Knowledge Graph match the YU.R brand to
+    // the actual legal entity — useful for B2B trust + rich results.
+    vatID: "BE1031312116",
+    taxID: "BE1031312116",
     sameAs: [
       // Populate as Sofia hands us the profile URLs.
       // "https://www.instagram.com/yurskinsolution",
@@ -55,6 +60,9 @@ export function organizationJsonLd() {
     ],
     address: {
       "@type": "PostalAddress",
+      streetAddress: "Boomsesteenweg 41/4b",
+      postalCode: "2630",
+      addressLocality: "Aartselaar",
       addressCountry: "BE",
     },
     // A contact point is optional but helps Google's Knowledge Panel.

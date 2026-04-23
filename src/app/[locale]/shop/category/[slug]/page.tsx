@@ -17,6 +17,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { notFound } from "next/navigation";
+import { maybeRedirect } from "@/lib/redirects/maybe-redirect";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import {
@@ -99,7 +100,10 @@ export default async function CategoryLandingPage({
 
   // 404 before doing any further work if the slug isn't a live category.
   const category = await getShopCategoryBySlug(locale, slug);
-  if (!category) notFound();
+  if (!category) {
+    await maybeRedirect(locale, `/shop/category/${slug}`);
+    notFound();
+  }
 
   const sort = parseSort(sp.sort);
   const skinTypeSlugs = parseMulti(sp.skinType);
