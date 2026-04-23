@@ -1,52 +1,40 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Logo — the real YU.R wordmark, used in every surface that currently
-// renders the brand visually. Single source of truth: any copy change or
-// replacement asset only needs to land at /public/brand/logo-lockup.svg.
+// renders the brand visually.
 //
-// Two variants:
-//   lockup   — full artwork, `yu·r` + "SKIN SOLUTION" tagline
+// Two variants, each backed by its own real SVG asset:
+//   lockup   → /brand/logo-lockup.svg
+//              Full artwork, `yu·r` + "SKIN SOLUTION" tagline underneath.
 //              Use where there's vertical space (footer, sign-in hero,
 //              email headers rendered via PNG exports).
-//   wordmark — just `yu·r`, no tagline, tightly cropped left/right too
-//              Use in tight contexts (nav, admin sidebar, favicons) where
-//              "SKIN SOLUTION" would render at <8px and the horizontal
-//              artboard padding would leave the letters floating.
+//   wordmark → /brand/favicon.svg
+//              Just `yu·r`, no tagline. Tightly cropped so the letters
+//              fill the frame — no wasted whitespace.
+//              Use in tight contexts (nav, admin sidebar, favicons).
 //
-// Implementation — we don't maintain two SVG files. Both variants embed
-// the same /brand/logo-lockup.svg via a host <svg> whose viewBox crops
-// down to just the region we want. That way if Sofia ever swaps the
-// logo, she replaces ONE file and both variants update immediately.
+// Why two files instead of one cropped via CSS/viewBox:
+//   The stretched `y` in this logo has an exceptionally long descender
+//   that reaches DOWN to the same vertical zone where "SKIN SOLUTION"
+//   sits horizontally (the tagline lives to the right of the descender,
+//   not below it). A viewBox crop that hid the tagline would also clip
+//   the bottom of the y. So the wordmark variant needs its own SVG with
+//   the tagline paths actually removed — which favicon.svg already is.
 //
-// Crop regions were measured from the source SVG's path transforms:
-//   yu·r letter bounds ≈ x: 380–1210, y: 100–660 (padding added for safety)
-//   tagline bounds      ≈ y: 700–760
+// If Sofia ever redraws the logo, re-export both files together from
+// the source .ai — keep them visually coherent.
 // ─────────────────────────────────────────────────────────────────────────
 
 type LogoVariant = "lockup" | "wordmark";
 
-/**
- * Source SVG intrinsic dimensions — pulled from the file's viewBox.
- * Keep in sync with /public/brand/logo-lockup.svg.
- */
-const SOURCE = {
-  width: 1587.4,
-  height: 1122.52,
-} as const;
-
-/**
- * ViewBox crops per variant. Values are in source-SVG coordinates.
- *   lockup   — full artwork, no crop
- *   wordmark — tight rectangle around just the `yu·r` letterforms,
- *              excluding the tagline and most of the artboard padding
- */
-const VIEWBOX: Record<LogoVariant, { x: number; y: number; w: number; h: number }> = {
-  lockup: { x: 0,   y: 0,   w: SOURCE.width, h: SOURCE.height },
-  wordmark: { x: 360, y: 90, w: 870, h: 590 },
+const SRC: Record<LogoVariant, string> = {
+  lockup: "/brand/logo-lockup.svg",
+  wordmark: "/brand/favicon.svg",
 };
 
 type LogoProps = {
   variant?: LogoVariant;
-  /** CSS height value — number (px) or any CSS length. Width follows aspect. */
+  /** CSS height value — number (px) or any CSS length. Width follows the
+   *  natural aspect ratio of the variant's SVG. */
   height?: number | string;
   /** Accessible label. Defaults vary by variant; pass explicit when needed. */
   alt?: string;
@@ -59,39 +47,24 @@ export function Logo({
   alt,
   className,
 }: LogoProps) {
-  const box = VIEWBOX[variant];
   const label = alt ?? (variant === "lockup" ? "YU.R Skin Solution" : "YU.R");
   const h = typeof height === "number" ? `${height}px` : height;
-  const aspectRatio = box.w / box.h;
 
   return (
-    <svg
-      viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`}
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
-      aria-label={label}
-      preserveAspectRatio="xMidYMid meet"
+    // Next.js <Image> would force explicit width/height and kick off its
+    // optimizer; for a ~3KB vector logo we just want a direct <img>.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={SRC[variant]}
+      alt={label}
       className={className}
       style={{
         height: h,
         width: "auto",
-        aspectRatio,
         display: "block",
-        // Prevent weird squish if the parent forces a conflicting size —
-        // aspectRatio + auto width derives from height reliably.
+        // Guard against parents forcing a width that would squash the mark.
         flexShrink: 0,
       }}
-    >
-      {/* Embed the external SVG as-is. The host <svg>'s viewBox controls
-          which portion of the source renders; the rest is cropped by the
-          SVG spec naturally (no overflow:hidden needed). */}
-      <image
-        href="/brand/logo-lockup.svg"
-        width={SOURCE.width}
-        height={SOURCE.height}
-        x={0}
-        y={0}
-      />
-    </svg>
+    />
   );
 }
