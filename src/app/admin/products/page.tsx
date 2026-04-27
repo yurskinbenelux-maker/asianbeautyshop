@@ -10,30 +10,48 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
-import { CloudUpload, Copy, Plus, Search } from "lucide-react";
+import { CloudUpload, Copy, Plus, Search, RotateCcw, Trash2 } from "lucide-react";
 import { Prisma, ProductStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
-import { createProduct, duplicateProduct } from "./actions";
+import {
+  createProduct,
+  duplicateProduct,
+  hardDeleteProduct,
+  restoreProduct,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = Promise<{ q?: string; status?: string }>;
+// Pseudo-status used in the URL only (never written to the DB) to surface
+// soft-deleted products in a Trash bucket. Lifted to module scope so the
+// buildStatusHref helper below can typecheck against it.
+type StatusFilter = ProductStatus | "TRASH";
+
+type SearchParams = Promise<{ q?: string; status?: string; err?: string }>;
 
 export default async function ProductsListPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const { q, status } = await searchParams;
-  const statusFilter =
-    status === "DRAFT" || status === "PUBLISHED" || status === "ARCHIVED"
-      ? (status as ProductStatus)
+  const { q, status, err } = await searchParams;
+  const statusFilter: StatusFilter | undefined =
+    status === "DRAFT" ||
+    status === "PUBLISHED" ||
+    status === "ARCHIVED" ||
+    status === "TRASH"
+      ? (status as StatusFilter)
       : undefined;
 
+  const isTrash = statusFilter === "TRASH";
+
   const where: Prisma.ProductWhereInput = {
-    deletedAt: null,
-    ...(statusFilter ? { status: statusFilter } : {}),
+    // Trash mode flips the soft-delete filter; otherwise we hide deleted.
+    ...(isTrash
+      ? { NOT: { deletedAt: null } }
+      : { deletedAt: null }),
+    ...(statusFilter && !isTrash ? { status: statusFilter } : {}),
     ...(q && q.trim()
       ? {
           OR: [
@@ -69,12 +87,15 @@ export default async function ProductsListPage({
     },
   });
 
-  const [total, publishedCount, draftCount, archivedCount] = await Promise.all([
-    prisma.product.count({ where: { deletedAt: null } }),
-    prisma.product.count({ where: { deletedAt: null, status: "PUBLISHED" } }),
-    prisma.product.count({ where: { deletedAt: null, status: "DRAFT" } }),
-    prisma.product.count({ where: { deletedAt: null, status: "ARCHIVED" } }),
-  ]);
+  const [total, publishedCount, draftCount, archivedCount, trashCount] =
+    await Promise.all([
+      prisma.product.count({ where: { deletedAt: null } }),
+      prisma.product.count({ where: { deletedAt: null, status: "PUBLISHED" } }),
+      prisma.product.count({ where: { deletedAt: null, status: "DRAFT" } }),
+      prisma.product.count({ where: { deletedAt: null, status: "ARCHIVED" } }),
+      // Trash = soft-deleted regardless of status.
+      prisma.product.count({ where: { NOT: { deletedAt: null } } }),
+    ]);
 
   return (
     <div className="mx-auto max-w-6xl px-8 py-12">
@@ -152,8 +173,25 @@ export default async function ProductsListPage({
             href={buildStatusHref("ARCHIVED", q)}
             active={statusFilter === "ARCHIVED"}
           />
+          {/* Trash bucket — only present when there's something in it,
+              so the filter rail stays calm in the common case. */}
+          {trashCount > 0 && (
+            <StatusPill
+              label={`Trash · ${trashCount}`}
+              href={buildStatusHref("TRASH", q)}
+              active={isTrash}
+            />
+          )}
         </div>
       </div>
+
+      {/* err query param surfaced from hard-delete refusal. Cheap toast. */}
+      {err === "order-refs" && (
+        <div className="mt-4 border border-vermilion/30 bg-vermilion/5 px-4 py-3 text-[12px] text-vermilion">
+          Couldn&rsquo;t delete: that product has variants referenced by past
+          orders. Keep the trashed row instead — it preserves order history.
+        </div>
+      )}
 
       {/* table */}
       <div className="mt-6 border border-ink/10 bg-white/60">
@@ -215,22 +253,55 @@ export default async function ProductsListPage({
                     </Td>
                     <Td className="text-right">
                       {/*
-                        Duplicate: a tiny form per row because Next's Server
-                        Actions need a form. The button is icon-only to keep
-                        the row tall-and-thin; screen readers get the label.
-                        Redirects straight into the copy's edit page.
+                        In normal views: Duplicate.
+                        In Trash view: Restore + Delete-permanently. Both
+                        are tiny per-row forms because Next's Server Actions
+                        need a form. Hard-delete is gated server-side: it
+                        only fires on already-trashed rows and refuses if
+                        any past OrderItem references a variant.
                       */}
-                      <form action={duplicateProduct}>
-                        <input type="hidden" name="productId" value={p.id} />
-                        <button
-                          type="submit"
-                          aria-label={`Duplicate ${name}`}
-                          title="Duplicate — creates a draft copy"
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full text-ink-mid transition-colors hover:bg-ink/5 hover:text-ink"
-                        >
-                          <Copy className="h-3.5 w-3.5" aria-hidden />
-                        </button>
-                      </form>
+                      {isTrash ? (
+                        <div className="flex justify-end gap-1">
+                          <form action={restoreProduct}>
+                            <input type="hidden" name="productId" value={p.id} />
+                            <button
+                              type="submit"
+                              aria-label={`Restore ${name}`}
+                              title="Restore — bring back into the catalogue"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-full text-ink-mid transition-colors hover:bg-ink/5 hover:text-ink"
+                            >
+                              <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+                            </button>
+                          </form>
+                          <form action={hardDeleteProduct}>
+                            <input type="hidden" name="productId" value={p.id} />
+                            <button
+                              type="submit"
+                              aria-label={`Delete ${name} permanently`}
+                              title="Delete permanently — frees the SKU"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-full text-vermilion transition-colors hover:bg-vermilion hover:text-white"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                            </button>
+                          </form>
+                        </div>
+                      ) : (
+                        <form action={duplicateProduct}>
+                          <input
+                            type="hidden"
+                            name="productId"
+                            value={p.id}
+                          />
+                          <button
+                            type="submit"
+                            aria-label={`Duplicate ${name}`}
+                            title="Duplicate — creates a draft copy"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-ink-mid transition-colors hover:bg-ink/5 hover:text-ink"
+                          >
+                            <Copy className="h-3.5 w-3.5" aria-hidden />
+                          </button>
+                        </form>
+                      )}
                     </Td>
                   </tr>
                 );
@@ -245,7 +316,7 @@ export default async function ProductsListPage({
 
 // ──────── small helpers local to this page ──────────────────────────────
 
-function buildStatusHref(status: ProductStatus | null, q?: string) {
+function buildStatusHref(status: StatusFilter | null, q?: string) {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
   if (q) params.set("q", q);

@@ -586,9 +586,10 @@ export async function duplicateProduct(formData: FormData) {
   redirect(`/admin/products/${created.id}?tab=basics`);
 }
 
-// ──────── soft delete ────────────────────────────────────────────────────
+// ──────── soft delete / restore / hard delete ───────────────────────────
 
-/** GDPR-friendly: we flag, never drop. Products can be recovered from DB. */
+/** GDPR-friendly: we flag, never drop. Products can be recovered from
+ *  the Trash filter on /admin/products until hardDeleteProduct lands them. */
 export async function softDeleteProduct(productId: string) {
   await requireAdmin();
 
@@ -600,6 +601,99 @@ export async function softDeleteProduct(productId: string) {
   revalidatePath("/admin/products");
   revalidatePath("/", "layout");
   redirect("/admin/products");
+}
+
+/** Bring a soft-deleted product back into the active catalogue. Status
+ *  stays ARCHIVED (so the shop doesn't suddenly show a long-trashed item)
+ *  — Sofia bumps it to PUBLISHED from the editor when she's ready. */
+export async function restoreProduct(formData: FormData) {
+  const actor = await requireAdmin();
+  const productId = String(formData.get("productId") ?? "").trim();
+  if (!productId) return;
+
+  await prisma.product.update({
+    where: { id: productId },
+    data: { deletedAt: null },
+  });
+
+  await logAudit({
+    actor,
+    action: "product.restore",
+    entityType: "Product",
+    entityId: productId,
+    summary: `Restored from trash`,
+  });
+
+  revalidatePath("/admin/products");
+  redirect(`/admin/products/${productId}`);
+}
+
+/**
+ * Hard-delete a trashed product. Drops the Product row + cascades through
+ * the schema (translations, variants, media, pivots all clear via
+ * `onDelete: Cascade`). OrderItem keeps a snapshot of the product/variant
+ * info so historical orders survive — but if any order STILL references
+ * a variant of this product, we refuse so we don't orphan the FK.
+ *
+ * Two safeties:
+ *   · Product must already be soft-deleted (deletedAt != null) — that's
+ *     "moved to trash" — so you can't lose data with one wayward click.
+ *   · Refuses if any variant has past OrderItems linked.
+ */
+export async function hardDeleteProduct(formData: FormData) {
+  const actor = await requireAdmin();
+  const productId = String(formData.get("productId") ?? "").trim();
+  if (!productId) return;
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: {
+      id: true,
+      sku: true,
+      deletedAt: true,
+      variants: {
+        select: {
+          id: true,
+          _count: { select: { orderItems: true } },
+        },
+      },
+    },
+  });
+  if (!product) return;
+
+  // Safety 1: must be in trash already.
+  if (!product.deletedAt) {
+    // Should not be reachable from the UI — Trash is the only entry point —
+    // but defend in depth.
+    return;
+  }
+
+  // Safety 2: any past OrderItems linked? Refuse — Sofia keeps the trashed
+  // row instead.
+  const totalOrderRefs = product.variants.reduce(
+    (n, v) => n + v._count.orderItems,
+    0,
+  );
+  if (totalOrderRefs > 0) {
+    // We don't have a great way to surface this to the user from a
+    // form-action that uses redirect(); fall through to the trash view
+    // and let them notice the product is still there. A better UX (toast
+    // via cookie or query param) is a follow-up.
+    redirect(`/admin/products?status=TRASH&err=order-refs`);
+  }
+
+  await prisma.product.delete({ where: { id: productId } });
+
+  await logAudit({
+    actor,
+    action: "product.hard_delete",
+    entityType: "Product",
+    entityId: productId,
+    summary: `Permanently deleted ${product.sku}`,
+  });
+
+  revalidatePath("/admin/products");
+  redirect("/admin/products?status=TRASH");
 }
 
 // ──────── media ──────────────────────────────────────────────────────────
