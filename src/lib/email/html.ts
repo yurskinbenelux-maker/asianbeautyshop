@@ -55,13 +55,25 @@ export const BUSINESS_LEGAL_LINE =
 /**
  * Wrap an inner HTML string in the standard YU.R email shell.
  * Outer page background is rice (#F3EDE3); inner card is ivory (#FBF7EF).
- * Both the rice/ivory contrast and 'YU.R · 유알' eyebrow are the signature
- * elements — every template should keep them.
+ *
+ * Header: a small hosted PNG logo (apple-touch-icon, 56×56) sits above a
+ * thin "YU.R Skin Solution" wordmark eyebrow. If the recipient's client
+ * blocks images by default (Gmail, Outlook), the wordmark text alone still
+ * brands the email. The Hangul seal "유알" was retired in the 2026-04
+ * brand sweep — emails now match the site's wordmark-only treatment.
  */
 export function renderEmailShell(input: EmailShellInput): string {
   const footer =
     input.footerNote ??
     "K'Elmus Group BV · Aartselaar, Belgium";
+
+  // Absolute URL is required — Gmail and most webmail clients won't
+  // resolve relative paths in <img src>. We pin to the canonical origin
+  // and rely on the brand PNG icon set living at /brand/.
+  const siteOrigin =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    "https://yurskinsolution.eu";
+  const logoUrl = `${siteOrigin}/brand/apple-touch-icon.png`;
 
   return /* html */ `<!doctype html>
 <html lang="${esc(input.lang)}">
@@ -83,8 +95,16 @@ export function renderEmailShell(input: EmailShellInput): string {
             <tr>
               <td style="padding:40px 44px 36px 44px;">
 
-                <div style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8A8A8A;">
-                  YU.R &nbsp;·&nbsp; 유알
+                <!-- logo header — image with text fallback for blocked-image inboxes -->
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 4px 0;">
+                  <tr>
+                    <td style="padding:0;">
+                      <img src="${logoUrl}" alt="YU.R" width="48" height="48" style="display:block;width:48px;height:48px;border:0;outline:none;text-decoration:none;background:#F3EDE3;" />
+                    </td>
+                  </tr>
+                </table>
+                <div style="margin:0 0 4px 0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8A8A8A;">
+                  YU.R Skin Solution
                 </div>
 
                 ${input.body}
