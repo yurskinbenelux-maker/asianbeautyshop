@@ -111,6 +111,12 @@ model Brand {
   name       String
   isActive   Boolean            @default(true)
   logoUrl    String?
+  // Country the brand is based in. ISO-3166 alpha-2, e.g. "KR" for YU.R.
+  // Mirrors the supplier sheet's "Brand country" column. Stored once per
+  // brand instead of per product (where it would duplicate 35-200x with
+  // no extra information). PDPs can render "Brand from {country}" by
+  // joining through Product.brand.country.
+  country    String?
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
   translations BrandTranslation[]
@@ -160,6 +166,17 @@ enum ProductStatus {
   ARCHIVED
 }
 
+// Supplier classifies products by gender / age cohort. Most YU.R items are
+// UNISEX; the others are kept so PDP filters and supplier round-trips stay
+// honest. Add new values when new product lines arrive (e.g. PETS).
+enum AudienceCategory {
+  UNISEX
+  WOMEN
+  MEN
+  KIDS
+  BABIES
+}
+
 model Product {
   id              String          @id @default(uuid()) @db.Uuid
   sku             String          @unique           // human-friendly SKU e.g. "YUR-SUN-SPF50"
@@ -176,6 +193,22 @@ model Product {
   weightGrams     Int?                               // for Sendcloud shipping quote
   volumeMl        Int?                               // for the PDP "50 ml" badge
   launchedAt      DateTime?
+
+  // ── Supplier-spec fields ─────────────────────────────────────────────
+  // These mirror the columns on Sofia's master-data xlsx so a CSV round
+  // trip is lossless. They are language-agnostic (numbers, codes, ISO
+  // country) — translatable copy lives on ProductTranslation instead.
+
+  productLine      String?                          // sub-line within the brand, e.g. "Yu.R PRO"
+  barcode          String?  @unique                 // EAN-13, used by retail scanners + returns
+  shelfLifeMonths  Int?                             // unopened shelf life. Cosmetics convention is months,
+                                                    // not years (PAO is opened-life — separate concept).
+  originCountry    String?                          // ISO-3166 alpha-2, e.g. "KR" — country product is made in
+  hsCode           String?                          // customs/HS classification, used by Sendcloud + invoices
+  audienceCategory AudienceCategory @default(UNISEX) // gender/age cohort from the supplier sheet
+  inciList         String?                          // full INCI ingredient declaration as one string.
+                                                    // Universal nomenclature → not per-locale.
+
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   deletedAt       DateTime?
@@ -200,6 +233,7 @@ model Product {
   @@index([brandId])
   @@index([isFeatured])
   @@index([isBestseller])
+  @@index([barcode])
 }
 
 model ProductTranslation {
@@ -212,6 +246,10 @@ model ProductTranslation {
   shortDescription String?
   description      String   // rich HTML from Tiptap
   howToUse         String?  // rich HTML
+  // Per-locale safety / regulatory copy. Lives here (not on Product) so
+  // Sofia can localise warnings — the legal phrasing differs across NL/FR
+  // jurisdictions even though the underlying caution is the same.
+  warnings         String?  // plain text or simple HTML
   seoTitle         String?
   seoDescription   String?
   @@unique([productId, locale])

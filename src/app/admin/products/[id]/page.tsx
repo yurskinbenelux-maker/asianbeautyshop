@@ -346,6 +346,15 @@ export default async function ProductEditPage({
                   : Number(product.comparePrice).toFixed(2),
               volumeMl: product.volumeMl?.toString() ?? "",
               weightGrams: product.weightGrams?.toString() ?? "",
+              // Supplier-spec fields. Empty strings (not null) so the
+              // input defaultValues stay controlled-friendly.
+              productLine: product.productLine ?? "",
+              barcode: product.barcode ?? "",
+              shelfLifeMonths: product.shelfLifeMonths?.toString() ?? "",
+              originCountry: product.originCountry ?? "",
+              hsCode: product.hsCode ?? "",
+              audienceCategory: product.audienceCategory,
+              inciList: product.inciList ?? "",
             }}
           />
         )}
@@ -362,6 +371,7 @@ export default async function ProductEditPage({
                 shortDescription: t?.shortDescription ?? "",
                 description: t?.description ?? "",
                 howToUse: t?.howToUse ?? "",
+                warnings: t?.warnings ?? "",
                 seoTitle: t?.seoTitle ?? "",
                 seoDescription: t?.seoDescription ?? "",
               };

@@ -521,14 +521,23 @@ export type ProductDetail = {
   volumeMl: number | null;
   isFeatured: boolean;
   isBestseller: boolean;
-  /** Includes slug so the PDP can link to the brand landing page. */
-  brand: { name: string; slug: string } | null;
+  /** Includes slug + country so the PDP can render "Made in {brand-country}". */
+  brand: { name: string; slug: string; country: string | null } | null;
   // locale-resolved translation
   name: string;
   slug: string;
   tagline: string | null;
   descriptionHtml: string;
   howToUseHtml: string | null;
+  warningsText: string | null;
+  // ─── Supplier-spec fields surfaced from Product ─────────────────────
+  productLine: string | null;
+  barcode: string | null;
+  shelfLifeMonths: number | null;
+  originCountry: string | null;     // ISO-3166 alpha-2
+  hsCode: string | null;
+  audienceCategory: string;          // enum value as string
+  inciList: string | null;
   // full gallery
   images: Array<{ url: string; alt: string | null }>;
   // slugs in every locale, used by the LocaleSwitcher on this page
@@ -610,12 +619,22 @@ export async function getProductBySlug({
     volumeMl: p.volumeMl,
     isFeatured: p.isFeatured,
     isBestseller: p.isBestseller,
-    brand: p.brand ? { name: p.brand.name, slug: p.brand.slug } : null,
+    brand: p.brand
+      ? { name: p.brand.name, slug: p.brand.slug, country: p.brand.country }
+      : null,
     name: tr.name,
     slug: tr.slug,
     tagline: tr.shortDescription,
     descriptionHtml: tr.description,
     howToUseHtml: tr.howToUse,
+    warningsText: tr.warnings,
+    productLine: p.productLine,
+    barcode: p.barcode,
+    shelfLifeMonths: p.shelfLifeMonths,
+    originCountry: p.originCountry,
+    hsCode: p.hsCode,
+    audienceCategory: p.audienceCategory,
+    inciList: p.inciList,
     images: p.media.map((m) => ({ url: m.url, alt: m.alt })),
     slugByLocale,
     primaryCategorySlug: primaryCategoryLink?.category.slug ?? null,

@@ -49,6 +49,7 @@ import { IngredientSection } from "@/components/shop/pdp/ingredient-section";
 import { RitualStepsSection } from "@/components/shop/pdp/ritual-steps-section";
 import { ReviewsSection } from "@/components/shop/pdp/reviews-section";
 import { RitualBundleSection } from "@/components/shop/pdp/ritual-bundle-section";
+import { ProductDetailsPanel } from "@/components/shop/pdp/product-details-panel";
 import { BestsellerCard } from "@/components/home/bestseller-card";
 import { LocaleAlternatesProvider } from "@/components/layout/locale-alternates";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -349,8 +350,13 @@ export default async function ProductDetailPage({
         />
 
         {/* ── ingredients ───────────────────────────────────────── */}
+        {/* fullInciText comes from Product.inciList — the legally-correct
+            full declaration from the supplier. When present, the section
+            renders it as the source of truth in the "Show the list"
+            accordion (otherwise it falls back to the pivot list). */}
         <IngredientSection
           ingredients={ingredients}
+          fullInciText={product.inciList}
           labels={{
             eyebrow: t("key_ingredients_eyebrow"),
             keyTitle: t("key_ingredients_title"),
@@ -358,6 +364,35 @@ export default async function ProductDetailPage({
             show: t("full_ingredients_show"),
             hide: t("full_ingredients_hide"),
             allergenSuffix: t("allergen_suffix"),
+          }}
+        />
+
+        {/* ── product details / specifications ─────────────────── */}
+        {/* Origin country, shelf life, audience, product-line and the
+            per-locale safety disclosure. All optional — the panel
+            self-hides if the product has none of these set. */}
+        <ProductDetailsPanel
+          originCountry={product.originCountry}
+          shelfLifeMonths={product.shelfLifeMonths}
+          audienceCategory={product.audienceCategory}
+          productLine={product.productLine}
+          warnings={product.warningsText}
+          locale={locale}
+          labels={{
+            eyebrow: t("details_eyebrow"),
+            origin: t("details_origin"),
+            shelfLife: t("details_shelf_life"),
+            shelfLifeUnit: t("details_shelf_life_unit"),
+            audience: t("details_audience"),
+            productLine: t("details_product_line"),
+            safety: t("details_safety"),
+          }}
+          audienceLabels={{
+            UNISEX: t("audience_unisex"),
+            WOMEN: t("audience_women"),
+            MEN: t("audience_men"),
+            KIDS: t("audience_kids"),
+            BABIES: t("audience_babies"),
           }}
         />
 

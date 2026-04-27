@@ -27,20 +27,44 @@ type Labels = {
 
 export function IngredientSection({
   ingredients,
+  fullInciText,
   labels,
 }: {
   ingredients: PdpIngredient[];
+  /**
+   * The full INCI declaration as a single string, sourced from
+   * Product.inciList (the supplier's official packaging text). When
+   * provided, this is the source of truth for the "Show the list"
+   * accordion — it's the legally-correct, complete statement. We fall
+   * back to comma-joining the curated `ingredients` pivot only when no
+   * INCI text has been recorded for the product.
+   */
+  fullInciText?: string | null;
   labels: Labels;
 }) {
   const [open, setOpen] = useState(false);
 
-  if (ingredients.length === 0) return null;
+  // Render nothing only if BOTH sources are empty — the section is the
+  // PDP's regulatory ingredients block, so even a product with no key
+  // ingredients curated should still expose the full INCI when set.
+  if (ingredients.length === 0 && !fullInciText) return null;
 
   const key = ingredients.filter((i) => i.isKey || i.isKeyAsset);
   const fallbackKey = key.length === 0 ? ingredients.slice(0, 3) : key;
-  // The "full list" shows every single ingredient — key ones are not
-  // stripped because customers expect a complete INCI statement.
-  const full = ingredients;
+
+  // Full list — INCI string from supplier wins; otherwise compose from
+  // the pivot. Returns the rendered string (no JSX) so the markup below
+  // stays simple and the count display works for both shapes.
+  const fullText = fullInciText?.trim()
+    ? fullInciText.trim()
+    : ingredients
+        .map((i) =>
+          i.isKey || i.isKeyAsset ? `*${i.inciName}` : i.inciName,
+        )
+        .join(", ");
+  const fullCount = fullInciText?.trim()
+    ? fullInciText.split(",").filter((s) => s.trim().length > 0).length
+    : ingredients.length;
 
   return (
     <section className="container mt-24 max-w-4xl">
@@ -95,7 +119,7 @@ export function IngredientSection({
           <div>
             <div className="eyebrow">{labels.fullTitle}</div>
             <div className="mt-1 text-[13px] text-ink-mid">
-              {full.length} {full.length === 1 ? "ingredient" : "ingredients"}
+              {fullCount} {fullCount === 1 ? "ingredient" : "ingredients"}
             </div>
           </div>
           <ChevronDown
@@ -107,15 +131,8 @@ export function IngredientSection({
         </button>
 
         {open && (
-          <p className="mt-6 font-mono text-[12px] leading-[1.9] tracking-wide text-ink-mid">
-            {full
-              .map((i) =>
-                i.isKey || i.isKeyAsset
-                  ? `*${i.inciName}`
-                  : i.inciName,
-              )
-              .join(", ")}
-            .
+          <p className="mt-6 whitespace-pre-line font-mono text-[12px] leading-[1.9] tracking-wide text-ink-mid">
+            {fullText}
           </p>
         )}
       </div>

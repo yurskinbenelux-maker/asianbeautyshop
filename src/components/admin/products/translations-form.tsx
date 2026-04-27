@@ -28,6 +28,8 @@ export type TranslationData = {
   shortDescription: string;
   description: string;
   howToUse: string;
+  /** Per-locale safety / regulatory copy from the supplier sheet. */
+  warnings: string;
   seoTitle: string;
   seoDescription: string;
 };
@@ -160,6 +162,14 @@ function LocalePanel({
         rows={5}
         defaultValue={initial.howToUse}
         hint="Ritual steps. Leave blank if not applicable."
+      />
+
+      <TextAreaField
+        label="Warnings &amp; cautions"
+        name="warnings"
+        rows={4}
+        defaultValue={initial.warnings}
+        hint="Safety / regulatory copy from the supplier (e.g. 'Avoid contact with eyes', 'Keep out of reach of children'). Shows as a small disclosure block at the bottom of the product page."
       />
 
       <div className="border-t border-ink/10 pt-6">

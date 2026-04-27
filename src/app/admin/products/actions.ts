@@ -17,7 +17,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { Locale, MediaKind, Prisma, ProductStatus } from "@prisma/client";
+import {
+  AudienceCategory,
+  Locale,
+  MediaKind,
+  Prisma,
+  ProductStatus,
+} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import {
@@ -97,6 +103,22 @@ export async function createProduct() {
 
 // ──────── basics tab ─────────────────────────────────────────────────────
 
+// Reusable transformer: blank string → null, otherwise parsed positive integer.
+// Reused for volume / weight / shelf-life so the error messages stay consistent.
+const PositiveIntOrEmpty = z
+  .string()
+  .trim()
+  .transform((v) => (v === "" ? null : Number(v)))
+  .refine((v) => v === null || (Number.isInteger(v) && v > 0), {
+    message: "Must be a positive whole number",
+  });
+
+// Reusable: blank string → null, otherwise the trimmed value.
+const TrimOrNull = z
+  .string()
+  .trim()
+  .transform((v) => (v === "" ? null : v));
+
 const BasicsSchema = z.object({
   sku: z.string().min(1, "SKU is required").max(64),
   status: z.nativeEnum(ProductStatus),
@@ -104,20 +126,39 @@ const BasicsSchema = z.object({
   isBestseller: z.coerce.boolean(),
   isAvailableForAi: z.coerce.boolean(),
   hideFromSearch: z.coerce.boolean(),
-  volumeMl: z
+  volumeMl: PositiveIntOrEmpty,
+  weightGrams: PositiveIntOrEmpty,
+
+  // ─── Supplier-spec fields (xlsx → DB round-trip) ─────────────────────
+  productLine: TrimOrNull,
+  // Barcode is normalised to digits only (UPC/EAN/GTIN). Blank stays null.
+  // We don't strictly enforce length here — the importer already does, and
+  // an admin editing one product is allowed to fix legacy data.
+  barcode: z
     .string()
     .trim()
-    .transform((v) => (v === "" ? null : Number(v)))
-    .refine((v) => v === null || (Number.isInteger(v) && v > 0), {
-      message: "Volume must be a positive whole number",
+    .transform((v) => (v === "" ? null : v.replace(/\D+/g, "") || null))
+    .refine((v) => v === null || (v.length >= 8 && v.length <= 14), {
+      message: "Barcode must be 8–14 digits (UPC / EAN / GTIN)",
     }),
-  weightGrams: z
+  shelfLifeMonths: PositiveIntOrEmpty,
+  // ISO-3166 alpha-2. Uppercased on save. Empty allowed for unknown origin.
+  originCountry: z
     .string()
     .trim()
-    .transform((v) => (v === "" ? null : Number(v)))
-    .refine((v) => v === null || (Number.isInteger(v) && v > 0), {
-      message: "Weight must be a positive whole number",
+    .transform((v) => (v === "" ? null : v.toUpperCase()))
+    .refine((v) => v === null || /^[A-Z]{2}$/.test(v), {
+      message: "Use the ISO-3166 alpha-2 code (e.g. KR, JP, FR)",
     }),
+  hsCode: z
+    .string()
+    .trim()
+    .transform((v) => (v === "" ? null : v.replace(/\D+/g, "") || null))
+    .refine((v) => v === null || (v.length >= 4 && v.length <= 14), {
+      message: "HS code must be 4–14 digits",
+    }),
+  audienceCategory: z.nativeEnum(AudienceCategory),
+  inciList: TrimOrNull,
 });
 
 export type ActionState = {
@@ -145,6 +186,13 @@ export async function updateBasics(
     hideFromSearch: formData.get("hideFromSearch") === "on",
     volumeMl: formData.get("volumeMl") ?? "",
     weightGrams: formData.get("weightGrams") ?? "",
+    productLine: formData.get("productLine") ?? "",
+    barcode: formData.get("barcode") ?? "",
+    shelfLifeMonths: formData.get("shelfLifeMonths") ?? "",
+    originCountry: formData.get("originCountry") ?? "",
+    hsCode: formData.get("hsCode") ?? "",
+    audienceCategory: formData.get("audienceCategory") ?? AudienceCategory.UNISEX,
+    inciList: formData.get("inciList") ?? "",
   });
 
   if (!parsed.success) {
@@ -213,6 +261,11 @@ const TranslationSchema = z.object({
     .string()
     .trim()
     .transform((v) => (v === "" ? null : v)),
+  // Per-locale safety / regulatory copy. Plain text or simple HTML.
+  warnings: z
+    .string()
+    .trim()
+    .transform((v) => (v === "" ? null : v)),
   seoTitle: z
     .string()
     .trim()
@@ -241,6 +294,7 @@ export async function updateTranslation(
     shortDescription: formData.get("shortDescription") ?? "",
     description: formData.get("description"),
     howToUse: formData.get("howToUse") ?? "",
+    warnings: formData.get("warnings") ?? "",
     seoTitle: formData.get("seoTitle") ?? "",
     seoDescription: formData.get("seoDescription") ?? "",
   });

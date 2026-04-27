@@ -23,7 +23,7 @@
 //     URLs from the request handler.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { Locale, ProductStatus } from "@prisma/client";
+import { AudienceCategory, Locale, ProductStatus } from "@prisma/client";
 
 // ────────── public types ────────────────────────────────────────────────
 
@@ -35,6 +35,8 @@ export const CSV_COLUMNS = [
   "sku",
   "status",
   "brand_slug",
+  "product_line",        // sub-brand from supplier sheet, e.g. "Yu.R PRO"
+  "barcode",             // EAN-13
   // pricing (all euros, decimal as "24.90" or "24,90")
   "price_eur",
   "compare_price_eur",
@@ -42,6 +44,11 @@ export const CSV_COLUMNS = [
   // physical
   "volume_ml",
   "weight_grams",
+  "shelf_life_months",   // unopened shelf life
+  "origin_country",      // ISO-3166 alpha-2, e.g. "KR"
+  "hs_code",             // customs / HS classification
+  "audience_category",   // UNISEX | WOMEN | MEN | KIDS | BABIES
+  "inci_list",           // full INCI declaration (one long string, language-agnostic)
   // flags
   "is_featured",
   "is_bestseller",
@@ -55,6 +62,7 @@ export const CSV_COLUMNS = [
   "short_description_en",
   "description_en",
   "how_to_use_en",
+  "warnings_en",
   "seo_title_en",
   "seo_description_en",
   // NL
@@ -63,6 +71,7 @@ export const CSV_COLUMNS = [
   "short_description_nl",
   "description_nl",
   "how_to_use_nl",
+  "warnings_nl",
   "seo_title_nl",
   "seo_description_nl",
   // FR
@@ -71,6 +80,7 @@ export const CSV_COLUMNS = [
   "short_description_fr",
   "description_fr",
   "how_to_use_fr",
+  "warnings_fr",
   "seo_title_fr",
   "seo_description_fr",
   // RU
@@ -79,6 +89,7 @@ export const CSV_COLUMNS = [
   "short_description_ru",
   "description_ru",
   "how_to_use_ru",
+  "warnings_ru",
   "seo_title_ru",
   "seo_description_ru",
   // pivot rows (semicolon-separated slugs)
@@ -100,11 +111,18 @@ export type ValidatedRow = {
   sku: string;
   status: ProductStatus;
   brandSlug: string | null;
+  productLine: string | null;
+  barcode: string | null;
   priceEur: string; // Decimal-safe string form, e.g. "24.90"
   comparePriceEur: string | null;
   costEur: string | null;
   volumeMl: number | null;
   weightGrams: number | null;
+  shelfLifeMonths: number | null;
+  originCountry: string | null;     // ISO-3166 alpha-2, uppercased
+  hsCode: string | null;
+  audienceCategory: AudienceCategory; // defaults to UNISEX when blank
+  inciList: string | null;
   isFeatured: boolean;
   isBestseller: boolean;
   isAvailableForAi: boolean;
@@ -125,6 +143,7 @@ export type TranslationFields = {
   shortDescription: string | null;
   description: string;
   howToUse: string | null;
+  warnings: string | null;          // safety / regulatory copy, per locale
   seoTitle: string | null;
   seoDescription: string | null;
 };
@@ -309,6 +328,31 @@ const STATUS_MAP: Record<string, ProductStatus> = {
   hidden: ProductStatus.ARCHIVED,
 };
 
+// Aliases the supplier sheet uses for the gender / age cohort. Mapped
+// permissively so a Russian "Унисекс" or French "Mixte" still lands in
+// UNISEX. Anything we can't map falls through to UNISEX (the default for
+// 90 % of K-beauty products) rather than failing the whole row.
+const AUDIENCE_MAP: Record<string, AudienceCategory> = {
+  unisex: AudienceCategory.UNISEX,
+  mixte: AudienceCategory.UNISEX,
+  унисекс: AudienceCategory.UNISEX,
+  women: AudienceCategory.WOMEN,
+  woman: AudienceCategory.WOMEN,
+  female: AudienceCategory.WOMEN,
+  "for women": AudienceCategory.WOMEN,
+  men: AudienceCategory.MEN,
+  man: AudienceCategory.MEN,
+  male: AudienceCategory.MEN,
+  "for men": AudienceCategory.MEN,
+  kids: AudienceCategory.KIDS,
+  children: AudienceCategory.KIDS,
+  "for boys": AudienceCategory.KIDS,
+  "for girls": AudienceCategory.KIDS,
+  babies: AudienceCategory.BABIES,
+  baby: AudienceCategory.BABIES,
+  "for babies": AudienceCategory.BABIES,
+};
+
 type LocaleSlot = { locale: Locale; suffix: string };
 const LOCALE_SLOTS: ReadonlyArray<LocaleSlot> = [
   { locale: Locale.EN, suffix: "en" },
@@ -348,6 +392,78 @@ export function validateRow(
   const brandRaw = (raw.brand_slug ?? "").trim();
   const brandSlug = brandRaw === "" ? null : brandRaw;
 
+  // Sub-brand / product line.
+  const productLine = trimOrNull(raw.product_line);
+
+  // Barcode — supplier sheets use EAN-13. We accept any digit-only string
+  // 8–14 chars (covers UPC-A 12, EAN-8/13, GTIN-14) but normalise to digits
+  // only so a stray space/hyphen doesn't break unique-index lookups.
+  const barcodeRaw = (raw.barcode ?? "").trim();
+  let barcode: string | null = null;
+  if (barcodeRaw !== "") {
+    const digits = barcodeRaw.replace(/\D+/g, "");
+    if (digits.length < 8 || digits.length > 14) {
+      errors.push(
+        `barcode "${barcodeRaw}" must be a UPC/EAN/GTIN of 8–14 digits`,
+      );
+    } else {
+      barcode = digits;
+    }
+  }
+
+  // Origin country — accept ISO-3166 alpha-2 (canonical) or full country
+  // name (we'll keep alpha-2 in the DB; uppercased). Anything longer than 2
+  // chars and not a known name falls through as a soft error.
+  const originRaw = (raw.origin_country ?? "").trim();
+  let originCountry: string | null = null;
+  if (originRaw !== "") {
+    if (/^[A-Za-z]{2}$/.test(originRaw)) {
+      originCountry = originRaw.toUpperCase();
+    } else {
+      const mapped = COUNTRY_NAME_TO_ISO[originRaw.toLowerCase()];
+      if (mapped) {
+        originCountry = mapped;
+      } else {
+        errors.push(
+          `origin_country "${originRaw}" — use the ISO-3166 alpha-2 code (e.g. "KR" for South Korea)`,
+        );
+      }
+    }
+  }
+
+  // HS code — light validation: numeric, 6–10 digits typical (we allow up
+  // to 14 since some EU subheadings extend that far). Hyphens are stripped.
+  const hsRaw = (raw.hs_code ?? "").trim();
+  let hsCode: string | null = null;
+  if (hsRaw !== "") {
+    const digits = hsRaw.replace(/\D+/g, "");
+    if (digits.length < 4 || digits.length > 14) {
+      errors.push(
+        `hs_code "${hsRaw}" must be 4–14 digits (e.g. "3304991000" for skincare)`,
+      );
+    } else {
+      hsCode = digits;
+    }
+  }
+
+  // Audience — defaults to UNISEX. Unknown strings flag as a soft error so
+  // a typo lands on the row's report, not silently drops to UNISEX.
+  const audienceRaw = (raw.audience_category ?? "").trim().toLowerCase();
+  let audienceCategory: AudienceCategory = AudienceCategory.UNISEX;
+  if (audienceRaw !== "") {
+    const mapped = AUDIENCE_MAP[audienceRaw];
+    if (mapped) {
+      audienceCategory = mapped;
+    } else {
+      errors.push(
+        `audience_category "${raw.audience_category}" unknown — use UNISEX, WOMEN, MEN, KIDS, or BABIES`,
+      );
+    }
+  }
+
+  // INCI list — accept anything trimmed. Often very long; no length cap.
+  const inciList = trimOrNull(raw.inci_list);
+
   // Prices.
   const priceEur = coerceMoney(raw.price_eur);
   if (priceEur === null) {
@@ -373,6 +489,11 @@ export function validateRow(
   const weightGrams = coerceIntOrError(
     raw.weight_grams,
     "weight_grams",
+    errors,
+  );
+  const shelfLifeMonths = coerceIntOrError(
+    raw.shelf_life_months,
+    "shelf_life_months",
     errors,
   );
 
@@ -417,6 +538,7 @@ export function validateRow(
       shortDescription: trimOrNull(raw[`short_description_${slot.suffix}`]),
       description: description || "<p></p>",
       howToUse: trimOrNull(raw[`how_to_use_${slot.suffix}`]),
+      warnings: trimOrNull(raw[`warnings_${slot.suffix}`]),
       seoTitle: trimOrNull(raw[`seo_title_${slot.suffix}`]),
       seoDescription: trimOrNull(raw[`seo_description_${slot.suffix}`]),
     });
@@ -433,11 +555,18 @@ export function validateRow(
       sku,
       status,
       brandSlug,
+      productLine,
+      barcode,
       priceEur: priceEur as string,
       comparePriceEur,
       costEur,
       volumeMl,
       weightGrams,
+      shelfLifeMonths,
+      originCountry,
+      hsCode,
+      audienceCategory,
+      inciList,
       isFeatured,
       isBestseller,
       isAvailableForAi,
@@ -452,6 +581,27 @@ export function validateRow(
     },
   };
 }
+
+// Minimal country-name → ISO-3166-α2 map for the supplier sheets we see.
+// Sofia almost always sources from Korea; the rest are common K-beauty
+// adjacent. Not exhaustive — anything we miss falls through as a row error
+// so it gets fixed at upload time rather than landing as bad data.
+const COUNTRY_NAME_TO_ISO: Record<string, string> = {
+  "korea, republic of": "KR",
+  "republic of korea": "KR",
+  "south korea": "KR",
+  "korea": "KR",
+  "japan": "JP",
+  "china": "CN",
+  "france": "FR",
+  "germany": "DE",
+  "italy": "IT",
+  "united kingdom": "GB",
+  "united states": "US",
+  "usa": "US",
+  "netherlands": "NL",
+  "belgium": "BE",
+};
 
 function coerceIntOrError(
   raw: string | undefined,
@@ -551,12 +701,20 @@ export function parseProductCsv(text: string): ParseOutcome {
 const CSV_EXAMPLE: Record<string, string> = {
   sku: "YUR-HYALURON-SERUM",
   status: "DRAFT",
-  brand_slug: "yu-r",
+  brand_slug: "yur",
+  product_line: "Yu.R PRO",
+  barcode: "8809085104847",
   price_eur: "39.00",
   compare_price_eur: "",
   cost_eur: "12.00",
   volume_ml: "30",
-  weight_grams: "60",
+  weight_grams: "",
+  shelf_life_months: "36",
+  origin_country: "KR",
+  hs_code: "3304991000",
+  audience_category: "UNISEX",
+  inci_list:
+    "Water, Glycerin, Sodium Hyaluronate, Hydrolyzed Hyaluronic Acid, Panthenol, 1,2-Hexanediol, Allantoin, Ethylhexylglycerin",
   is_featured: "false",
   is_bestseller: "true",
   is_available_for_ai: "true",
@@ -569,6 +727,7 @@ const CSV_EXAMPLE: Record<string, string> = {
     "<p>A lightweight serum that layers three molecular weights of hyaluronic acid for both surface and deep hydration.</p>",
   how_to_use_en:
     "<p>Apply 2–3 drops to damp skin after toning, morning and evening.</p>",
+  warnings_en: "Avoid contact with eyes. Discontinue use if irritation occurs.",
   seo_title_en: "Hyaluron Glow Serum — YU.R",
   seo_description_en: "Hydrating hyaluronic serum from YU.R.",
   name_nl: "Hyaluron Glow Serum",
@@ -576,6 +735,7 @@ const CSV_EXAMPLE: Record<string, string> = {
   short_description_nl: "",
   description_nl: "<p>Een licht serum met drie soorten hyaluronzuur.</p>",
   how_to_use_nl: "",
+  warnings_nl: "",
   seo_title_nl: "",
   seo_description_nl: "",
   name_fr: "Sérum Hyaluron Glow",
@@ -583,6 +743,7 @@ const CSV_EXAMPLE: Record<string, string> = {
   short_description_fr: "",
   description_fr: "<p>Un sérum léger à trois poids d'acide hyaluronique.</p>",
   how_to_use_fr: "",
+  warnings_fr: "",
   seo_title_fr: "",
   seo_description_fr: "",
   name_ru: "Сыворотка с гиалуроновой кислотой",
@@ -590,6 +751,7 @@ const CSV_EXAMPLE: Record<string, string> = {
   short_description_ru: "",
   description_ru: "<p>Лёгкая сыворотка с тремя видами гиалуроновой кислоты.</p>",
   how_to_use_ru: "",
+  warnings_ru: "",
   seo_title_ru: "",
   seo_description_ru: "",
   category_slugs: "serums;hydration",

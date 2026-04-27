@@ -14,7 +14,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { ProductStatus } from "@prisma/client";
+import { AudienceCategory, ProductStatus } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { updateBasics, type ActionState } from "@/app/admin/products/actions";
 
@@ -29,6 +29,24 @@ type Initial = {
   comparePrice: string;
   volumeMl: string;
   weightGrams: string;
+  // ─── Supplier-spec fields (xlsx round-trip) ─────────────────────────
+  productLine: string;
+  barcode: string;
+  shelfLifeMonths: string;
+  originCountry: string;       // ISO-3166 alpha-2
+  hsCode: string;
+  audienceCategory: AudienceCategory;
+  inciList: string;
+};
+
+// User-friendly labels for the audience dropdown — keep order stable so
+// UNISEX (the default for ~90 % of K-beauty) is the first option.
+const AUDIENCE_LABEL: Record<AudienceCategory, string> = {
+  UNISEX: "Unisex (default)",
+  WOMEN: "Women",
+  MEN: "Men",
+  KIDS: "Kids",
+  BABIES: "Babies",
 };
 
 const INITIAL_STATE: ActionState = { ok: true };
@@ -106,9 +124,9 @@ export function BasicsForm({
       {/* ── Physical ──────────────────────────────────────────────── */}
       <Section
         title="Physical"
-        hint="Volume shows on the product page as a ml badge. Weight is used by Sendcloud to quote shipping."
+        hint="Volume shows on the product page as a ml badge. Weight is used by Sendcloud to quote shipping. Shelf life appears in the product details panel for customers."
       >
-        <div className="grid gap-6 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-3">
           <Field
             label="Volume (ml)"
             name="volumeMl"
@@ -125,7 +143,95 @@ export function BasicsForm({
             defaultValue={initial.weightGrams}
             errors={state.fieldErrors?.weightGrams}
           />
+          <Field
+            label="Shelf life (months)"
+            name="shelfLifeMonths"
+            inputMode="numeric"
+            placeholder="36"
+            defaultValue={initial.shelfLifeMonths}
+            hint="Unopened. PAO (after-opening) is separate."
+            errors={state.fieldErrors?.shelfLifeMonths}
+          />
         </div>
+      </Section>
+
+      {/* ── Supplier / compliance ─────────────────────────────────── */}
+      {/* Honors the columns from Sofia's master-data sheet. Origin and
+          audience surface on the public PDP; barcode + HS code are for
+          ops (returns scanning, customs paperwork, retail compliance). */}
+      <Section
+        title="Supplier &amp; compliance"
+        hint="Mirrors the supplier data sheet. Barcode is the EAN-13 from the manufacturer; HS code is for customs paperwork."
+      >
+        <div className="grid gap-6 sm:grid-cols-2">
+          <Field
+            label="Product line"
+            name="productLine"
+            placeholder="e.g. Yu.R PRO"
+            defaultValue={initial.productLine}
+            hint="Sub-brand within YU.R, if any."
+          />
+          <Field
+            label="Barcode (EAN / UPC / GTIN)"
+            name="barcode"
+            inputMode="numeric"
+            placeholder="8809085104847"
+            defaultValue={initial.barcode}
+            hint="Digits only. 8–14 characters."
+            errors={state.fieldErrors?.barcode}
+          />
+          <Field
+            label="Country of origin (ISO-2)"
+            name="originCountry"
+            placeholder="KR"
+            defaultValue={initial.originCountry}
+            hint="Two-letter code, e.g. KR for South Korea."
+            errors={state.fieldErrors?.originCountry}
+          />
+          <Field
+            label="HS code"
+            name="hsCode"
+            inputMode="numeric"
+            placeholder="3304991000"
+            defaultValue={initial.hsCode}
+            hint="Customs classification (Sendcloud, invoices)."
+            errors={state.fieldErrors?.hsCode}
+          />
+          <div>
+            <Label>Audience</Label>
+            <select
+              name="audienceCategory"
+              defaultValue={initial.audienceCategory}
+              className="mt-1 w-full border border-ink/15 bg-white px-3 py-2 text-[13px] text-ink focus:border-ink focus:outline-none"
+            >
+              {(Object.keys(AUDIENCE_LABEL) as AudienceCategory[]).map((k) => (
+                <option key={k} value={k}>
+                  {AUDIENCE_LABEL[k]}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-[11px] text-ink-mid">
+              Most YU.R products are unisex. Used for the audience filter.
+            </p>
+          </div>
+        </div>
+      </Section>
+
+      {/* ── Full INCI ─────────────────────────────────────────────── */}
+      {/* Language-agnostic — INCI nomenclature is the same in every
+          locale. Stored once on Product, rendered as an accordion on
+          the customer PDP under "Full ingredient list". */}
+      <Section
+        title="Full ingredient list (INCI)"
+        hint="The complete declaration as it appears on the packaging. One paragraph, comma-separated, no formatting needed."
+      >
+        <textarea
+          name="inciList"
+          defaultValue={initial.inciList}
+          rows={6}
+          placeholder="Water, Glycerin, Sodium Hyaluronate, …"
+          className="w-full border border-ink/15 bg-white px-3 py-2 font-mono text-[12px] leading-relaxed text-ink placeholder:text-ink-mid/60 focus:border-ink focus:outline-none"
+        />
       </Section>
 
       {/* ── Visibility toggles ────────────────────────────────────── */}
