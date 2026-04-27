@@ -14,10 +14,19 @@ import {
   Link as LinkIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { AdminMediaRow } from "@/lib/queries/admin-media";
+import type {
+  AdminMediaRow,
+  MediaPickerProduct,
+} from "@/lib/queries/admin-media";
 import { MediaDrawer } from "./media-drawer";
 
-export function MediaCard({ media }: { media: AdminMediaRow }) {
+export function MediaCard({
+  media,
+  pickerProducts,
+}: {
+  media: AdminMediaRow;
+  pickerProducts: MediaPickerProduct[];
+}) {
   const [open, setOpen] = useState(false);
   const orphan = !media.productId && media.bannerCount === 0;
 
@@ -94,7 +103,13 @@ export function MediaCard({ media }: { media: AdminMediaRow }) {
         </div>
       </div>
 
-      {open && <MediaDrawer media={media} onClose={() => setOpen(false)} />}
+      {open && (
+        <MediaDrawer
+          media={media}
+          pickerProducts={pickerProducts}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </>
   );
 }

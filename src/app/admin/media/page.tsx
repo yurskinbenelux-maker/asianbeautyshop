@@ -15,12 +15,14 @@ import Link from "next/link";
 import { ImageIcon } from "lucide-react";
 import {
   listAdminMedia,
+  listProductsForMediaPicker,
   MEDIA_PAGE_SIZE,
   type MediaScope,
 } from "@/lib/queries/admin-media";
 import { MediaFilters } from "@/components/admin/media/media-filters";
 import { MediaCard } from "@/components/admin/media/media-card";
 import { OrphanCleanup } from "@/components/admin/media/orphan-cleanup";
+import { LibraryUploader } from "@/components/admin/media/library-uploader";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +48,12 @@ export default async function MediaPage({
   const q = sp.q ?? "";
   const page = Math.max(1, Number(sp.page) || 1);
 
-  const result = await listAdminMedia({ scope, q }, page);
+  // The grid + the picker that lives inside each card's drawer share
+  // the request — fetched in parallel because they're independent.
+  const [result, pickerProducts] = await Promise.all([
+    listAdminMedia({ scope, q }, page),
+    listProductsForMediaPicker(),
+  ]);
   const totalPages = Math.max(1, Math.ceil(result.total / MEDIA_PAGE_SIZE));
 
   return (
@@ -68,6 +75,12 @@ export default async function MediaPage({
         </div>
       </header>
 
+      {/* Drag-drop / pick-files zone. Always visible at the top so
+          uploading is the most prominent action on the page. */}
+      <div className="mt-8">
+        <LibraryUploader />
+      </div>
+
       <section className="mt-8 grid gap-3 sm:grid-cols-3">
         <Stat label="Total images" value={result.counts.all} />
         <Stat label="Linked to products" value={result.counts.linked} />
@@ -88,7 +101,11 @@ export default async function MediaPage({
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {result.rows.map((m) => (
-              <MediaCard key={m.id} media={m} />
+              <MediaCard
+                key={m.id}
+                media={m}
+                pickerProducts={pickerProducts}
+              />
             ))}
           </div>
         )}

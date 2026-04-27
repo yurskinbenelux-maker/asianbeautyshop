@@ -13,7 +13,9 @@ import {
   CheckCircle2,
   Copy,
   Crown,
+  Link2,
   Loader2,
+  Search,
   Trash2,
   X,
 } from "lucide-react";
@@ -22,19 +24,25 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   deleteMediaAction,
+  linkMediaToProductAction,
   setPrimaryMediaAction,
   updateMediaAltAction,
   type ActionState,
 } from "@/app/admin/media/actions";
-import type { AdminMediaRow } from "@/lib/queries/admin-media";
+import type {
+  AdminMediaRow,
+  MediaPickerProduct,
+} from "@/lib/queries/admin-media";
 
 const INITIAL: ActionState = { ok: false };
 
 export function MediaDrawer({
   media,
+  pickerProducts,
   onClose,
 }: {
   media: AdminMediaRow;
+  pickerProducts: MediaPickerProduct[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -44,8 +52,15 @@ export function MediaDrawer({
     INITIAL,
   );
   const [deleteState, deleteAction] = useActionState(deleteMediaAction, INITIAL);
+  const [linkState, linkAction] = useActionState(
+    linkMediaToProductAction,
+    INITIAL,
+  );
   const [copied, setCopied] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [pickerQuery, setPickerQuery] = useState("");
+  const [pickedProductId, setPickedProductId] = useState<string | null>(null);
+  const [makePrimary, setMakePrimary] = useState(false);
 
   // Close on Escape — nice keyboard parity with the cart drawer.
   useEffect(() => {
@@ -60,6 +75,17 @@ export function MediaDrawer({
   useEffect(() => {
     if (altState.ok || primaryState.ok) router.refresh();
   }, [altState.ok, primaryState.ok, router]);
+
+  // After a successful link, refresh the page (so usage counts update)
+  // and reset the picker so the next link starts clean.
+  useEffect(() => {
+    if (linkState.ok) {
+      router.refresh();
+      setPickedProductId(null);
+      setMakePrimary(false);
+      setPickerQuery("");
+    }
+  }, [linkState.ok, router]);
 
   // Close after successful delete.
   useEffect(() => {
@@ -212,6 +238,138 @@ export function MediaDrawer({
             </form>
           )}
 
+          {/* Link to a product ---------------------------------------------- */}
+          {/* Same image can power multiple PDPs — picking a product here
+              creates a new Media row pointing at the same storage URL.
+              The "Make primary" checkbox flips that copy to be the
+              product's hero image (clearing any prior primary). */}
+          <div className="border-t border-ink/10 pt-6">
+            <div className="eyebrow flex items-center gap-2">
+              <Link2 className="h-3 w-3" />
+              Link to a product
+            </div>
+            <p className="mt-2 text-[12px] text-ink-mid">
+              Reuse this image on another product. The file isn&apos;t
+              duplicated — only the link.
+            </p>
+
+            <form action={linkAction} className="mt-4 space-y-3">
+              <input type="hidden" name="mediaId" value={media.id} />
+              <input
+                type="hidden"
+                name="productId"
+                value={pickedProductId ?? ""}
+              />
+              <input
+                type="hidden"
+                name="setAsPrimary"
+                value={makePrimary ? "on" : ""}
+              />
+
+              {/* Search field — small client-side filter over the
+                  pre-loaded product list. */}
+              <label className="flex items-center gap-2 border border-ink/15 bg-white px-3 py-2 text-[12px] text-ink-mid focus-within:border-ink">
+                <Search className="h-3.5 w-3.5" />
+                <input
+                  type="search"
+                  value={pickerQuery}
+                  onChange={(e) => setPickerQuery(e.target.value)}
+                  placeholder="Search products by name…"
+                  className="w-full bg-transparent text-[13px] text-ink placeholder:text-ink-mid/60 focus:outline-none"
+                />
+              </label>
+
+              {/* Filtered product results — clickable rows. Capped to
+                  20 to keep the list readable; refine the query if you
+                  don't see what you're looking for. */}
+              <ul className="max-h-56 space-y-0.5 overflow-y-auto border border-ink/10 bg-white p-1">
+                {(() => {
+                  const q = pickerQuery.trim().toLowerCase();
+                  const filtered = q
+                    ? pickerProducts.filter((p) =>
+                        p.name.toLowerCase().includes(q),
+                      )
+                    : pickerProducts;
+                  const visible = filtered.slice(0, 20);
+                  if (visible.length === 0) {
+                    return (
+                      <li className="px-3 py-2 text-[12px] italic text-ink-mid">
+                        No matches.
+                      </li>
+                    );
+                  }
+                  return visible.map((p) => {
+                    const picked = pickedProductId === p.id;
+                    const alreadyOnThisProduct = media.productId === p.id;
+                    return (
+                      <li key={p.id}>
+                        <button
+                          type="button"
+                          onClick={() => setPickedProductId(p.id)}
+                          disabled={alreadyOnThisProduct}
+                          className={cn(
+                            "flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left text-[13px] transition-colors",
+                            alreadyOnThisProduct
+                              ? "cursor-not-allowed text-ink-mid/50"
+                              : picked
+                                ? "bg-ink text-rice"
+                                : "text-ink hover:bg-ink/5",
+                          )}
+                        >
+                          <span className="truncate">{p.name}</span>
+                          {alreadyOnThisProduct && (
+                            <span className="shrink-0 text-[10px] uppercase tracking-label">
+                              Current
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  });
+                })()}
+              </ul>
+
+              {/* Optional: make this the new primary image on the picked
+                  product. Disabled until a product is picked because it
+                  has no meaning otherwise. */}
+              <label className="flex items-center gap-2 text-[12px] text-ink-mid">
+                <input
+                  type="checkbox"
+                  checked={makePrimary}
+                  onChange={(e) => setMakePrimary(e.target.checked)}
+                  disabled={!pickedProductId}
+                  className="h-3.5 w-3.5 cursor-pointer accent-ink disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                <span
+                  className={cn(
+                    !pickedProductId && "opacity-50",
+                  )}
+                >
+                  Use as the product&apos;s primary image
+                </span>
+              </label>
+
+              <div className="flex items-center gap-3">
+                <LinkButton disabled={!pickedProductId} />
+                {linkState.message && (
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 text-[11px]",
+                      linkState.ok ? "text-sage" : "text-vermilion",
+                    )}
+                  >
+                    {linkState.ok ? (
+                      <CheckCircle2 className="h-3 w-3" />
+                    ) : (
+                      <AlertCircle className="h-3 w-3" />
+                    )}
+                    {linkState.message}
+                  </span>
+                )}
+              </div>
+            </form>
+          </div>
+
           {/* Delete --------------------------------------------------------- */}
           <div className="border-t border-ink/10 pt-6">
             <div className="eyebrow text-vermilion">Danger zone</div>
@@ -284,6 +442,24 @@ function SetPrimaryButton() {
         <Crown className="h-3 w-3" />
       )}
       Make primary image
+    </button>
+  );
+}
+
+function LinkButton({ disabled }: { disabled: boolean }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending || disabled}
+      className="inline-flex items-center gap-1.5 border border-ink bg-ink px-3 py-2 text-[11px] uppercase tracking-label text-rice hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {pending ? (
+        <Loader2 className="h-3 w-3 animate-spin" />
+      ) : (
+        <Link2 className="h-3 w-3" />
+      )}
+      Link image
     </button>
   );
 }

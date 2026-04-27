@@ -114,3 +114,81 @@ export async function listAdminMedia(
 }
 
 export const MEDIA_PAGE_SIZE = PAGE_SIZE;
+
+/**
+ * Lightweight product list for the media drawer's product picker. Each
+ * product surfaces its EN name + slug — we don't bother localising the
+ * picker because admin is EN-only. Excludes archived products. Returns
+ * EVERY product, sorted A→Z; the catalogue is small (≈35 SKUs) so
+ * pagination is wasted complexity.
+ */
+export type MediaPickerProduct = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+export async function listProductsForMediaPicker(): Promise<
+  MediaPickerProduct[]
+> {
+  const products = await prisma.product.findMany({
+    where: { deletedAt: null },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      translations: {
+        where: { locale: Locale.EN },
+        select: { name: true, slug: true },
+      },
+    },
+  });
+
+  return products
+    .map((p) => ({
+      id: p.id,
+      name: p.translations[0]?.name ?? "(untitled)",
+      slug: p.translations[0]?.slug ?? p.id,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * For a given URL, who references it? Used by the drawer to surface
+ * "this image is linked to N products" so Sofia can see reuse at a
+ * glance. Each reference is its own Media row (one per product).
+ */
+export type MediaUsage = {
+  mediaId: string;
+  productId: string | null;
+  productName: string | null;
+  productSlug: string | null;
+  isPrimary: boolean;
+};
+
+export async function listUsagesForUrl(url: string): Promise<MediaUsage[]> {
+  const rows = await prisma.media.findMany({
+    where: { url },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      productId: true,
+      isPrimary: true,
+      product: {
+        select: {
+          translations: {
+            where: { locale: Locale.EN },
+            select: { name: true, slug: true },
+          },
+        },
+      },
+    },
+  });
+
+  return rows.map((r) => ({
+    mediaId: r.id,
+    productId: r.productId,
+    productName: r.product?.translations[0]?.name ?? null,
+    productSlug: r.product?.translations[0]?.slug ?? null,
+    isPrimary: r.isPrimary,
+  }));
+}
