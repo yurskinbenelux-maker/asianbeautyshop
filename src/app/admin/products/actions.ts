@@ -586,6 +586,65 @@ export async function duplicateProduct(formData: FormData) {
   redirect(`/admin/products/${created.id}?tab=basics`);
 }
 
+// ──────── bulk publish ──────────────────────────────────────────────────
+//
+// One-click "publish all drafts" for the post-CSV-import flow. After Sofia
+// imports 35 supplier products and sets prices, she shouldn't have to open
+// each PDP and flip status to PUBLISHED. One button does the lot.
+//
+// Safety: skips any draft whose price is €0.00 — that's the import default
+// and going live at €0 lets customers buy for free. The action surfaces
+// the skipped count via a redirect query param so the UI can show "X
+// products skipped — set prices first" without a separate flash mechanism.
+// ─────────────────────────────────────────────────────────────────────────
+
+export async function bulkPublishDraftsAction() {
+  const actor = await requireAdmin();
+
+  // Count + collect first so we can audit-log the count and report skips.
+  const eligible = await prisma.product.findMany({
+    where: {
+      status: ProductStatus.DRAFT,
+      deletedAt: null,
+      // Decimal column: > 0 enforced via Prisma's numeric comparator.
+      price: { gt: new Prisma.Decimal("0") },
+    },
+    select: { id: true, sku: true },
+  });
+
+  const skippedCount = await prisma.product.count({
+    where: {
+      status: ProductStatus.DRAFT,
+      deletedAt: null,
+      price: { lte: new Prisma.Decimal("0") },
+    },
+  });
+
+  if (eligible.length === 0) {
+    redirect(`/admin/products?status=DRAFT&publishedNone=1&skipped=${skippedCount}`);
+  }
+
+  await prisma.product.updateMany({
+    where: { id: { in: eligible.map((p) => p.id) } },
+    data: { status: ProductStatus.PUBLISHED },
+  });
+
+  await logAudit({
+    actor,
+    action: "products.bulk_publish",
+    entityType: "Product",
+    entityId: null,
+    summary: `Published ${eligible.length} drafts (${skippedCount} skipped at €0)`,
+    meta: { publishedSkus: eligible.map((p) => p.sku), skippedCount },
+  });
+
+  revalidatePath("/admin/products");
+  revalidatePath("/", "layout");
+  redirect(
+    `/admin/products?status=PUBLISHED&published=${eligible.length}&skipped=${skippedCount}`,
+  );
+}
+
 // ──────── soft delete / restore / hard delete ───────────────────────────
 
 /** GDPR-friendly: we flag, never drop. Products can be recovered from

@@ -10,11 +10,20 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
-import { CloudUpload, Copy, Plus, Search, RotateCcw, Trash2 } from "lucide-react";
+import {
+  CloudUpload,
+  Copy,
+  Plus,
+  Search,
+  RotateCcw,
+  Trash2,
+  Rocket,
+} from "lucide-react";
 import { Prisma, ProductStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
 import {
+  bulkPublishDraftsAction,
   createProduct,
   duplicateProduct,
   hardDeleteProduct,
@@ -28,14 +37,23 @@ export const dynamic = "force-dynamic";
 // buildStatusHref helper below can typecheck against it.
 type StatusFilter = ProductStatus | "TRASH";
 
-type SearchParams = Promise<{ q?: string; status?: string; err?: string }>;
+type SearchParams = Promise<{
+  q?: string;
+  status?: string;
+  err?: string;
+  /** Set by bulkPublishDraftsAction's redirect — drives the green banner. */
+  published?: string;
+  publishedNone?: string;
+  skipped?: string;
+}>;
 
 export default async function ProductsListPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const { q, status, err } = await searchParams;
+  const { q, status, err, published, publishedNone, skipped } =
+    await searchParams;
   const statusFilter: StatusFilter | undefined =
     status === "DRAFT" ||
     status === "PUBLISHED" ||
@@ -87,15 +105,34 @@ export default async function ProductsListPage({
     },
   });
 
-  const [total, publishedCount, draftCount, archivedCount, trashCount] =
-    await Promise.all([
-      prisma.product.count({ where: { deletedAt: null } }),
-      prisma.product.count({ where: { deletedAt: null, status: "PUBLISHED" } }),
-      prisma.product.count({ where: { deletedAt: null, status: "DRAFT" } }),
-      prisma.product.count({ where: { deletedAt: null, status: "ARCHIVED" } }),
-      // Trash = soft-deleted regardless of status.
-      prisma.product.count({ where: { NOT: { deletedAt: null } } }),
-    ]);
+  const [
+    total,
+    publishedCount,
+    draftCount,
+    archivedCount,
+    trashCount,
+    publishableDraftCount,
+  ] = await Promise.all([
+    prisma.product.count({ where: { deletedAt: null } }),
+    prisma.product.count({ where: { deletedAt: null, status: "PUBLISHED" } }),
+    prisma.product.count({ where: { deletedAt: null, status: "DRAFT" } }),
+    prisma.product.count({ where: { deletedAt: null, status: "ARCHIVED" } }),
+    // Trash = soft-deleted regardless of status.
+    prisma.product.count({ where: { NOT: { deletedAt: null } } }),
+    // Drafts that have a real price set — drives the "Publish all drafts"
+    // button label and visibility. €0 drafts are excluded so a one-click
+    // bulk action can't accidentally make products buyable for free.
+    prisma.product.count({
+      where: {
+        deletedAt: null,
+        status: "DRAFT",
+        price: { gt: new Prisma.Decimal("0") },
+      },
+    }),
+  ]);
+
+  // €0 drafts that the bulk action would skip — useful copy under the button.
+  const zeroPricedDraftCount = draftCount - publishableDraftCount;
 
   return (
     <div className="mx-auto max-w-6xl px-8 py-12">
@@ -113,6 +150,23 @@ export default async function ProductsListPage({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Bulk publish — only shown when there's something to publish.
+              Skips €0 drafts (the import default) so a click can't make
+              products buyable for free. */}
+          {publishableDraftCount > 0 && (
+            <form action={bulkPublishDraftsAction}>
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 border border-gold/40 bg-gold/10 px-4 py-2 text-[12px] uppercase tracking-label text-gold transition-colors hover:border-gold hover:bg-gold hover:text-white"
+                title="Flips every DRAFT with a real price (€>0) to PUBLISHED in one click."
+              >
+                <Rocket className="h-4 w-4" aria-hidden />
+                Publish {publishableDraftCount}{" "}
+                {publishableDraftCount === 1 ? "draft" : "drafts"}
+              </button>
+            </form>
+          )}
+
           {/* Secondary: bulk CSV import — link to /admin/products/import */}
           <Link
             href="/admin/products/import"
@@ -134,6 +188,17 @@ export default async function ProductsListPage({
           </form>
         </div>
       </header>
+
+      {/* Hint under the masthead when there's a tail of €0 drafts that
+          the bulk action would skip — gives Sofia a nudge to set prices
+          before clicking. */}
+      {publishableDraftCount > 0 && zeroPricedDraftCount > 0 && (
+        <p className="mt-3 text-[11px] uppercase tracking-label text-ink-mid">
+          {zeroPricedDraftCount}{" "}
+          {zeroPricedDraftCount === 1 ? "draft" : "drafts"} at €0 will be
+          skipped — set a price first.
+        </p>
+      )}
 
       {/* filters */}
       <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-ink/10 pt-6">
@@ -190,6 +255,30 @@ export default async function ProductsListPage({
         <div className="mt-4 border border-vermilion/30 bg-vermilion/5 px-4 py-3 text-[12px] text-vermilion">
           Couldn&rsquo;t delete: that product has variants referenced by past
           orders. Keep the trashed row instead — it preserves order history.
+        </div>
+      )}
+
+      {/* Bulk-publish result banners. The action redirects with one of:
+          ?published=N&skipped=M     — green success, optional skip note
+          ?publishedNone=1&skipped=M — amber "nothing to do, all at €0"
+      */}
+      {published && Number(published) > 0 && (
+        <div className="mt-4 border border-gold/40 bg-gold/10 px-4 py-3 text-[12px] text-gold">
+          Published {published}{" "}
+          {Number(published) === 1 ? "product" : "products"}.
+          {skipped && Number(skipped) > 0 && (
+            <>
+              {" "}
+              Skipped {skipped} at €0 — set their prices first, then run
+              again.
+            </>
+          )}
+        </div>
+      )}
+      {publishedNone === "1" && (
+        <div className="mt-4 border border-vermilion/30 bg-vermilion/5 px-4 py-3 text-[12px] text-vermilion">
+          Nothing to publish — all draft products are at €0. Set a price
+          on at least one before clicking Publish drafts.
         </div>
       )}
 
