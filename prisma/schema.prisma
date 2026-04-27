@@ -276,8 +276,36 @@ model ProductVariant {
   orderItems  OrderItem[]
   cartItems   CartItem[]
   movements   InventoryMovement[]
+  backInStock BackInStockSubscription[]
 
   @@index([productId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  BACK-IN-STOCK SUBSCRIPTIONS
+// ─────────────────────────────────────────────────────────────────────────
+// Customer signs up with their email when a variant is out of stock; the
+// hourly cron checks each subscription's variant.stock and, if positive,
+// fires a "It's back" email and stamps notifiedAt so we never re-notify
+// the same row twice.
+//
+// Why per-variant (not per-product): stock lives on the variant. A product
+// with no variants has no stock concept at all, so there's nothing to
+// notify on. Keeping the FK required makes the unique index honest in
+// Postgres (NULLs aren't equal — would let a single email subscribe many
+// times to the same product).
+
+model BackInStockSubscription {
+  id         String   @id @default(uuid()) @db.Uuid
+  email      String
+  variantId  String   @db.Uuid
+  variant    ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  locale     Locale   @default(EN)
+  createdAt  DateTime @default(now())
+  notifiedAt DateTime?
+
+  @@unique([email, variantId])
+  @@index([variantId, notifiedAt])
 }
 
 model ProductCategory {

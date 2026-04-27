@@ -15,11 +15,28 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Check } from "lucide-react";
+import { Locale } from "@prisma/client";
 import { useCart } from "@/components/cart/cart-provider";
 import { cn, formatEur } from "@/lib/utils";
 import type { PdpVariant } from "@/lib/queries/pdp";
+import { BackInStockForm } from "./back-in-stock-form";
+
+/** URL locale ("en") → Prisma Locale enum ("EN"). Defensive — falls back
+ *  to EN if the runtime ever surfaces something we don't recognise. */
+function toPrismaLocale(urlLocale: string): Locale {
+  switch (urlLocale.toLowerCase()) {
+    case "nl":
+      return Locale.NL;
+    case "fr":
+      return Locale.FR;
+    case "ru":
+      return Locale.RU;
+    default:
+      return Locale.EN;
+  }
+}
 
 type Props = {
   productId: string;
@@ -46,6 +63,8 @@ export function ProductPurchase({
 }: Props) {
   const t = useTranslations("product");
   const tCart = useTranslations("cart");
+  const urlLocale = useLocale();
+  const prismaLocale = toPrismaLocale(urlLocale);
   const { addItem } = useCart();
   const [, startTransition] = useTransition();
   const [justAdded, setJustAdded] = useState(false);
@@ -187,42 +206,55 @@ export function ProductPurchase({
         </>
       )}
 
-      {/* ── add-to-ritual CTA ──────────────────────────────────── */}
+      {/* ── CTA — add to cart, OR back-in-stock signup ──────────── */}
+      {/* When the active variant has stock, show the standard add-to-cart
+          button. When it's out of stock AND we have a variantId (we always
+          do here, since !isInStock implies activeVariant exists per the
+          stock-signal block above), swap the disabled CTA for the
+          back-in-stock email capture — same height so layout doesn't jump. */}
       <div className="mt-8">
-        <button
-          type="button"
-          onClick={onAdd}
-          aria-live="polite"
-          disabled={!isInStock || isAdding}
-          className={cn(
-            "group relative inline-flex h-14 w-full items-center justify-center overflow-hidden text-[13px] uppercase tracking-label transition-colors",
-            !isInStock
-              ? "cursor-not-allowed bg-ink/20 text-rice"
-              : justAdded
+        {isInStock ? (
+          <button
+            type="button"
+            onClick={onAdd}
+            aria-live="polite"
+            disabled={isAdding}
+            className={cn(
+              "group relative inline-flex h-14 w-full items-center justify-center overflow-hidden text-[13px] uppercase tracking-label transition-colors",
+              justAdded
                 ? "bg-ink/90 text-rice"
                 : isAdding
                   ? "bg-ink/80 text-rice"
                   : "bg-ink text-rice hover:bg-vermilion",
-          )}
-        >
-          <span className="relative z-10 inline-flex items-center gap-2">
-            {!isInStock ? (
-              t("out_of_stock")
-            ) : justAdded ? (
-              <>
-                <Check className="h-3.5 w-3.5" aria-hidden />
-                {tCart("added_inline")}
-              </>
-            ) : isAdding ? (
-              <>
-                <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-rice/70" />
-                {tCart("adding")}
-              </>
-            ) : (
-              t("add_to_ritual")
             )}
-          </span>
-        </button>
+          >
+            <span className="relative z-10 inline-flex items-center gap-2">
+              {justAdded ? (
+                <>
+                  <Check className="h-3.5 w-3.5" aria-hidden />
+                  {tCart("added_inline")}
+                </>
+              ) : isAdding ? (
+                <>
+                  <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-rice/70" />
+                  {tCart("adding")}
+                </>
+              ) : (
+                t("add_to_ritual")
+              )}
+            </span>
+          </button>
+        ) : activeVariant ? (
+          <BackInStockForm
+            variantId={activeVariant.id}
+            locale={prismaLocale}
+          />
+        ) : (
+          // Defensive: no variant + out of stock shouldn't occur (no
+          // variant means no stock concept) but keep a quiet message
+          // rather than rendering nothing.
+          <p className="text-[13px] text-ink-mid">{t("out_of_stock")}</p>
+        )}
       </div>
     </div>
   );
