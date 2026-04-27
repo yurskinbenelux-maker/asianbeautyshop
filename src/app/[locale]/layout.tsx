@@ -22,6 +22,7 @@ import { MotionProvider } from "@/components/motion/motion-provider";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { peekCartSummary } from "@/lib/cart/cart";
+import { getShopCategories } from "@/lib/queries/products";
 import { CookieBanner } from "@/components/consent/cookie-banner";
 import { readConsentCookie } from "@/lib/consent/consent";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -149,6 +150,14 @@ export default async function LocaleLayout({ children, params }: Props) {
   // returning visitors — no flash of "we use cookies" on every page view.
   const consent = await readConsentCookie();
 
+  // Fetch the canonical category list once at the layout level — the
+  // header's SHOP hover menu uses it on every page, and the layout is
+  // the cheapest level to fetch from (one DB read per request rather
+  // than one per page). Includes only categories with ≥1 published SKU.
+  const shopCategories = (await getShopCategories(locale)).filter(
+    (c) => c.count > 0,
+  );
+
   return (
     <html
       lang={locale}
@@ -165,7 +174,7 @@ export default async function LocaleLayout({ children, params }: Props) {
             <CartProvider initialCart={initialCart}>
               {/* WCAG 2.4.1 — first tabbable, jumps past nav/locale/cart */}
               <SkipLink />
-              <Nav />
+              <Nav shopCategories={shopCategories} />
               <main id="main" className="relative">{children}</main>
               <Footer />
               <ConciergeOrb />

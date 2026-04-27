@@ -15,8 +15,19 @@ import { LocaleSwitcher } from "./locale-switcher";
 import { CartButton } from "@/components/cart/cart-button";
 import { SearchOverlay } from "./search-overlay";
 import { Logo } from "@/components/brand/logo";
+import {
+  ShopMegaMenu,
+  type ShopMegaMenuCategory,
+} from "@/components/layout/shop-mega-menu";
 
-export function Nav() {
+export function Nav({
+  shopCategories = [],
+}: {
+  /** Categories rendered inside the SHOP hover-menu. Fetched once at the
+   *  layout level so every page reuses the same query. Default `[]` keeps
+   *  storybook / preview mounts working without prop noise. */
+  shopCategories?: ShopMegaMenuCategory[];
+}) {
   const t = useTranslations();
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
@@ -117,8 +128,12 @@ export function Nav() {
         </Link>
 
         {/* ── Primary navigation (desktop only) ────────────────────── */}
+        {/* SHOP is rendered as a hover/focus mega-menu — clicking the
+            word still navigates to /shop, but hovering reveals every
+            category in a small panel below. The other primary links
+            stay simple text anchors. */}
         <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
-          <NavLink href="/shop">{t("nav.shop")}</NavLink>
+          <ShopMegaMenu categories={shopCategories} />
           <NavLink href="/rituals">{t("nav.rituals")}</NavLink>
           <NavLink href="/ingredients">{t("nav.ingredients")}</NavLink>
           <NavLink href="/journal">{t("nav.journal")}</NavLink>
