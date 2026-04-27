@@ -38,6 +38,19 @@ import {
 } from "@/app/admin/products/actions";
 import { cn } from "@/lib/utils";
 
+// Three line options surfaced as a single-select picker on the Organise
+// tab. We deliberately hard-code the labels here rather than importing
+// PRODUCT_LINES from @/lib/queries/products — that module imports
+// `prisma` at the top, which would drag the Prisma client into the
+// client bundle if a "use client" file pulled from it. The slug values
+// must match the canonical PRODUCT_LINES list on the server side.
+const LINE_OPTIONS = [
+  { slug: "yur" as const, label: "Yu•R" },
+  { slug: "yur-pro" as const, label: "Yu•R Pro" },
+  { slug: "yur-me" as const, label: "Yu•R Me" },
+];
+type ProductLineSlug = (typeof LINE_OPTIONS)[number]["slug"];
+
 // ──────── types ──────────────────────────────────────────────────────────
 
 export type TaxonomyOption = {
@@ -49,6 +62,12 @@ export type TaxonomyOption = {
 type Props = {
   productId: string;
   initial: {
+    /**
+     * Currently-selected line slug. Falls back to "yur" (the default
+     * line — null/empty productLine in DB) for legacy products that
+     * predate the picker.
+     */
+    productLineSlug: ProductLineSlug;
     categoryIds: string[];
     skinTypeIds: string[];
     concernIds: string[];
@@ -92,6 +111,13 @@ export function OrganiseForm({ productId, initial, options }: Props) {
     () => new Set(initial.ingredientIds),
   );
 
+  // Single-select line picker. Backed by a hidden input named
+  // "productLineSlug" so the existing FormData-only server action
+  // contract holds — no JSON round-trips, no separate save.
+  const [lineSlug, setLineSlug] = useState<ProductLineSlug>(
+    initial.productLineSlug,
+  );
+
   // Options mirror the server-provided lists but allow local growth when
   // the admin creates a new taxonomy item inline. We keep them sorted by
   // label so the UI stays stable.
@@ -130,6 +156,47 @@ export function OrganiseForm({ productId, initial, options }: Props) {
 
   return (
     <form action={formAction} className="space-y-12">
+      {/* ── Line ───────────────────────────────────────────────────── */}
+      {/* Single-select. Hidden input feeds productLineSlug into the
+          updateOrganise server action; the UI is a row of pill buttons
+          mirroring the front-end LineTabs visual language. */}
+      <section>
+        <header className="flex items-baseline justify-between gap-4">
+          <div>
+            <h3 className="font-display text-[18px] text-ink">Line</h3>
+            <p className="mt-1 max-w-prose text-[13px] leading-relaxed text-ink-mid">
+              Which YU.R line this product belongs to. Drives the line
+              tabs on /shop and the line landing pages.
+            </p>
+          </div>
+          <div className="text-[11px] uppercase tracking-label text-ink-mid">
+            {LINE_OPTIONS.find((o) => o.slug === lineSlug)?.label ?? "—"}
+          </div>
+        </header>
+        <input type="hidden" name="productLineSlug" value={lineSlug} />
+        <div className="mt-5 flex flex-wrap gap-2">
+          {LINE_OPTIONS.map((opt) => {
+            const isOn = lineSlug === opt.slug;
+            return (
+              <button
+                type="button"
+                key={opt.slug}
+                onClick={() => setLineSlug(opt.slug)}
+                aria-pressed={isOn}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-[12px] transition-colors",
+                  isOn
+                    ? "border-ink bg-ink text-rice"
+                    : "border-ink/15 bg-white/60 text-ink-mid hover:border-ink/40 hover:text-ink",
+                )}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       {/* ── Categories ─────────────────────────────────────────────── */}
       <Section
         title="Categories"

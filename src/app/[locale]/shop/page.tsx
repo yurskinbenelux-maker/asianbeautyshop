@@ -129,7 +129,10 @@ export default async function ShopPage({ params, searchParams }: Props) {
       take: PAGE_SIZE,
       ...filterArgs,
     }),
-    getShopCategories(locale),
+    // Categories are now line-aware: when the user picks a line, the
+    // strip below collapses to only the categories Sofia has stocked
+    // for that line. Without a line filter we still show every shelf.
+    getShopCategories(locale, { lineSlugs }),
     getShopFilters(locale),
   ]);
 

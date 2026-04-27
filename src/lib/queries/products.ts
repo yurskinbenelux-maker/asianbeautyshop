@@ -131,10 +131,13 @@ export type ShopFilterArgs = {
  * old imports wrote both depending on whether the supplier sheet had an
  * explicit blank or omitted the cell.
  */
+// Labels use U+2022 BULLET (•) per the YU.R brand book — "Yu•R", not
+// "Yu.R" or "YU.R". Matches the typography Max requested for the
+// front-end line tabs and the admin organize picker.
 export const PRODUCT_LINES = [
-  { slug: "yur", label: "Yu.R", dbValues: [null as string | null, ""] },
-  { slug: "yur-pro", label: "Yu.R Pro", dbValues: ["Yu.R PRO"] },
-  { slug: "yur-me", label: "Yu.R Me", dbValues: ["Yu.R Me"] },
+  { slug: "yur", label: "Yu•R", dbValues: [null as string | null, ""] },
+  { slug: "yur-pro", label: "Yu•R Pro", dbValues: ["Yu.R PRO"] },
+  { slug: "yur-me", label: "Yu•R Me", dbValues: ["Yu.R Me"] },
 ] as const;
 
 export type ProductLineSlug = (typeof PRODUCT_LINES)[number]["slug"];
@@ -284,13 +287,31 @@ export async function getShopProducts({
 /**
  * getShopCategories — used by the filter row on /shop.
  * Returns every active category with its translated name, plus the
- * count of products currently living in it.  Categories with zero
- * published products are still returned (Sofia may be staging).
+ * count of products currently living in it.
+ *
+ * When `lineSlugs` is passed (e.g. the customer picked Yu•R Pro from
+ * the line tabs), counts are scoped to products in that line AND
+ * categories with zero matching products are dropped — otherwise the
+ * strip turns into "0 PRODUCTS" noise. Categories that still have
+ * inventory across the whole catalogue are shown either way; the
+ * filtering happens via productLine on the join.
  */
 export async function getShopCategories(
   locale: string,
+  { lineSlugs }: { lineSlugs?: string[] } = {},
 ): Promise<Array<{ slug: string; name: string; count: number }>> {
   const loc = toPrismaLocale(locale);
+
+  // Combined where for the count subquery — published, not deleted, and
+  // (when filtering by line) restricted to that line's productLine values.
+  const baseProductWhere: Prisma.ProductWhereInput = {
+    status: ProductStatus.PUBLISHED,
+    deletedAt: null,
+  };
+  const productWhere: Prisma.ProductWhereInput =
+    lineSlugs && lineSlugs.length > 0
+      ? { AND: [baseProductWhere, lineWhere(lineSlugs)] }
+      : baseProductWhere;
 
   const cats = await prisma.category.findMany({
     where: { isActive: true },
@@ -300,16 +321,14 @@ export async function getShopCategories(
       _count: {
         select: {
           products: {
-            where: {
-              product: { status: ProductStatus.PUBLISHED, deletedAt: null },
-            },
+            where: { product: productWhere },
           },
         },
       },
     },
   });
 
-  return cats.map((c) => {
+  const mapped = cats.map((c) => {
     const tr =
       c.translations.find((t) => t.locale === loc) ??
       c.translations.find((t) => t.locale === Locale.EN);
@@ -319,6 +338,14 @@ export async function getShopCategories(
       count: c._count.products,
     };
   });
+
+  // When a line filter is active, hide categories with zero matches —
+  // they only confuse. Without a line filter we keep zeros (Sofia may be
+  // staging a new shelf and wants the chip to render as "MORE" candidate).
+  if (lineSlugs && lineSlugs.length > 0) {
+    return mapped.filter((c) => c.count > 0);
+  }
+  return mapped;
 }
 
 /**
@@ -552,8 +579,11 @@ export async function getShopFilters(
       .filter((b) => b.count > 0),
     // Lines come from a groupBy on Product.productLine, then re-bucketed
     // through PRODUCT_LINES so the order + labels match the design system
-    // (Yu.R first, Pro, then Me) regardless of how the rows happened to
-    // come back from the DB. Hidden if the line has zero published SKUs.
+    // (Yu•R first, Pro, then Me) regardless of how the rows happened to
+    // come back from the DB. We deliberately do NOT filter zero-count lines
+    // out here — the strip should always show all three so customers can
+    // tap into a line that's still being merchandised, and so admins can
+    // see at a glance which line has nothing published yet.
     lines: PRODUCT_LINES.map((l) => {
       const count = lineGroups
         .filter((g) =>
@@ -561,7 +591,7 @@ export async function getShopFilters(
         )
         .reduce((sum, g) => sum + g._count._all, 0);
       return { slug: l.slug, label: l.label, count };
-    }).filter((l) => l.count > 0),
+    }),
     ingredients: ingredients
       .map((i) => {
         const tr =

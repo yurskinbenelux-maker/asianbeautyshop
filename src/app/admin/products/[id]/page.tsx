@@ -27,6 +27,7 @@ import {
 } from "@/components/admin/products/organise-form";
 import { InventoryPanel } from "@/components/admin/products/inventory-panel";
 import { listProductMovements } from "@/lib/inventory/db";
+import { PRODUCT_LINES } from "@/lib/queries/products";
 
 export const dynamic = "force-dynamic";
 
@@ -392,6 +393,16 @@ export default async function ProductEditPage({
           <OrganiseForm
             productId={product.id}
             initial={{
+              // Resolve the stored productLine string back to a slug so
+              // the picker can highlight the right radio. Anything we
+              // don't recognise falls back to the default Yu•R line —
+              // safer than crashing the editor on a stale value.
+              productLineSlug:
+                PRODUCT_LINES.find((l) =>
+                  (l.dbValues as readonly (string | null)[]).includes(
+                    product.productLine,
+                  ),
+                )?.slug ?? "yur",
               categoryIds: product.categories.map((x) => x.categoryId),
               skinTypeIds: product.skinTypes.map((x) => x.skinTypeId),
               concernIds: product.concerns.map((x) => x.concernId),

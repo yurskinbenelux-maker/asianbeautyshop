@@ -74,16 +74,19 @@ export async function LineTabs({ lines, activeSlug, preservedParams }: Props) {
         {t("all")}
       </Tab>
       {/* Iterate PRODUCT_LINES (not the response array) so order is
-          deterministic — Yu.R, Pro, Me — even if the query changes. */}
+          deterministic — Yu•R, Pro, Me — even if the query changes.
+          Zero-count lines are still rendered (greyed-but-clickable) so
+          customers can browse into a line that's still being merchandised
+          and admins can see at a glance which line has nothing published. */}
       {PRODUCT_LINES.map((def) => {
         const taxon = lines.find((l) => l.slug === def.slug);
-        if (!taxon) return null; // hidden when count=0
+        const count = taxon?.count ?? 0;
         return (
           <Tab
             key={def.slug}
             href={buildHref(def.slug)}
             active={activeSlug === def.slug}
-            count={taxon.count}
+            count={count}
           >
             {def.label}
           </Tab>

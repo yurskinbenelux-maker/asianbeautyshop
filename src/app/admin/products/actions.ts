@@ -26,6 +26,7 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { PRODUCT_LINES } from "@/lib/queries/products";
 import {
   PRODUCT_MEDIA_BUCKET,
   supabaseAdmin,
@@ -988,7 +989,28 @@ export async function updateOrganise(
   const benefitIds = collectIds(formData, "benefitIds");
   const ingredientIds = collectIds(formData, "ingredientIds");
 
+  // Line picker — single-select. Empty / missing / unrecognised → null
+  // (default Yu•R line). The PRODUCT_LINES list in queries/products.ts
+  // is the canonical source of slug → DB-string mapping.
+  const lineSlugRaw = String(formData.get("productLineSlug") ?? "").trim();
+  const lineDef = PRODUCT_LINES.find((l) => l.slug === lineSlugRaw);
+  const productLineDbValue: string | null =
+    lineDef && lineDef.slug !== "yur"
+      ? // First non-null DB value for the line — that's what we write.
+        ((lineDef.dbValues as readonly (string | null)[]).find(
+          (v) => v !== null,
+        ) ?? null)
+      : null;
+
   try {
+    // Persist the line column outside the per-relation transactions.
+    // It's a scalar on Product, not a join table — keeping it separate
+    // means a relation failure further down doesn't roll back the
+    // line edit, which Sofia would find surprising.
+    await prisma.product.update({
+      where: { id: productId },
+      data: { productLine: productLineDbValue },
+    });
     // One transaction per relation — small, fast, and a failure on one
     // relation won't poison the others (they'd have succeeded already,
     // which matches the admin's mental model of "save per section").
