@@ -27,7 +27,7 @@ const CATEGORIES: ReadonlyArray<{
   { slug: "cleanser", sortOrder: 1, translations: { EN: "Cleanser", NL: "Reiniger", FR: "Nettoyant", RU: "\u041e\u0447\u0438\u0449\u0435\u043d\u0438\u0435" } },
   { slug: "toner", sortOrder: 2, translations: { EN: "Toner", NL: "Toner", FR: "Tonique", RU: "\u0422\u043e\u043d\u0435\u0440" } },
   { slug: "peeling", sortOrder: 3, translations: { EN: "Peeling", NL: "Peeling", FR: "Peeling", RU: "\u041f\u0438\u043b\u0438\u043d\u0433" } },
-  { slug: "serum", sortOrder: 4, translations: { EN: "Serum", NL: "Serum", FR: "S\u00e9rum", RU: "\u0421\u044b\u0432\u043e\u0440\u043e\u0442\u043a\u0430" } },
+  { slug: "essences-serums", sortOrder: 4, translations: { EN: "Essences & Serums", NL: "Essences & serums", FR: "Essences & s\u00e9rums", RU: "\u042d\u0441\u0441\u0435\u043d\u0446\u0438\u0438 \u0438 \u0441\u044b\u0432\u043e\u0440\u043e\u0442\u043a\u0438" } },
   { slug: "cream", sortOrder: 5, translations: { EN: "Cream", NL: "Cr\u00e8me", FR: "Cr\u00e8me", RU: "\u041a\u0440\u0435\u043c" } },
   { slug: "mask", sortOrder: 6, translations: { EN: "Mask", NL: "Masker", FR: "Masque", RU: "\u041c\u0430\u0441\u043a\u0430" } },
   { slug: "spf", sortOrder: 7, translations: { EN: "SPF", NL: "SPF", FR: "SPF", RU: "SPF" } },

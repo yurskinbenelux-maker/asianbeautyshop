@@ -75,13 +75,17 @@ const TARGETS: TargetCategory[] = [
     },
   },
   {
-    slug: "serum",
+    // The "treatment" step on a K-beauty routine bundles essences and
+    // serums together. Sofia chose the umbrella label so customers
+    // browsing this shelf see both formats without deciding upfront
+    // which they need.
+    slug: "essences-serums",
     sortOrder: 4,
     translations: {
-      EN: "Serum",
-      NL: "Serum",
-      FR: "Sérum",
-      RU: "Сыворотка",
+      EN: "Essences & Serums",
+      NL: "Essences & serums",
+      FR: "Essences & sérums",
+      RU: "Эссенции и сыворотки",
     },
   },
   {
@@ -132,10 +136,14 @@ const REMAP: Record<string, string> = {
   // Peeling — currently named "peeling-gel"
   "peeling-gel": "peeling",
 
-  // Treatment — essence + serum collapsed
-  essence: "serum",
-  "essences-serums": "serum",
-  "essences-and-serums": "serum",
+  // Treatment — both legacy slugs AND the singular "serum" fold into
+  // the umbrella "essences-serums" target. The third entry handles
+  // anyone who's already run an earlier version of this script (when
+  // the target was "serum") — re-running picks up that state and
+  // lands on "essences-serums" cleanly.
+  essence: "essences-serums",
+  "essences-and-serums": "essences-serums",
+  serum: "essences-serums",
 
   // Moisturisers — every texture + tinted moisturiser
   moisturisers: "cream",
