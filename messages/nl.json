@@ -28,7 +28,10 @@
     "about": "Over ons",
     "account": "Account",
     "cart": "Winkelmand",
-    "search": "Zoeken"
+    "search": "Zoeken",
+    "menu": "Menu",
+    "open_menu": "Menu openen",
+    "close_menu": "Menu sluiten"
   },
   "hero": {
     "eyebrow": "Nieuw — lentecollectie",
@@ -153,6 +156,13 @@
     "audience_men": "Voor mannen",
     "audience_kids": "Voor kinderen",
     "audience_babies": "Voor baby's",
+    "back_in_stock_cta": "Mail me als het er weer is",
+    "back_in_stock_email_label": "Je e-mailadres",
+    "back_in_stock_email_placeholder": "jij@email.nl",
+    "back_in_stock_helper": "Eén bericht, en we delen je adres met niemand.",
+    "back_in_stock_submitting": "Bezig…",
+    "back_in_stock_thanks": "Genoteerd — we mailen zodra het terug is.",
+    "back_in_stock_already_subscribed": "Je staat al op de lijst.",
     "ritual_eyebrow": "Het ritueel",
     "morning": "Ochtend",
     "evening": "Avond",
@@ -652,6 +662,32 @@
       "remove": "Verwijderen uit verlanglijst",
       "save": "Bewaren",
       "saved": "Bewaard"
+    },
+    "review_form": {
+      "trigger": "Schrijf een review",
+      "heading": "Review voor {name}",
+      "rating_label": "Beoordeling",
+      "rating_aria": "{n} sterren",
+      "title_label": "Titel (optioneel)",
+      "title_placeholder": "Een paar woorden",
+      "body_label": "Je review",
+      "body_placeholder": "Vertel ons hoe het voelde op je huid.",
+      "submit": "Review verzenden",
+      "submitting": "Bezig met verzenden…",
+      "cancel": "Annuleren",
+      "submitted": "Bedankt — wordt binnenkort gelezen",
+      "already_reviewed_label": "Beoordeeld",
+      "error": {
+        "invalid_input": "Vul de vereiste velden in.",
+        "invalid_order": "We konden die bestelling niet vinden.",
+        "order_not_delivered": "Reviews worden geaccepteerd zodra de bestelling is geleverd.",
+        "product_not_in_order": "Dit product is geen onderdeel van deze bestelling.",
+        "already_reviewed": "Je hebt dit product al beoordeeld.",
+        "rating_out_of_range": "Kies een beoordeling van 1 tot 5.",
+        "body_too_short": "Nog een paar woorden graag.",
+        "body_too_long": "Je review is iets te lang — houd het onder 1500 tekens.",
+        "internal": "Er ging iets mis. Probeer het opnieuw."
+      }
     }
   },
   "privacy": {

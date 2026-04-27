@@ -20,7 +20,9 @@ import { ChevronLeft } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { requireCustomer } from "@/lib/auth";
 import { getMyOrderByNumber, type FormattedAddress } from "@/lib/queries/orders";
+import { prisma } from "@/lib/prisma";
 import { formatEur, priceLocale } from "@/lib/utils";
+import { OrderReviewForm } from "@/components/account/order-review-form";
 
 type Props = { params: Promise<{ locale: string; number: string }> };
 
@@ -44,6 +46,24 @@ export default async function OrderDetailPage({ params }: Props) {
   const t = await getTranslations("account");
   const order = await getMyOrderByNumber(profile.id, number, locale);
   if (!order) notFound();
+
+  // Pull the set of productIds the customer has already reviewed for the
+  // products in this order. Used below to gate the "leave a review" trigger
+  // — re-submission is blocked at the server-action level too, but hiding
+  // the entry point is the right UX (and avoids a misleading affordance).
+  // Only worth running when the order is DELIVERED; the form isn't shown
+  // otherwise.
+  const reviewedProductIds = new Set<string>();
+  if (order.status === "DELIVERED") {
+    const reviewed = await prisma.review.findMany({
+      where: {
+        userId: profile.id,
+        productId: { in: order.items.map((it) => it.productId) },
+      },
+      select: { productId: true },
+    });
+    for (const r of reviewed) reviewedProductIds.add(r.productId);
+  }
 
   const euro = (v: number) => formatEur(v, priceLocale(locale));
   const dateFmt = new Intl.DateTimeFormat(priceLocale(locale), {
@@ -88,54 +108,82 @@ export default async function OrderDetailPage({ params }: Props) {
           {t("order_items_heading")}
         </h2>
         <ul className="mt-6 divide-y divide-ink/10 border-y border-ink/10">
-          {order.items.map((it) => (
-            <li
-              key={it.id}
-              className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:gap-6"
-            >
-              <div className="flex items-center gap-4 md:flex-1">
-                {it.thumbnailUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={it.thumbnailUrl}
-                    alt=""
-                    className="h-16 w-16 shrink-0 border border-rice bg-white/50 object-cover"
-                  />
-                ) : (
-                  <div className="h-16 w-16 shrink-0 border border-ink/10 bg-white/50" />
-                )}
-                <div className="min-w-0">
-                  <div className="font-display text-[15px] text-ink">
-                    {it.slug ? (
-                      <Link
-                        href={`/shop/${it.slug}`}
-                        className="transition-colors hover:text-vermilion"
-                      >
-                        {it.nameSnapshot}
-                      </Link>
+          {order.items.map((it) => {
+            const canReview =
+              order.status === "DELIVERED" &&
+              !reviewedProductIds.has(it.productId);
+            const alreadyReviewed =
+              order.status === "DELIVERED" &&
+              reviewedProductIds.has(it.productId);
+            return (
+              <li
+                key={it.id}
+                className="flex flex-col gap-4 py-5 md:gap-3"
+              >
+                {/* Top row: thumbnail + name + qty/price */}
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
+                  <div className="flex items-center gap-4 md:flex-1">
+                    {it.thumbnailUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={it.thumbnailUrl}
+                        alt=""
+                        className="h-16 w-16 shrink-0 border border-rice bg-white/50 object-cover"
+                      />
                     ) : (
-                      it.nameSnapshot
+                      <div className="h-16 w-16 shrink-0 border border-ink/10 bg-white/50" />
                     )}
+                    <div className="min-w-0">
+                      <div className="font-display text-[15px] text-ink">
+                        {it.slug ? (
+                          <Link
+                            href={`/shop/${it.slug}`}
+                            className="transition-colors hover:text-vermilion"
+                          >
+                            {it.nameSnapshot}
+                          </Link>
+                        ) : (
+                          it.nameSnapshot
+                        )}
+                      </div>
+                      <div className="mt-0.5 text-[12px] text-ink-mid">
+                        {t("order_sku", { sku: it.skuSnapshot })}
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-0.5 text-[12px] text-ink-mid">
-                    {t("order_sku", { sku: it.skuSnapshot })}
-                  </div>
-                </div>
-              </div>
 
-              <div className="flex items-center justify-between gap-6 md:justify-end">
-                <div className="text-[13px] text-ink-mid">
-                  {t("order_qty_x_price", {
-                    qty: it.quantity,
-                    price: euro(it.unitPrice),
-                  })}
+                  <div className="flex items-center justify-between gap-6 md:justify-end">
+                    <div className="text-[13px] text-ink-mid">
+                      {t("order_qty_x_price", {
+                        qty: it.quantity,
+                        price: euro(it.unitPrice),
+                      })}
+                    </div>
+                    <div className="font-display text-[15px] text-ink min-w-[5rem] text-right">
+                      {euro(it.lineTotal)}
+                    </div>
+                  </div>
                 </div>
-                <div className="font-display text-[15px] text-ink min-w-[5rem] text-right">
-                  {euro(it.lineTotal)}
-                </div>
-              </div>
-            </li>
-          ))}
+
+                {/* Bottom row: review entry-point. Renders only on DELIVERED
+                    orders. Two paths: form trigger (collapsed by default)
+                    or a quiet "already reviewed" badge. */}
+                {canReview && (
+                  <OrderReviewForm
+                    orderNumber={order.publicNumber}
+                    productId={it.productId}
+                    productName={it.nameSnapshot}
+                    urlLocale={locale}
+                  />
+                )}
+                {alreadyReviewed && (
+                  <p className="mt-1 text-[11px] uppercase tracking-label text-ink-mid">
+                    {t("review_form.already_reviewed_label")}
+                  </p>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </div>
 

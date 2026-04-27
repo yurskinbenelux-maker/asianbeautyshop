@@ -28,7 +28,10 @@
     "about": "About",
     "account": "Account",
     "cart": "Cart",
-    "search": "Search"
+    "search": "Search",
+    "menu": "Menu",
+    "open_menu": "Open menu",
+    "close_menu": "Close menu"
   },
   "hero": {
     "eyebrow": "New arrival — spring collection",
@@ -153,6 +156,13 @@
     "audience_men": "For men",
     "audience_kids": "For kids",
     "audience_babies": "For babies",
+    "back_in_stock_cta": "Notify me when it's back",
+    "back_in_stock_email_label": "Your email",
+    "back_in_stock_email_placeholder": "you@email.com",
+    "back_in_stock_helper": "We'll email you once and never share your address.",
+    "back_in_stock_submitting": "Saving…",
+    "back_in_stock_thanks": "Got it — we'll email you when it's back.",
+    "back_in_stock_already_subscribed": "You're already on the list.",
     "ritual_eyebrow": "The ritual",
     "morning": "Morning",
     "evening": "Evening",
@@ -652,6 +662,32 @@
       "remove": "Remove from wishlist",
       "save": "Save",
       "saved": "Saved"
+    },
+    "review_form": {
+      "trigger": "Leave a review",
+      "heading": "Reviewing {name}",
+      "rating_label": "Rating",
+      "rating_aria": "{n} stars",
+      "title_label": "Title (optional)",
+      "title_placeholder": "A few words about it",
+      "body_label": "Your review",
+      "body_placeholder": "Tell us how it felt on your skin.",
+      "submit": "Submit review",
+      "submitting": "Sending…",
+      "cancel": "Cancel",
+      "submitted": "Thanks — pending a quick read",
+      "already_reviewed_label": "Reviewed",
+      "error": {
+        "invalid_input": "Please complete the required fields.",
+        "invalid_order": "We couldn't find that order.",
+        "order_not_delivered": "Reviews are accepted once an order is delivered.",
+        "product_not_in_order": "This product isn't part of this order.",
+        "already_reviewed": "You've already reviewed this product.",
+        "rating_out_of_range": "Please choose a rating from 1 to 5.",
+        "body_too_short": "Just a few more words, please.",
+        "body_too_long": "Your review is a bit long — keep it under 1500 characters.",
+        "internal": "Something went wrong. Please try again."
+      }
     }
   },
   "privacy": {

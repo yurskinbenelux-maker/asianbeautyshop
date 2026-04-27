@@ -25,7 +25,7 @@ mkdir -p "$OUT"
 PAGES=(
   "home::/en"
   "shop::/en/shop"
-  "pdp::/en/shop/24k-gold-ampoule-15-ml"
+  "pdp::/en/shop/24k-gold-ampoule"
   "cart::/en/cart"
 )
 
@@ -45,12 +45,23 @@ for pair in "${PAGES[@]}"; do
     out_json="$OUT/$name-$strategy.json"
     echo "  ⏱  $name ($strategy) → $url"
 
-    # --quiet suppresses log lines; --chrome-flags pinned to headless
-    # so it works on any dev machine including CI later.
+    # Lighthouse's CLI takes --preset=desktop to switch to desktop emulation.
+    # Mobile is the default — for mobile runs we deliberately omit the flag.
+    # --quiet suppresses log lines; --chrome-flags pinned to headless so the
+    # script works on any dev machine including CI later.
+    if [ "$strategy" = "desktop" ]; then
+      preset_arg=(--preset=desktop)
+    else
+      preset_arg=()
+    fi
+
+    # Note the ${arr[@]+"${arr[@]}"} idiom: under `set -u` (nounset),
+    # macOS Bash 3 treats an empty-array expansion as an unbound variable.
+    # This form expands to nothing when the array is empty, instead of erroring.
     npx --yes lighthouse "$url" \
       --quiet \
       --chrome-flags="--headless=new" \
-      --preset="$strategy" \
+      ${preset_arg[@]+"${preset_arg[@]}"} \
       --only-categories=performance,accessibility,best-practices,seo \
       --output=html --output=json \
       --output-path="$OUT/$name-$strategy" \

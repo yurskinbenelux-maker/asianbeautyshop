@@ -28,7 +28,10 @@
     "about": "À propos",
     "account": "Compte",
     "cart": "Panier",
-    "search": "Rechercher"
+    "search": "Rechercher",
+    "menu": "Menu",
+    "open_menu": "Ouvrir le menu",
+    "close_menu": "Fermer le menu"
   },
   "hero": {
     "eyebrow": "Nouveauté — collection printemps",
@@ -153,6 +156,13 @@
     "audience_men": "Pour hommes",
     "audience_kids": "Pour enfants",
     "audience_babies": "Pour bébés",
+    "back_in_stock_cta": "Prévenez-moi quand c'est dispo",
+    "back_in_stock_email_label": "Votre e-mail",
+    "back_in_stock_email_placeholder": "vous@email.fr",
+    "back_in_stock_helper": "Un seul e-mail, votre adresse n'est jamais partagée.",
+    "back_in_stock_submitting": "Enregistrement…",
+    "back_in_stock_thanks": "C'est noté — on vous écrit dès le retour.",
+    "back_in_stock_already_subscribed": "Vous êtes déjà inscrit.",
     "ritual_eyebrow": "Le rituel",
     "morning": "Matin",
     "evening": "Soir",
@@ -652,6 +662,32 @@
       "remove": "Retirer de la liste",
       "save": "Sauvegarder",
       "saved": "Sauvegardé"
+    },
+    "review_form": {
+      "trigger": "Laisser un avis",
+      "heading": "Votre avis sur {name}",
+      "rating_label": "Note",
+      "rating_aria": "{n} étoiles",
+      "title_label": "Titre (facultatif)",
+      "title_placeholder": "Quelques mots",
+      "body_label": "Votre avis",
+      "body_placeholder": "Dites-nous ce que vous avez ressenti.",
+      "submit": "Envoyer l'avis",
+      "submitting": "Envoi…",
+      "cancel": "Annuler",
+      "submitted": "Merci — en attente de relecture",
+      "already_reviewed_label": "Avis déposé",
+      "error": {
+        "invalid_input": "Veuillez compléter les champs requis.",
+        "invalid_order": "Cette commande est introuvable.",
+        "order_not_delivered": "Les avis sont acceptés après la livraison.",
+        "product_not_in_order": "Ce produit ne fait pas partie de cette commande.",
+        "already_reviewed": "Vous avez déjà laissé un avis sur ce produit.",
+        "rating_out_of_range": "Veuillez choisir une note entre 1 et 5.",
+        "body_too_short": "Encore quelques mots, s'il vous plaît.",
+        "body_too_long": "Votre avis est un peu long — sous 1500 caractères.",
+        "internal": "Une erreur est survenue. Veuillez réessayer."
+      }
     }
   },
   "privacy": {

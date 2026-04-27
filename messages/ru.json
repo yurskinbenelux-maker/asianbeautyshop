@@ -28,7 +28,10 @@
     "about": "О бренде",
     "account": "Аккаунт",
     "cart": "Корзина",
-    "search": "Поиск"
+    "search": "Поиск",
+    "menu": "Меню",
+    "open_menu": "Открыть меню",
+    "close_menu": "Закрыть меню"
   },
   "hero": {
     "eyebrow": "Новое — весенняя коллекция",
@@ -153,6 +156,13 @@
     "audience_men": "Для мужчин",
     "audience_kids": "Для детей",
     "audience_babies": "Для младенцев",
+    "back_in_stock_cta": "Сообщить, когда появится",
+    "back_in_stock_email_label": "Ваш e-mail",
+    "back_in_stock_email_placeholder": "you@email.com",
+    "back_in_stock_helper": "Одно письмо, адрес никому не передаётся.",
+    "back_in_stock_submitting": "Сохраняем…",
+    "back_in_stock_thanks": "Готово — мы напишем, когда товар вернётся.",
+    "back_in_stock_already_subscribed": "Вы уже подписаны.",
     "ritual_eyebrow": "Ритуал",
     "morning": "Утро",
     "evening": "Вечер",
@@ -652,6 +662,32 @@
       "remove": "Убрать из избранного",
       "save": "Сохранить",
       "saved": "Сохранено"
+    },
+    "review_form": {
+      "trigger": "Оставить отзыв",
+      "heading": "Отзыв на {name}",
+      "rating_label": "Оценка",
+      "rating_aria": "{n} из 5 звёзд",
+      "title_label": "Заголовок (необязательно)",
+      "title_placeholder": "Несколько слов",
+      "body_label": "Ваш отзыв",
+      "body_placeholder": "Расскажите, как продукт повёл себя на коже.",
+      "submit": "Отправить отзыв",
+      "submitting": "Отправляем…",
+      "cancel": "Отменить",
+      "submitted": "Спасибо — ждём публикации",
+      "already_reviewed_label": "Отзыв оставлен",
+      "error": {
+        "invalid_input": "Заполните обязательные поля.",
+        "invalid_order": "Заказ не найден.",
+        "order_not_delivered": "Отзывы принимаются после доставки заказа.",
+        "product_not_in_order": "Этот товар не входит в этот заказ.",
+        "already_reviewed": "Вы уже оставили отзыв на этот товар.",
+        "rating_out_of_range": "Выберите оценку от 1 до 5.",
+        "body_too_short": "Ещё несколько слов, пожалуйста.",
+        "body_too_long": "Отзыв слишком длинный — до 1500 символов.",
+        "internal": "Что-то пошло не так. Попробуйте ещё раз."
+      }
     }
   },
   "privacy": {
