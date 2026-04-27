@@ -1186,3 +1186,345 @@ export async function adjustVariantStockAction(
     )}. Now ${result.stockAfter}.`,
   };
 }
+
+// ──────── variant CRUD ──────────────────────────────────────────────────
+//
+// The Inventory tab needs to manage variants, not just adjust stock on
+// existing ones. Three actions:
+//
+//   createVariantAction — adds a new size/colour/etc., with optional
+//     price override and opening stock. Opening stock writes an INITIAL
+//     movement so the audit log has a starting point.
+//
+//   updateVariantAction — rename label, change SKU, change price/compare
+//     price, toggle default. Stock is NOT edited here (use adjustVariant-
+//     StockAction for that — we want every stock change in the movement log).
+//
+//   deleteVariantAction — refuses if any OrderItem references the variant
+//     (deleting it would orphan order history). Otherwise hard-delete.
+// ─────────────────────────────────────────────────────────────────────────
+
+const VariantBaseSchema = z.object({
+  label: z.string().trim().min(1, "Label is required").max(60),
+  sku: z.string().trim().min(1, "SKU is required").max(64),
+  price: z
+    .string()
+    .trim()
+    .transform((v) => (v === "" ? null : v.replace(",", "."))),
+  comparePrice: z
+    .string()
+    .trim()
+    .transform((v) => (v === "" ? null : v.replace(",", "."))),
+  isDefault: z.coerce.boolean(),
+  sortOrder: z
+    .string()
+    .trim()
+    .transform((v) => (v === "" ? 0 : Number.parseInt(v, 10)))
+    .refine((n) => Number.isFinite(n) && n >= 0, {
+      message: "Sort order must be 0 or a positive whole number",
+    }),
+});
+
+const CreateVariantSchema = VariantBaseSchema.extend({
+  openingStock: z
+    .string()
+    .trim()
+    .transform((v) => (v === "" ? 0 : Number.parseInt(v, 10)))
+    .refine((n) => Number.isFinite(n) && n >= 0, {
+      message: "Opening stock must be 0 or a positive whole number",
+    }),
+});
+
+const UpdateVariantSchema = VariantBaseSchema.extend({
+  variantId: z.string().uuid(),
+});
+
+/** Helper: parse "24.90" / "24,90" into Decimal, or pass through null. */
+function decimalOrNull(raw: string | null): Prisma.Decimal | null {
+  if (raw === null || raw === "") return null;
+  try {
+    return new Prisma.Decimal(raw);
+  } catch {
+    return null;
+  }
+}
+
+export async function createVariantAction(
+  productId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const actor = await requireAdmin();
+
+  const parsed = CreateVariantSchema.safeParse({
+    label: formData.get("label") ?? "",
+    sku: formData.get("sku") ?? "",
+    price: formData.get("price") ?? "",
+    comparePrice: formData.get("comparePrice") ?? "",
+    isDefault: formData.get("isDefault") === "on",
+    sortOrder: formData.get("sortOrder") ?? "",
+    openingStock: formData.get("openingStock") ?? "",
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Please fix the highlighted fields.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  // Sanity check the parent product exists (and isn't soft-deleted).
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { id: true, deletedAt: true },
+  });
+  if (!product || product.deletedAt) {
+    return { ok: false, message: "Product not found." };
+  }
+
+  const data = parsed.data;
+  const priceDec = decimalOrNull(data.price);
+  if (data.price !== null && priceDec === null) {
+    return {
+      ok: false,
+      message: "Price must look like 24.90 (or be left blank to inherit).",
+      fieldErrors: { price: ["Invalid number"] },
+    };
+  }
+  const compareDec = decimalOrNull(data.comparePrice);
+  if (data.comparePrice !== null && compareDec === null) {
+    return {
+      ok: false,
+      message: "Compare price must look like 29.90.",
+      fieldErrors: { comparePrice: ["Invalid number"] },
+    };
+  }
+
+  let createdId: string;
+  try {
+    createdId = await prisma.$transaction(async (tx) => {
+      // If the new variant claims default, demote any existing default —
+      // there can only be one (matches the storefront's selector logic).
+      if (data.isDefault) {
+        await tx.productVariant.updateMany({
+          where: { productId, isDefault: true },
+          data: { isDefault: false },
+        });
+      }
+
+      const v = await tx.productVariant.create({
+        data: {
+          productId,
+          sku: data.sku,
+          label: data.label,
+          price: priceDec,
+          comparePrice: compareDec,
+          isDefault: data.isDefault,
+          sortOrder: data.sortOrder,
+          stock: 0,
+        },
+        select: { id: true, sku: true, label: true },
+      });
+
+      // Opening stock → record as INITIAL movement so the audit trail
+      // starts at a real number, not silently at zero.
+      if (parsed.data.openingStock > 0) {
+        await applyMovement(tx, {
+          variantId: v.id,
+          delta: parsed.data.openingStock,
+          reason: "INITIAL",
+          actorId: actor.id,
+          actorEmail: actor.email ?? null,
+          note: "Opening stock on variant creation",
+        });
+      }
+
+      return v.id;
+    });
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      return {
+        ok: false,
+        message: "That SKU is already in use. Pick a different one.",
+        fieldErrors: { sku: ["Already in use"] },
+      };
+    }
+    console.error("[createVariantAction] failed", err);
+    return { ok: false, message: "Couldn't create variant. Try again." };
+  }
+
+  await logAudit({
+    actor,
+    action: "variant.create",
+    entityType: "ProductVariant",
+    entityId: createdId,
+    summary: `${data.sku} — ${data.label}`,
+    meta: { productId, openingStock: parsed.data.openingStock },
+  });
+
+  revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/", "layout");
+  return { ok: true, message: `Variant "${data.label}" created.` };
+}
+
+export async function updateVariantAction(
+  productId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const actor = await requireAdmin();
+
+  const parsed = UpdateVariantSchema.safeParse({
+    variantId: formData.get("variantId"),
+    label: formData.get("label") ?? "",
+    sku: formData.get("sku") ?? "",
+    price: formData.get("price") ?? "",
+    comparePrice: formData.get("comparePrice") ?? "",
+    isDefault: formData.get("isDefault") === "on",
+    sortOrder: formData.get("sortOrder") ?? "",
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Please fix the highlighted fields.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+  const data = parsed.data;
+
+  // Check ownership — variant must live under this product.
+  const existing = await prisma.productVariant.findUnique({
+    where: { id: data.variantId },
+    select: { id: true, productId: true, sku: true, label: true },
+  });
+  if (!existing || existing.productId !== productId) {
+    return { ok: false, message: "Variant not found on this product." };
+  }
+
+  const priceDec = decimalOrNull(data.price);
+  if (data.price !== null && priceDec === null) {
+    return {
+      ok: false,
+      message: "Price must look like 24.90 (or be left blank to inherit).",
+      fieldErrors: { price: ["Invalid number"] },
+    };
+  }
+  const compareDec = decimalOrNull(data.comparePrice);
+  if (data.comparePrice !== null && compareDec === null) {
+    return {
+      ok: false,
+      message: "Compare price must look like 29.90.",
+      fieldErrors: { comparePrice: ["Invalid number"] },
+    };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      if (data.isDefault) {
+        // Demote any other default first so the (productId, isDefault=true)
+        // invariant only ever has one row at a time.
+        await tx.productVariant.updateMany({
+          where: { productId, isDefault: true, NOT: { id: data.variantId } },
+          data: { isDefault: false },
+        });
+      }
+      await tx.productVariant.update({
+        where: { id: data.variantId },
+        data: {
+          label: data.label,
+          sku: data.sku,
+          price: priceDec,
+          comparePrice: compareDec,
+          isDefault: data.isDefault,
+          sortOrder: data.sortOrder,
+        },
+      });
+    });
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      return {
+        ok: false,
+        message: "That SKU is already in use. Pick a different one.",
+        fieldErrors: { sku: ["Already in use"] },
+      };
+    }
+    console.error("[updateVariantAction] failed", err);
+    return { ok: false, message: "Couldn't save variant. Try again." };
+  }
+
+  await logAudit({
+    actor,
+    action: "variant.update",
+    entityType: "ProductVariant",
+    entityId: data.variantId,
+    summary: `${data.sku} — ${data.label}`,
+    meta: { productId },
+  });
+
+  revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Variant saved." };
+}
+
+export async function deleteVariantAction(
+  productId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const actor = await requireAdmin();
+
+  const variantId = String(formData.get("variantId") ?? "").trim();
+  if (!variantId) return { ok: false, message: "Missing variant id." };
+
+  const existing = await prisma.productVariant.findUnique({
+    where: { id: variantId },
+    select: {
+      id: true,
+      productId: true,
+      sku: true,
+      label: true,
+      _count: { select: { orderItems: true } },
+    },
+  });
+  if (!existing || existing.productId !== productId) {
+    return { ok: false, message: "Variant not found on this product." };
+  }
+
+  // Refuse if customer orders reference this variant — deleting would
+  // orphan order history. Sofia should archive the parent product instead.
+  if (existing._count.orderItems > 0) {
+    return {
+      ok: false,
+      message: `Can't delete — ${existing._count.orderItems} past order(s) reference this variant. Archive the product instead.`,
+    };
+  }
+
+  try {
+    // InventoryMovement and CartItem rows cascade via the schema's
+    // onDelete relations. OrderItem doesn't (we keep order history
+    // intact) — but we already gated on that count above.
+    await prisma.productVariant.delete({ where: { id: variantId } });
+  } catch (err) {
+    console.error("[deleteVariantAction] failed", err);
+    return { ok: false, message: "Couldn't delete variant. Try again." };
+  }
+
+  await logAudit({
+    actor,
+    action: "variant.delete",
+    entityType: "ProductVariant",
+    entityId: variantId,
+    summary: `${existing.sku} — ${existing.label}`,
+    meta: { productId },
+  });
+
+  revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/", "layout");
+  return { ok: true, message: `Variant "${existing.label}" deleted.` };
+}

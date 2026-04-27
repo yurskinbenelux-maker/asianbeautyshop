@@ -88,6 +88,8 @@ export default async function ProductEditPage({
       ingredients: { select: { ingredientId: true } },
       // Inventory tab — list + stock per variant, ordered by sortOrder
       // so Sofia sees them in the same order the PDP shows them.
+      // price/comparePrice are needed so the Edit form can pre-populate
+      // the inputs with current overrides.
       variants: {
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
         select: {
@@ -96,6 +98,9 @@ export default async function ProductEditPage({
           label: true,
           stock: true,
           isDefault: true,
+          price: true,
+          comparePrice: true,
+          sortOrder: true,
         },
       },
     },
@@ -406,12 +411,22 @@ export default async function ProductEditPage({
         {tab === "inventory" && (
           <InventoryPanel
             productId={product.id}
+            // Product price as a Decimal-safe string — shown in the
+            // "Add variant" form's price placeholder so Sofia knows
+            // what blank inherits to.
+            productPrice={Number(product.price).toFixed(2)}
             variants={product.variants.map((v) => ({
               id: v.id,
               sku: v.sku,
               label: v.label,
               stock: v.stock,
               isDefault: v.isDefault,
+              // Decimal-safe strings; "" means "no override, inherit
+              // from Product.price" — matches the form's placeholder.
+              price: v.price === null ? "" : Number(v.price).toFixed(2),
+              comparePrice:
+                v.comparePrice === null ? "" : Number(v.comparePrice).toFixed(2),
+              sortOrder: v.sortOrder,
             }))}
             movements={movements}
           />
