@@ -207,7 +207,10 @@
     "results_one": "product",
     "results_other": "producten",
     "quick_view": "Snel bekijken",
-    "load_more": "Meer laden"
+    "load_more": "Meer laden",
+    "lines_label": "Lijnen",
+    "categories_label": "Categorieën",
+    "more": "Meer"
   },
   "cart": {
     "eyebrow": "Jouw mandje",

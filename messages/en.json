@@ -207,7 +207,10 @@
     "results_one": "product",
     "results_other": "products",
     "quick_view": "Quick view",
-    "load_more": "Load more"
+    "load_more": "Load more",
+    "lines_label": "Lines",
+    "categories_label": "Categories",
+    "more": "More"
   },
   "cart": {
     "eyebrow": "Your basket",

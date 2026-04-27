@@ -30,8 +30,13 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ShopFilters as ShopFilterData } from "@/lib/queries/products";
 
-/** Keys of multi-select params — kept in one place so we parse/write consistently. */
-const MULTI_KEYS = ["skinType", "concern", "brand", "ingredient"] as const;
+/**
+ * Keys of multi-select params — kept in one place so we parse/write
+ * consistently. We dropped `brand` from this list when YU.R was
+ * confirmed as the sole supplier — the LineTabs in the page header
+ * (Yu.R / Yu.R Pro / Yu.R Me) are the meaningful refinement now.
+ */
+const MULTI_KEYS = ["skinType", "concern", "ingredient"] as const;
 type MultiKey = (typeof MULTI_KEYS)[number];
 
 type Props = {
@@ -55,7 +60,6 @@ export function ShopFilters({ filters, open, onClose }: Props) {
     return {
       skinType: read("skinType"),
       concern: read("concern"),
-      brand: read("brand"),
       ingredient: read("ingredient"),
       minPrice: searchParams.get("minPrice"),
       maxPrice: searchParams.get("maxPrice"),
@@ -183,13 +187,9 @@ export function ShopFilters({ filters, open, onClose }: Props) {
             />
           </FilterGroup>
 
-          <FilterGroup title={t("filter_brand")} hidden={filters.brands.length === 0}>
-            <CheckboxList
-              options={filters.brands}
-              selected={selected.brand}
-              onToggle={(slug) => toggleMulti("brand", slug)}
-            />
-          </FilterGroup>
+          {/* Brand filter retired — there's exactly one brand (YU.R), so
+              a single-checkbox filter group is dead UI. The LineTabs in
+              the page header now carry the Yu.R / Pro / Me refinement. */}
 
           <FilterGroup
             title={t("filter_ingredients")}

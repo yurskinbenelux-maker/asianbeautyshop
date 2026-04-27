@@ -22,6 +22,7 @@ import {
   type ShopSort,
 } from "@/lib/queries/products";
 import { CategoryFilter } from "@/components/shop/category-filter";
+import { LineTabs } from "@/components/shop/line-tabs";
 import { SortSelect } from "@/components/shop/sort-select";
 import { ShopFiltersShell } from "@/components/shop/shop-filters-shell";
 import { ShopInfiniteGrid } from "@/components/shop/shop-infinite-grid";
@@ -40,6 +41,8 @@ type Props = {
     skinType?: string;
     concern?: string;
     brand?: string;
+    /** Multi-select product line slug list — `yur,yur-pro,yur-me`. */
+    line?: string;
     ingredient?: string;
     minPrice?: string;
     maxPrice?: string;
@@ -96,6 +99,7 @@ export default async function ShopPage({ params, searchParams }: Props) {
   const skinTypeSlugs = parseMulti(sp.skinType);
   const concernSlugs = parseMulti(sp.concern);
   const brandSlugs = parseMulti(sp.brand);
+  const lineSlugs = parseMulti(sp.line);
   const ingredientSlugs = parseMulti(sp.ingredient);
   const minPriceEur = parsePrice(sp.minPrice);
   const maxPriceEur = parsePrice(sp.maxPrice);
@@ -110,6 +114,7 @@ export default async function ShopPage({ params, searchParams }: Props) {
     skinTypeSlugs,
     concernSlugs,
     brandSlugs,
+    lineSlugs,
     ingredientSlugs,
     minPriceEur,
     maxPriceEur,
@@ -147,8 +152,33 @@ export default async function ShopPage({ params, searchParams }: Props) {
         </p>
       </div>
 
+      {/* ── line tabs (Yu.R · Yu.R Pro · Yu.R Me) ──────────────── */}
+      {/* Top-row primary navigation. Lives in its own band — separated
+          from the category strip below by generous whitespace so the
+          two read as different layers of refinement. */}
+      <div className="mt-16 border-t border-ink/10 pt-8">
+        <LineTabs
+          lines={filters.lines}
+          activeSlug={lineSlugs?.[0]}
+          preservedParams={(() => {
+            // Build an URLSearchParams of every refinement we want to
+            // preserve when the user toggles a line tab. Drop `line`
+            // itself — the LineTabs component decides what to set.
+            const sp = new URLSearchParams();
+            if (sort && sort !== "newest") sp.set("sort", sort);
+            if (skinTypeSlugs?.length) sp.set("skinType", skinTypeSlugs.join(","));
+            if (concernSlugs?.length) sp.set("concern", concernSlugs.join(","));
+            if (brandSlugs?.length) sp.set("brand", brandSlugs.join(","));
+            if (ingredientSlugs?.length) sp.set("ingredient", ingredientSlugs.join(","));
+            if (minPriceEur !== undefined) sp.set("minPrice", String(minPriceEur));
+            if (maxPriceEur !== undefined) sp.set("maxPrice", String(maxPriceEur));
+            return sp;
+          })()}
+        />
+      </div>
+
       {/* ── category pills + sort ──────────────────────────────── */}
-      <div className="mt-16 flex flex-col gap-6 border-t border-ink/10 pt-8 md:flex-row md:items-center md:justify-between">
+      <div className="mt-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <CategoryFilter
           categories={categories}
           activeSlug={categorySlug}

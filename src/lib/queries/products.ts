@@ -106,9 +106,57 @@ export type ShopFilterArgs = {
   concernSlugs?: string[];
   brandSlugs?: string[];
   ingredientSlugs?: string[];
+  /**
+   * Product lines: yur, yur-pro, yur-me. Sourced from Product.productLine.
+   * Multi-select with OR semantics across lines.
+   */
+  lineSlugs?: string[];
   minPriceEur?: number;
   maxPriceEur?: number;
 };
+
+/**
+ * Canonical product line definitions. Source of truth — every line filter
+ * lookup, label, and URL slug derives from here. Adding a fourth line
+ * later is a one-row change.
+ *
+ * Why not a Brand row per line: the company is one brand (YU.R, one VAT,
+ * one supplier). The "Pro" and "Me" labels are *sub-lines* within the
+ * brand, not separate brands. Modelling them as a Product.productLine
+ * column reflects the buyer mental model + keeps the Brand model clean
+ * for a future where Sofia stocks a second supplier.
+ *
+ * `dbValues` is the set of strings that appear in Product.productLine for
+ * that line. The default line includes both `null` and the empty string —
+ * old imports wrote both depending on whether the supplier sheet had an
+ * explicit blank or omitted the cell.
+ */
+export const PRODUCT_LINES = [
+  { slug: "yur", label: "Yu.R", dbValues: [null as string | null, ""] },
+  { slug: "yur-pro", label: "Yu.R Pro", dbValues: ["Yu.R PRO"] },
+  { slug: "yur-me", label: "Yu.R Me", dbValues: ["Yu.R Me"] },
+] as const;
+
+export type ProductLineSlug = (typeof PRODUCT_LINES)[number]["slug"];
+
+/** Returns the Prisma `productLine` predicate for a given list of line slugs. */
+function lineWhere(slugs: string[]): Prisma.ProductWhereInput {
+  // Build an OR of per-line predicates. The default line ("yur") has the
+  // tricky case of matching both NULL and empty string.
+  const orClauses: Prisma.ProductWhereInput[] = [];
+  for (const s of slugs) {
+    const def = PRODUCT_LINES.find((l) => l.slug === s);
+    if (!def) continue;
+    for (const v of def.dbValues) {
+      if (v === null) {
+        orClauses.push({ productLine: null });
+      } else {
+        orClauses.push({ productLine: v });
+      }
+    }
+  }
+  return orClauses.length > 0 ? { OR: orClauses } : {};
+}
 
 /**
  * Build the Prisma where clause shared by getShopProducts + the facet
@@ -142,6 +190,9 @@ function buildShopWhere(filters: ShopFilterArgs): Prisma.ProductWhereInput {
   }
   if (filters.brandSlugs?.length) {
     AND.push({ brand: { slug: { in: filters.brandSlugs } } });
+  }
+  if (filters.lineSlugs?.length) {
+    AND.push(lineWhere(filters.lineSlugs));
   }
   if (filters.ingredientSlugs?.length) {
     AND.push({
@@ -373,6 +424,13 @@ export type ShopFilters = {
   skinTypes: ShopFilterTaxon[];
   concerns: ShopFilterTaxon[];
   brands: ShopFilterTaxon[];
+  /**
+   * Product lines (Yu.R / Yu.R Pro / Yu.R Me). Counts are scoped to
+   * published products and reflect each line's actual inventory volume.
+   * Always emitted in PRODUCT_LINES order, never alphabetised — Sofia
+   * cares about the Pro/Me hierarchy reading consistently.
+   */
+  lines: ShopFilterTaxon[];
   ingredients: ShopFilterTaxon[];
   /** Cheapest / most expensive published product — used to seed the range slider. */
   priceMinEur: number;
@@ -402,7 +460,7 @@ export async function getShopFilters(
     deletedAt: null,
   } as const;
 
-  const [skinTypes, concerns, brands, ingredients, priceAgg] =
+  const [skinTypes, concerns, brands, ingredients, priceAgg, lineGroups] =
     await Promise.all([
       prisma.skinType.findMany({
         orderBy: { slug: "asc" },
@@ -452,6 +510,15 @@ export async function getShopFilters(
         _min: { price: true },
         _max: { price: true },
       }),
+      // groupBy productLine — gives us a tiny rowset like
+      //   [ { productLine: null, _count: 16 }, { productLine: 'Yu.R PRO', _count: 8 }, ... ]
+      // which we then bucket into PRODUCT_LINES below. Cheaper than 3 separate
+      // counts and survives any future line additions without a query change.
+      prisma.product.groupBy({
+        by: ["productLine"],
+        where: publishedProduct,
+        _count: { _all: true },
+      }),
     ]);
 
   const labelFor = <T extends { locale: Locale; label: string }>(
@@ -483,6 +550,18 @@ export async function getShopFilters(
         count: b._count.products,
       }))
       .filter((b) => b.count > 0),
+    // Lines come from a groupBy on Product.productLine, then re-bucketed
+    // through PRODUCT_LINES so the order + labels match the design system
+    // (Yu.R first, Pro, then Me) regardless of how the rows happened to
+    // come back from the DB. Hidden if the line has zero published SKUs.
+    lines: PRODUCT_LINES.map((l) => {
+      const count = lineGroups
+        .filter((g) =>
+          (l.dbValues as readonly (string | null)[]).includes(g.productLine),
+        )
+        .reduce((sum, g) => sum + g._count._all, 0);
+      return { slug: l.slug, label: l.label, count };
+    }).filter((l) => l.count > 0),
     ingredients: ingredients
       .map((i) => {
         const tr =

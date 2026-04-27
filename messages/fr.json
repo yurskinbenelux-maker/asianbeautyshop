@@ -207,7 +207,10 @@
     "results_one": "produit",
     "results_other": "produits",
     "quick_view": "Aperçu rapide",
-    "load_more": "Charger plus"
+    "load_more": "Charger plus",
+    "lines_label": "Lignes",
+    "categories_label": "Catégories",
+    "more": "Plus"
   },
   "cart": {
     "eyebrow": "Votre panier",
