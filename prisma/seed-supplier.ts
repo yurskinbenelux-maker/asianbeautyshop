@@ -21,22 +21,16 @@ const CATEGORIES: ReadonlyArray<{
   sortOrder: number;
   translations: Record<Locale, string>;
 }> = [
-  { slug: "cleanser", sortOrder: 0, translations: { EN: "Cleanser", NL: "Reiniger", FR: "Nettoyant", RU: "\u041e\u0447\u0438\u0449\u0430\u044e\u0449\u0435\u0435 \u0441\u0440\u0435\u0434\u0441\u0442\u0432\u043e" } },
-  { slug: "cleansing-foam", sortOrder: 1, translations: { EN: "Cleansing Foam", NL: "Reinigingsschuim", FR: "Mousse nettoyante", RU: "\u041e\u0447\u0438\u0449\u0430\u044e\u0449\u0430\u044f \u043f\u0435\u043d\u043a\u0430" } },
-  { slug: "cleansing-oil", sortOrder: 2, translations: { EN: "Cleansing Oil", NL: "Reinigingsolie", FR: "Huile d\u00e9maquillante", RU: "\u0413\u0438\u0434\u0440\u043e\u0444\u0438\u043b\u044c\u043d\u043e\u0435 \u043c\u0430\u0441\u043b\u043e" } },
-  { slug: "peeling-gel", sortOrder: 3, translations: { EN: "Peeling Gel", NL: "Peelinggel", FR: "Gel exfoliant", RU: "\u041f\u0438\u043b\u0438\u043d\u0433-\u0433\u0435\u043b\u044c" } },
-  { slug: "toner", sortOrder: 4, translations: { EN: "Toner", NL: "Toner", FR: "Tonique", RU: "\u0422\u043e\u043d\u0438\u043a" } },
-  { slug: "essence", sortOrder: 5, translations: { EN: "Essence", NL: "Essence", FR: "Essence", RU: "\u042d\u0441\u0441\u0435\u043d\u0446\u0438\u044f" } },
-  { slug: "serum", sortOrder: 6, translations: { EN: "Serum", NL: "Serum", FR: "S\u00e9rum", RU: "\u0421\u044b\u0432\u043e\u0440\u043e\u0442\u043a\u0430" } },
-  { slug: "emulsion", sortOrder: 7, translations: { EN: "Emulsion", NL: "Emulsie", FR: "\u00c9mulsion", RU: "\u042d\u043c\u0443\u043b\u044c\u0441\u0438\u044f" } },
-  { slug: "lotion", sortOrder: 8, translations: { EN: "Lotion", NL: "Lotion", FR: "Lotion", RU: "\u041b\u043e\u0441\u044c\u043e\u043d" } },
-  { slug: "cream", sortOrder: 9, translations: { EN: "Cream", NL: "Cr\u00e8me", FR: "Cr\u00e8me", RU: "\u041a\u0440\u0435\u043c" } },
-  { slug: "cream-mask", sortOrder: 10, translations: { EN: "Cream Mask", NL: "Cr\u00e8memasker", FR: "Masque cr\u00e8me", RU: "\u041a\u0440\u0435\u043c-\u043c\u0430\u0441\u043a\u0430" } },
-  { slug: "sheet-mask", sortOrder: 11, translations: { EN: "Sheet Mask", NL: "Sheet Mask", FR: "Masque tissu", RU: "\u0422\u043a\u0430\u043d\u0435\u0432\u0430\u044f \u043c\u0430\u0441\u043a\u0430" } },
-  { slug: "cc-cream", sortOrder: 12, translations: { EN: "CC Cream", NL: "CC-cr\u00e8me", FR: "Cr\u00e8me CC", RU: "CC-\u043a\u0440\u0435\u043c" } },
-  { slug: "dd-cream", sortOrder: 13, translations: { EN: "DD Cream", NL: "DD-cr\u00e8me", FR: "Cr\u00e8me DD", RU: "DD-\u043a\u0440\u0435\u043c" } },
-  { slug: "cushion", sortOrder: 14, translations: { EN: "Cushion", NL: "Cushion", FR: "Cushion", RU: "\u041a\u0443\u0448\u043e\u043d" } },
-  { slug: "sunscreen", sortOrder: 15, translations: { EN: "Sunscreen", NL: "Zonnebrand", FR: "Cr\u00e8me solaire", RU: "\u0421\u043e\u043b\u043d\u0446\u0435\u0437\u0430\u0449\u0438\u0442\u043d\u043e\u0435 \u0441\u0440\u0435\u0434\u0441\u0442\u0432\u043e" } },
+  // 7 categories \u2014 K-beauty step ritual order. Consolidated 2026-04 from
+  // the original supplier-import 16; see prisma/migrate-categories-7.ts
+  // for the remap table that turned old slugs into these.
+  { slug: "cleanser", sortOrder: 1, translations: { EN: "Cleanser", NL: "Reiniger", FR: "Nettoyant", RU: "\u041e\u0447\u0438\u0449\u0435\u043d\u0438\u0435" } },
+  { slug: "toner", sortOrder: 2, translations: { EN: "Toner", NL: "Toner", FR: "Tonique", RU: "\u0422\u043e\u043d\u0435\u0440" } },
+  { slug: "peeling", sortOrder: 3, translations: { EN: "Peeling", NL: "Peeling", FR: "Peeling", RU: "\u041f\u0438\u043b\u0438\u043d\u0433" } },
+  { slug: "serum", sortOrder: 4, translations: { EN: "Serum", NL: "Serum", FR: "S\u00e9rum", RU: "\u0421\u044b\u0432\u043e\u0440\u043e\u0442\u043a\u0430" } },
+  { slug: "cream", sortOrder: 5, translations: { EN: "Cream", NL: "Cr\u00e8me", FR: "Cr\u00e8me", RU: "\u041a\u0440\u0435\u043c" } },
+  { slug: "mask", sortOrder: 6, translations: { EN: "Mask", NL: "Masker", FR: "Masque", RU: "\u041c\u0430\u0441\u043a\u0430" } },
+  { slug: "spf", sortOrder: 7, translations: { EN: "SPF", NL: "SPF", FR: "SPF", RU: "SPF" } },
 ];
 
 // ─── Ingredients (INCI) ────────────────────────────────────────────────
