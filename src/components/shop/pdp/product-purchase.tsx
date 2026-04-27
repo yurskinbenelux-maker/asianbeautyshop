@@ -164,16 +164,27 @@ export function ProductPurchase({
               );
             })}
           </div>
-          {/* Stock hint — greyed "out of stock" or subtle "only N left". */}
+        </fieldset>
+      )}
+
+      {/* ── stock signal (out / low) ──────────────────────────── */}
+      {/* Lifted out of the variant fieldset so single-SKU products
+          (one variant, no selector) also surface the urgency. We only
+          render when there's an activeVariant — products with no
+          variant rows have no stock concept and stay silent. */}
+      {activeVariant && (
+        <>
           {!isInStock && (
-            <p className="mt-3 text-[12px] text-ink-mid">{t("out_of_stock")}</p>
+            <p className="mt-6 text-[12px] uppercase tracking-label text-ink-mid">
+              {t("out_of_stock")}
+            </p>
           )}
-          {isInStock && isLow && activeVariant && (
-            <p className="mt-3 text-[12px] text-vermilion">
+          {isInStock && isLow && (
+            <p className="mt-6 text-[12px] uppercase tracking-label text-vermilion">
               {t("low_stock", { count: activeVariant.stock })}
             </p>
           )}
-        </fieldset>
+        </>
       )}
 
       {/* ── add-to-ritual CTA ──────────────────────────────────── */}
