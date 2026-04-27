@@ -141,9 +141,14 @@ export function ConciergeShell({
           aria-hidden
           style={{ animationDelay: "1.2s" }}
         />
-        <span className="relative animate-breathe font-kr text-[22px] leading-none">
-          印
-        </span>
+        {/* AI orb glyph — Sparkles is the universal "smart assistant"
+            mark; replaces the previous CJK 印 (stamp) character to keep
+            the brand wordmark-only post-2026-04 brand sweep. */}
+        <Sparkles
+          className="relative h-5 w-5 animate-breathe"
+          aria-hidden
+          strokeWidth={1.6}
+        />
       </button>
 
       {/* ── panel ───────────────────────────────────────────────── */}
@@ -175,7 +180,15 @@ export function ConciergeShell({
                     <ArrowLeft className="h-4 w-4" />
                   </button>
                 )}
-                <span className="seal">印</span>
+                {/* Avatar pip in the chat header — same Sparkles motif
+                    as the floating orb so the icon language stays
+                    consistent. Vermilion background matches the orb. */}
+                <span
+                  className="inline-flex h-7 w-7 items-center justify-center bg-vermilion text-rice"
+                  aria-hidden
+                >
+                  <Sparkles className="h-3.5 w-3.5" strokeWidth={1.6} />
+                </span>
                 <div>
                   <div className="font-display text-[16px] leading-none text-ink">
                     {assistantName}

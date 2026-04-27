@@ -75,9 +75,6 @@ export default function LocaleError({
           </Link>
         </div>
 
-        <div className="mt-16 font-kr text-[40px] leading-none text-vermilion/40" aria-hidden>
-          印
-        </div>
       </div>
     </section>
   );

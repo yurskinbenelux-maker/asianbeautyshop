@@ -56,11 +56,6 @@ export default async function LocaleNotFound() {
             {t("cta_journal")}
           </Link>
         </div>
-
-        {/* Decorative seal — reinforces brand on a dead-end page */}
-        <div className="mt-16 font-kr text-[40px] leading-none text-vermilion/40" aria-hidden>
-          印
-        </div>
       </div>
     </section>
   );
