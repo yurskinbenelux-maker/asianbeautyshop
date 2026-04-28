@@ -21,6 +21,7 @@ import { getMollie, isPaidStatus } from "@/lib/mollie/client";
 import { sendOrderConfirmationEmail } from "@/lib/email/order-confirmation";
 import { sendAdminNewOrderEmail } from "@/lib/email/admin-new-order";
 import { applyMovement } from "@/lib/inventory/movements";
+import { syncOrderToSendcloud } from "@/lib/sendcloud/sync";
 
 // ────────── types ───────────────────────────────────────────────────────
 
@@ -185,10 +186,15 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
   // Emails fire AFTER the transaction commits so a Resend outage can't roll
   // back the payment-state write. The helpers already swallow their own
   // errors, but we additionally wrap in allSettled.
+  //
+  // Sendcloud parcel creation lives here too — same allSettled guarantee.
+  // If the API call fails, the order still flipped to PAID; Sofia can
+  // retry the parcel creation manually from the admin order page.
   if (willFlipToPaid) {
     await Promise.allSettled([
       sendOrderConfirmationEmail(order.id),
       sendAdminNewOrderEmail(order.id),
+      syncOrderToSendcloud(order.id),
     ]);
   }
 

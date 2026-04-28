@@ -30,6 +30,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { logAudit } from "@/lib/audit/log";
+import { syncOrderToSendcloud } from "@/lib/sendcloud/sync";
 import { applyMovement } from "@/lib/inventory/movements";
 import { ALLOWED_TRANSITIONS, canTransition } from "@/lib/orders/transitions";
 import { sendOrderConfirmationEmail } from "@/lib/email/order-confirmation";
@@ -875,5 +876,69 @@ export async function bulkMarkFulfillingAction(
         ? `${eligible.length} marked as fulfilling.`
         : `${eligible.length} marked as fulfilling · ${skipped} skipped.`,
   };
+}
+
+// ─── Sendcloud retry ───────────────────────────────────────────────────
+//
+// When the auto-sync that runs on Mollie webhook fails (Sendcloud down,
+// invalid address, rule mismatch), the order lands in PAID with no
+// sendcloudParcelId. This action lets Sofia re-fire the sync from the
+// admin order page. Idempotent: if a parcel already exists the underlying
+// sync helper returns ok without creating a duplicate.
+
+export type RetrySendcloudState = {
+  ok: boolean;
+  message?: string;
+};
+
+export async function retrySendcloudSyncAction(
+  _prev: RetrySendcloudState,
+  formData: FormData,
+): Promise<RetrySendcloudState> {
+  await requireAdmin();
+
+  const orderId = String(formData.get("orderId") ?? "");
+  if (!orderId) return { ok: false, message: "Missing order id." };
+
+  const result = await syncOrderToSendcloud(orderId);
+
+  // Map the helper's discriminated union into something the form UI
+  // can render — `ok=true` covers both freshly-created and already-synced.
+  if (result.ok) {
+    revalidatePath(`/admin/orders/${orderId}`);
+    return {
+      ok: true,
+      message: `Synced — parcel ${result.parcelId}`,
+    };
+  }
+
+  // Failure — give Sofia the most actionable phrasing per reason.
+  switch (result.reason) {
+    case "not-configured":
+      return {
+        ok: false,
+        message:
+          "Sendcloud isn't configured — set SENDCLOUD_PUBLIC_KEY + SENDCLOUD_SECRET_KEY in env.",
+      };
+    case "order-not-found":
+      return { ok: false, message: "Order not found." };
+    case "order-not-paid":
+      return {
+        ok: false,
+        message: "Order isn't paid yet — Sendcloud only ships paid orders.",
+      };
+    case "no-shipping-address":
+      return {
+        ok: false,
+        message: "Order has no shipping address — can't ship.",
+      };
+    case "already-synced":
+      return { ok: true, message: "Already synced." };
+    case "sendcloud-error":
+      return {
+        ok: false,
+        message: result.message ?? "Sendcloud rejected the request.",
+      };
+  }
 }
 

@@ -34,6 +34,7 @@ import { StatusActions } from "@/components/admin/orders/status-actions";
 import { TrackingForm } from "@/components/admin/orders/tracking-form";
 import { RefundForm } from "@/components/admin/orders/refund-form";
 import { NotesForm } from "@/components/admin/orders/notes-form";
+import { SendcloudRetryButton } from "@/components/admin/orders/sendcloud-retry-button";
 import { InvoiceForm } from "@/components/admin/orders/invoice-form";
 import { cn } from "@/lib/utils";
 
@@ -302,6 +303,11 @@ export default async function AdminOrderDetailPage({
                       <span className="font-mono text-[12px]">
                         {order.sendcloudParcelId}
                       </span>
+                    ) : order.status === "PAID" ||
+                      order.status === "FULFILLING" ? (
+                      // Auto-sync didn't land — surface a manual retry
+                      // button so Sofia can re-fire without leaving the page.
+                      <SendcloudRetryButton orderId={order.id} />
                     ) : (
                       "—"
                     )
