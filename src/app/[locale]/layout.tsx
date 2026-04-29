@@ -25,6 +25,7 @@ import { peekCartSummary } from "@/lib/cart/cart";
 import { getShopCategories } from "@/lib/queries/products";
 import { readSetting } from "@/lib/settings";
 import { CookieBanner } from "@/components/consent/cookie-banner";
+import { ExitIntentPopup } from "@/components/marketing/exit-intent-popup";
 import { readConsentCookie } from "@/lib/consent/consent";
 import { JsonLd } from "@/components/seo/json-ld";
 import { organizationJsonLd, websiteJsonLd, siteOrigin } from "@/lib/seo/json-ld";
@@ -192,6 +193,11 @@ export default async function LocaleLayout({ children, params }: Props) {
               <ConciergeOrb />
               <CartDrawer />
               <CookieBanner initialHasConsent={consent !== null} />
+              {/* Exit-intent — funnels into the same newsletter pipeline
+                  as the footer form, so the welcome email + 10% coupon
+                  flow lights up automatically. Self-suppresses on
+                  cart/checkout/account/admin and after dismissal. */}
+              <ExitIntentPopup />
               <Toaster
                 position="bottom-center"
                 toastOptions={{

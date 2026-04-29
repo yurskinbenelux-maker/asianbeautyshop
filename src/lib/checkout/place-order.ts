@@ -50,6 +50,14 @@ export type PlaceOrderInput = {
   couponCode: string | null;
   notes: string | null;
   marketingOptIn: boolean;
+  /**
+   * Optional Mollie payment-method slug. When set, Mollie's hosted page
+   * lands directly on the wallet flow (Apple Pay / Google Pay / Bancontact /
+   * iDEAL / Card / PayPal) instead of showing the method picker. Saves
+   * the customer a click and surfaces the right brand association
+   * pre-payment. Undefined = let Mollie pick.
+   */
+  paymentMethod?: string;
 };
 
 export type AddressInput = {
@@ -278,6 +286,15 @@ export async function placeOrder(
         ? {
             webhookUrl: `${siteUrl}/api/webhooks/mollie${webhookSecret ? `?token=${encodeURIComponent(webhookSecret)}` : ""}`,
           }
+        : {}),
+      // When the customer picked a specific method on our checkout, we
+      // pass it through so Mollie's hosted page lands directly on that
+      // wallet/method UI. Cast is needed because @mollie/api-client's
+      // `method` type is a union of literal strings — we accept the
+      // method as a plain string from our schema and trust Zod's enum
+      // validation to keep it in the supported set.
+      ...(input.paymentMethod
+        ? { method: input.paymentMethod as never }
         : {}),
       locale: mapLocaleToMollie(input.locale),
       metadata: {

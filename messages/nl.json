@@ -310,7 +310,10 @@
     "failure_title": "Je betaling is niet gelukt.",
     "failure_lede": "Er werd niets aangerekend. Je kan het opnieuw proberen met dezelfde of een andere methode — je mandje wacht op je.",
     "failure_cta_retry": "Betaling opnieuw proberen",
-    "failure_cta_back_to_cart": "Terug naar mandje"
+    "failure_cta_back_to_cart": "Terug naar mandje",
+    "payment_method_label": "Kies een betaalmethode",
+    "payment_method_card": "Kaart",
+    "payment_method_all": "Alle methodes"
   },
   "concierge": {
     "open": "Open huidconcierge",
@@ -899,5 +902,18 @@
     "error_message_too_long": "Dat bericht is te lang — maximaal 4 000 tekens.",
     "error_consent_required": "Vink het vakje aan zodat we je bericht mogen bewaren.",
     "error_generic": "Er ging iets mis. Controleer de gemarkeerde velden."
+  },
+  "exit_intent": {
+    "eyebrow": "Voor je gaat",
+    "title": "10% korting op je eerste ritueel",
+    "body": "Laat je e-mail achter en we sturen een eenmalige code, plus af en toe een rustige notitie over Koreaanse huidverzorging. Uitschrijven kan altijd.",
+    "email_label": "E-mailadres",
+    "email_placeholder": "jij@voorbeeld.com",
+    "cta": "Stuur mijn code",
+    "cta_loading": "Versturen…",
+    "dismiss": "Nee, bedankt",
+    "close": "Sluiten",
+    "fine_print": "We sturen eerst een bevestigingslink voordat de code wordt verstuurd.",
+    "success": "Bekijk je inbox voor de bevestigingslink."
   }
 }

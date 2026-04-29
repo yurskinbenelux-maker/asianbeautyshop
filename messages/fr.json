@@ -310,7 +310,10 @@
     "failure_title": "Votre paiement n'a pas abouti.",
     "failure_lede": "Aucun débit n'a été effectué. Vous pouvez réessayer avec la même méthode ou en changer — votre panier vous attend.",
     "failure_cta_retry": "Réessayer le paiement",
-    "failure_cta_back_to_cart": "Retour au panier"
+    "failure_cta_back_to_cart": "Retour au panier",
+    "payment_method_label": "Choisir un moyen de paiement",
+    "payment_method_card": "Carte",
+    "payment_method_all": "Tous les moyens"
   },
   "concierge": {
     "open": "Ouvrir le concierge peau",
@@ -899,5 +902,18 @@
     "error_message_too_long": "Ce message est trop long — 4 000 caractères maximum.",
     "error_consent_required": "Veuillez cocher la case pour nous permettre de conserver votre message.",
     "error_generic": "Une erreur est survenue. Vérifiez les champs surlignés."
+  },
+  "exit_intent": {
+    "eyebrow": "Avant de partir",
+    "title": "10 % sur votre premier rituel",
+    "body": "Laissez votre e-mail et nous vous envoyons un code à usage unique, plus une note discrète de temps en temps sur les soins coréens. Désinscription à tout moment.",
+    "email_label": "Adresse e-mail",
+    "email_placeholder": "vous@exemple.com",
+    "cta": "Envoyer mon code",
+    "cta_loading": "Envoi…",
+    "dismiss": "Non merci",
+    "close": "Fermer",
+    "fine_print": "Nous enverrons d'abord un lien de confirmation avant le code.",
+    "success": "Vérifiez votre boîte de réception pour le lien de confirmation."
   }
 }

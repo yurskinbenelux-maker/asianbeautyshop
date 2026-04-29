@@ -38,6 +38,27 @@ const AddressSchema = z.object({
   phone: z.string().trim().max(32).optional(),
 });
 
+/**
+ * Mollie payment methods we surface as quick-pick buttons. Empty string
+ * = let Mollie's hosted page show its full method picker (the default).
+ *
+ * Slugs match Mollie's API exactly — see
+ * https://docs.mollie.com/reference/v2/payments-api/create-payment#parameters
+ * Adding a method here also requires Sofia to enable it in the Mollie
+ * Dashboard → Settings → Payment methods. We only surface methods that
+ * make sense for our customer geography (BE / NL / FR / LU / DE).
+ */
+export const SUPPORTED_PAYMENT_METHODS = [
+  "applepay",
+  "googlepay",
+  "bancontact",
+  "ideal",
+  "creditcard",
+  "paypal",
+] as const;
+export type SupportedPaymentMethod =
+  (typeof SUPPORTED_PAYMENT_METHODS)[number];
+
 const CheckoutSchema = z.object({
   email: z.string().trim().toLowerCase().email("email_invalid"),
   shipping: AddressSchema,
@@ -48,6 +69,11 @@ const CheckoutSchema = z.object({
   notes: z.string().trim().max(1000).optional(),
   marketingOptIn: z.enum(["yes", "no"]).default("no"),
   locale: z.string().trim().length(2),
+  /** Optional preferred Mollie method — if set, the hosted page lands
+   *  directly on the wallet flow instead of showing the method picker. */
+  paymentMethod: z
+    .enum(SUPPORTED_PAYMENT_METHODS)
+    .optional(),
 });
 
 export type SubmitCheckoutResult =
@@ -70,6 +96,7 @@ export async function submitCheckout(
 ): Promise<SubmitCheckoutResult> {
   // 1. Parse form data into a structured object — all nested fields are
   //    flat on FormData so we reach them by name convention ("shipping.line1").
+  const rawMethod = formData.get("paymentMethod")?.toString();
   const raw = {
     email: formData.get("email")?.toString() ?? "",
     locale: formData.get("locale")?.toString() ?? "en",
@@ -83,6 +110,13 @@ export async function submitCheckout(
     billing:
       formData.get("billingSame")?.toString() === "no"
         ? readAddress(formData, "billing")
+        : undefined,
+    // Empty / unknown method strings stay undefined so Zod's enum doesn't
+    // refuse the request — Mollie's full picker is the safe fallback.
+    paymentMethod:
+      rawMethod &&
+      (SUPPORTED_PAYMENT_METHODS as readonly string[]).includes(rawMethod)
+        ? rawMethod
         : undefined,
   };
 
@@ -116,6 +150,7 @@ export async function submitCheckout(
       locale: parsed.data.locale,
       email: parsed.data.email,
       userId,
+      paymentMethod: parsed.data.paymentMethod,
       shipping: {
         firstName: parsed.data.shipping.firstName,
         lastName: parsed.data.shipping.lastName,

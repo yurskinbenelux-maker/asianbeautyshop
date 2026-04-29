@@ -84,6 +84,10 @@ export function CheckoutClient({
   const [couponCode, setCouponCode] = useState("");
   const [billingSame, setBillingSame] = useState(true);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
+  // Optional Mollie quick-pick. null → land on Mollie's full method picker.
+  // Wallet methods (applepay, googlepay) feel "express" because Mollie's
+  // hosted page drops the customer straight into the device's wallet UI.
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [topLevelError, setTopLevelError] = useState<CheckoutErrorCode | null>(
@@ -358,6 +362,69 @@ export function CheckoutClient({
                 </div>
               )}
 
+              {/* ── Method quick-pick ──────────────────────────────────
+                  Each tile preselects a Mollie method so the hosted page
+                  lands directly on that wallet/method UI (no extra click
+                  on Mollie's picker). The "All methods" tile reverts to
+                  the default (Mollie shows everything Sofia enabled).
+                  Apple Pay only shows on devices where it works; we let
+                  Mollie's hosted page handle the unavailable case
+                  gracefully — surfacing it everywhere is fine.
+                  Hidden input ties the React state into FormData. */}
+              <fieldset className="mt-6">
+                <legend className="mb-2 text-[11px] uppercase tracking-label text-ink-mid">
+                  {t("payment_method_label")}
+                </legend>
+                <div className="grid grid-cols-3 gap-2">
+                  <PaymentMethodTile
+                    value="applepay"
+                    label="Apple Pay"
+                    iconUrl="https://www.mollie.com/external/icons/payment-methods/applepay.svg"
+                    selected={paymentMethod === "applepay"}
+                    onSelect={setPaymentMethod}
+                  />
+                  <PaymentMethodTile
+                    value="googlepay"
+                    label="Google Pay"
+                    iconUrl="https://www.mollie.com/external/icons/payment-methods/googlepay.svg"
+                    selected={paymentMethod === "googlepay"}
+                    onSelect={setPaymentMethod}
+                  />
+                  <PaymentMethodTile
+                    value="bancontact"
+                    label="Bancontact"
+                    iconUrl="https://www.mollie.com/external/icons/payment-methods/bancontact.svg"
+                    selected={paymentMethod === "bancontact"}
+                    onSelect={setPaymentMethod}
+                  />
+                  <PaymentMethodTile
+                    value="ideal"
+                    label="iDEAL"
+                    iconUrl="https://www.mollie.com/external/icons/payment-methods/ideal.svg"
+                    selected={paymentMethod === "ideal"}
+                    onSelect={setPaymentMethod}
+                  />
+                  <PaymentMethodTile
+                    value="creditcard"
+                    label={t("payment_method_card")}
+                    iconUrl="https://www.mollie.com/external/icons/payment-methods/creditcard.svg"
+                    selected={paymentMethod === "creditcard"}
+                    onSelect={setPaymentMethod}
+                  />
+                  <PaymentMethodTile
+                    value=""
+                    label={t("payment_method_all")}
+                    selected={paymentMethod === null || paymentMethod === ""}
+                    onSelect={() => setPaymentMethod(null)}
+                  />
+                </div>
+                <input
+                  type="hidden"
+                  name="paymentMethod"
+                  value={paymentMethod ?? ""}
+                />
+              </fieldset>
+
               <button
                 type="submit"
                 disabled={isSubmitting || !shippable}
@@ -382,6 +449,54 @@ export function CheckoutClient({
 }
 
 // ────────── sub-components ──────────────────────────────────────────────
+
+/**
+ * One quick-pick tile in the payment-method picker. Click → onSelect(value).
+ * Selected state is a vermilion border + ink fill on the label. We render
+ * the brand icon from Mollie's public CDN — they license those for use
+ * inside checkouts. The "All methods" tile has no icon and a generic label.
+ */
+function PaymentMethodTile({
+  value,
+  label,
+  iconUrl,
+  selected,
+  onSelect,
+}: {
+  value: string;
+  label: string;
+  iconUrl?: string;
+  selected: boolean;
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(value)}
+      aria-pressed={selected}
+      className={cn(
+        "flex h-14 items-center justify-center gap-2 border bg-white/60 px-3 transition-colors",
+        selected
+          ? "border-ink ring-1 ring-ink"
+          : "border-ink/15 hover:border-ink/40",
+      )}
+    >
+      {iconUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={iconUrl}
+          alt=""
+          width={32}
+          height={20}
+          className="h-5 w-auto"
+        />
+      )}
+      <span className="text-[11px] uppercase tracking-label text-ink">
+        {label}
+      </span>
+    </button>
+  );
+}
 
 function Section({
   title,
