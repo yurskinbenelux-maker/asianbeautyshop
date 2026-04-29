@@ -148,3 +148,24 @@
     to   { transform: translateY(0);    opacity: 1; }
   }
 }
+
+/* ── View Transitions API ────────────────────────────────────────────
+   When elements share a `view-transition-name` across navigations
+   (shop card image → PDP hero image), the browser captures their
+   geometry on both pages and tweens between them. We only tune the
+   timing here; the names are set inline on the elements that morph.
+   Reduced-motion users get an instant swap. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 220ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+  }
+}

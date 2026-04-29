@@ -55,7 +55,15 @@ export function BestsellerCard({
     >
       <Link href={`/shop/${product.slug}`} className="block">
         {/* ── product image / SVG fallback ─────────────────── */}
-        <div className="relative aspect-[4/5] overflow-hidden bg-rice-dim">
+        {/* view-transition-name pairs with the PDP hero so the image
+            morphs smoothly between this card and the product page on
+            click. The slug-based name is unique per-product per-page,
+            which is what the API requires. Browsers without VT support
+            ignore the property; the navigation still works normally. */}
+        <div
+          className="relative aspect-[4/5] overflow-hidden bg-rice-dim"
+          style={{ viewTransitionName: `product-image-${product.slug}` }}
+        >
           <div className="absolute left-4 top-4 font-kr text-[12px] text-ink-mid">
             {label}
           </div>

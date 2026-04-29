@@ -210,7 +210,8 @@
     "load_more": "Показать ещё",
     "lines_label": "Линейки",
     "categories_label": "Категории",
-    "more": "Ещё"
+    "more": "Ещё",
+    "recently_viewed_title": "Недавно просмотрено"
   },
   "cart": {
     "eyebrow": "Ваша корзина",

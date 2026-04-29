@@ -210,7 +210,8 @@
     "load_more": "Charger plus",
     "lines_label": "Lignes",
     "categories_label": "Catégories",
-    "more": "Plus"
+    "more": "Plus",
+    "recently_viewed_title": "Vus récemment"
   },
   "cart": {
     "eyebrow": "Votre panier",

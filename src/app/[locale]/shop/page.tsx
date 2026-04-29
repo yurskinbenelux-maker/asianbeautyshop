@@ -26,6 +26,7 @@ import { LineTabs } from "@/components/shop/line-tabs";
 import { SortSelect } from "@/components/shop/sort-select";
 import { ShopFiltersShell } from "@/components/shop/shop-filters-shell";
 import { ShopInfiniteGrid } from "@/components/shop/shop-infinite-grid";
+import { RecentlyViewedRail } from "@/components/shop/recently-viewed-rail";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 // Page size for both the server-rendered first page and every subsequent
@@ -225,6 +226,9 @@ export default async function ShopPage({ params, searchParams }: Props) {
           )}
         </div>
       </div>
+
+      {/* ── recently viewed (client-only; hidden when empty) ───── */}
+      <RecentlyViewedRail />
     </section>
   );
 }

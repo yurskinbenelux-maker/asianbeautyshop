@@ -43,6 +43,8 @@ import {
 } from "@/lib/queries/pdp";
 import { priceLocale } from "@/lib/utils";
 import { ProductGallery } from "@/components/shop/product-gallery";
+import { RecentlyViewedRail } from "@/components/shop/recently-viewed-rail";
+import { TrackRecentlyViewed } from "@/components/shop/track-recently-viewed";
 import { ProductPurchase } from "@/components/shop/pdp/product-purchase";
 import { PdpTagRail } from "@/components/shop/pdp/pdp-tag-rail";
 import { IngredientSection } from "@/components/shop/pdp/ingredient-section";
@@ -269,6 +271,17 @@ export default async function ProductDetailPage({
             images={product.images}
             productName={product.name}
             isFeatured={product.isFeatured}
+            viewTransitionSlug={product.slug}
+          />
+          {/* Track this PDP in localStorage so the rail at the bottom
+              of the page can surface it on subsequent visits. Renders
+              nothing — pure side-effect on mount. */}
+          <TrackRecentlyViewed
+            slug={product.slug}
+            name={product.name}
+            imageUrl={product.images[0]?.url ?? null}
+            priceEur={product.priceEur}
+            comparePriceEur={product.comparePriceEur}
           />
 
           {/* ── info column ────────────────────────────────────── */}
@@ -440,6 +453,9 @@ export default async function ProductDetailPage({
             </div>
           </section>
         )}
+
+        {/* ── recently viewed (client-only; hidden when empty) ─── */}
+        <RecentlyViewedRail excludeSlug={product.slug} />
 
         {/* ── back link (soft landing at the bottom) ────────────── */}
         <div className="container mt-24 flex justify-center">
