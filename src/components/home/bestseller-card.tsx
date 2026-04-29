@@ -12,7 +12,7 @@ import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import type { ProductCardData } from "@/lib/queries/products";
-import { formatEur, priceLocale } from "@/lib/utils";
+import { cn, formatEur, priceLocale } from "@/lib/utils";
 
 type Swatch = { tube: string; cap: string };
 
@@ -142,8 +142,23 @@ export function BestsellerCard({
           )}
         </div>
 
+        {/* ── social proof badges (#150) ──────────────────── */}
+        {/* Bestseller pill is the highest-priority signal — only one
+            shown per card to avoid badge clutter. Featured products
+            without bestseller status get the editorial mark instead. */}
+        {(product.isBestseller || product.isFeatured) && (
+          <p className="mt-4 text-[10px] uppercase tracking-label text-vermilion">
+            {product.isBestseller ? "Bestseller" : "Editor's pick"}
+          </p>
+        )}
+
         {/* ── meta row ─────────────────────────────────────── */}
-        <div className="mt-5 flex items-baseline justify-between gap-4">
+        <div
+          className={cn(
+            "flex items-baseline justify-between gap-4",
+            product.isBestseller || product.isFeatured ? "mt-2" : "mt-5",
+          )}
+        >
           <div>
             <h3 className="font-display text-[20px] leading-tight text-ink">
               {product.name}
@@ -164,6 +179,28 @@ export function BestsellerCard({
             </span>
           </div>
         </div>
+
+        {/* ── rating row (#150) ──────────────────────────────
+            Quiet typography — the count earns the trust, not the
+            star colour. Hidden when there are no published reviews
+            to avoid screaming "0 reviews" at customers. */}
+        {product.reviewCount > 0 && product.reviewAvg !== null && (
+          <p className="mt-2 flex items-center gap-1.5 text-[12px] text-ink-mid">
+            <span aria-hidden className="text-vermilion">
+              ★
+            </span>
+            <span className="text-ink">
+              {product.reviewAvg.toFixed(1)}
+            </span>
+            <span aria-hidden className="text-ink-mid/50">
+              ·
+            </span>
+            <span>
+              {product.reviewCount}{" "}
+              {product.reviewCount === 1 ? "review" : "reviews"}
+            </span>
+          </p>
+        )}
       </Link>
     </motion.div>
   );

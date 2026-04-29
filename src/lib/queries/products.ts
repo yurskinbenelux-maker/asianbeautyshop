@@ -33,7 +33,39 @@ export type ProductCardData = {
   tagline: string | null;      // shortDescription from translation
   imageUrl: string | null;     // primary Media.url if any
   imageAlt: string | null;
+  /** Social proof — surfaced on shop cards via #150 work. Both fields
+   *  reflect ONLY published reviews to avoid leaking moderation state.
+   *  reviewCount is 0 when nobody has reviewed yet; reviewAvg is null
+   *  in the same case so the card can show "no reviews yet" cleanly
+   *  rather than a misleading "0.0 stars". */
+  reviewCount: number;
+  reviewAvg: number | null;
 };
+
+/**
+ * Aggregate published-review stats for a batch of products. One groupBy
+ * query, returns a Map of productId → { count, avg }. Caller stitches
+ * results back into the product list. Avoids N+1 by design.
+ */
+async function reviewStatsByProductId(
+  productIds: string[],
+): Promise<Map<string, { count: number; avg: number | null }>> {
+  if (productIds.length === 0) return new Map();
+  const rows = await prisma.review.groupBy({
+    by: ["productId"],
+    where: { productId: { in: productIds }, isPublished: true },
+    _count: { _all: true },
+    _avg: { rating: true },
+  });
+  const out = new Map<string, { count: number; avg: number | null }>();
+  for (const r of rows) {
+    out.set(r.productId, {
+      count: r._count._all,
+      avg: r._avg.rating ?? null,
+    });
+  }
+  return out;
+}
 
 /**
  * getBestsellers — products flagged as bestsellers, ordered by launch date.
@@ -66,12 +98,17 @@ export async function getBestsellers(
     },
   });
 
+  // Pull the published-review stats in one extra query so the cards
+  // can render "★ 4.7 · 23 reviews" without hitting the DB per product.
+  const stats = await reviewStatsByProductId(products.map((p) => p.id));
+
   return products.map((p) => {
     const tr =
       p.translations.find((t) => t.locale === loc) ??
       p.translations.find((t) => t.locale === Locale.EN);
 
     const img = p.media[0] ?? null;
+    const s = stats.get(p.id);
 
     return {
       id: p.id,
@@ -85,6 +122,8 @@ export async function getBestsellers(
       tagline: tr?.shortDescription ?? null,
       imageUrl: img?.url ?? null,
       imageAlt: img?.alt ?? tr?.name ?? null,
+      reviewCount: s?.count ?? 0,
+      reviewAvg: s?.avg ?? null,
     };
   });
 }
@@ -261,11 +300,16 @@ export async function getShopProducts({
     prisma.product.count({ where }),
   ]);
 
+  // One extra round-trip for the review aggregates so cards can render
+  // "★ 4.7 · 23 reviews". Empty when the page is empty.
+  const stats = await reviewStatsByProductId(products.map((p) => p.id));
+
   const items = products.map((p) => {
     const tr =
       p.translations.find((t) => t.locale === loc) ??
       p.translations.find((t) => t.locale === Locale.EN);
     const img = p.media[0] ?? null;
+    const s = stats.get(p.id);
     return {
       id: p.id,
       sku: p.sku,
@@ -278,6 +322,8 @@ export async function getShopProducts({
       tagline: tr?.shortDescription ?? null,
       imageUrl: img?.url ?? null,
       imageAlt: img?.alt ?? tr?.name ?? null,
+      reviewCount: s?.count ?? 0,
+      reviewAvg: s?.avg ?? null,
     };
   });
 
@@ -817,11 +863,14 @@ export async function getRelatedProducts({
     });
   }
 
+  const stats = await reviewStatsByProductId(products.map((p) => p.id));
+
   return products.map((p) => {
     const t =
       p.translations.find((x) => x.locale === loc) ??
       p.translations.find((x) => x.locale === Locale.EN);
     const img = p.media[0] ?? null;
+    const s = stats.get(p.id);
     return {
       id: p.id,
       sku: p.sku,
@@ -834,6 +883,8 @@ export async function getRelatedProducts({
       tagline: t?.shortDescription ?? null,
       imageUrl: img?.url ?? null,
       imageAlt: img?.alt ?? t?.name ?? null,
+      reviewCount: s?.count ?? 0,
+      reviewAvg: s?.avg ?? null,
     };
   });
 }
@@ -952,11 +1003,14 @@ export async function searchProducts({
     prisma.product.count({ where }),
   ]);
 
+  const stats = await reviewStatsByProductId(products.map((p) => p.id));
+
   const items = products.map((p) => {
     const t =
       p.translations.find((x) => x.locale === loc) ??
       p.translations.find((x) => x.locale === Locale.EN);
     const img = p.media[0];
+    const s = stats.get(p.id);
     return {
       id: p.id,
       sku: p.sku,
@@ -969,6 +1023,8 @@ export async function searchProducts({
       tagline: t?.shortDescription ?? null,
       imageUrl: img?.url ?? null,
       imageAlt: img?.alt ?? t?.name ?? null,
+      reviewCount: s?.count ?? 0,
+      reviewAvg: s?.avg ?? null,
     };
   });
 
