@@ -19,13 +19,21 @@ import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { useCart } from "./cart-provider";
+import { FreeShippingMeter } from "./free-shipping-meter";
 import { cn, formatEur, priceLocale } from "@/lib/utils";
 
 export function CartDrawer() {
   const t = useTranslations("cart");
   const locale = useLocale();
   const currencyLocale = priceLocale(locale);
-  const { cart, isOpen, closeDrawer, isPending, lastError } = useCart();
+  const {
+    cart,
+    isOpen,
+    closeDrawer,
+    isPending,
+    lastError,
+    freeShippingThresholdEur,
+  } = useCart();
 
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -126,6 +134,15 @@ export function CartDrawer() {
                 {lastError}
               </div>
             )}
+
+            {/* Free-shipping meter — surfaces just above the subtotal so
+                the "€X to go" cue lands right where the customer is
+                already looking at the price. Self-hides when the
+                threshold is 0 (Sofia disabled it in admin). */}
+            <FreeShippingMeter
+              subtotalEur={cart.subtotalEur}
+              thresholdEur={freeShippingThresholdEur}
+            />
 
             <div className="flex items-baseline justify-between text-[13px]">
               <span className="uppercase tracking-label text-ink-mid">

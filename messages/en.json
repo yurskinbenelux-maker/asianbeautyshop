@@ -239,7 +239,9 @@
     "summary_shipping": "Shipping",
     "summary_shipping_value": "Calculated at checkout",
     "summary_total": "Estimated total",
-    "continue_link": "Continue shopping"
+    "continue_link": "Continue shopping",
+    "free_shipping_remaining": "{amount} to go for free shipping",
+    "free_shipping_unlocked": "Free shipping unlocked"
   },
   "checkout": {
     "eyebrow": "Checkout",

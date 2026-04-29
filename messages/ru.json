@@ -239,7 +239,9 @@
     "summary_shipping": "Доставка",
     "summary_shipping_value": "Рассчитается при оформлении",
     "summary_total": "Ориентировочный итог",
-    "continue_link": "Продолжить покупки"
+    "continue_link": "Продолжить покупки",
+    "free_shipping_remaining": "До бесплатной доставки осталось {amount}",
+    "free_shipping_unlocked": "Бесплатная доставка получена"
   },
   "checkout": {
     "eyebrow": "Оформление",

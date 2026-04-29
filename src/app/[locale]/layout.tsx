@@ -23,6 +23,7 @@ import { CartProvider } from "@/components/cart/cart-provider";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { peekCartSummary } from "@/lib/cart/cart";
 import { getShopCategories } from "@/lib/queries/products";
+import { readSetting } from "@/lib/settings";
 import { CookieBanner } from "@/components/consent/cookie-banner";
 import { readConsentCookie } from "@/lib/consent/consent";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -158,6 +159,14 @@ export default async function LocaleLayout({ children, params }: Props) {
     (c) => c.count > 0,
   );
 
+  // Free-shipping threshold — surfaced as a progress indicator inside
+  // the cart drawer so customers see "€X to go for free shipping"
+  // every time they add an item. Reads Sofia's admin override (or
+  // default €99.99) at request time.
+  const shippingSettings = await readSetting("shipping");
+  const freeShippingThresholdEur =
+    shippingSettings.freeThresholdCents / 100;
+
   return (
     <html
       lang={locale}
@@ -171,7 +180,10 @@ export default async function LocaleLayout({ children, params }: Props) {
         <JsonLd data={websiteJsonLd()} />
         <NextIntlClientProvider messages={messages}>
           <MotionProvider>
-            <CartProvider initialCart={initialCart}>
+            <CartProvider
+              initialCart={initialCart}
+              freeShippingThresholdEur={freeShippingThresholdEur}
+            >
               {/* WCAG 2.4.1 — first tabbable, jumps past nav/locale/cart */}
               <SkipLink />
               <Nav shopCategories={shopCategories} />

@@ -239,7 +239,9 @@
     "summary_shipping": "Verzending",
     "summary_shipping_value": "Berekend bij het afrekenen",
     "summary_total": "Geschat totaal",
-    "continue_link": "Verder winkelen"
+    "continue_link": "Verder winkelen",
+    "free_shipping_remaining": "Nog {amount} voor gratis verzending",
+    "free_shipping_unlocked": "Gratis verzending vrijgespeeld"
   },
   "checkout": {
     "eyebrow": "Afrekenen",

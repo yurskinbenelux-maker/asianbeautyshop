@@ -76,11 +76,14 @@ const DEFAULTS = {
   } satisfies StoreSettings,
 
   shipping: {
-    freeThresholdCents: 7500,
+    // Free shipping threshold raised to €99.99 (#169) — high enough to
+    // pull AOV upward (typical YU.R basket sits around €40-60), low
+    // enough that a 2-3 product ritual reaches it.
+    freeThresholdCents: 9999,
     flatRateCents: 595,
     allowedCountries: ["BE", "NL", "FR", "LU", "DE"],
     disclaimer:
-      "Orders ship within 1–2 working days from Belgium. Delivery takes 2–5 days depending on destination.",
+      "Free shipping on orders over €99.99. Orders ship within 1–2 working days from Belgium. Delivery takes 2–5 days depending on destination.",
   } satisfies ShippingSettings,
 
   tax: {

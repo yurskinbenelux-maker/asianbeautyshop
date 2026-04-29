@@ -38,6 +38,10 @@ type CartContextValue = {
   isOpen: boolean;
   isPending: boolean;
   lastError: string | null;
+  /** Free-shipping threshold in EUR — passed in from the server layout
+   *  so the cart drawer can render a "€X to go" progress indicator that
+   *  honours Sofia's admin overrides. 0 means no threshold configured. */
+  freeShippingThresholdEur: number;
 
   openDrawer: () => void;
   closeDrawer: () => void;
@@ -56,9 +60,13 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({
   initialCart,
+  freeShippingThresholdEur = 0,
   children,
 }: {
   initialCart: CartSummary;
+  /** Pulled from getEffectiveSettings().shipping.freeThresholdCents on the
+   *  server layout. Default 0 keeps the indicator hidden if not threaded. */
+  freeShippingThresholdEur?: number;
   children: ReactNode;
 }) {
   const locale = useLocale();
@@ -196,6 +204,7 @@ export function CartProvider({
       isOpen,
       isPending,
       lastError,
+      freeShippingThresholdEur,
       openDrawer,
       closeDrawer,
       toggleDrawer,
@@ -208,6 +217,7 @@ export function CartProvider({
       isOpen,
       isPending,
       lastError,
+      freeShippingThresholdEur,
       openDrawer,
       closeDrawer,
       toggleDrawer,

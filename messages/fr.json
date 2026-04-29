@@ -239,7 +239,9 @@
     "summary_shipping": "Livraison",
     "summary_shipping_value": "Calculée au paiement",
     "summary_total": "Total estimé",
-    "continue_link": "Continuer mes achats"
+    "continue_link": "Continuer mes achats",
+    "free_shipping_remaining": "Plus que {amount} pour la livraison offerte",
+    "free_shipping_unlocked": "Livraison offerte débloquée"
   },
   "checkout": {
     "eyebrow": "Paiement",
