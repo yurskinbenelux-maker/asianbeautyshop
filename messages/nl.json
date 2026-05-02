@@ -31,7 +31,8 @@
     "search": "Zoeken",
     "menu": "Menu",
     "open_menu": "Menu openen",
-    "close_menu": "Menu sluiten"
+    "close_menu": "Menu sluiten",
+    "instagram": "Instagram"
   },
   "hero": {
     "eyebrow": "Nieuw — lentecollectie",
@@ -916,5 +917,6 @@
     "close": "Sluiten",
     "fine_print": "We sturen eerst een bevestigingslink voordat de code wordt verstuurd.",
     "success": "Bekijk je inbox voor de bevestigingslink."
-  }
+  },
+  "home": {}
 }

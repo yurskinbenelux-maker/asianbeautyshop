@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { Link } from "@/i18n/routing";
-import { Menu, Search, User, X } from "lucide-react";
+import { Instagram, Menu, Search, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LocaleSwitcher } from "./locale-switcher";
 import { CartButton } from "@/components/cart/cart-button";
@@ -126,6 +126,20 @@ export function Nav({
               and h-20 desktop nav (80px) without overwhelming either. */}
           <Logo variant="wordmark" height={48} alt={t("brand.name")} />
         </Link>
+
+        {/* ── Instagram link — sits right next to the wordmark on every
+            viewport so visitors see the social channel without scrolling.
+            Plain anchor, no API, no auth — opens the IG profile in a new
+            tab. Update the href if the handle ever changes. */}
+        <a
+          href="https://www.instagram.com/yur_skin_cosmetics/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t("nav.instagram")}
+          className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center text-ink-mid transition-colors hover:text-vermilion"
+        >
+          <Instagram className="h-4 w-4" aria-hidden />
+        </a>
 
         {/* ── Primary navigation (desktop only) ────────────────────── */}
         {/* SHOP is rendered as a hover/focus mega-menu — clicking the

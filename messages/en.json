@@ -31,7 +31,8 @@
     "search": "Search",
     "menu": "Menu",
     "open_menu": "Open menu",
-    "close_menu": "Close menu"
+    "close_menu": "Close menu",
+    "instagram": "Instagram"
   },
   "hero": {
     "eyebrow": "New arrival — spring collection",
@@ -916,5 +917,6 @@
     "close": "Close",
     "fine_print": "We'll email a confirmation link before sending the code.",
     "success": "Check your inbox for the confirmation link."
-  }
+  },
+  "home": {}
 }

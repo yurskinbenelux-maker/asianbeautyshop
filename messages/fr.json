@@ -31,7 +31,8 @@
     "search": "Rechercher",
     "menu": "Menu",
     "open_menu": "Ouvrir le menu",
-    "close_menu": "Fermer le menu"
+    "close_menu": "Fermer le menu",
+    "instagram": "Instagram"
   },
   "hero": {
     "eyebrow": "Nouveauté — collection printemps",
@@ -916,5 +917,6 @@
     "close": "Fermer",
     "fine_print": "Nous enverrons d'abord un lien de confirmation avant le code.",
     "success": "Vérifiez votre boîte de réception pour le lien de confirmation."
-  }
+  },
+  "home": {}
 }
