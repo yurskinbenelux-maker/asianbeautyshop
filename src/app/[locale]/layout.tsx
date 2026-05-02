@@ -74,7 +74,7 @@ export async function generateMetadata({
     tail: "",
     title: t("home.title"),
     description: t("home.description"),
-    ogImage: `${siteOrigin()}/brand/og-default.jpg`,
+    ogImage: `${siteOrigin()}/brand/og-default.png`,
   });
 
   return {
