@@ -146,11 +146,10 @@ export function ProductPurchase({
             · {volumeMl} ml
           </span>
         )}
-        {activeVariant && (
-          <span className="text-[12px] uppercase tracking-label text-ink-mid">
-            · {activeVariant.label}
-          </span>
-        )}
+        {/* Variant label intentionally NOT echoed next to the price —
+            the variant selector below already shows the active choice
+            with the same label, and duplicating it here turns into
+            visual noise (especially for SKU-style labels like "#23"). */}
       </div>
 
       {/* ── variant selector (size / volume) ──────────────────── */}
