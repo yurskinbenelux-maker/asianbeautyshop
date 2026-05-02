@@ -179,7 +179,13 @@
     "bundle_eyebrow": "Complete your ritual",
     "bundle_title": "Pairs beautifully with",
     "bundle_add": "Add",
-    "view_full": "View full product"
+    "view_full": "View full product",
+    "ugc": {
+      "eyebrow": "Lived in",
+      "title": "How customers use this",
+      "alt_with_name": "Customer photo by {name}",
+      "alt_default": "Customer photo"
+    }
   },
   "shop": {
     "title": "The collection",
@@ -243,7 +249,10 @@
     "summary_total": "Estimated total",
     "continue_link": "Continue shopping",
     "free_shipping_remaining": "{amount} to go for free shipping",
-    "free_shipping_unlocked": "Free shipping unlocked"
+    "free_shipping_unlocked": "Free shipping unlocked",
+    "gift_card_for_self": "Gift card for yourself",
+    "gift_card_for_friend": "Gift card for {name}",
+    "gift_card_qty_one": "Gift card · 1"
   },
   "checkout": {
     "eyebrow": "Checkout",
@@ -291,6 +300,7 @@
       "NO_CART": "We couldn't find your basket. Please add a product and try again.",
       "COUNTRY_NOT_SHIPPABLE": "We don't ship to this country yet.",
       "CHECKOUT_UNAVAILABLE": "Checkout isn't configured yet. Please try again shortly.",
+      "GIFTCARD_INVALID": "One of your gift card codes is no longer valid. Remove it and try again.",
       "PAYMENT_PROVIDER_ERROR": "We couldn't open the payment page. Please try again.",
       "UNKNOWN": "Something went wrong. Please try again."
     },
@@ -536,6 +546,7 @@
     "nav_returns": "Returns",
     "nav_addresses": "Addresses",
     "nav_wishlist": "Wishlist",
+    "nav_gift_cards": "Gift cards",
     "nav_profile": "Profile",
     "nav_privacy": "Privacy",
     "nav_sign_out": "Sign out",
@@ -709,7 +720,9 @@
         "order-not-found": "Order not found.",
         "no-items": "This order has no items."
       }
-    }
+    },
+    "field_birthday": "Date of birth",
+    "profile_birthday_hint": "Optional. We'll send you something on your birthday."
   },
   "privacy": {
     "meta_title": "Your data & privacy — YU.R Skin Solution",
@@ -929,5 +942,55 @@
     "fine_print": "We'll email a confirmation link before sending the code.",
     "success": "Check your inbox for the confirmation link."
   },
-  "home": {}
+  "home": {},
+  "gift_card": {
+    "pdp": {
+      "digital_label": "Digital · email delivery",
+      "denomination_label": "Choose amount",
+      "delivery_label": "Send to",
+      "delivery_self": "For me",
+      "delivery_friend": "For a friend",
+      "field_recipient_name": "Recipient name",
+      "field_recipient_email": "Recipient email",
+      "field_sender_name": "From",
+      "field_sender_placeholder": "Your name (optional)",
+      "field_message": "Personal message",
+      "field_message_placeholder": "A short note for your friend (optional)",
+      "cta_label": "Add gift card to bag",
+      "added_label": "Added",
+      "hint_self": "We'll deliver the code to your inbox the moment payment clears.",
+      "hint_friend": "We'll send the code straight to your friend after payment, with your message."
+    },
+    "checkout": {
+      "field_label": "Gift card code",
+      "field_placeholder": "GIFT-XXXXXXXX",
+      "apply_label": "Apply",
+      "remove_label": "Remove gift card",
+      "error_invalid": "That doesn't look like a valid gift card code.",
+      "error_not-found": "We couldn't find that code. Check for typos and try again.",
+      "error_void": "This card has been voided. Contact us if you think this is wrong.",
+      "error_expired": "This gift card has expired.",
+      "error_depleted": "This card has no balance left.",
+      "error_duplicate": "You've already applied this code.",
+      "disclaimer_member": "Any unspent balance will stay on your card and is visible in your account.",
+      "disclaimer_guest_heading": "Sign in to keep the change.",
+      "disclaimer_guest_body": "Gift cards are linked to the email they were sent to. If you check out as a guest and don't use the full balance, you'll need the original email to redeem the rest later. Sign in or create an account first to keep any leftover automatically.",
+      "disclaimer_guest_cta": "Sign in or create an account"
+    },
+    "account": {
+      "title": "Gift cards",
+      "lede": "Cards you've received and cards you've sent. Codes apply at checkout — multiple cards can stack on one order.",
+      "empty_lede": "No gift cards yet. When someone sends you one — or you treat yourself — it'll appear here.",
+      "section_owned_active": "Ready to spend",
+      "section_owned_active_lede": "Use these codes at checkout. Balances persist between orders.",
+      "section_owned_archived": "Past cards",
+      "section_sent": "Cards you've sent",
+      "section_sent_lede": "A copy for your records — useful if a friend asks you to forward the code again.",
+      "sent_to": "To {name}",
+      "status_active": "Active",
+      "status_depleted": "Spent",
+      "status_expired": "Expired",
+      "status_void": "Void"
+    }
+  }
 }

@@ -16,6 +16,8 @@ type ProfileDefaults = {
   firstName: string;
   lastName: string;
   phone: string;
+  /** YYYY-MM-DD; empty string when the customer hasn't set one. */
+  birthday: string;
   preferredLocale: "en" | "nl" | "fr" | "ru";
   marketingOptIn: boolean;
 };
@@ -73,6 +75,21 @@ export function ProfileForm({
         defaultValue={defaults.phone}
         error={state.fieldErrors?.phone}
       />
+
+      {/* Birthday (#186) — drives the annual birthday-email cron.
+          Optional. Clear by emptying the field and saving. */}
+      <div>
+        <Field
+          label={t("field_birthday")}
+          name="birthday"
+          type="date"
+          defaultValue={defaults.birthday}
+          error={state.fieldErrors?.birthday}
+        />
+        <p className="mt-1.5 text-[11px] text-ink-mid">
+          {t("profile_birthday_hint")}
+        </p>
+      </div>
 
       <fieldset>
         <legend className="mb-3 block text-[11px] uppercase tracking-label text-ink-mid">

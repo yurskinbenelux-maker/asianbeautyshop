@@ -32,6 +32,7 @@ import {
   CornerDownRight,
   History,
   Beaker,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -62,6 +63,7 @@ const SECTIONS: Section[] = [
   { href: "/admin/returns",    label: "Returns",    icon: RotateCcw,        cap: "returns.view" },
   { href: "/admin/customers",  label: "Customers",  icon: Users,            cap: "customers.view" },
   { href: "/admin/coupons",    label: "Coupons",    icon: BadgePercent,     cap: "coupons.edit" },
+  { href: "/admin/gift-cards", label: "Gift cards", icon: Gift,             cap: "giftcards.view" },
   { href: "/admin/reviews",      label: "Reviews",      icon: MessageSquare, cap: "reviews.moderate" },
   { href: "/admin/contact",      label: "Messages",     icon: Mail,          cap: "contact.view" },
   { href: "/admin/testimonials", label: "Testimonials", icon: Quote,         cap: "testimonials.edit" },

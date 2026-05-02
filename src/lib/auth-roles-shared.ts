@@ -50,6 +50,8 @@ export type AdminCapability =
   | "settings.view"
   | "settings.edit"
   | "coupons.edit"
+  | "giftcards.view"
+  | "giftcards.manage"
   | "emails.send"
   | "redirects.edit"
   | "audit.view";
@@ -70,7 +72,8 @@ export const CAPS: Record<AdminRole, Set<AdminCapability>> = {
     "inventory.adjust",
     "customers.view", "customers.export", "customers.edit",
     "settings.view", "settings.edit",
-    "coupons.edit", "emails.send", "redirects.edit", "audit.view",
+    "coupons.edit", "giftcards.view", "giftcards.manage",
+    "emails.send", "redirects.edit", "audit.view",
   ]),
   EDITOR: new Set<AdminCapability>([
     "products.view", "products.edit",
@@ -89,6 +92,7 @@ export const CAPS: Record<AdminRole, Set<AdminCapability>> = {
     "contact.view", "contact.reply",
     "inventory.adjust",
     "customers.view", // fulfilment sees addresses/phone — that's the job
+    "giftcards.view", // read-only so they can answer "did the card go through"
   ]),
 };
 

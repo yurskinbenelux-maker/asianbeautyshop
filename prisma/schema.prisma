@@ -50,6 +50,14 @@ model User {
   marketingOptIn Boolean   @default(false)
   marketingOptInAt DateTime?
   acceptsTermsAt DateTime?
+
+  // Optional DOB — drives the birthday-email cron (#186). Stored as a
+  // DateTime so Prisma stays happy, but only the month/day matter to us.
+  birthday      DateTime?
+  // Calendar year of the most recent birthday email we sent, used as a
+  // sentinel to prevent the daily cron from re-sending if it runs twice
+  // on the same day or if Sofia hand-fires it for testing.
+  lastBirthdayEmailedYear Int?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
   deletedAt     DateTime?  // GDPR soft-delete
@@ -93,6 +101,10 @@ model Address {
 
   orderShipments Order[] @relation("shipping")
   orderBilling   Order[] @relation("billing")
+  // ProductSubscription snapshots the shipping address at signup so a
+  // later edit doesn't reroute pending shipments — the FK lives on the
+  // ProductSubscription, this is just the opposite side Prisma needs.
+  productSubscriptions ProductSubscription[]
 
   @@index([userId])
 }
@@ -168,6 +180,15 @@ enum ProductStatus {
   ARCHIVED
 }
 
+// Distinguishes ordinary inventory from special non-physical products.
+// GIFT_CARD turns a Product row into a configurable digital good — variants
+// = denominations (€25/€50/…), no shipping, custom PDP form, and the Mollie
+// webhook mints a real GiftCard row for each unit purchased.
+enum ProductKind {
+  STANDARD
+  GIFT_CARD
+}
+
 // Supplier classifies products by gender / age cohort. Most YU.R items are
 // UNISEX; the others are kept so PDP filters and supplier round-trips stay
 // honest. Add new values when new product lines arrive (e.g. PETS).
@@ -185,6 +206,10 @@ model Product {
   brandId         String?         @db.Uuid
   brand           Brand?          @relation(fields: [brandId], references: [id])
   status          ProductStatus   @default(DRAFT)
+  // STANDARD = a normal physical product. GIFT_CARD = digital good — the
+  // PDP swaps in a recipient form, the Mollie webhook mints a real
+  // GiftCard row per purchased unit, and shipping is skipped at checkout.
+  kind            ProductKind     @default(STANDARD)
   isFeatured      Boolean         @default(false)
   isBestseller    Boolean         @default(false)
   isAvailableForAi Boolean        @default(true)    // admin toggle: can the AI concierge recommend this?
@@ -231,6 +256,7 @@ model Product {
   wishlistedBy    WishlistItem[]
   cartItems       CartItem[]
   subscriptions   ProductSubscription[]
+  ugcPhotos       UgcPhoto[]
 
   @@index([status])
   @@index([brandId])
@@ -524,9 +550,19 @@ model CartItem {
   variant    ProductVariant? @relation(fields: [variantId], references: [id])
   quantity   Int             @default(1)
   unitPrice  Decimal         @db.Decimal(10, 2) // snapshot at add-to-cart
+  // Per-line config for non-standard products. Today only gift cards use
+  // this — payload shape is { recipientEmail, recipientName?, senderName?,
+  // message?, deliverAt? }. STANDARD products leave it null.
+  // We deliberately removed the (cartId, productId, variantId) unique
+  // constraint that used to guard duplicate-add: per-recipient gift cards
+  // need to live on separate lines even when denomination matches.
+  // Quantity-bump dedup for STANDARD lines is now enforced in code, where
+  // we can branch on `kind === GIFT_CARD`.
+  giftCardConfig Json?
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
-  @@unique([cartId, productId, variantId])
+
+  @@index([cartId])
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -625,7 +661,17 @@ model OrderItem {
   unitPrice    Decimal          @db.Decimal(10, 2)
   lineTotal    Decimal          @db.Decimal(10, 2)
   taxRate      Decimal?         @db.Decimal(5, 4)  // e.g. 0.2100 for 21%
+
+  // Gift-card-specific fields. `giftCardConfig` is copied from the cart
+  // line at order placement so the snapshot survives later cart edits.
+  // `issuedGiftCardId` is set by the Mollie-paid webhook once a real
+  // GiftCard row is minted — gives admin a back-reference to the card
+  // that came out of this purchase.
+  giftCardConfig    Json?
+  issuedGiftCardId  String?  @db.Uuid
+
   @@index([orderId])
+  @@index([issuedGiftCardId])
 }
 
 model OrderEvent {
@@ -755,6 +801,28 @@ model Coupon {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
+//  USER-GENERATED CONTENT
+//  Manually curated photos of customers using a product. Surfaced on the
+//  PDP under "How customers use this". Sofia uploads via /admin/ugc and
+//  taps each photo to a single product. Soft-deleteable.
+// ────────────────────────────────────────────────────────────────────────────
+
+model UgcPhoto {
+  id                 String   @id @default(uuid()) @db.Uuid
+  productId          String   @db.Uuid
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  imageUrl           String   // Supabase Storage URL
+  customerFirstName  String?  // optional caption byline
+  caption            String?  // optional 1-line note
+  sortOrder          Int      @default(0)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([productId, isActive])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 //  GIFT CARDS
 //  Separate from Coupon because the mental model is different — a coupon is
 //  a discount rule (used N times), a gift card is a money balance (drawn
@@ -779,10 +847,20 @@ model GiftCard {
   recipientEmail  String                            // who the card was sent to
   recipientName   String?
   senderName      String?                           // optional, shown in the gift email
+  senderEmail     String?                           // buyer's email — kept distinct from recipient
+                                                    // for "send to a friend" flows.
   message         String?                           // optional gift note
+  // "self" = bought for personal use; "friend" = bought to send. Drives
+  // which email template fires (recipient + buyer-confirmation).
+  deliveryMode    String?                           // "self" | "friend"
   expiresAt       DateTime?                         // null = never. Default 1 year set in code.
-  // Optional: which order purchased this gift card (null for admin-issued)
+  // Optional: which order purchased this gift card (null for admin-issued).
   purchaseOrderId String?        @db.Uuid
+  // Optional: which OrderItem on that order this card came from. Lets the
+  // admin link card → line and the post-payment hook know the per-line
+  // config (recipient details, message). Unique because each OrderItem
+  // mints exactly one card today (quantity is forced to 1 for gift cards).
+  purchaseOrderItemId String?    @unique @db.Uuid
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -790,6 +868,8 @@ model GiftCard {
 
   @@index([status])
   @@index([recipientEmail])
+  @@index([senderEmail])
+  @@index([purchaseOrderId])
 }
 
 // One row per redemption (per order). Lets us audit + reverse a redemption
@@ -829,12 +909,12 @@ model LoyaltyAccount {
   id            String           @id @default(uuid()) @db.Uuid
   userId        String           @unique @db.Uuid
   user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  /** Points cached for cheap display — equal to sum(events.delta). */
+  // Points cached for cheap display — equal to sum(events.delta).
   pointsBalance Int              @default(0)
-  /** Lifetime accrual — informational, never decremented. */
+  // Lifetime accrual — informational, never decremented.
   pointsLifetime Int             @default(0)
-  /** Customer's personal referral code, e.g. "SOFIA-K4M7". Shareable
-   *  forever. Friends apply at checkout to mint the referee discount. */
+  // Customer's personal referral code, e.g. "SOFIA-K4M7". Shareable
+  // forever. Friends apply at checkout to mint the referee discount.
   referralCode  String           @unique
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
@@ -849,11 +929,11 @@ model LoyaltyEvent {
   accountId   String           @db.Uuid
   account     LoyaltyAccount   @relation(fields: [accountId], references: [id], onDelete: Cascade)
   kind        LoyaltyEventKind
-  /** Signed integer — positive accrual, negative redemption / expiry. */
+  // Signed integer — positive accrual, negative redemption / expiry.
   delta       Int
-  /** Free-text reason shown in the customer's history table. */
+  // Free-text reason shown in the customer's history table.
   reason      String
-  /** Optional links — order that earned the points, coupon that burnt them, etc. */
+  // Optional links — order that earned the points, coupon that burnt them, etc.
   orderId     String?          @db.Uuid
   couponCode  String?
   createdAt   DateTime         @default(now())

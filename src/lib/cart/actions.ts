@@ -21,6 +21,7 @@ import {
   peekCartSummary,
 } from "./cart";
 import type { CartSummary } from "./types";
+import type { GiftCardConfig } from "@/lib/gift-cards/types";
 
 export type CartActionResult = {
   ok: boolean;
@@ -52,12 +53,19 @@ export async function getCartAction(
   return peekCartSummary({ locale: toPrismaLocale(urlLocale) });
 }
 
-/** Add a product (optionally a variant) to the cart. */
+/**
+ * Add a product (optionally a variant) to the cart.
+ *
+ * For gift cards, pass `giftCardConfig` with at minimum
+ * `{ deliveryMode, recipientEmail }`. Omitting it on a GIFT_CARD product
+ * throws — that's intentional, the PDP form should always supply it.
+ */
 export async function addToCartAction(input: {
   productId: string;
   variantId?: string | null;
   quantity?: number;
   urlLocale?: string;
+  giftCardConfig?: GiftCardConfig | null;
 }): Promise<CartActionResult> {
   try {
     const cart = await addItem({
@@ -65,6 +73,7 @@ export async function addToCartAction(input: {
       variantId: input.variantId ?? null,
       quantity: input.quantity ?? 1,
       locale: toPrismaLocale(input.urlLocale),
+      giftCardConfig: input.giftCardConfig ?? null,
     });
     // Revalidate every localised layout so the header badge updates.
     revalidatePath("/", "layout");

@@ -179,7 +179,13 @@
     "bundle_eyebrow": "Complétez votre rituel",
     "bundle_title": "Se marie à la perfection avec",
     "bundle_add": "Ajouter",
-    "view_full": "Voir le produit complet"
+    "view_full": "Voir le produit complet",
+    "ugc": {
+      "eyebrow": "En usage",
+      "title": "Comment nos clients l'utilisent",
+      "alt_with_name": "Photo cliente de {name}",
+      "alt_default": "Photo cliente"
+    }
   },
   "shop": {
     "title": "La collection",
@@ -243,7 +249,10 @@
     "summary_total": "Total estimé",
     "continue_link": "Continuer mes achats",
     "free_shipping_remaining": "Plus que {amount} pour la livraison offerte",
-    "free_shipping_unlocked": "Livraison offerte débloquée"
+    "free_shipping_unlocked": "Livraison offerte débloquée",
+    "gift_card_for_self": "Carte cadeau pour vous-même",
+    "gift_card_for_friend": "Carte cadeau pour {name}",
+    "gift_card_qty_one": "Carte cadeau · 1"
   },
   "checkout": {
     "eyebrow": "Paiement",
@@ -291,6 +300,7 @@
       "NO_CART": "Nous n'avons pas retrouvé votre panier. Ajoutez un produit et réessayez.",
       "COUNTRY_NOT_SHIPPABLE": "Nous n'expédions pas encore vers ce pays.",
       "CHECKOUT_UNAVAILABLE": "Le paiement n'est pas encore configuré. Réessayez dans un instant.",
+      "GIFTCARD_INVALID": "Un de vos codes carte cadeau n'est plus valable. Retirez-le et réessayez.",
       "PAYMENT_PROVIDER_ERROR": "Nous n'avons pas pu ouvrir la page de paiement. Réessayez.",
       "UNKNOWN": "Une erreur est survenue. Réessayez."
     },
@@ -536,6 +546,7 @@
     "nav_returns": "Retours",
     "nav_addresses": "Adresses",
     "nav_wishlist": "Liste d'envies",
+    "nav_gift_cards": "Cartes cadeaux",
     "nav_profile": "Profil",
     "nav_privacy": "Confidentialité",
     "nav_sign_out": "Se déconnecter",
@@ -709,7 +720,9 @@
         "order-not-found": "Commande introuvable.",
         "no-items": "Cette commande ne contient aucun article."
       }
-    }
+    },
+    "field_birthday": "Date de naissance",
+    "profile_birthday_hint": "Facultatif. Nous vous enverrons un petit quelque chose pour votre anniversaire."
   },
   "privacy": {
     "meta_title": "Vos données & confidentialité — YU.R Skin Solution",
@@ -929,5 +942,55 @@
     "fine_print": "Nous enverrons d'abord un lien de confirmation avant le code.",
     "success": "Vérifiez votre boîte de réception pour le lien de confirmation."
   },
-  "home": {}
+  "home": {},
+  "gift_card": {
+    "pdp": {
+      "digital_label": "Numérique · livrée par e-mail",
+      "denomination_label": "Choisissez un montant",
+      "delivery_label": "Envoyer à",
+      "delivery_self": "Pour moi",
+      "delivery_friend": "Pour un proche",
+      "field_recipient_name": "Nom du destinataire",
+      "field_recipient_email": "E-mail du destinataire",
+      "field_sender_name": "De la part de",
+      "field_sender_placeholder": "Votre nom (facultatif)",
+      "field_message": "Message personnel",
+      "field_message_placeholder": "Un petit mot pour votre proche (facultatif)",
+      "cta_label": "Ajouter la carte cadeau au panier",
+      "added_label": "Ajoutée",
+      "hint_self": "Nous livrerons le code dans votre boîte mail dès le paiement validé.",
+      "hint_friend": "Nous enverrons le code directement à votre proche après le paiement, accompagné de votre message."
+    },
+    "checkout": {
+      "field_label": "Code de carte cadeau",
+      "field_placeholder": "GIFT-XXXXXXXX",
+      "apply_label": "Appliquer",
+      "remove_label": "Retirer la carte cadeau",
+      "error_invalid": "Ce code ne ressemble pas à une carte cadeau valide.",
+      "error_not-found": "Nous n'avons pas trouvé ce code. Vérifiez l'orthographe et réessayez.",
+      "error_void": "Cette carte a été annulée. Contactez-nous si cela vous semble incorrect.",
+      "error_expired": "Cette carte cadeau est expirée.",
+      "error_depleted": "Cette carte n'a plus de solde disponible.",
+      "error_duplicate": "Vous avez déjà appliqué ce code.",
+      "disclaimer_member": "Le solde non utilisé restera sur votre carte et sera visible dans votre compte.",
+      "disclaimer_guest_heading": "Connectez-vous pour conserver le solde restant.",
+      "disclaimer_guest_body": "Les cartes cadeaux sont liées à l'adresse e-mail à laquelle elles ont été envoyées. Si vous payez en tant qu'invité sans utiliser tout le solde, il vous faudra l'e-mail d'origine pour récupérer la différence plus tard. Connectez-vous ou créez un compte avant le paiement pour garder automatiquement le solde restant.",
+      "disclaimer_guest_cta": "Se connecter ou créer un compte"
+    },
+    "account": {
+      "title": "Cartes cadeaux",
+      "lede": "Les cartes que vous avez reçues et celles que vous avez envoyées. Les codes s'appliquent au paiement — plusieurs cartes peuvent se cumuler sur une même commande.",
+      "empty_lede": "Aucune carte cadeau pour le moment. Quand quelqu'un vous en offrira une — ou que vous vous ferez plaisir — elle apparaîtra ici.",
+      "section_owned_active": "Prêtes à être utilisées",
+      "section_owned_active_lede": "Utilisez ces codes au paiement. Le solde est conservé d'une commande à l'autre.",
+      "section_owned_archived": "Cartes passées",
+      "section_sent": "Cartes que vous avez envoyées",
+      "section_sent_lede": "Une copie pour vos archives — utile si un proche vous demande de lui transférer le code à nouveau.",
+      "sent_to": "À {name}",
+      "status_active": "Active",
+      "status_depleted": "Épuisée",
+      "status_expired": "Expirée",
+      "status_void": "Annulée"
+    }
+  }
 }

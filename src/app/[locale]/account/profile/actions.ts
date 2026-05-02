@@ -40,6 +40,14 @@ const ProfileSchema = z.object({
     .union([z.literal("on"), z.literal("true"), z.literal("")])
     .optional()
     .transform((v) => v === "on" || v === "true"),
+  // Birthday — accepts a YYYY-MM-DD string from the date input, or
+  // empty/null from a customer who'd rather not share. We normalise to
+  // a Date at midnight UTC to keep the column timezone-agnostic.
+  birthday: z.preprocess((v) => {
+    if (typeof v !== "string" || v.trim() === "") return null;
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }, z.date().nullable()),
   locale: z.string().min(2).max(2),
 });
 
@@ -75,6 +83,7 @@ export async function updateProfileAction(
       firstName: data.firstName,
       lastName: data.lastName,
       phone: data.phone,
+      birthday: data.birthday,
       preferredLocale: newPreferred,
       marketingOptIn,
       ...(optInChanged && {

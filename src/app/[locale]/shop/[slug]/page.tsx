@@ -51,7 +51,9 @@ import { priceLocale } from "@/lib/utils";
 import { ProductGallery } from "@/components/shop/product-gallery";
 import { RecentlyViewedRail } from "@/components/shop/recently-viewed-rail";
 import { TrackRecentlyViewed } from "@/components/shop/track-recently-viewed";
+import { UgcSection } from "@/components/shop/pdp/ugc-section";
 import { ProductPurchase } from "@/components/shop/pdp/product-purchase";
+import { GiftCardPurchase } from "@/components/shop/pdp/gift-card-purchase";
 import { PdpTagRail } from "@/components/shop/pdp/pdp-tag-rail";
 import { IngredientSection } from "@/components/shop/pdp/ingredient-section";
 import { RitualStepsSection } from "@/components/shop/pdp/ritual-steps-section";
@@ -327,16 +329,25 @@ export default async function ProductDetailPage({
 
             <div className="rule my-8" />
 
-            {/* price row + variant selector + add-to-ritual */}
-            <ProductPurchase
-              productId={product.id}
-              sku={product.sku}
-              basePriceEur={product.priceEur}
-              baseComparePriceEur={product.comparePriceEur}
-              volumeMl={product.volumeMl}
-              currencyLocale={currencyLocale}
-              variants={variants}
-            />
+            {/* price row + variant selector + add-to-ritual.
+                Gift cards swap out for a recipient configurator. */}
+            {product.kind === "GIFT_CARD" ? (
+              <GiftCardPurchase
+                productId={product.id}
+                currencyLocale={currencyLocale}
+                variants={variants}
+              />
+            ) : (
+              <ProductPurchase
+                productId={product.id}
+                sku={product.sku}
+                basePriceEur={product.priceEur}
+                baseComparePriceEur={product.comparePriceEur}
+                volumeMl={product.volumeMl}
+                currencyLocale={currencyLocale}
+                variants={variants}
+              />
+            )}
 
             {/* description (on the info column, tighter layout) */}
             <div
@@ -459,6 +470,11 @@ export default async function ProductDetailPage({
             </div>
           </section>
         )}
+
+        {/* ── UGC: How customers use this ─────────────────────── */}
+        {/* Self-hides when there are no active photos for this product —
+            hides on launch until Sofia uploads the first one. */}
+        <UgcSection productId={product.id} />
 
         {/* ── recently viewed (client-only; hidden when empty) ─── */}
         <RecentlyViewedRail excludeSlug={product.slug} />

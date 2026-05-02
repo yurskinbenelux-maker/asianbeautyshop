@@ -179,7 +179,13 @@
     "bundle_eyebrow": "Maak het ritueel compleet",
     "bundle_title": "Past prachtig bij",
     "bundle_add": "Toevoegen",
-    "view_full": "Volledig product bekijken"
+    "view_full": "Volledig product bekijken",
+    "ugc": {
+      "eyebrow": "In gebruik",
+      "title": "Zo gebruiken klanten dit",
+      "alt_with_name": "Klantfoto van {name}",
+      "alt_default": "Klantfoto"
+    }
   },
   "shop": {
     "title": "De collectie",
@@ -243,7 +249,10 @@
     "summary_total": "Geschat totaal",
     "continue_link": "Verder winkelen",
     "free_shipping_remaining": "Nog {amount} voor gratis verzending",
-    "free_shipping_unlocked": "Gratis verzending vrijgespeeld"
+    "free_shipping_unlocked": "Gratis verzending vrijgespeeld",
+    "gift_card_for_self": "Cadeaubon voor jezelf",
+    "gift_card_for_friend": "Cadeaubon voor {name}",
+    "gift_card_qty_one": "Cadeaubon · 1"
   },
   "checkout": {
     "eyebrow": "Afrekenen",
@@ -291,6 +300,7 @@
       "NO_CART": "We konden je mandje niet vinden. Voeg een product toe en probeer het opnieuw.",
       "COUNTRY_NOT_SHIPPABLE": "We verzenden nog niet naar dit land.",
       "CHECKOUT_UNAVAILABLE": "Afrekenen is nog niet geconfigureerd. Probeer het zo dadelijk opnieuw.",
+      "GIFTCARD_INVALID": "Een van je cadeaubon-codes is niet meer geldig. Verwijder de code en probeer opnieuw.",
       "PAYMENT_PROVIDER_ERROR": "We konden de betaalpagina niet openen. Probeer het opnieuw.",
       "UNKNOWN": "Er ging iets mis. Probeer het opnieuw."
     },
@@ -536,6 +546,7 @@
     "nav_returns": "Retour",
     "nav_addresses": "Adressen",
     "nav_wishlist": "Verlanglijst",
+    "nav_gift_cards": "Cadeaubonnen",
     "nav_profile": "Profiel",
     "nav_privacy": "Privacy",
     "nav_sign_out": "Uitloggen",
@@ -709,7 +720,9 @@
         "order-not-found": "Bestelling niet gevonden.",
         "no-items": "Deze bestelling bevat geen artikelen."
       }
-    }
+    },
+    "field_birthday": "Geboortedatum",
+    "profile_birthday_hint": "Optioneel. We sturen je iets op je verjaardag."
   },
   "privacy": {
     "meta_title": "Jouw gegevens & privacy — YU.R Skin Solution",
@@ -929,5 +942,55 @@
     "fine_print": "We sturen eerst een bevestigingslink voordat de code wordt verstuurd.",
     "success": "Bekijk je inbox voor de bevestigingslink."
   },
-  "home": {}
+  "home": {},
+  "gift_card": {
+    "pdp": {
+      "digital_label": "Digitaal · per e-mail bezorgd",
+      "denomination_label": "Kies een bedrag",
+      "delivery_label": "Versturen naar",
+      "delivery_self": "Voor mij",
+      "delivery_friend": "Voor een vriend(in)",
+      "field_recipient_name": "Naam van de ontvanger",
+      "field_recipient_email": "E-mail van de ontvanger",
+      "field_sender_name": "Van",
+      "field_sender_placeholder": "Jouw naam (optioneel)",
+      "field_message": "Persoonlijke boodschap",
+      "field_message_placeholder": "Een kort woordje voor je vriend(in) (optioneel)",
+      "cta_label": "Cadeaubon in je tas",
+      "added_label": "Toegevoegd",
+      "hint_self": "We bezorgen de code in je inbox zodra de betaling rond is.",
+      "hint_friend": "We sturen de code rechtstreeks naar je vriend(in) na de betaling, samen met je boodschap."
+    },
+    "checkout": {
+      "field_label": "Code cadeaubon",
+      "field_placeholder": "GIFT-XXXXXXXX",
+      "apply_label": "Toepassen",
+      "remove_label": "Cadeaubon verwijderen",
+      "error_invalid": "Dat lijkt geen geldige code voor een cadeaubon.",
+      "error_not-found": "We vinden die code niet terug. Controleer op tikfouten en probeer opnieuw.",
+      "error_void": "Deze bon is ingetrokken. Neem contact met ons op als dat niet klopt.",
+      "error_expired": "Deze cadeaubon is vervallen.",
+      "error_depleted": "Op deze bon staat geen saldo meer.",
+      "error_duplicate": "Je hebt deze code al toegepast.",
+      "disclaimer_member": "Wat je niet uitgeeft, blijft op je bon staan en is zichtbaar in je account.",
+      "disclaimer_guest_heading": "Meld je aan om het restsaldo te bewaren.",
+      "disclaimer_guest_body": "Cadeaubonnen zijn gekoppeld aan het e-mailadres waarnaar ze verstuurd zijn. Reken je af als gast en gebruik je het saldo niet helemaal op, dan heb je later die oorspronkelijke e-mail nodig om de rest in te wisselen. Meld je eerst aan of maak een account aan, dan blijft het restsaldo automatisch staan.",
+      "disclaimer_guest_cta": "Aanmelden of account aanmaken"
+    },
+    "account": {
+      "title": "Cadeaubonnen",
+      "lede": "Bonnen die je hebt ontvangen en bonnen die je hebt verstuurd. Codes pas je toe bij het afrekenen — meerdere bonnen mogen op één bestelling.",
+      "empty_lede": "Nog geen cadeaubonnen. Zodra iemand er een naar je stuurt — of je trakteert jezelf — verschijnt die hier.",
+      "section_owned_active": "Klaar om te besteden",
+      "section_owned_active_lede": "Gebruik deze codes bij het afrekenen. Het saldo blijft tussen bestellingen bewaard.",
+      "section_owned_archived": "Vroegere bonnen",
+      "section_sent": "Bonnen die je hebt verstuurd",
+      "section_sent_lede": "Een kopie voor je archief — handig als een vriend(in) vraagt om de code opnieuw door te sturen.",
+      "sent_to": "Aan {name}",
+      "status_active": "Actief",
+      "status_depleted": "Opgebruikt",
+      "status_expired": "Vervallen",
+      "status_void": "Geannuleerd"
+    }
+  }
 }

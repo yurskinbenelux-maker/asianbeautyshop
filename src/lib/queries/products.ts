@@ -671,6 +671,11 @@ export async function getShopFilters(
 export type ProductDetail = {
   id: string;
   sku: string;
+  /**
+   * "STANDARD" for ordinary skincare. "GIFT_CARD" turns the PDP into a
+   * configurable digital good — denomination picker + recipient form.
+   */
+  kind: "STANDARD" | "GIFT_CARD";
   priceEur: number;
   comparePriceEur: number | null;
   volumeMl: number | null;
@@ -769,6 +774,7 @@ export async function getProductBySlug({
   return {
     id: p.id,
     sku: p.sku,
+    kind: p.kind === "GIFT_CARD" ? "GIFT_CARD" : "STANDARD",
     priceEur: Number(p.price),
     comparePriceEur: p.comparePrice ? Number(p.comparePrice) : null,
     volumeMl: p.volumeMl,

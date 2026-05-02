@@ -90,7 +90,13 @@ export function computeOrderTotals(input: PricingInput): PricingResult {
   //    allow-list, return a marker the UI can show as "we don't ship there".
   //    If no country yet (pre-address), treat as shippable so the summary
   //    still renders an estimate.
+  //
+  //    Digital-only carts bypass the allow-list entirely — gift cards can
+  //    be sent anywhere there's email.
+  const cartHasPhysical =
+    cart.items.length === 0 || cart.items.some((i) => i.requiresShipping);
   const shippable =
+    !cartHasPhysical ||
     !shippingCountry ||
     shipping.allowedCountries.length === 0 ||
     shipping.allowedCountries.includes(shippingCountry.toUpperCase());
@@ -110,12 +116,21 @@ export function computeOrderTotals(input: PricingInput): PricingResult {
   }
 
   // 3. Base shipping — free-over-threshold or flat-rate.
+  //    Digital-only carts (every item is a gift card) skip shipping
+  //    entirely — there's nothing to put in a parcel. We treat that as
+  //    `free_threshold` reason since the customer doesn't need to know
+  //    the internal logic; the UI just renders "Free".
   const freeThresholdEur = centsToEur(shipping.freeThresholdCents);
   const flatRateEur = centsToEur(shipping.flatRateCents);
+  const cartIsDigitalOnly =
+    cart.items.length > 0 && cart.items.every((i) => !i.requiresShipping);
 
   let shippingEur: number;
   let shippingReason: PricingResult["shippingReason"];
-  if (freeThresholdEur > 0 && subtotalEur >= freeThresholdEur) {
+  if (cartIsDigitalOnly) {
+    shippingEur = 0;
+    shippingReason = "free_threshold";
+  } else if (freeThresholdEur > 0 && subtotalEur >= freeThresholdEur) {
     shippingEur = 0;
     shippingReason = "free_threshold";
   } else {

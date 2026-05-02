@@ -7,6 +7,8 @@
 // translation once per request.
 // ─────────────────────────────────────────────────────────────────────────
 
+import type { GiftCardConfig } from "@/lib/gift-cards/types";
+
 export type CartItemView = {
   id: string;                // CartItem.id — stable key for React + mutations
   productId: string;
@@ -19,6 +21,19 @@ export type CartItemView = {
   unitPriceEur: number;      // in euros, not cents
   quantity: number;
   lineTotalEur: number;      // unitPrice × quantity, pre-computed
+  /**
+   * If this line is a gift-card purchase, the per-recipient config. The
+   * cart drawer uses it to render "→ recipient@email" instead of variant
+   * label, and the order-placement code copies it into OrderItem.giftCardConfig
+   * so the Mollie webhook can mint the right GiftCard row. Null on
+   * standard products.
+   */
+  giftCardConfig: GiftCardConfig | null;
+  /**
+   * False for digital goods (gift cards). The pricing engine checks this
+   * across the cart to decide whether to charge shipping at all.
+   */
+  requiresShipping: boolean;
 };
 
 export type CartSummary = {

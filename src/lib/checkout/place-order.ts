@@ -37,6 +37,7 @@ import {
   hasMollieKey,
   mapLocaleToMollie,
 } from "@/lib/mollie/client";
+import { lookupGiftCard } from "@/lib/gift-cards/db";
 
 // ────────── input shape ─────────────────────────────────────────────────
 
@@ -48,6 +49,14 @@ export type PlaceOrderInput = {
   shipping: AddressInput;
   billing: AddressInput | null; // null → copy from shipping
   couponCode: string | null;
+  /**
+   * Gift card codes the customer pasted at checkout. Validated server-side
+   * here — invalid codes throw "GIFTCARD_INVALID:<code>:<reason>" so the
+   * UI can highlight the bad chip. Multiple codes stack: their balances
+   * sum and feed `pricing.giftCardBalanceEur`. Drained against the order
+   * post-payment by the Mollie webhook.
+   */
+  giftCardCodes?: string[];
   notes: string | null;
   marketingOptIn: boolean;
   /**
@@ -109,6 +118,26 @@ export async function placeOrder(
     input.couponCode ? loadCoupon(input.couponCode) : Promise.resolve(null),
   ]);
 
+  // 2b. Validate gift card codes server-side. The client previewed them
+  // already, but a stale tab can't be trusted with money. Each code looked
+  // up here returns its current balance; we sum them for pricing and keep
+  // the giftCardId list for the post-paid drain.
+  const giftCardCodes = (input.giftCardCodes ?? []).map((c) =>
+    c.trim().toUpperCase(),
+  );
+  const giftCardIds: string[] = [];
+  let giftCardBalanceSumEur = 0;
+  for (const code of giftCardCodes) {
+    const result = await lookupGiftCard(code);
+    if (!result.ok) {
+      // Surface the specific code + reason so the UI can highlight which
+      // chip went bad. Action layer maps unknown errors to "UNKNOWN".
+      throw new Error(`GIFTCARD_INVALID:${code}:${result.reason}`);
+    }
+    giftCardIds.push(result.id);
+    giftCardBalanceSumEur += result.balance;
+  }
+
   // 3. Compute totals. If the chosen country isn't on the allow-list,
   //    refuse here before creating any DB rows.
   const pricing = computeOrderTotals({
@@ -117,9 +146,19 @@ export async function placeOrder(
     coupon,
     shipping,
     tax,
+    giftCardBalanceEur:
+      giftCardBalanceSumEur > 0 ? giftCardBalanceSumEur : undefined,
   });
   if (!pricing.shippable) {
     throw new Error("COUNTRY_NOT_SHIPPABLE");
+  }
+
+  // Edge case: gift card balance covers the entire order. Mollie rejects
+  // €0 payments, and we don't yet support a "free order" path that fires
+  // post-paid hooks inline. For now, refuse with a clear error so the UI
+  // can ask the customer to keep one card for next time.
+  if (pricing.grandTotalEur < 0.5 && giftCardIds.length > 0) {
+    throw new Error("CHECKOUT_UNAVAILABLE: gift card balance fully covers this order. Keep one card for a future purchase.");
   }
 
   // 4. Create addresses + order + items in a single transaction so a
@@ -214,26 +253,72 @@ export async function placeOrder(
         couponCode: coupon?.code ?? null,
         notes: input.notes ?? null,
         items: {
-          create: cart.items.map((item) => ({
-            productId: item.productId,
-            variantId: item.variantId,
-            nameSnapshot: nameByProductId.get(item.productId) ?? item.name,
-            skuSnapshot: skuByProductId.get(item.productId) ?? "—",
-            quantity: item.quantity,
-            unitPrice: new Prisma.Decimal(item.unitPriceEur.toFixed(2)),
-            lineTotal: new Prisma.Decimal(item.lineTotalEur.toFixed(2)),
-            taxRate,
-          })),
+          create: cart.items.map((item) => {
+            // Gift cards: copy the per-line config snapshot from the cart
+            // and rewrite the "__buyer__" sentinel to the real buyer email
+            // so the post-payment hook never has to guess. The cart-line
+            // config is the source of truth for recipient details — the
+            // OrderItem is the durable replica.
+            let configForOrder: Prisma.InputJsonValue | undefined;
+            if (item.giftCardConfig) {
+              const c = item.giftCardConfig;
+              configForOrder = {
+                deliveryMode: c.deliveryMode,
+                recipientEmail:
+                  c.deliveryMode === "self" ||
+                  c.recipientEmail === "__buyer__"
+                    ? input.email.trim().toLowerCase()
+                    : c.recipientEmail,
+                recipientName: c.recipientName ?? null,
+                senderName: c.senderName ?? null,
+                message: c.message ?? null,
+              };
+            }
+            return {
+              productId: item.productId,
+              variantId: item.variantId,
+              nameSnapshot: nameByProductId.get(item.productId) ?? item.name,
+              skuSnapshot: skuByProductId.get(item.productId) ?? "—",
+              quantity: item.quantity,
+              unitPrice: new Prisma.Decimal(item.unitPriceEur.toFixed(2)),
+              lineTotal: new Prisma.Decimal(item.lineTotalEur.toFixed(2)),
+              taxRate,
+              ...(configForOrder
+                ? { giftCardConfig: configForOrder }
+                : {}),
+            };
+          }),
         },
         events: {
-          create: {
-            kind: "order.created",
-            message: `Placed by ${input.userId ? "customer" : "guest"}`,
-            metadata: {
-              cartId: cart.id,
-              country: input.shipping.country.toUpperCase(),
+          create: [
+            {
+              kind: "order.created",
+              message: `Placed by ${input.userId ? "customer" : "guest"}`,
+              metadata: {
+                cartId: cart.id,
+                country: input.shipping.country.toUpperCase(),
+              },
             },
-          },
+            // Stamp the attached gift card IDs as metadata so the Mollie
+            // webhook can drain them on the PAID transition. Guarded with
+            // a length check so we don't litter every order with an empty
+            // event.
+            ...(giftCardIds.length > 0
+              ? [
+                  {
+                    kind: "giftcard.attached",
+                    message: `${giftCardIds.length} gift card(s) applied (€${giftCardBalanceSumEur.toFixed(
+                      2,
+                    )})`,
+                    metadata: {
+                      giftCardIds,
+                      preCreditTotalEur:
+                        pricing.grandTotalEur + pricing.giftCardEur,
+                    },
+                  },
+                ]
+              : []),
+          ],
         },
       },
       select: {

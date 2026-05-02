@@ -235,18 +235,43 @@ function CartLine({
             </div>
           )}
 
+          {/* Gift-card specific subtext: who's the card for? Sentinel
+              "__buyer__" means the buyer hasn't told us yet (we'll stamp
+              their email at checkout); show "for me" instead of an opaque
+              token. */}
+          {item.giftCardConfig && (
+            <div className="mt-1 text-[11px] tracking-normal text-ink-mid">
+              {item.giftCardConfig.deliveryMode === "self" ||
+              item.giftCardConfig.recipientEmail === "__buyer__"
+                ? t("gift_card_for_self")
+                : t("gift_card_for_friend", {
+                    name:
+                      item.giftCardConfig.recipientName ||
+                      item.giftCardConfig.recipientEmail,
+                  })}
+            </div>
+          )}
+
           <div className="mt-2 text-[13px] text-ink-mid">
             {formatEur(item.unitPriceEur, currencyLocale)}
           </div>
         </div>
 
         <div className="mt-3 flex items-center justify-between">
-          <QuantityStepper
-            value={item.quantity}
-            onChange={(next) => updateQty(item.id, next)}
-            decLabel={t("decrease")}
-            incLabel={t("increase")}
-          />
+          {/* Gift cards have a fixed quantity of 1 — each line is a unique
+              recipient. Hide the stepper to make that obvious. */}
+          {item.giftCardConfig ? (
+            <span className="text-[11px] uppercase tracking-label text-ink-mid">
+              {t("gift_card_qty_one")}
+            </span>
+          ) : (
+            <QuantityStepper
+              value={item.quantity}
+              onChange={(next) => updateQty(item.id, next)}
+              decLabel={t("decrease")}
+              incLabel={t("increase")}
+            />
+          )}
 
           <div className="flex items-center gap-3">
             <span className="font-display text-[15px] text-ink">

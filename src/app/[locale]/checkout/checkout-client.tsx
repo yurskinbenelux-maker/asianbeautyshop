@@ -37,6 +37,7 @@ import {
 
 import { submitCheckout, type CheckoutErrorCode } from "./actions";
 import { AddressAutocomplete } from "@/components/checkout/address-autocomplete";
+import { GiftCardCodesField } from "@/components/checkout/gift-card-codes-field";
 
 // ────────── props ───────────────────────────────────────────────────────
 
@@ -83,6 +84,9 @@ export function CheckoutClient({
     defaultAddress?.country ?? "BE",
   );
   const [couponCode, setCouponCode] = useState("");
+  // Live total of redeemed gift card balances. Subtracted from grandTotal
+  // in the previewed totals so the customer sees the impact before submit.
+  const [giftCardBalanceEur, setGiftCardBalanceEur] = useState(0);
   const [billingSame, setBillingSame] = useState(true);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   // Optional Mollie quick-pick. null → land on Mollie's full method picker.
@@ -107,8 +111,12 @@ export function CheckoutClient({
         coupon: null,
         shipping: shippingSettings,
         tax: taxSettings,
+        // Gift card balance applied here is a preview only — the server
+        // re-validates each code in place-order before actually drawing
+        // it down, so a stale tab can't fake a discount.
+        giftCardBalanceEur: giftCardBalanceEur > 0 ? giftCardBalanceEur : undefined,
       }),
-    [cart, country, shippingSettings, taxSettings],
+    [cart, country, shippingSettings, taxSettings, giftCardBalanceEur],
   );
 
   // Fall back to the server's first-render totals before the user touches
@@ -251,6 +259,16 @@ export function CheckoutClient({
                 }
                 hint={t("field_coupon_hint")}
               />
+              {/* Gift card redemption — bearer token, can stack multiple codes
+                  on one order. The disclaimer below flips loud → calm based
+                  on whether the customer is signed in. */}
+              <div className="mt-5">
+                <GiftCardCodesField
+                  isLoggedIn={!!customerEmail}
+                  currencyLocale={currencyLocale}
+                  onBalanceChange={setGiftCardBalanceEur}
+                />
+              </div>
               <div className="mt-5">
                 <label className="block">
                   <span className="mb-2 block text-[11px] uppercase tracking-label text-ink-mid">

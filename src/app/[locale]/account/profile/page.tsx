@@ -59,6 +59,11 @@ export default async function ProfilePage({ params }: Props) {
               firstName: profile.firstName ?? "",
               lastName: profile.lastName ?? "",
               phone: profile.phone ?? "",
+              // Slice the ISO date so the <input type="date"> reads it
+              // cleanly. Empty string when the customer hasn't shared.
+              birthday: profile.birthday
+                ? profile.birthday.toISOString().slice(0, 10)
+                : "",
               preferredLocale: fromPrismaLocale(profile.preferredLocale),
               marketingOptIn: profile.marketingOptIn,
             }}

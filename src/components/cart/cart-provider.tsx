@@ -32,6 +32,7 @@ import {
 } from "@/lib/cart/actions";
 import type { CartSummary } from "@/lib/cart/types";
 import { EMPTY_CART_SUMMARY } from "@/lib/cart/types";
+import type { GiftCardConfig } from "@/lib/gift-cards/types";
 
 type CartContextValue = {
   cart: CartSummary;
@@ -51,6 +52,8 @@ type CartContextValue = {
     productId: string;
     variantId?: string | null;
     quantity?: number;
+    /** Optional gift-card recipient payload — required for GIFT_CARD products. */
+    giftCardConfig?: GiftCardConfig | null;
   }) => Promise<void>;
   updateQty: (cartItemId: string, quantity: number) => Promise<void>;
   removeLine: (cartItemId: string) => Promise<void>;
@@ -80,7 +83,7 @@ export function CartProvider({
   const toggleDrawer = useCallback(() => setIsOpen((v) => !v), []);
 
   const addItem = useCallback<CartContextValue["addItem"]>(
-    async ({ productId, variantId, quantity }) => {
+    async ({ productId, variantId, quantity, giftCardConfig }) => {
       setLastError(null);
       // Wrap in a transition so React can show the pending state
       // (spinner on the button) without blocking input.
@@ -92,6 +95,7 @@ export function CartProvider({
               variantId,
               quantity,
               urlLocale: locale,
+              giftCardConfig: giftCardConfig ?? null,
             });
             setCart(result.cart);
             if (!result.ok && result.message) setLastError(result.message);

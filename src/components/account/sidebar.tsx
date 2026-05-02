@@ -20,6 +20,7 @@ import {
   LogOut,
   RotateCcw,
   Shield,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,7 @@ type Section = {
     | "returns"
     | "addresses"
     | "wishlist"
+    | "gift_cards"
     | "profile"
     | "privacy";
   icon: React.ComponentType<{ className?: string }>;
@@ -42,6 +44,7 @@ const SECTIONS: Section[] = [
   { href: "/account/returns",   key: "returns",   icon: RotateCcw },
   { href: "/account/addresses", key: "addresses", icon: MapPin },
   { href: "/account/wishlist",  key: "wishlist",  icon: Heart },
+  { href: "/account/gift-cards", key: "gift_cards", icon: Gift },
   { href: "/account/profile",   key: "profile",   icon: User },
   { href: "/account/privacy",   key: "privacy",   icon: Shield },
 ];

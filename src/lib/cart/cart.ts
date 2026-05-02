@@ -22,9 +22,13 @@
 // braces rather than essential. Add via `npm i server-only` when you
 // want the compile-time error.
 import { cookies } from "next/headers";
-import { Locale, Prisma } from "@prisma/client";
+import { Locale, Prisma, ProductKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { CartSummary, CartItemView } from "./types";
+import {
+  isGiftCardConfig,
+  type GiftCardConfig,
+} from "@/lib/gift-cards/types";
 
 const CART_COOKIE = "cart_token";
 const CART_TTL_DAYS = 30;
@@ -135,6 +139,7 @@ export async function getCartSummary(args: {
       product: {
         select: {
           id: true,
+          kind: true,
           volumeMl: true,
           translations: {
             where: { locale },
@@ -185,6 +190,11 @@ export async function getCartSummary(args: {
     const slug = translated?.slug ?? fallback?.slug ?? "";
 
     const unitPriceEur = decimalToNumber(i.unitPrice);
+    // The Json column comes back as `Prisma.JsonValue`. Run it through the
+    // type guard so the client only ever sees a well-formed config (or null).
+    const giftCardConfig = isGiftCardConfig(i.giftCardConfig)
+      ? (i.giftCardConfig as GiftCardConfig)
+      : null;
     return {
       id: i.id,
       productId: i.productId,
@@ -197,6 +207,8 @@ export async function getCartSummary(args: {
       unitPriceEur,
       quantity: i.quantity,
       lineTotalEur: round2(unitPriceEur * i.quantity),
+      giftCardConfig,
+      requiresShipping: i.product.kind !== ProductKind.GIFT_CARD,
     };
   });
 
@@ -223,16 +235,24 @@ export async function addItem(args: {
   variantId?: string | null;
   quantity?: number;
   locale?: Locale;
+  /**
+   * Required when the product is a GIFT_CARD. Each gift-card line carries
+   * its own recipient details so two cards going to two friends can't
+   * collapse onto a single cart line. Standard products MUST omit this.
+   */
+  giftCardConfig?: GiftCardConfig | null;
 }): Promise<CartSummary> {
   const quantity = Math.max(1, Math.floor(args.quantity ?? 1));
   const locale = args.locale ?? Locale.EN;
 
   // Get product + variant price in one shot so we can snapshot unitPrice
-  // at add-to-cart time (what the customer saw).
+  // at add-to-cart time (what the customer saw). Also pull `kind` so we
+  // know whether to expect a gift-card config payload.
   const product = await prisma.product.findFirst({
     where: { id: args.productId, deletedAt: null, status: "PUBLISHED" },
     select: {
       id: true,
+      kind: true,
       price: true,
       variants: args.variantId
         ? {
@@ -247,6 +267,19 @@ export async function addItem(args: {
     throw new Error("Product not available.");
   }
 
+  const isGiftCard = product.kind === ProductKind.GIFT_CARD;
+
+  // Validate the recipient payload shape for gift cards. Reject silently
+  // for standard products if a config slipped through — better to ignore
+  // than to litter unrelated rows with stale data.
+  let configToPersist: GiftCardConfig | null = null;
+  if (isGiftCard) {
+    if (!args.giftCardConfig || !isGiftCardConfig(args.giftCardConfig)) {
+      throw new Error("Gift card recipient is required.");
+    }
+    configToPersist = args.giftCardConfig;
+  }
+
   const variantPrice =
     args.variantId && product.variants?.[0]?.price
       ? product.variants[0].price
@@ -255,30 +288,55 @@ export async function addItem(args: {
 
   const cart = await getOrCreateCart({ locale });
 
-  // Upsert on the composite unique [cartId, productId, variantId].
-  // Adding the same thing twice bumps qty rather than creating a duplicate row.
-  const existing = await prisma.cartItem.findFirst({
-    where: {
-      cartId: cart.id,
-      productId: args.productId,
-      variantId: args.variantId ?? null,
-    },
-    select: { id: true, quantity: true },
-  });
-
-  if (existing) {
-    await prisma.cartItem.update({
-      where: { id: existing.id },
-      data: { quantity: existing.quantity + quantity },
+  // Standard products: bump quantity if the same (productId, variantId)
+  // pair is already in the cart so the customer doesn't see two identical
+  // lines after a double-click.
+  //
+  // Gift cards: each line is unique (different recipient, message). We
+  // always create a fresh row, even when the denomination matches.
+  if (!isGiftCard) {
+    const existing = await prisma.cartItem.findFirst({
+      where: {
+        cartId: cart.id,
+        productId: args.productId,
+        variantId: args.variantId ?? null,
+        // Only match rows without a gift-card config — never collapse a
+        // standard line onto a gift-card line, even if the (product,
+        // variant) pair somehow matches.
+        giftCardConfig: { equals: Prisma.DbNull },
+      },
+      select: { id: true, quantity: true },
     });
+
+    if (existing) {
+      await prisma.cartItem.update({
+        where: { id: existing.id },
+        data: { quantity: existing.quantity + quantity },
+      });
+    } else {
+      await prisma.cartItem.create({
+        data: {
+          cartId: cart.id,
+          productId: args.productId,
+          variantId: args.variantId ?? null,
+          quantity,
+          unitPrice,
+        },
+      });
+    }
   } else {
+    // Gift card — always a fresh line, quantity forced to 1 so each card
+    // gets its own recipient/message. If the customer wants two €50 cards
+    // for two different people, that's two lines.
     await prisma.cartItem.create({
       data: {
         cartId: cart.id,
         productId: args.productId,
         variantId: args.variantId ?? null,
-        quantity,
+        quantity: 1,
         unitPrice,
+        giftCardConfig:
+          configToPersist as unknown as Prisma.InputJsonValue,
       },
     });
   }

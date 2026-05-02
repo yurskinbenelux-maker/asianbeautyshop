@@ -22,6 +22,8 @@ import { sendOrderConfirmationEmail } from "@/lib/email/order-confirmation";
 import { sendAdminNewOrderEmail } from "@/lib/email/admin-new-order";
 import { applyMovement } from "@/lib/inventory/movements";
 import { syncOrderToSendcloud } from "@/lib/sendcloud/sync";
+import { issueGiftCardsForOrder } from "@/lib/gift-cards/issue-from-order";
+import { applyGiftCardToOrder } from "@/lib/gift-cards/db";
 
 // ────────── types ───────────────────────────────────────────────────────
 
@@ -130,12 +132,28 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
   // On the into-PAID transition, pull the line items so we can decrement
   // stock for each variant inside the same transaction. On any other
   // transition we skip — stock already moved on the original paid event.
-  let paidItems: Array<{ variantId: string | null; quantity: number }> = [];
+  // We also pull product.kind so we can skip GIFT_CARD lines (they don't
+  // have real inventory; the synthetic 9_999 stock would just churn the
+  // movements log).
+  let paidItems: Array<{
+    variantId: string | null;
+    quantity: number;
+    productKind: "STANDARD" | "GIFT_CARD";
+  }> = [];
   if (willFlipToPaid) {
-    paidItems = await prisma.orderItem.findMany({
+    const rows = await prisma.orderItem.findMany({
       where: { orderId: order.id },
-      select: { variantId: true, quantity: true },
+      select: {
+        variantId: true,
+        quantity: true,
+        product: { select: { kind: true } },
+      },
     });
+    paidItems = rows.map((r) => ({
+      variantId: r.variantId,
+      quantity: r.quantity,
+      productKind: r.product.kind === "GIFT_CARD" ? "GIFT_CARD" : "STANDARD",
+    }));
   }
 
   await prisma.$transaction(async (tx) => {
@@ -172,6 +190,7 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
     if (willFlipToPaid) {
       for (const item of paidItems) {
         if (!item.variantId) continue; // products without variants: out of scope
+        if (item.productKind === "GIFT_CARD") continue; // digital good, no stock to move
         await applyMovement(tx, {
           variantId: item.variantId,
           delta: -item.quantity,
@@ -191,10 +210,22 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
   // If the API call fails, the order still flipped to PAID; Sofia can
   // retry the parcel creation manually from the admin order page.
   if (willFlipToPaid) {
+    // Drain any gift cards that were applied at checkout. Order of
+    // operations matters: drain BEFORE the customer confirmation email
+    // so the email reads the post-credit grandTotal correctly. Each call
+    // is idempotent on (giftCardId, orderId), so re-running on a webhook
+    // retry is a no-op.
+    await drainAttachedGiftCards(order.id);
+
     await Promise.allSettled([
       sendOrderConfirmationEmail(order.id),
       sendAdminNewOrderEmail(order.id),
       syncOrderToSendcloud(order.id),
+      // Mint gift cards from any GIFT_CARD line items + send recipient
+      // emails. Wrapped in allSettled — a failure here shouldn't roll back
+      // the order's PAID state. The helper itself is idempotent so admin
+      // can hand-resync the order if a card needs to be re-issued.
+      issueGiftCardsForOrder(order.id),
     ]);
   }
 
@@ -208,6 +239,54 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
     changed: !paymentUnchanged || !orderUnchanged,
     paidTransition: willFlipToPaid,
   };
+}
+
+// ────────── gift card draining ─────────────────────────────────────────
+//
+// On the PAID transition, look up any GiftCard IDs that placeOrder stamped
+// on this order via the `giftcard.attached` OrderEvent. For each, decrement
+// its balance by the smaller of its remaining balance and the un-drawn
+// portion of the order total. Each draw is idempotent on (giftCardId,
+// orderId) — webhook retries don't double-spend.
+//
+// We process in stamp order so the first card the customer applied
+// drains first, matching the chip order they saw at checkout.
+
+async function drainAttachedGiftCards(orderId: string): Promise<void> {
+  const event = await prisma.orderEvent.findFirst({
+    where: { orderId, kind: "giftcard.attached" },
+    orderBy: { createdAt: "desc" },
+    select: { metadata: true },
+  });
+  if (!event || !event.metadata) return;
+
+  const meta = event.metadata as {
+    giftCardIds?: string[];
+    preCreditTotalEur?: number;
+  };
+  const ids = Array.isArray(meta.giftCardIds) ? meta.giftCardIds : [];
+  if (ids.length === 0) return;
+
+  // The pre-credit total is what we'd have charged Mollie if no card was
+  // applied — that's what each gift card draws against (pricing already
+  // capped each draw at min(balance, total)).
+  let remainingEur = meta.preCreditTotalEur ?? 0;
+
+  for (const giftCardId of ids) {
+    if (remainingEur <= 0) break;
+    const result = await applyGiftCardToOrder({
+      giftCardId,
+      orderId,
+      orderTotalEur: remainingEur,
+    });
+    if (result.ok) {
+      remainingEur = round2(remainingEur - result.amountUsedEur);
+    }
+  }
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
 }
 
 // ────────── mapping ─────────────────────────────────────────────────────

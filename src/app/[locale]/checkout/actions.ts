@@ -66,6 +66,16 @@ const CheckoutSchema = z.object({
   billingSame: z.enum(["yes", "no"]).default("yes"),
   billing: AddressSchema.optional(),
   couponCode: z.string().trim().max(40).optional(),
+  /**
+   * Newline-separated GIFT- codes the customer applied via the field.
+   * Re-validated server-side in placeOrder against fresh balances — the
+   * client's preview total is just UX, never authoritative.
+   */
+  giftCardCodes: z
+    .string()
+    .trim()
+    .max(400) // 8 codes * 14 chars, generous
+    .optional(),
   notes: z.string().trim().max(1000).optional(),
   marketingOptIn: z.enum(["yes", "no"]).default("no"),
   locale: z.string().trim().length(2),
@@ -86,6 +96,7 @@ export type CheckoutErrorCode =
   | "NO_CART"
   | "COUNTRY_NOT_SHIPPABLE"
   | "CHECKOUT_UNAVAILABLE"
+  | "GIFTCARD_INVALID"
   | "PAYMENT_PROVIDER_ERROR"
   | "UNKNOWN";
 
@@ -101,6 +112,7 @@ export async function submitCheckout(
     email: formData.get("email")?.toString() ?? "",
     locale: formData.get("locale")?.toString() ?? "en",
     couponCode: formData.get("couponCode")?.toString() || undefined,
+    giftCardCodes: formData.get("giftCardCodes")?.toString() || undefined,
     notes: formData.get("notes")?.toString() || undefined,
     marketingOptIn:
       formData.get("marketingOptIn")?.toString() === "yes" ? "yes" : "no",
@@ -179,6 +191,17 @@ export async function submitCheckout(
             }
           : null,
       couponCode: parsed.data.couponCode ?? null,
+      // Split + dedupe + uppercase each code. Empty array if none.
+      giftCardCodes: parsed.data.giftCardCodes
+        ? Array.from(
+            new Set(
+              parsed.data.giftCardCodes
+                .split(/\s+/)
+                .map((c) => c.trim().toUpperCase())
+                .filter((c) => c.length > 0),
+            ),
+          )
+        : [],
       notes: parsed.data.notes ?? null,
       marketingOptIn: parsed.data.marketingOptIn === "yes",
     });
@@ -218,6 +241,9 @@ function mapError(err: unknown): CheckoutErrorCode {
     if (err.message.startsWith("CART_EMPTY")) return "CART_EMPTY";
     if (err.message.startsWith("COUNTRY_NOT_SHIPPABLE")) {
       return "COUNTRY_NOT_SHIPPABLE";
+    }
+    if (err.message.startsWith("GIFTCARD_INVALID")) {
+      return "GIFTCARD_INVALID";
     }
     if (err.message.startsWith("CHECKOUT_UNAVAILABLE")) {
       return "CHECKOUT_UNAVAILABLE";
