@@ -45,6 +45,7 @@ export function fixtureOrder(locale: Locale): EmailOrder {
         productSlug: "rice-water-cleansing-gel",
         imageUrl:
           "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=160&q=80",
+        kind: "STANDARD",
       },
       {
         id: "preview-item-2",
@@ -55,6 +56,7 @@ export function fixtureOrder(locale: Locale): EmailOrder {
         productSlug: "ginseng-recovery-serum",
         imageUrl:
           "https://images.unsplash.com/photo-1620916566886-f7069e6aaaa0?auto=format&fit=crop&w=160&q=80",
+        kind: "STANDARD",
       },
     ],
     shippingAddress: {
