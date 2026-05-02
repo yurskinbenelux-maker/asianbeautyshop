@@ -59,9 +59,18 @@ export const SUPPORTED_PAYMENT_METHODS = [
 export type SupportedPaymentMethod =
   (typeof SUPPORTED_PAYMENT_METHODS)[number];
 
+/**
+ * For a fully-digital cart (e.g. only gift cards), the customer fills
+ * billing only and the shipping fields are blank. Make shipping optional
+ * at the schema level so Zod doesn't reject — the server then re-derives
+ * "is this digital-only?" from the cart contents and refuses if a
+ * physical line snuck in without a shipping address.
+ */
+const OptionalAddressSchema = AddressSchema.partial().optional();
+
 const CheckoutSchema = z.object({
   email: z.string().trim().toLowerCase().email("email_invalid"),
-  shipping: AddressSchema,
+  shipping: OptionalAddressSchema,
   // Either a full billing address, or the sentinel "same" to clone shipping.
   billingSame: z.enum(["yes", "no"]).default("yes"),
   billing: AddressSchema.optional(),
@@ -141,21 +150,65 @@ export async function submitCheckout(
     return { ok: false, error: "VALIDATION_FAILED", fieldErrors };
   }
 
-  // 2. Resolve cart from the cookie.
+  // 2. Resolve cart from the cookie + re-derive whether it's digital-only.
+  // The client signals via a hidden field but we never trust the wire —
+  // a tampered cart could otherwise skip the shipping address entirely
+  // for a physical purchase.
   const jar = await cookies();
   const token = jar.get("cart_token")?.value;
   if (!token) return { ok: false, error: "NO_CART" };
   const cart = await prisma.cart.findUnique({
     where: { token },
-    select: { id: true },
+    select: {
+      id: true,
+      items: {
+        select: { product: { select: { kind: true } } },
+      },
+    },
   });
   if (!cart) return { ok: false, error: "NO_CART" };
+  const isDigitalOnly =
+    cart.items.length > 0 &&
+    cart.items.every((i) => i.product.kind === "GIFT_CARD");
 
   // 3. Optional: current customer, for linking the order to an account.
   const current = await getCurrentCustomer();
   const userId = current?.profile.id ?? null;
 
-  // 4. Fire placeOrder. Map any thrown business errors to known codes.
+  // 4. For digital-only carts the customer filled `billing.*` and left
+  //    `shipping.*` blank. Promote billing → "the address" for the
+  //    place-order call and don't pass a shipping address at all.
+  // For physical / mixed carts the original flow stands: shipping is
+  //    required, billing falls back to shipping when billingSame=yes.
+  let shippingForOrder: typeof parsed.data.shipping | null = null;
+  let billingForOrder: typeof parsed.data.billing | null = null;
+  if (isDigitalOnly) {
+    // The form rendered the billing block; if billing is missing here
+    // it's a validation issue. Bail with a friendly error.
+    if (!parsed.data.billing) {
+      return {
+        ok: false,
+        error: "VALIDATION_FAILED",
+        fieldErrors: { "billing.line1": "billing_required" },
+      };
+    }
+    billingForOrder = parsed.data.billing;
+    shippingForOrder = null;
+  } else {
+    // Physical / mixed: shipping is mandatory.
+    if (!parsed.data.shipping || !parsed.data.shipping.line1) {
+      return {
+        ok: false,
+        error: "VALIDATION_FAILED",
+        fieldErrors: { "shipping.line1": "line1_required" },
+      };
+    }
+    shippingForOrder = parsed.data.shipping;
+    billingForOrder =
+      parsed.data.billingSame === "no" ? parsed.data.billing ?? null : null;
+  }
+
+  // Fire placeOrder. Map any thrown business errors to known codes.
   try {
     const result = await placeOrder({
       cartId: cart.id,
@@ -163,33 +216,34 @@ export async function submitCheckout(
       email: parsed.data.email,
       userId,
       paymentMethod: parsed.data.paymentMethod,
-      shipping: {
-        firstName: parsed.data.shipping.firstName,
-        lastName: parsed.data.shipping.lastName,
-        company: parsed.data.shipping.company ?? null,
-        line1: parsed.data.shipping.line1,
-        line2: parsed.data.shipping.line2 ?? null,
-        city: parsed.data.shipping.city,
-        postcode: parsed.data.shipping.postcode,
-        region: parsed.data.shipping.region ?? null,
-        country: parsed.data.shipping.country,
-        phone: parsed.data.shipping.phone ?? null,
-      },
-      billing:
-        parsed.data.billingSame === "no" && parsed.data.billing
-          ? {
-              firstName: parsed.data.billing.firstName,
-              lastName: parsed.data.billing.lastName,
-              company: parsed.data.billing.company ?? null,
-              line1: parsed.data.billing.line1,
-              line2: parsed.data.billing.line2 ?? null,
-              city: parsed.data.billing.city,
-              postcode: parsed.data.billing.postcode,
-              region: parsed.data.billing.region ?? null,
-              country: parsed.data.billing.country,
-              phone: parsed.data.billing.phone ?? null,
-            }
-          : null,
+      shipping: shippingForOrder
+        ? {
+            firstName: shippingForOrder.firstName ?? "",
+            lastName: shippingForOrder.lastName ?? "",
+            company: shippingForOrder.company ?? null,
+            line1: shippingForOrder.line1 ?? "",
+            line2: shippingForOrder.line2 ?? null,
+            city: shippingForOrder.city ?? "",
+            postcode: shippingForOrder.postcode ?? "",
+            region: shippingForOrder.region ?? null,
+            country: shippingForOrder.country ?? "",
+            phone: shippingForOrder.phone ?? null,
+          }
+        : null,
+      billing: billingForOrder
+        ? {
+            firstName: billingForOrder.firstName,
+            lastName: billingForOrder.lastName,
+            company: billingForOrder.company ?? null,
+            line1: billingForOrder.line1,
+            line2: billingForOrder.line2 ?? null,
+            city: billingForOrder.city,
+            postcode: billingForOrder.postcode,
+            region: billingForOrder.region ?? null,
+            country: billingForOrder.country,
+            phone: billingForOrder.phone ?? null,
+          }
+        : null,
       couponCode: parsed.data.couponCode ?? null,
       // Split + dedupe + uppercase each code. Empty array if none.
       giftCardCodes: parsed.data.giftCardCodes

@@ -261,6 +261,8 @@
     "section_contact": "Contact",
     "section_shipping": "Adresse de livraison",
     "section_billing": "Facturation",
+    "section_billing_only": "Coordonnées de facturation",
+    "billing_only_hint": "Nous en avons besoin uniquement pour votre facture. Aucun colis ne sera expédié — votre code carte cadeau arrive par e-mail.",
     "section_extras": "Code promo & notes",
     "field_email": "E-mail",
     "field_marketing": "Envoyez-moi de temps en temps des lettres avec les nouveautés, les rituels et les notes d'ingrédients.",

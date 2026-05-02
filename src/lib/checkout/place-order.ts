@@ -51,7 +51,12 @@ export type PlaceOrderInput = {
   locale: string; // URL locale ("en", "nl", "fr", "ru")
   email: string;
   userId: string | null; // null = guest
-  shipping: AddressInput;
+  /**
+   * Null when the cart is digital-only (every line is a gift card) — in
+   * that case `billing` is the only address we ask the customer for, no
+   * parcel will be created, and Order.shippingAddressId stays null.
+   */
+  shipping: AddressInput | null;
   billing: AddressInput | null; // null → copy from shipping
   couponCode: string | null;
   /**
@@ -145,9 +150,14 @@ export async function placeOrder(
 
   // 3. Compute totals. If the chosen country isn't on the allow-list,
   //    refuse here before creating any DB rows.
+  // Pricing already short-circuits the country check on digital-only
+  // carts (anywhere there's email is fine), so we pass the billing
+  // country when shipping is absent — that's good enough for VAT.
+  const countryForPricing =
+    input.shipping?.country ?? input.billing?.country ?? null;
   const pricing = computeOrderTotals({
     cart,
-    shippingCountry: input.shipping.country,
+    shippingCountry: countryForPricing,
     coupon,
     shipping,
     tax,
@@ -169,25 +179,39 @@ export async function placeOrder(
   // 4. Create addresses + order + items in a single transaction so a
   //    mid-insert error can't leave orphan addresses pointing nowhere.
   const publicNumber = await generateOrderNumber();
+  // Falls back: shipping → billing for billing input;
+  // billing → shipping for the rare cart that has shipping but no billing.
   const billing = input.billing ?? input.shipping;
+  if (!billing) {
+    // Defensive: action layer is supposed to ensure at least one address.
+    // If neither is present, refuse — VAT compliance + Mollie risk
+    // require at least a billing address.
+    throw new Error("CHECKOUT_UNAVAILABLE: address missing");
+  }
 
   const order = await prisma.$transaction(async (tx) => {
-    const shippingAddress = await tx.address.create({
-      data: {
-        userId: input.userId,
-        type: "SHIPPING",
-        firstName: input.shipping.firstName,
-        lastName: input.shipping.lastName,
-        company: input.shipping.company,
-        line1: input.shipping.line1,
-        line2: input.shipping.line2,
-        city: input.shipping.city,
-        postcode: input.shipping.postcode,
-        region: input.shipping.region,
-        country: input.shipping.country.toUpperCase(),
-        phone: input.shipping.phone,
-      },
-    });
+    // Only create a shipping Address row when the cart actually needs
+    // shipping. Digital-only carts leave Order.shippingAddressId null
+    // (the column is nullable in schema). This keeps the admin UI clean
+    // and Sendcloud sync a clean no-op.
+    const shippingAddress = input.shipping
+      ? await tx.address.create({
+          data: {
+            userId: input.userId,
+            type: "SHIPPING",
+            firstName: input.shipping.firstName,
+            lastName: input.shipping.lastName,
+            company: input.shipping.company,
+            line1: input.shipping.line1,
+            line2: input.shipping.line2,
+            city: input.shipping.city,
+            postcode: input.shipping.postcode,
+            region: input.shipping.region,
+            country: input.shipping.country.toUpperCase(),
+            phone: input.shipping.phone,
+          },
+        })
+      : null;
 
     const billingAddress = await tx.address.create({
       data: {
@@ -233,7 +257,7 @@ export async function placeOrder(
     const skuByProductId = new Map(skuRows.map((r) => [r.id, r.sku]));
 
     const taxRate = new Prisma.Decimal(
-      ((tax.overrides[input.shipping.country.toUpperCase()] ??
+      ((tax.overrides[(input.shipping?.country ?? billing.country).toUpperCase()] ??
         tax.ratePercent) /
         100
       ).toFixed(4),
@@ -248,7 +272,7 @@ export async function placeOrder(
         currency: "EUR",
         status: "PENDING",
         paymentStatus: "UNPAID",
-        shippingAddressId: shippingAddress.id,
+        shippingAddressId: shippingAddress?.id ?? null,
         billingAddressId: billingAddress.id,
         subtotal: new Prisma.Decimal(pricing.subtotalEur.toFixed(2)),
         discountTotal: new Prisma.Decimal(pricing.discountEur.toFixed(2)),
@@ -301,7 +325,10 @@ export async function placeOrder(
               message: `Placed by ${input.userId ? "customer" : "guest"}`,
               metadata: {
                 cartId: cart.id,
-                country: input.shipping.country.toUpperCase(),
+                country: (
+                  input.shipping?.country ?? billing.country
+                ).toUpperCase(),
+                digitalOnly: !input.shipping,
               },
             },
             // Stamp the attached gift card IDs as metadata so the Mollie

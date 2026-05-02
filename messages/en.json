@@ -261,6 +261,8 @@
     "section_contact": "Contact",
     "section_shipping": "Shipping address",
     "section_billing": "Billing",
+    "section_billing_only": "Billing details",
+    "billing_only_hint": "We just need this for your invoice. No parcel will be shipped — your gift card code is delivered by email.",
     "section_extras": "Coupon & notes",
     "field_email": "Email",
     "field_marketing": "Send me occasional letters with new arrivals, rituals, and ingredient notes.",

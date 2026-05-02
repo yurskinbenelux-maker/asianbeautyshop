@@ -357,6 +357,25 @@ export async function markShippedAction(
   const order = await loadOrderOrFail(orderId);
   if (!order) return { ok: false, message: "Order not found." };
 
+  // Refuse to mark a digital-only order as shipped — there's no parcel
+  // to track, and firing the "Your parcel has left the studio" email
+  // would confuse the customer. The /admin/orders/[id] page hides the
+  // tracking form for these orders, but defend at the action layer too.
+  const items = await prisma.orderItem.findMany({
+    where: { orderId },
+    select: { product: { select: { kind: true } } },
+  });
+  const hasPhysical = items.some(
+    (i) => i.product.kind !== "GIFT_CARD",
+  );
+  if (!hasPhysical) {
+    return {
+      ok: false,
+      message:
+        "This order has no physical items — it can't be marked shipped.",
+    };
+  }
+
   // Only block if we're moving status — saving a tracking edit on an
   // already-SHIPPED order is fine.
   const willChangeStatus = order.status !== "SHIPPED";

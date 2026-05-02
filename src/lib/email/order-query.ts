@@ -18,6 +18,12 @@ export type EmailOrderItem = {
   productName: string;
   productSlug: string;
   imageUrl: string | null;
+  /**
+   * "GIFT_CARD" for digital lines, "STANDARD" otherwise. Email templates
+   * branch on `items.every(i => i.kind === "GIFT_CARD")` to switch from
+   * shipping copy to digital-delivery copy.
+   */
+  kind: "STANDARD" | "GIFT_CARD";
 };
 
 export type EmailOrderAddress = {
@@ -77,6 +83,7 @@ export async function getOrderForEmail(
         include: {
           product: {
             select: {
+              kind: true,
               translations: {
                 select: { locale: true, name: true, slug: true },
               },
@@ -122,6 +129,8 @@ export async function getOrderForEmail(
       productName: it.variant?.label ? `${name} — ${it.variant.label}` : name,
       productSlug: slug,
       imageUrl: it.product?.media?.[0]?.url ?? null,
+      kind:
+        it.product?.kind === "GIFT_CARD" ? "GIFT_CARD" : "STANDARD",
     };
   });
 

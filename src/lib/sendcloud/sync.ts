@@ -27,7 +27,12 @@ import {
 } from "./client";
 
 export type SendcloudSyncResult =
-  | { ok: true; parcelId: string; trackingNumber: string | null }
+  | {
+      ok: true;
+      parcelId: string | null; // null when digital-only and we skipped
+      trackingNumber: string | null;
+      skipped?: "digital-only"; // only set when no parcel was needed
+    }
   | {
       ok: false;
       reason:
@@ -190,6 +195,7 @@ export async function syncOrderToSendcloud(
           unitPrice: true,
           product: {
             select: {
+              kind: true,
               weightGrams: true,
               hsCode: true,
               originCountry: true,
@@ -216,6 +222,30 @@ export async function syncOrderToSendcloud(
   ) {
     return { ok: false, reason: "order-not-paid" };
   }
+
+  // Digital-only orders (every line is a gift card) have nothing to ship.
+  // Skip cleanly so the Mollie webhook's `Promise.allSettled([..., sync])`
+  // doesn't log a false-negative, and Sofia doesn't see a phantom parcel
+  // in her Sendcloud dashboard.
+  const hasPhysical = order.items.some(
+    (i) => i.product.kind !== "GIFT_CARD",
+  );
+  if (!hasPhysical) {
+    await prisma.orderEvent.create({
+      data: {
+        orderId: order.id,
+        kind: "shipping.skipped",
+        message: "Digital-only order — no parcel needed",
+      },
+    });
+    return {
+      ok: true,
+      parcelId: null,
+      trackingNumber: null,
+      skipped: "digital-only",
+    };
+  }
+
   if (!order.shippingAddress) {
     return { ok: false, reason: "no-shipping-address" };
   }

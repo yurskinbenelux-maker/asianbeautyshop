@@ -87,6 +87,13 @@ export function CheckoutClient({
   // Live total of redeemed gift card balances. Subtracted from grandTotal
   // in the previewed totals so the customer sees the impact before submit.
   const [giftCardBalanceEur, setGiftCardBalanceEur] = useState(0);
+
+  // True when every cart line is a gift card (or any other digital good).
+  // Drives whether we render the shipping form section at all — for a
+  // digital-only order we collect only a billing address (for VAT + Mollie
+  // fraud scoring) and skip everything to do with the parcel.
+  const cartIsDigitalOnly =
+    cart.items.length > 0 && cart.items.every((i) => !i.requiresShipping);
   const [billingSame, setBillingSame] = useState(true);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   // Optional Mollie quick-pick. null → land on Mollie's full method picker.
@@ -208,42 +215,81 @@ export function CheckoutClient({
               </label>
             </Section>
 
-            {/* Shipping address */}
-            <Section title={t("section_shipping")}>
-              <AddressFields
-                prefix="shipping"
-                defaults={defaultAddress}
-                fieldErrors={fieldErrors}
-                onCountryChange={setCountry}
-                t={t}
-              />
-            </Section>
-
-            {/* Billing same / different */}
-            <Section title={t("section_billing")}>
-              <label className="flex cursor-pointer items-start gap-3">
-                <input
-                  type="checkbox"
-                  checked={billingSame}
-                  onChange={(e) => setBillingSame(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 border-ink/20 accent-vermilion"
+            {/* Shipping address — hidden for digital-only carts (gift
+                cards have nothing to put in a parcel). The form falls
+                back to a billing-only layout. */}
+            {!cartIsDigitalOnly && (
+              <Section title={t("section_shipping")}>
+                <AddressFields
+                  prefix="shipping"
+                  defaults={defaultAddress}
+                  fieldErrors={fieldErrors}
+                  onCountryChange={setCountry}
+                  t={t}
                 />
-                <span className="text-[13px] leading-relaxed text-ink">
-                  {t("field_billing_same")}
-                </span>
-              </label>
+              </Section>
+            )}
 
-              {!billingSame && (
-                <div className="mt-6">
+            {/* Billing — for a mixed/physical cart this is "Billing same?
+                / Billing details", for a digital-only cart it's the only
+                address we collect (used for VAT invoice + Mollie risk). */}
+            <Section
+              title={
+                cartIsDigitalOnly
+                  ? t("section_billing_only")
+                  : t("section_billing")
+              }
+            >
+              {cartIsDigitalOnly ? (
+                <>
+                  <p className="mb-5 text-[12px] leading-relaxed text-ink-mid">
+                    {t("billing_only_hint")}
+                  </p>
                   <AddressFields
                     prefix="billing"
-                    defaults={null}
+                    defaults={defaultAddress}
                     fieldErrors={fieldErrors}
+                    onCountryChange={setCountry}
                     t={t}
                   />
-                </div>
+                </>
+              ) : (
+                <>
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={billingSame}
+                      onChange={(e) => setBillingSame(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 border-ink/20 accent-vermilion"
+                    />
+                    <span className="text-[13px] leading-relaxed text-ink">
+                      {t("field_billing_same")}
+                    </span>
+                  </label>
+
+                  {!billingSame && (
+                    <div className="mt-6">
+                      <AddressFields
+                        prefix="billing"
+                        defaults={null}
+                        fieldErrors={fieldErrors}
+                        t={t}
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </Section>
+
+            {/* Submit-time signal so the server can distinguish a digital-
+                only checkout (no shipping address required, no parcel
+                created). The client-side flag isn't authoritative — the
+                server re-derives it from cart contents. */}
+            <input
+              type="hidden"
+              name="cartIsDigitalOnly"
+              value={cartIsDigitalOnly ? "yes" : "no"}
+            />
 
             {/* Extras */}
             <Section title={t("section_extras")}>

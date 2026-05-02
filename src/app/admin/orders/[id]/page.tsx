@@ -399,16 +399,27 @@ export default async function AdminOrderDetailPage({
             <StatusActions orderId={order.id} options={statusOptions} />
           </Panel>
 
-          <Panel title="Shipping">
-            <TrackingForm
-              orderId={order.id}
-              trackingNumber={order.trackingNumber}
-              trackingUrl={order.trackingUrl}
-              alreadyShipped={
-                order.status === "SHIPPED" || order.status === "DELIVERED"
-              }
-            />
-          </Panel>
+          {/* Shipping panel hidden for digital-only orders — no parcel
+              to track, and the markShipped action would refuse anyway. */}
+          {order.items.some((it) => it.product.kind !== "GIFT_CARD") ? (
+            <Panel title="Shipping">
+              <TrackingForm
+                orderId={order.id}
+                trackingNumber={order.trackingNumber}
+                trackingUrl={order.trackingUrl}
+                alreadyShipped={
+                  order.status === "SHIPPED" || order.status === "DELIVERED"
+                }
+              />
+            </Panel>
+          ) : (
+            <Panel title="Delivery">
+              <p className="text-[12px] leading-relaxed text-ink-mid">
+                Digital order — gift card code(s) delivered by email at
+                payment confirmation. No parcel to ship.
+              </p>
+            </Panel>
+          )}
 
           <Panel title="Refund">
             <RefundForm

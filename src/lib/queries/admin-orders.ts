@@ -149,6 +149,7 @@ export async function getAdminOrder(id: string) {
             select: {
               id: true,
               sku: true,
+              kind: true,
               translations: {
                 where: { locale: "EN" },
                 select: { name: true, slug: true },

@@ -261,6 +261,8 @@
     "section_contact": "Contact",
     "section_shipping": "Verzendadres",
     "section_billing": "Facturatie",
+    "section_billing_only": "Facturatiegegevens",
+    "billing_only_hint": "Dit hebben we nodig voor je factuur. Er wordt geen pakket verzonden — je cadeaubon-code komt per e-mail.",
     "section_extras": "Kortingsbon & notities",
     "field_email": "E-mail",
     "field_marketing": "Stuur me af en toe een brief met nieuwe arrivals, rituelen en ingrediëntenverhalen.",
