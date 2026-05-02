@@ -26,6 +26,7 @@ import { getShopCategories } from "@/lib/queries/products";
 import { readSetting } from "@/lib/settings";
 import { CookieBanner } from "@/components/consent/cookie-banner";
 import { ExitIntentPopup } from "@/components/marketing/exit-intent-popup";
+import { SwRegister } from "@/components/pwa/sw-register";
 import { readConsentCookie } from "@/lib/consent/consent";
 import { JsonLd } from "@/components/seo/json-ld";
 import { organizationJsonLd, websiteJsonLd, siteOrigin } from "@/lib/seo/json-ld";
@@ -198,6 +199,10 @@ export default async function LocaleLayout({ children, params }: Props) {
                   flow lights up automatically. Self-suppresses on
                   cart/checkout/account/admin and after dismissal. */}
               <ExitIntentPopup />
+              {/* PWA — registers /sw.js once on production paint so the
+                  brand PNG icons + Next static chunks get cached. Skips
+                  localhost so dev-mode hot-reload isn't poisoned. */}
+              <SwRegister />
               <Toaster
                 position="bottom-center"
                 toastOptions={{

@@ -16,6 +16,10 @@
 import { notFound } from "next/navigation";
 import { maybeRedirect } from "@/lib/redirects/maybe-redirect";
 import Image from "next/image";
+
+// Brand pages cache for 60s — same shape as category landings.
+export const revalidate = 60;
+
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import {

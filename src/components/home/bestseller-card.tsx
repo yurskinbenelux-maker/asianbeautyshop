@@ -8,6 +8,7 @@
 
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
@@ -92,14 +93,18 @@ export function BestsellerCard({
           )}
 
           {product.imageUrl ? (
-            // Once Sofia uploads real photography via admin → Supabase Storage,
-            // this branch renders. Until then the SVG fallback below shows.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            // next/image transcodes the Supabase PNG/JPG to AVIF on the
+            // fly (per next.config images.formats). On a typical card we
+            // ship ~40-60% fewer bytes than the original. `sizes` tells
+            // the optimizer which variant to pick per breakpoint —
+            // honoured by both AVIF and the fallback.
+            <Image
               src={product.imageUrl}
               alt={product.imageAlt ?? product.name}
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              loading={index === 0 ? "eager" : "lazy"}
+              fill
+              priority={index === 0}
+              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
             <div className="flex h-full items-end justify-center pb-10">

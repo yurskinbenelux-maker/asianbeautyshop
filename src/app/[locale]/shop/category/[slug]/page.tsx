@@ -20,6 +20,11 @@ import { notFound } from "next/navigation";
 import { maybeRedirect } from "@/lib/redirects/maybe-redirect";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
+
+// Category landing pages cache for 60s — same tradeoff as /shop.
+// Admin edits to category copy / pricing land within a minute.
+export const revalidate = 60;
+
 import {
   getShopCategoryBySlug,
   getShopProducts,

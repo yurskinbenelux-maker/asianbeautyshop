@@ -36,6 +36,7 @@ import {
 } from "@/lib/checkout/pricing";
 
 import { submitCheckout, type CheckoutErrorCode } from "./actions";
+import { AddressAutocomplete } from "@/components/checkout/address-autocomplete";
 
 // ────────── props ───────────────────────────────────────────────────────
 
@@ -558,14 +559,30 @@ function AddressFields({
         autoComplete="organization"
       />
 
-      <Field
-        label={t("field_line1")}
-        name={`${prefix}.line1`}
-        defaultValue={defaults?.line1 ?? ""}
-        required
-        error={err("line1")}
-        autoComplete="address-line1"
-      />
+      {/* Shipping line1 gets Google Places autocomplete (#184) — the
+          billing copy stays a plain Field because customers rarely
+          type a different billing address from scratch. The picker
+          writes back to the city/postcode/country fields by name when
+          a suggestion is selected; without an API key it degrades
+          gracefully to a plain input. */}
+      {prefix === "shipping" ? (
+        <AutocompleteLine1Field
+          prefix={prefix}
+          label={t("field_line1")}
+          defaultValue={defaults?.line1 ?? ""}
+          error={err("line1")}
+          onCountryChange={onCountryChange}
+        />
+      ) : (
+        <Field
+          label={t("field_line1")}
+          name={`${prefix}.line1`}
+          defaultValue={defaults?.line1 ?? ""}
+          required
+          error={err("line1")}
+          autoComplete="address-line1"
+        />
+      )}
 
       <Field
         label={t("field_line2")}
@@ -630,6 +647,84 @@ function AddressFields({
         autoComplete="tel"
       />
     </div>
+  );
+}
+
+/**
+ * AutocompleteLine1Field — wraps AddressAutocomplete inside the same
+ * Field layout (label / error / placeholder) used elsewhere on the
+ * form. When the user picks a Google suggestion we write the parsed
+ * city / postcode / country / region into the sibling fields by name.
+ *
+ * We reach through `document` rather than lifting state because the
+ * AddressFields tree is otherwise uncontrolled — promoting it to
+ * controlled state for one feature would balloon the diff.
+ */
+function AutocompleteLine1Field({
+  prefix,
+  label,
+  defaultValue,
+  error,
+  onCountryChange,
+}: {
+  prefix: "shipping" | "billing";
+  label: string;
+  defaultValue: string;
+  error?: string;
+  onCountryChange?: (c: string) => void;
+}) {
+  const errId = error ? `${prefix}-line1-err` : undefined;
+  const inputClass = cn(
+    "block w-full border bg-rice/40 px-3.5 py-2.5 text-[13px] text-ink placeholder:text-ink-mid focus:outline-none focus:ring-1 focus:ring-ink/20",
+    error ? "border-vermilion" : "border-ink/15",
+  );
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[11px] uppercase tracking-label text-ink-mid">
+        {label}
+      </span>
+      <AddressAutocomplete
+        name={`${prefix}.line1`}
+        defaultValue={defaultValue}
+        required
+        className={inputClass}
+        onAddressPicked={(a) => {
+          // Write to siblings by name. Each Field renders a unique
+          // [name="<prefix>.<field>"] input — so we just update the
+          // value via the native setter and dispatch an `input` event
+          // to keep React's controlled-input invariant happy where
+          // it applies.
+          const set = (n: string, v: string) => {
+            const el = document.querySelector<HTMLInputElement>(
+              `[name="${prefix}.${n}"]`,
+            );
+            if (!el) return;
+            const setter = Object.getOwnPropertyDescriptor(
+              window.HTMLInputElement.prototype,
+              "value",
+            )?.set;
+            setter?.call(el, v);
+            el.dispatchEvent(new Event("input", { bubbles: true }));
+          };
+          // Place the parsed line1 into our own input too — Google's
+          // formatted text differs slightly from the typed search.
+          set("line1", a.line1);
+          set("city", a.city);
+          set("postcode", a.postcode);
+          if (a.region) set("region", a.region);
+          // The country field is a <select>; updating its value via
+          // the same path triggers React's onChange so the parent
+          // pricing-preview reflects the new VAT/shipping zone.
+          set("country", a.country);
+          if (onCountryChange) onCountryChange(a.country);
+        }}
+      />
+      {error && (
+        <span id={errId} className="mt-1 block text-[11px] text-vermilion">
+          {error}
+        </span>
+      )}
+    </label>
   );
 }
 

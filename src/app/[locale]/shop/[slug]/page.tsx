@@ -23,6 +23,12 @@
 import { notFound } from "next/navigation";
 import { maybeRedirect } from "@/lib/redirects/maybe-redirect";
 import type { Metadata } from "next";
+
+// PDPs cache for 5 minutes — product copy / pricing / reviews
+// shouldn't change minute-to-minute, and edits in /admin/products
+// reach users within 5 min. LCP gets a meaningful boost on repeat
+// hits because the entire page is served from the static build cache.
+export const revalidate = 300;
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import NextLink from "next/link";
