@@ -38,6 +38,11 @@ import {
   mapLocaleToMollie,
 } from "@/lib/mollie/client";
 import { lookupGiftCard } from "@/lib/gift-cards/db";
+import { drainAttachedGiftCards } from "./sync-mollie";
+import { sendOrderConfirmationEmail } from "@/lib/email/order-confirmation";
+import { sendAdminNewOrderEmail } from "@/lib/email/admin-new-order";
+import { syncOrderToSendcloud } from "@/lib/sendcloud/sync";
+import { issueGiftCardsForOrder } from "@/lib/gift-cards/issue-from-order";
 
 // ────────── input shape ─────────────────────────────────────────────────
 
@@ -153,13 +158,13 @@ export async function placeOrder(
     throw new Error("COUNTRY_NOT_SHIPPABLE");
   }
 
-  // Edge case: gift card balance covers the entire order. Mollie rejects
-  // €0 payments, and we don't yet support a "free order" path that fires
-  // post-paid hooks inline. For now, refuse with a clear error so the UI
-  // can ask the customer to keep one card for next time.
-  if (pricing.grandTotalEur < 0.5 && giftCardIds.length > 0) {
-    throw new Error("CHECKOUT_UNAVAILABLE: gift card balance fully covers this order. Keep one card for a future purchase.");
-  }
+  // Edge case: gift card balance covers the entire order. We can't ask
+  // Mollie to charge €0, so we run a "free order" path further down —
+  // mark the order PAID inline, drain the gift cards, fire the same
+  // post-paid hooks the Mollie webhook would have. Detected here so the
+  // downstream code can branch on it without re-deriving the test.
+  const isFreeOrder =
+    giftCardIds.length > 0 && pricing.grandTotalEur < 0.01;
 
   // 4. Create addresses + order + items in a single transaction so a
   //    mid-insert error can't leave orphan addresses pointing nowhere.
@@ -342,13 +347,74 @@ export async function placeOrder(
     return created;
   });
 
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    "http://localhost:3000";
+
+  // 4b. Free-order shortcut. When the customer's gift card balance fully
+  //     covers this order, Mollie has nothing to charge — we'd 422 if we
+  //     tried. Mark the order PAID directly, drain the cards, and fire
+  //     the same post-paid hooks the Mollie webhook would have on a
+  //     normal payment. The customer skips the hosted-payment hop and
+  //     lands straight on /checkout/success.
+  if (isFreeOrder) {
+    await prisma.$transaction([
+      prisma.order.update({
+        where: { id: order.id },
+        data: {
+          paymentStatus: "PAID",
+          status: "PAID",
+          paidAt: new Date(),
+        },
+      }),
+      prisma.orderEvent.create({
+        data: {
+          orderId: order.id,
+          kind: "payment.paid",
+          message: "Free order — covered in full by gift card balance",
+          metadata: { source: "gift_card_only" },
+        },
+      }),
+    ]);
+
+    // Decrement gift card balances against the order. Idempotent on
+    // (giftCardId, orderId), so a retry of this whole code path is safe.
+    await drainAttachedGiftCards(order.id);
+
+    // Side effects — same set the Mollie webhook fires on PAID. Wrapped
+    // in allSettled so an email outage doesn't leave the order half-done.
+    await Promise.allSettled([
+      sendOrderConfirmationEmail(order.id),
+      sendAdminNewOrderEmail(order.id),
+      syncOrderToSendcloud(order.id),
+      issueGiftCardsForOrder(order.id),
+    ]);
+
+    // Clear the cart so it doesn't haunt the customer's next visit, same
+    // hygiene as the Mollie path.
+    const jarFree = await cookies();
+    jarFree.delete("cart_token");
+    await prisma.cart.update({
+      where: { id: cart.id },
+      data: { expiresAt: new Date(Date.now() - 1) },
+    }).catch(() => {});
+
+    return {
+      orderId: order.id,
+      publicNumber: order.publicNumber,
+      // Internal route — checkout/success knows how to render a confirmed
+      // PAID order without waiting on Mollie return params.
+      checkoutUrl: `${siteUrl}/${input.locale}/checkout/success?order=${encodeURIComponent(
+        order.publicNumber,
+      )}&free=1`,
+      grandTotalEur: 0,
+    };
+  }
+
   // 5. Ask Mollie to open a payment. We do this AFTER the transaction
   //    commits so a Mollie API failure doesn't roll back the order — the
   //    order stays PENDING and the admin (or a retry) can re-attempt.
   const mollie = getMollie();
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "http://localhost:3000";
   const webhookSecret =
     process.env.MOLLIE_WEBHOOK_SECRET ?? process.env.CRON_SECRET ?? "";
 

@@ -252,7 +252,7 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
 // We process in stamp order so the first card the customer applied
 // drains first, matching the chip order they saw at checkout.
 
-async function drainAttachedGiftCards(orderId: string): Promise<void> {
+export async function drainAttachedGiftCards(orderId: string): Promise<void> {
   const event = await prisma.orderEvent.findFirst({
     where: { orderId, kind: "giftcard.attached" },
     orderBy: { createdAt: "desc" },
