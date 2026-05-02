@@ -62,6 +62,8 @@ model User {
   conversations AiConversation[]
   contactMessages ContactMessage[]
   returns       ReturnRequest[]
+  subscriptions ProductSubscription[]
+  loyaltyAccount LoyaltyAccount?
 
   @@index([role])
   @@index([deletedAt])
@@ -228,6 +230,7 @@ model Product {
   orderItems      OrderItem[]
   wishlistedBy    WishlistItem[]
   cartItems       CartItem[]
+  subscriptions   ProductSubscription[]
 
   @@index([status])
   @@index([brandId])
@@ -277,6 +280,7 @@ model ProductVariant {
   cartItems   CartItem[]
   movements   InventoryMovement[]
   backInStock BackInStockSubscription[]
+  subscriptions ProductSubscription[]
 
   @@index([productId])
 }
@@ -585,6 +589,12 @@ model Order {
   notes             String?                 // customer's order note
   adminNotes        String?                 // internal
 
+  // Subscription cycle that minted this order, if any. NULL = ad-hoc
+  // checkout. Populated by the recurring-charge cron in #181 so admin
+  // can answer "is this a sub renewal?" at a glance.
+  subscriptionId    String?       @db.Uuid
+  subscription      ProductSubscription? @relation("subscription_orders", fields: [subscriptionId], references: [id])
+
   placedAt          DateTime      @default(now())
   paidAt            DateTime?
   shippedAt         DateTime?
@@ -742,6 +752,197 @@ model Coupon {
   firstOrderOnly Boolean      @default(false)
   createdAt     DateTime      @default(now())
   orders        Order[]
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  GIFT CARDS
+//  Separate from Coupon because the mental model is different — a coupon is
+//  a discount rule (used N times), a gift card is a money balance (drawn
+//  down by amount). Status is computed off balance + expiry but cached for
+//  cheap admin filtering.
+// ────────────────────────────────────────────────────────────────────────────
+
+enum GiftCardStatus {
+  ACTIVE     // balance > 0 and not expired
+  DEPLETED   // balance == 0
+  VOID       // admin manually voided (e.g. fraud)
+  EXPIRED    // past expiresAt
+}
+
+model GiftCard {
+  id              String         @id @default(uuid()) @db.Uuid
+  code            String         @unique          // "GIFT-XXXXXXXX" — what the customer types
+  initialBalance  Decimal        @db.Decimal(10, 2) // amount sold for / issued at
+  balance         Decimal        @db.Decimal(10, 2) // remaining balance, decrements per redemption
+  currency        String         @default("EUR")
+  status          GiftCardStatus @default(ACTIVE)
+  recipientEmail  String                            // who the card was sent to
+  recipientName   String?
+  senderName      String?                           // optional, shown in the gift email
+  message         String?                           // optional gift note
+  expiresAt       DateTime?                         // null = never. Default 1 year set in code.
+  // Optional: which order purchased this gift card (null for admin-issued)
+  purchaseOrderId String?        @db.Uuid
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  redemptions     GiftCardRedemption[]
+
+  @@index([status])
+  @@index([recipientEmail])
+}
+
+// One row per redemption (per order). Lets us audit + reverse a redemption
+// if the order is cancelled/refunded.
+model GiftCardRedemption {
+  id          String   @id @default(uuid()) @db.Uuid
+  giftCardId  String   @db.Uuid
+  giftCard    GiftCard @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
+  orderId     String   @db.Uuid
+  amountUsed  Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+
+  // A given gift card can only be applied once per order (otherwise a
+  // double-click would double-deduct).
+  @@unique([giftCardId, orderId])
+  @@index([orderId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  LOYALTY POINTS + REFERRALS
+//  Points accrue on paid orders (1 point per €1 spent, configurable in
+//  code) and burn on coupons issued from the customer dashboard. Refer-
+//  a-friend uses two coupon codes per pair: one for the friend (10% off
+//  first order), one for the referrer (10% off their next order, minted
+//  the moment the friend's order is paid).
+// ────────────────────────────────────────────────────────────────────────────
+
+enum LoyaltyEventKind {
+  EARNED_ORDER       // accrued from a paid order
+  REDEEMED_COUPON    // burned points to mint a discount coupon
+  ADJUSTED_ADMIN     // manual admin adjustment (gift / clawback)
+  REFERRAL_BONUS     // bonus points awarded for a successful referral
+  EXPIRED            // points cleared by the annual expiry sweep
+}
+
+model LoyaltyAccount {
+  id            String           @id @default(uuid()) @db.Uuid
+  userId        String           @unique @db.Uuid
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /** Points cached for cheap display — equal to sum(events.delta). */
+  pointsBalance Int              @default(0)
+  /** Lifetime accrual — informational, never decremented. */
+  pointsLifetime Int             @default(0)
+  /** Customer's personal referral code, e.g. "SOFIA-K4M7". Shareable
+   *  forever. Friends apply at checkout to mint the referee discount. */
+  referralCode  String           @unique
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  events        LoyaltyEvent[]
+
+  @@index([referralCode])
+}
+
+model LoyaltyEvent {
+  id          String           @id @default(uuid()) @db.Uuid
+  accountId   String           @db.Uuid
+  account     LoyaltyAccount   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  kind        LoyaltyEventKind
+  /** Signed integer — positive accrual, negative redemption / expiry. */
+  delta       Int
+  /** Free-text reason shown in the customer's history table. */
+  reason      String
+  /** Optional links — order that earned the points, coupon that burnt them, etc. */
+  orderId     String?          @db.Uuid
+  couponCode  String?
+  createdAt   DateTime         @default(now())
+
+  @@index([accountId])
+  @@index([orderId])
+}
+
+// Two-sided referral tracking. A row is created the moment the
+// referee uses the referral coupon at checkout; settled on first paid
+// order so we can pay the referrer their bonus without rewarding
+// abandoned carts.
+model Referral {
+  id              String     @id @default(uuid()) @db.Uuid
+  referrerUserId  String     @db.Uuid
+  refereeUserId   String?    @db.Uuid             // null until the friend places their first order
+  refereeOrderId  String?    @db.Uuid             // first paid order from the referee
+  refereeEmail    String                          // captured at checkout for guest cases
+  status          ReferralStatus @default(PENDING)
+  rewardCouponCode String?                        // code minted for the referrer once status flips to REWARDED
+  createdAt       DateTime   @default(now())
+  rewardedAt      DateTime?
+
+  @@index([referrerUserId])
+  @@index([status])
+}
+
+enum ReferralStatus {
+  PENDING     // referee has used the code at checkout, hasn't paid yet
+  REWARDED    // referee paid; referrer got their coupon
+  CANCELLED   // referee order failed / refunded
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  SUBSCRIBE & SAVE
+//  Customers can sign up to receive a product on a recurring cadence (30,
+//  60, 90 days) at a discount. Mollie's "first payment" + "mandate" model
+//  drives the recurring charges; we cache the mandate id so subsequent
+//  cycles don't need a customer-present checkout.
+// ────────────────────────────────────────────────────────────────────────────
+
+enum SubscriptionStatus {
+  PENDING_FIRST_PAYMENT  // signup created, Mollie hasn't confirmed the first payment yet
+  ACTIVE                 // mandate live, scheduled to run on nextRunAt
+  PAUSED                 // customer-initiated pause (kept indefinitely)
+  CANCELLED              // hard cancel — won't re-run
+  PAYMENT_FAILED         // last cycle's charge failed, awaiting customer fix
+}
+
+model ProductSubscription {
+  id              String              @id @default(uuid()) @db.Uuid
+  userId          String              @db.Uuid
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId       String              @db.Uuid
+  product         Product             @relation(fields: [productId], references: [id])
+  variantId       String?             @db.Uuid
+  variant         ProductVariant?     @relation(fields: [variantId], references: [id])
+  quantity        Int                 @default(1)
+
+  // Mollie linkage
+  mollieCustomerId String?            // mollie customer id (cst_xxx) — created once at first signup
+  mollieMandateId  String?            // mollie mandate id — needed for charging without customer present
+  mollieFirstPaymentId String?        // tr_xxx of the initial transaction that minted the mandate
+
+  // Cadence + state
+  cadenceDays     Int                 // 30 / 60 / 90 typically
+  discountPercent Decimal             @default(0) @db.Decimal(5, 2) // e.g. 10.00 for 10% off
+
+  status          SubscriptionStatus  @default(PENDING_FIRST_PAYMENT)
+  nextRunAt       DateTime?           // when the cron should attempt the next charge — null when PAUSED/CANCELLED
+  lastRunAt       DateTime?
+  lastFailureAt   DateTime?
+  consecutiveFailures Int             @default(0)
+
+  // Snapshotted shipping address — copied from the user at signup so a
+  // later address edit doesn't retroactively reroute pending shipments.
+  shippingAddressId String?           @db.Uuid
+  shippingAddress   Address?          @relation(fields: [shippingAddressId], references: [id])
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  cancelledAt     DateTime?
+
+  // Each scheduled cycle creates a normal Order; we link them back so the
+  // /account/subscriptions page can show "next run" and "past 6 cycles".
+  childOrders     Order[]             @relation("subscription_orders")
+
+  @@index([userId])
+  @@index([status, nextRunAt])
 }
 
 // ────────────────────────────────────────────────────────────────────────────

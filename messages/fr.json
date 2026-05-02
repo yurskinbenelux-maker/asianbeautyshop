@@ -698,6 +698,17 @@
         "body_too_long": "Votre avis est un peu long — sous 1500 caractères.",
         "internal": "Une erreur est survenue. Veuillez réessayer."
       }
+    },
+    "reorder": {
+      "cta": "Recommander ces articles",
+      "loading": "Ajout…",
+      "added": "{count} article(s) ajouté(s) à votre panier.",
+      "none_added": "Aucun article n'a pu être ajouté.",
+      "skipped": "{count} indisponible(s).",
+      "error": {
+        "order-not-found": "Commande introuvable.",
+        "no-items": "Cette commande ne contient aucun article."
+      }
     }
   },
   "privacy": {

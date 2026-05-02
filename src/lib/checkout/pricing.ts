@@ -44,6 +44,12 @@ export type PricingInput = {
   coupon: PricingCoupon | null;
   shipping: ShippingSettings;
   tax: TaxSettings;
+  /**
+   * Optional gift-card balance available at apply time. We subtract
+   * `min(balance, post-tax total)` so a customer with a €100 card and
+   * a €40 cart pays nothing through Mollie and the card retains €60.
+   */
+  giftCardBalanceEur?: number;
 };
 
 export type PricingResult = {
@@ -51,7 +57,13 @@ export type PricingResult = {
   discountEur: number; // coupon value actually applied
   shippingEur: number; // final shipping charge after coupon + threshold
   taxEur: number; // VAT; derived if tax.includedInPrice, otherwise added
-  grandTotalEur: number; // what the customer pays
+  /**
+   * Amount applied from a gift-card balance towards this order. Subtracted
+   * from grandTotal so the customer's Mollie charge equals only what's
+   * actually owed in cash.
+   */
+  giftCardEur: number;
+  grandTotalEur: number; // what the customer pays after gift-card credit
   currency: "EUR";
   /**
    * Ready-made reason text for the shipping line, so the UI can show
@@ -89,6 +101,7 @@ export function computeOrderTotals(input: PricingInput): PricingResult {
       discountEur: 0,
       shippingEur: 0,
       taxEur: 0,
+      giftCardEur: 0,
       grandTotalEur: subtotalEur,
       currency: "EUR",
       shippingReason: "unshippable",
@@ -154,11 +167,21 @@ export function computeOrderTotals(input: PricingInput): PricingResult {
     grandTotalEur = round2(netTaxable + taxEur);
   }
 
+  // 6. Gift-card credit — applied AFTER tax + shipping because it's a
+  // payment instrument (like cash), not a discount on the price. Caps at
+  // the available balance and at the post-tax total so we never go negative.
+  const giftCardEur =
+    input.giftCardBalanceEur && input.giftCardBalanceEur > 0
+      ? round2(Math.min(input.giftCardBalanceEur, grandTotalEur))
+      : 0;
+  grandTotalEur = round2(grandTotalEur - giftCardEur);
+
   return {
     subtotalEur,
     discountEur,
     shippingEur,
     taxEur,
+    giftCardEur,
     grandTotalEur,
     currency: "EUR",
     shippingReason,

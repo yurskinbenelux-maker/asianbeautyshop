@@ -698,6 +698,17 @@
         "body_too_long": "Your review is a bit long — keep it under 1500 characters.",
         "internal": "Something went wrong. Please try again."
       }
+    },
+    "reorder": {
+      "cta": "Reorder these items",
+      "loading": "Adding…",
+      "added": "Added {count} item(s) to your cart.",
+      "none_added": "Couldn't add anything.",
+      "skipped": "{count} unavailable.",
+      "error": {
+        "order-not-found": "Order not found.",
+        "no-items": "This order has no items."
+      }
     }
   },
   "privacy": {

@@ -698,6 +698,17 @@
         "body_too_long": "Je review is iets te lang — houd het onder 1500 tekens.",
         "internal": "Er ging iets mis. Probeer het opnieuw."
       }
+    },
+    "reorder": {
+      "cta": "Opnieuw bestellen",
+      "loading": "Toevoegen…",
+      "added": "{count} artikel(en) aan je tas toegevoegd.",
+      "none_added": "Kon niets toevoegen.",
+      "skipped": "{count} niet beschikbaar.",
+      "error": {
+        "order-not-found": "Bestelling niet gevonden.",
+        "no-items": "Deze bestelling bevat geen artikelen."
+      }
     }
   },
   "privacy": {

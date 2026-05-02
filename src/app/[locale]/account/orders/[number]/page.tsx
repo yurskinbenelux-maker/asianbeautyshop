@@ -23,6 +23,7 @@ import { getMyOrderByNumber, type FormattedAddress } from "@/lib/queries/orders"
 import { prisma } from "@/lib/prisma";
 import { formatEur, priceLocale } from "@/lib/utils";
 import { OrderReviewForm } from "@/components/account/order-review-form";
+import { ReorderButton } from "@/components/account/reorder-button";
 
 type Props = { params: Promise<{ locale: string; number: string }> };
 
@@ -93,10 +94,14 @@ export default async function OrderDetailPage({ params }: Props) {
             {t("order_placed_on", { date: dateFmt.format(order.placedAt) })}
           </div>
         </div>
-        <div className="inline-flex items-center gap-2 self-start md:self-end">
+        <div className="flex flex-col items-start gap-3 self-start md:items-end md:self-end">
           <span className="seal">
             {t(`order_status.${order.status}` as OrderStatusKey)}
           </span>
+          {/* One-click reorder — only meaningful once the order has
+              actually been delivered (or shipped, but we still show
+              earlier so customers can pre-stock for next month). */}
+          <ReorderButton orderNumber={order.publicNumber} urlLocale={locale} />
         </div>
       </div>
 
