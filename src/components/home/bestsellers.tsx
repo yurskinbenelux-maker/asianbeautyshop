@@ -4,8 +4,10 @@
 // Server component: fetches real products from Supabase via Prisma, then
 // hands each one to <BestsellerCard /> (a client component that animates).
 //
-// If the DB has fewer than 3 bestsellers, we render what we have — Sofia
-// can flip the "bestseller" toggle on any product in the admin panel.
+// We fetch up to 4 so the desktop row can pack 4 products without
+// scrolling. The query returns whatever Sofia has flagged — fewer than
+// 4 is fine, the grid just renders what's there. Mobile shows 2-up
+// regardless (see grid classes below).
 // ─────────────────────────────────────────────────────────────────────────
 
 import { Link } from "@/i18n/routing";
@@ -26,7 +28,7 @@ export async function Bestsellers({
   locale: string;
   copy: BestsellersCopy;
 }) {
-  const products = await getBestsellers(locale, 3);
+  const products = await getBestsellers(locale, 4);
 
   // Graceful empty state (only shows before the DB is seeded)
   if (products.length === 0) {
@@ -65,10 +67,11 @@ export async function Bestsellers({
       </div>
 
       {/* ── product grid ─────────────────────────────────────── */}
-      {/* 2-up on phones (was 1-up) to match the /shop density and let
-          customers see at least two bestsellers above the fold on a
-          360 px screen. Tighter gap on mobile so 2 cols breathe. */}
-      <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-8">
+      {/* 2-up on phones, 4-up on desktop. The query fetches up to 4
+          bestsellers so all of them fit on one row at md+ without
+          horizontal scroll. Tighter gap on mobile so 2 cols breathe;
+          desktop gets the full editorial gap-8. */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-4 md:gap-8">
         {products.map((p, i) => (
           <BestsellerCard key={p.id} product={p} index={i} locale={locale} />
         ))}
