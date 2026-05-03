@@ -1072,7 +1072,13 @@ model JournalPost {
   id          String      @id @default(uuid()) @db.Uuid
   status      PostStatus  @default(DRAFT)
   publishedAt DateTime?
+  // Card thumbnail. Rendered at 4:5 portrait on the homepage teaser and
+  // /journal listing grid. Upload at ~1200×1500 for a clean 4:5 crop.
   coverUrl    String?
+  // Article hero — rendered full-width at 16:9 landscape at the top of
+  // /journal/[slug]. Upload at ~1600×900. Falls back to `coverUrl` when
+  // null so old articles keep rendering without admin intervention.
+  heroUrl     String?
   authorName  String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt

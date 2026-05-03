@@ -40,7 +40,11 @@ export type JournalFormInitial = {
   id?: string;
   status: PostStatus;
   publishedAt: Date | null;
+  /** Card thumbnail (4:5). Shows on /journal listing + homepage teaser. */
   coverUrl: string | null;
+  /** Article hero (16:9). Shows at top of /journal/[slug]. Optional —
+   *  falls back to coverUrl when null. */
+  heroUrl: string | null;
   authorName: string | null;
   translations: Record<Locale, Translation>;
 };
@@ -59,6 +63,7 @@ const EMPTY: JournalFormInitial = {
   status: "DRAFT",
   publishedAt: null,
   coverUrl: null,
+  heroUrl: null,
   authorName: null,
   translations: {
     EN: EMPTY_TRANSLATION("EN"),
@@ -147,13 +152,27 @@ export function JournalForm({
       </div>
 
       <Field
-        label="Cover image URL"
-        hint="Paste a URL from /admin/media. Shown at the top of the post."
+        label="Card thumbnail URL (4:5 portrait)"
+        hint="Shown on the /journal listing and homepage teaser. Upload at ~1200×1500. Paste a URL from /admin/media."
         error={err.coverUrl?.[0]}
       >
         <input
           name="coverUrl"
           defaultValue={data.coverUrl ?? ""}
+          className="input"
+          placeholder="https://…"
+          maxLength={2000}
+        />
+      </Field>
+
+      <Field
+        label="Article hero URL (16:9 landscape, optional)"
+        hint="Shown full-width at the top of the article page. Upload at ~1600×900. Leave blank to reuse the card thumbnail."
+        error={err.heroUrl?.[0]}
+      >
+        <input
+          name="heroUrl"
+          defaultValue={data.heroUrl ?? ""}
           className="input"
           placeholder="https://…"
           maxLength={2000}

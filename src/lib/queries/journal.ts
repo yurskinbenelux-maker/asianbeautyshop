@@ -99,7 +99,10 @@ export type JournalPostDetail = {
   id: string;
   publishedAt: Date;
   updatedAt: Date;
+  /** Card thumbnail (4:5). Also used as OG fallback if hero is null. */
   coverUrl: string | null;
+  /** Article-page hero (16:9). Detail page does `heroUrl ?? coverUrl`. */
+  heroUrl: string | null;
   authorName: string | null;
   title: string;
   excerpt: string | null;
@@ -152,6 +155,7 @@ export async function getJournalPostBySlug(
     publishedAt: post.publishedAt,
     updatedAt: post.updatedAt,
     coverUrl: post.coverUrl,
+    heroUrl: post.heroUrl,
     authorName: post.authorName,
     title: primary.title,
     excerpt: primary.excerpt,

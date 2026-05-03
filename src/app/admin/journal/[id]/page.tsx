@@ -41,6 +41,7 @@ export default async function EditJournalPostPage({
           status: post.status,
           publishedAt: post.publishedAt,
           coverUrl: post.coverUrl,
+          heroUrl: post.heroUrl,
           authorName: post.authorName,
           translations: post.translations,
         }}

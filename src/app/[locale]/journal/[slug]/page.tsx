@@ -145,15 +145,20 @@ export default async function JournalPostPage({ params }: Props) {
           )}
         </header>
 
-        {/* ── cover image (edge-to-edge) ─────────────────────── */}
-        {post.coverUrl && (
+        {/* ── hero image (edge-to-edge, 16:9) ──────────────────
+            Prefer `heroUrl` (uploaded specifically for the article
+            page at landscape ratio). Fall back to `coverUrl` so old
+            articles published before the heroUrl field existed still
+            render an image — they just get the same crop they used
+            to. */}
+        {(post.heroUrl ?? post.coverUrl) && (
           <div className="container mt-12">
             {/* next/image would require remotePatterns pre-declared; for
                 now the <img> tag matches the rest of the site's editorial
                 image handling. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={post.coverUrl}
+              src={post.heroUrl ?? post.coverUrl ?? ""}
               alt={post.title}
               className="aspect-[16/9] w-full object-cover"
             />

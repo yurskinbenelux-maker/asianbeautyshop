@@ -67,7 +67,16 @@ const optionalDateTime = z
 const PostSchema = z.object({
   status: z.nativeEnum(PostStatus),
   publishedAt: optionalDateTime,
+  // Card thumbnail (4:5) — shown on /journal listing + homepage teaser.
   coverUrl: z
+    .string()
+    .trim()
+    .max(2000)
+    .optional()
+    .default(""),
+  // Article hero (16:9) — shown at the top of /journal/[slug]. Optional;
+  // when blank the public detail page falls back to coverUrl.
+  heroUrl: z
     .string()
     .trim()
     .max(2000)
@@ -208,6 +217,7 @@ export async function createJournalPostAction(
       status: data.status,
       publishedAt: publishedAtFor(data.status, data.publishedAt),
       coverUrl: data.coverUrl || null,
+      heroUrl: data.heroUrl || null,
       authorName: data.authorName || null,
       translations: {
         create: (Object.keys(normalised) as Locale[])
@@ -272,6 +282,7 @@ export async function updateJournalPostAction(
         status: data.status,
         publishedAt: publishedAtFor(data.status, data.publishedAt),
         coverUrl: data.coverUrl || null,
+        heroUrl: data.heroUrl || null,
         authorName: data.authorName || null,
       },
     });

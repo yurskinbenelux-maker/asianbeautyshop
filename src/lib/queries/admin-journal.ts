@@ -33,7 +33,10 @@ export type JournalDetail = {
   id: string;
   status: PostStatus;
   publishedAt: Date | null;
+  /** Card thumbnail (4:5). Used on homepage teaser + /journal listing. */
   coverUrl: string | null;
+  /** Article hero (16:9). Used at the top of /journal/[slug]. */
+  heroUrl: string | null;
   authorName: string | null;
   translations: Record<Locale, JournalTranslationInput>;
 };
@@ -97,6 +100,7 @@ export async function getAdminJournalPost(
     status: p.status,
     publishedAt: p.publishedAt,
     coverUrl: p.coverUrl,
+    heroUrl: p.heroUrl,
     authorName: p.authorName,
     translations: byLocale,
   };
