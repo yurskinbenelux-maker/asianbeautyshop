@@ -517,6 +517,162 @@ export async function linkMediaToJournalAction(
   };
 }
 
+// ──────── direct-to-Supabase upload (large files) ──────────────────────
+//
+// Why: server actions pass the file through Next.js + Hostinger's nginx
+// before reaching Supabase. Each hop has its own body-size cap (Next 1
+// MB default, Hostinger ~32 MB, etc.) and they're hard to lift without
+// hitting the next one. Direct upload sidesteps all of them — the
+// browser PUTs the file straight to Supabase Storage. The server only
+// mints a one-time signed URL (tiny request) and registers the Media
+// row when the upload finishes (also tiny).
+//
+// Three-step flow:
+//   1. Client → createLibraryUploadUrl(meta) → returns signedUrl + objectPath
+//   2. Client → PUT file to signedUrl directly (Supabase JS client wraps this)
+//   3. Client → finaliseLibraryUpload(objectPath, ...) → creates Media row
+//
+// Only the bucket's file-size policy applies. Default on Supabase is 50
+// MB per object — set higher in Storage Settings if needed.
+// ─────────────────────────────────────────────────────────────────────────
+
+const UploadUrlSchema = z.object({
+  fileName: z.string().trim().min(1).max(200),
+  mimeType: z.string().trim().min(1).max(120),
+  size: z.coerce.number().int().min(1).max(200 * 1024 * 1024),
+});
+
+type CreateUploadUrlResult =
+  | {
+      ok: true;
+      signedUrl: string;
+      token: string;
+      objectPath: string;
+      bucket: string;
+    }
+  | { ok: false; message: string };
+
+export async function createLibraryUploadUrl(input: {
+  fileName: string;
+  mimeType: string;
+  size: number;
+}): Promise<CreateUploadUrlResult> {
+  await requireAdmin();
+
+  const parsed = UploadUrlSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: "Invalid upload metadata." };
+  }
+  const { fileName, mimeType, size } = parsed.data;
+
+  if (!(ALLOWED_MIME as readonly string[]).includes(mimeType)) {
+    return {
+      ok: false,
+      message:
+        "Unsupported file type. Images: JPG / PNG / WEBP / AVIF. Videos: MP4 / WEBM.",
+    };
+  }
+  const cap = maxBytesFor(mimeType);
+  if (size > cap) {
+    return {
+      ok: false,
+      message: `File is too large. Max ${cap / 1024 / 1024} MB for this format.`,
+    };
+  }
+
+  const safeName = sanitiseFilename(fileName);
+  const objectPath = `library/${crypto.randomUUID()}-${safeName}`;
+
+  const { data, error } = await supabaseAdmin()
+    .storage.from(PRODUCT_MEDIA_BUCKET)
+    .createSignedUploadUrl(objectPath);
+
+  if (error || !data) {
+    return {
+      ok: false,
+      message: `Couldn't open upload slot: ${error?.message ?? "unknown error"}`,
+    };
+  }
+
+  return {
+    ok: true,
+    signedUrl: data.signedUrl,
+    token: data.token,
+    objectPath: data.path,
+    bucket: PRODUCT_MEDIA_BUCKET,
+  };
+}
+
+const FinaliseSchema = z.object({
+  objectPath: z.string().trim().min(1).max(500),
+  mimeType: z.string().trim().min(1).max(120),
+  fileName: z.string().trim().min(1).max(200),
+});
+
+export async function finaliseLibraryUpload(input: {
+  objectPath: string;
+  mimeType: string;
+  fileName: string;
+}): Promise<ActionState> {
+  await requireAdmin();
+
+  const parsed = FinaliseSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: "Invalid finalise payload." };
+  }
+  const { objectPath, mimeType, fileName } = parsed.data;
+
+  // Defensive: only register objects we minted. Our paths always start
+  // with "library/" — anything else is suspicious.
+  if (!objectPath.startsWith("library/")) {
+    return { ok: false, message: "Invalid object path." };
+  }
+  if (!(ALLOWED_MIME as readonly string[]).includes(mimeType)) {
+    return { ok: false, message: "Unsupported file type." };
+  }
+
+  // Verify the object actually exists in the bucket before creating a
+  // Media row — protects against a malicious or buggy client that calls
+  // finalise without ever uploading.
+  const { data: probe, error: probeError } = await supabaseAdmin()
+    .storage.from(PRODUCT_MEDIA_BUCKET)
+    .list("library", {
+      search: objectPath.replace(/^library\//, ""),
+      limit: 1,
+    });
+  if (probeError || !probe || probe.length === 0) {
+    return {
+      ok: false,
+      message: "Upload not found in storage — try again.",
+    };
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabaseAdmin()
+    .storage.from(PRODUCT_MEDIA_BUCKET)
+    .getPublicUrl(objectPath);
+
+  const safeName = sanitiseFilename(fileName);
+  const created = await prisma.media.create({
+    data: {
+      productId: null,
+      kind: isVideoMime(mimeType) ? MediaKind.VIDEO : MediaKind.IMAGE,
+      url: publicUrl,
+      alt: safeName.replace(/\.[^.]+$/, "").replace(/-/g, " "),
+      isPrimary: false,
+      sortOrder: 0,
+    },
+  });
+
+  refresh();
+  return {
+    ok: true,
+    message: "Uploaded.",
+    createdId: created.id,
+  };
+}
+
 // ──────── set primary for a product ────────────────────────────────────
 
 export async function setPrimaryMediaAction(

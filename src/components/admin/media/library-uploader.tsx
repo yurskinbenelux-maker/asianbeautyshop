@@ -29,7 +29,11 @@ import {
   Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { uploadLibraryMediaAction } from "@/app/admin/media/actions";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  createLibraryUploadUrl,
+  finaliseLibraryUpload,
+} from "@/app/admin/media/actions";
 
 /** One item in the local upload queue — purely UI state. */
 type Job = {
@@ -54,45 +58,73 @@ export function LibraryUploader() {
         ...j,
       ]);
 
-      const fd = new FormData();
-      fd.set("file", file);
+      const markError = (message: string) =>
+        setJobs((j) =>
+          j.map((row) =>
+            row.id === id ? { ...row, status: "error", message } : row,
+          ),
+        );
 
-      // Wrap the action call in a try/catch — server actions don't
-      // throw on the action's own ok:false return, but they DO throw on
-      // network/auth/Supabase outages. We surface both in the same way.
       try {
-        const result = await uploadLibraryMediaAction({ ok: false }, fd);
-        setJobs((j) =>
-          j.map((row) =>
-            row.id === id
-              ? {
-                  ...row,
-                  status: result.ok ? "ok" : "error",
-                  message: result.message,
-                }
-              : row,
-          ),
-        );
-        if (result.ok) {
-          // Refresh the server component (grid + counts) once the new
-          // row is in DB. We wrap in startTransition to keep the UI
-          // responsive — the queue stays interactive while the page
-          // refetches in the background.
-          startTransition(() => router.refresh());
+        // 1. Ask the server for a signed upload slot. Tiny request —
+        //    just metadata — so it never trips a body-size limit.
+        const slot = await createLibraryUploadUrl({
+          fileName: file.name,
+          mimeType: file.type,
+          size: file.size,
+        });
+        if (!slot.ok) {
+          markError(slot.message);
+          return;
         }
-      } catch (err) {
+
+        // 2. Upload the bytes DIRECTLY to Supabase Storage. The
+        //    file never passes through our Next.js server, so neither
+        //    Hostinger's nginx body cap nor the Next server-action
+        //    body cap apply. The only ceiling left is the bucket's
+        //    own file-size policy in Supabase.
+        const supa = createSupabaseBrowserClient();
+        const { error: putError } = await supa.storage
+          .from(slot.bucket)
+          .uploadToSignedUrl(slot.objectPath, slot.token, file, {
+            contentType: file.type,
+            cacheControl: "31536000",
+            upsert: false,
+          });
+        if (putError) {
+          markError(`Upload failed: ${putError.message}`);
+          return;
+        }
+
+        // 3. Tell the server we're done — it creates the Media row,
+        //    sets the right MediaKind based on MIME, and revalidates
+        //    the library grid.
+        const finalised = await finaliseLibraryUpload({
+          objectPath: slot.objectPath,
+          mimeType: file.type,
+          fileName: file.name,
+        });
+        if (!finalised.ok) {
+          markError(finalised.message ?? "Couldn't finalise upload.");
+          return;
+        }
+
         setJobs((j) =>
           j.map((row) =>
             row.id === id
               ? {
                   ...row,
-                  status: "error",
-                  message:
-                    err instanceof Error ? err.message : "Upload failed.",
+                  status: "ok",
+                  message: finalised.message,
                 }
               : row,
           ),
         );
+        // Refresh the server component (grid + counts) once the new
+        // row is in DB.
+        startTransition(() => router.refresh());
+      } catch (err) {
+        markError(err instanceof Error ? err.message : "Upload failed.");
       }
     },
     [router],
