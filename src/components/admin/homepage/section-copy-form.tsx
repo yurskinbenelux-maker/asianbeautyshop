@@ -9,12 +9,18 @@
 //   • Each input shows the JSON fallback as its placeholder so Sofia can
 //     see what will render if she leaves the box blank
 //   • Long fields (lede, body) get a textarea, short fields get an input
+//   • A "Hide on the site" checkbox per field. Tick it → the public site
+//     renders nothing for that field across all 4 languages, no fallback
+//     to the JSON catalogue. Locale inputs go disabled while ticked
+//     because they're moot: the field is hidden anywhere it'd render.
 //
 // Submits one FormData with every (field.locale) key → saveSectionAction.
 // Empty value on any pair deletes that row (reverts to JSON default).
+// `${field}.__void` carries the hide state.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { EyeOff } from "lucide-react";
 import { Locale } from "@prisma/client";
 import {
   saveSectionAction,
@@ -62,6 +68,7 @@ type FieldBlock = {
   label: string;
   fallbackByLocale: Record<Locale, string>;
   valueByLocale: Record<Locale, string>;
+  voided: boolean;
 };
 
 export function SectionCopyForm({
@@ -79,66 +86,124 @@ export function SectionCopyForm({
     <form action={dispatch} className="space-y-8">
       <input type="hidden" name="section" value={section} />
 
-      {fields.map((fb) => {
-        const isLong = LONG_FIELDS.has(fb.field);
-        const max = MAX_LENGTH[fb.field];
-
-        return (
-          <fieldset
-            key={fb.field}
-            className="border border-ink/10 bg-white/60 p-6"
-          >
-            <legend className="px-1 font-display text-[18px] text-ink">
-              {fb.label}
-            </legend>
-            <p className="-mt-1 mb-4 font-mono text-[10px] uppercase tracking-label text-ink-mid">
-              {fb.field}
-            </p>
-
-            <div className="space-y-4">
-              {locales.map((locale) => {
-                const value = fb.valueByLocale[locale] ?? "";
-                const fallback = fb.fallbackByLocale[locale] ?? "";
-                const name = `${fb.field}.${locale}`;
-                return (
-                  <Field
-                    key={locale}
-                    label={LOCALE_LABEL[locale]}
-                    hint={
-                      fallback
-                        ? `Default: ${truncate(fallback, 140)}`
-                        : "No default — this field is blank unless you fill it in."
-                    }
-                  >
-                    {isLong ? (
-                      <textarea
-                        name={name}
-                        defaultValue={value}
-                        placeholder={fallback}
-                        rows={3}
-                        maxLength={max}
-                        className="input leading-relaxed"
-                      />
-                    ) : (
-                      <input
-                        name={name}
-                        defaultValue={value}
-                        placeholder={fallback}
-                        maxLength={max}
-                        className="input"
-                      />
-                    )}
-                  </Field>
-                );
-              })}
-            </div>
-          </fieldset>
-        );
-      })}
+      {fields.map((fb) => (
+        <FieldFieldset
+          key={fb.field}
+          fb={fb}
+          locales={locales}
+        />
+      ))}
 
       <StatusBanner state={state} />
       <SaveBar />
     </form>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// FieldFieldset — one field's worth of inputs (4 locales) + the
+// "Hide on the site" toggle. Pulled out into its own component because
+// it needs local state for the toggle, and we don't want to bloat the
+// parent's render with N useState calls.
+// ─────────────────────────────────────────────────────────────────────────
+
+function FieldFieldset({
+  fb,
+  locales,
+}: {
+  fb: FieldBlock;
+  locales: Locale[];
+}) {
+  const [voided, setVoided] = useState(fb.voided);
+  const isLong = LONG_FIELDS.has(fb.field);
+  const max = MAX_LENGTH[fb.field];
+
+  return (
+    <fieldset
+      className={
+        "border bg-white/60 p-6 " +
+        (voided
+          ? "border-vermilion/40 bg-vermilion/[0.03]"
+          : "border-ink/10")
+      }
+    >
+      <legend className="px-1 font-display text-[18px] text-ink">
+        {fb.label}
+      </legend>
+      <p className="-mt-1 mb-4 font-mono text-[10px] uppercase tracking-label text-ink-mid">
+        {fb.field}
+      </p>
+
+      {/* Hide-on-site toggle. Sends `${field}.__void` = "yes" | "no" so
+          the server action knows whether to write the sentinel to all
+          four locales (yes) or fall through to the per-locale inputs
+          below (no). */}
+      <label className="mb-4 flex cursor-pointer items-start gap-3 border border-ink/10 bg-rice-dim/50 p-3">
+        <input
+          type="checkbox"
+          name={`${fb.field}.__void`}
+          value="yes"
+          checked={voided}
+          onChange={(e) => setVoided(e.target.checked)}
+          className="mt-0.5 h-4 w-4 cursor-pointer accent-vermilion"
+        />
+        <div className="flex-1">
+          <div className="flex items-center gap-2 text-[12px] font-medium text-ink">
+            <EyeOff className="h-3.5 w-3.5" />
+            Hide this field on the site
+          </div>
+          <p className="mt-1 text-[11px] leading-relaxed text-ink-mid">
+            Renders nothing in any language. Toggling this overrides the
+            text inputs below in all four languages until you uncheck it.
+          </p>
+        </div>
+      </label>
+
+      <div
+        className={
+          "space-y-4 " + (voided ? "pointer-events-none opacity-50" : "")
+        }
+        aria-hidden={voided}
+      >
+        {locales.map((locale) => {
+          const value = fb.valueByLocale[locale] ?? "";
+          const fallback = fb.fallbackByLocale[locale] ?? "";
+          const name = `${fb.field}.${locale}`;
+          return (
+            <Field
+              key={locale}
+              label={LOCALE_LABEL[locale]}
+              hint={
+                fallback
+                  ? `Default: ${truncate(fallback, 140)}`
+                  : "No default — this field is blank unless you fill it in."
+              }
+            >
+              {isLong ? (
+                <textarea
+                  name={name}
+                  defaultValue={value}
+                  placeholder={fallback}
+                  rows={3}
+                  maxLength={max}
+                  disabled={voided}
+                  className="input leading-relaxed"
+                />
+              ) : (
+                <input
+                  name={name}
+                  defaultValue={value}
+                  placeholder={fallback}
+                  maxLength={max}
+                  disabled={voided}
+                  className="input"
+                />
+              )}
+            </Field>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }
 

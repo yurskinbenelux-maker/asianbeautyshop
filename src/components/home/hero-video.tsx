@@ -2,14 +2,20 @@
 // Hero V — Cinematic Video.
 //
 // Full-bleed muted-loop mp4 fills the viewport, a soft ink → transparent
-// gradient anchors the lower-left where the typography sits. Same copy
-// shape as HeroMoonJar so the SiteCopy overrides flow through unchanged.
+// gradient anchors the lower-left where the typography sits.
 //
-// Server component — autoplay/muted/loop/playsInline are pure HTML
-// attributes, no client JS. Falls back to a poster image when the
-// browser disables autoplay (low-power mode, data saver).
+// Why this is a client component:
+//   Browsers occasionally refuse to honour the `autoplay` attribute
+//   even when `muted` + `playsInline` are set — most often when the
+//   visitor has data-saver enabled, when the tab loaded in the
+//   background, or with certain macOS/iOS quirks. We add a small
+//   `.play()` retry on mount as a fallback so the hero almost
+//   always animates instead of freezing on the first frame.
 // ─────────────────────────────────────────────────────────────────────────
 
+"use client";
+
+import { useEffect, useRef } from "react";
 import { Link } from "@/i18n/routing";
 import { ArrowRight } from "lucide-react";
 import type { HeroCopy } from "./hero-moon-jar";
@@ -23,15 +29,40 @@ export function HeroVideo({
   videoUrl: string;
   poster?: string;
 }) {
+  const ref = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    // Defensive .play() — covers edge cases where the autoplay attribute
+    // alone isn't enough (data-saver, low-power mode, background tab).
+    // The promise rejects silently if the browser still refuses; the
+    // poster image stays visible in that case.
+    const tryPlay = () => {
+      const p = v.play();
+      if (p && typeof p.catch === "function") {
+        p.catch(() => {
+          // ignore — browser policy refused autoplay
+        });
+      }
+    };
+    if (v.readyState >= 2) {
+      tryPlay();
+    } else {
+      v.addEventListener("loadeddata", tryPlay, { once: true });
+      return () => v.removeEventListener("loadeddata", tryPlay);
+    }
+  }, [videoUrl]);
+
   return (
     <section
       className="relative h-[80vh] min-h-[560px] w-full overflow-hidden bg-ink"
       aria-labelledby="hero-headline"
     >
-      {/* video layer */}
       {videoUrl ? (
         // eslint-disable-next-line jsx-a11y/media-has-caption
         <video
+          ref={ref}
           className="absolute inset-0 h-full w-full object-cover"
           src={videoUrl}
           poster={poster || undefined}
@@ -39,7 +70,17 @@ export function HeroVideo({
           muted
           loop
           playsInline
-          preload="metadata"
+          // `auto` tells the browser to download the whole file eagerly
+          // instead of pausing after the metadata. Hero videos should
+          // play without delay — bandwidth cost is justified.
+          preload="auto"
+          // Disable the native macOS/iOS picture-in-picture promotion
+          // so the video stays in the page where we want it.
+          disablePictureInPicture
+          // Suppress remote-playback (AirPlay) controls — they have a
+          // habit of pausing the video when the visitor's Apple TV
+          // wakes up nearby.
+          disableRemotePlayback
         />
       ) : poster ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -52,16 +93,15 @@ export function HeroVideo({
         <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink/85 to-ink/95" />
       )}
 
-      {/* dark gradient under the type so it stays legible regardless of
-          what's in the footage. Stronger at the bottom-left where text
-          lives, fading to transparent up + right where the video reads
-          cleanly. */}
+      {/* Dark gradient under the type so it stays legible regardless
+          of what's in the footage. Stronger at the bottom-left where
+          text lives, fading to transparent up + right. */}
       <div
         aria-hidden
         className="absolute inset-0 bg-gradient-to-tr from-ink/75 via-ink/35 to-transparent"
       />
 
-      {/* copy column */}
+      {/* Copy column */}
       <div className="relative flex h-full flex-col justify-end pb-16 md:pb-24">
         <div className="container max-w-3xl">
           <div className="text-[11px] uppercase tracking-label text-rice/70">

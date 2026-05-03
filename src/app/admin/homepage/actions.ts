@@ -14,6 +14,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import {
   SITE_COPY_SCHEMA,
+  SITE_COPY_VOID,
   type SiteCopySection,
 } from "@/lib/queries/site-copy";
 
@@ -63,10 +64,21 @@ export async function saveSectionAction(
 
   const entries: Entry[] = [];
   for (const field of fields) {
+    // Per-field void flag — when ticked we ignore the per-locale text
+    // inputs entirely and write the sentinel to all 4 locales. When
+    // unticked we fall through to the existing path (text → upsert,
+    // empty → delete).
+    const voided =
+      typeof formData.get(`${field}.__void`) === "string" &&
+      formData.get(`${field}.__void`) !== "";
     for (const locale of LOCALES) {
-      const raw = formData.get(`${field}.${locale}`);
-      const value = typeof raw === "string" ? raw.trim() : "";
-      entries.push({ field, locale, value });
+      if (voided) {
+        entries.push({ field, locale, value: SITE_COPY_VOID });
+      } else {
+        const raw = formData.get(`${field}.${locale}`);
+        const value = typeof raw === "string" ? raw.trim() : "";
+        entries.push({ field, locale, value });
+      }
     }
   }
 

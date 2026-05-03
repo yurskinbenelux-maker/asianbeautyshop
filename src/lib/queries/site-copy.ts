@@ -24,6 +24,18 @@
 import { prisma } from "@/lib/prisma";
 import { Locale } from "@prisma/client";
 
+// ── 0. Void sentinel ──────────────────────────────────────────────────────
+//
+// The admin can mark any (section, field) as "hidden on the site". We
+// implement that by writing this sentinel string into all 4 locale rows
+// for that field. The public reader detects it and returns "" — short-
+// circuiting the usual JSON-catalogue fallback so nothing renders.
+//
+// Stored in the value column rather than via a dedicated boolean column
+// so we avoid a schema migration. The chance of legitimate copy
+// containing this exact string is essentially zero.
+export const SITE_COPY_VOID = "__SITE_COPY_VOID__";
+
 // ── 1. Taxonomy ────────────────────────────────────────────────────────────
 //
 // The canonical list of (section, field) pairs. The admin UI walks this map
@@ -259,10 +271,28 @@ export function siteCopy<S extends SiteCopySection>(
   // the generic section/field parameters don't trip up TS's narrowing.
   const sectionDict = dict[section] as Record<string, string> | undefined;
   const override = sectionDict?.[field as string];
+  // Voided fields short-circuit to "" — the public component renders the
+  // empty value and (when it conditionally renders against truthiness)
+  // skips the wrapper entirely. No fallback to the JSON catalogue.
+  if (override === SITE_COPY_VOID) return "";
   if (typeof override === "string" && override.length > 0) return override;
   // The JSON catalogue key is just the field name (hero.lede, footer.tagline,
   // etc.) since each component already calls getTranslations(section-ns).
   return t(field as string);
+}
+
+/**
+ * Cheap "is this (section, field) currently hidden?" check for any caller
+ * that needs to take a different action (e.g. skip a wrapper) when the
+ * field is voided rather than just having an empty string fall through.
+ */
+export function isFieldVoided<S extends SiteCopySection>(
+  dict: SiteCopyDict,
+  section: S,
+  field: SiteCopyField<S>,
+): boolean {
+  const sectionDict = dict[section] as Record<string, string> | undefined;
+  return sectionDict?.[field as string] === SITE_COPY_VOID;
 }
 
 // ── 4. Admin queries ──────────────────────────────────────────────────────

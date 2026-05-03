@@ -15,6 +15,7 @@ import {
   SITE_COPY_SCHEMA,
   SITE_COPY_SECTION_LABELS,
   SITE_COPY_FIELD_LABELS,
+  SITE_COPY_VOID,
   listSiteCopyRows,
   jsonFallback,
   type SiteCopySection,
@@ -73,11 +74,21 @@ export default async function EditSectionPage({
     for (const r of rows) {
       if (r.field === field) valueByLocale[r.locale] = r.value;
     }
+    // A field is "voided" when its EN row carries the sentinel — we
+    // always write the sentinel to all 4 locales together, but checking
+    // EN alone is enough to render the right state in the form.
+    const voided = valueByLocale.EN === SITE_COPY_VOID;
+    // When voided, blank out the per-locale text values in the form so
+    // Sofia doesn't see "__SITE_COPY_VOID__" in the inputs.
+    const visibleValueByLocale: Record<Locale, string> = voided
+      ? { EN: "", NL: "", FR: "", RU: "" }
+      : valueByLocale;
     return {
       field,
       label: SITE_COPY_FIELD_LABELS[field] ?? field,
       fallbackByLocale,
-      valueByLocale,
+      valueByLocale: visibleValueByLocale,
+      voided,
     };
   });
 
