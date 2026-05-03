@@ -41,9 +41,10 @@ export function YourRitual({ copy }: { copy: RitualCopy }) {
   return (
     <section
       id="ritual"
-      // py-24 (down from py-32). The section is short now; matching the
-      // previous outsized padding would leave it floating with whitespace.
-      className="relative scroll-mt-24 bg-ivory py-24"
+      // py-14 mobile / py-20 desktop. Earlier values left the section
+      // floating with whitespace — the timeline is so visually small
+      // (just four 14px dots) that bigger padding looks broken.
+      className="relative scroll-mt-24 bg-ivory py-14 sm:py-20"
     >
       {/* Decorative top-right maehwa branch — scaled down with the section.
           Original was h-64 w-96 / 40% opacity; the timeline layout has
@@ -53,13 +54,19 @@ export function YourRitual({ copy }: { copy: RitualCopy }) {
       </div>
 
       <div className="container relative">
-        {/* Voided fields ("" from siteCopyOr) collapse the wrapper entirely
-            so a hidden eyebrow/lede doesn't reserve vertical space. */}
+        {/* Centered header so the section reads as one composition rather
+            than a stranded headline floating on the left + a thin timeline
+            stranded at the bottom. The lede is hard-capped at a much
+            smaller size than text-display-md (which the homepage hero +
+            bestsellers + testimonials all use) so the section stays in
+            its lane — quiet caption, not another big headline. */}
         {(copy.eyebrow || copy.lede) ? (
-          <div className="mb-14 max-w-[28ch]">
+          <div className="mb-12 text-center sm:mb-14">
             {copy.eyebrow ? <div className="eyebrow">{copy.eyebrow}</div> : null}
             {copy.lede ? (
-              <h2 className="mt-3 text-display-md">{copy.lede}</h2>
+              <h2 className="mx-auto mt-3 max-w-[44ch] font-display text-[20px] leading-snug text-ink sm:text-[26px] md:text-[30px]">
+                {copy.lede}
+              </h2>
             ) : null}
           </div>
         ) : null}
@@ -73,7 +80,7 @@ export function YourRitual({ copy }: { copy: RitualCopy }) {
             className="pointer-events-none absolute left-[12.5%] right-[12.5%] top-[7px] h-px bg-ink/15"
           />
 
-          <ol className="relative grid grid-cols-4 gap-x-2">
+          <ol className="relative grid grid-cols-4 gap-x-1 sm:gap-x-4">
             {steps.map((s, i) => (
               <motion.li
                 key={s.n}
@@ -84,17 +91,24 @@ export function YourRitual({ copy }: { copy: RitualCopy }) {
                 className="flex flex-col items-center text-center"
               >
                 {/* Dot — vermilion fill with an ivory ring so the connector
-                    line "tucks under" each dot instead of touching it. */}
+                    line "tucks under" each dot instead of touching it.
+                    Same size at every breakpoint so the line position
+                    (top-[7px]) stays correct. */}
                 <div
                   aria-hidden
                   className="h-3.5 w-3.5 rounded-full border-4 border-ivory bg-vermilion"
                 />
-                <div className="mt-4 text-[10px] uppercase tracking-label text-ink sm:text-[11px]">
-                  <span className="font-display text-vermilion">{s.n}</span>
-                  <span className="mx-1.5 text-ink/30">·</span>
+                {/* Stacked layout on every screen: number → label → KR.
+                    Inline `01 · Cleanse` was wrapping awkwardly on small
+                    phones with longer translations (NL Beschermen,
+                    RU Очистить). Stacking is bulletproof at 320px. */}
+                <div className="mt-3 font-display text-[13px] leading-none text-vermilion sm:mt-4 sm:text-[16px]">
+                  {s.n}
+                </div>
+                <div className="mt-1.5 text-[9px] uppercase tracking-label text-ink sm:mt-2 sm:text-[11px]">
                   {tRitual(s.key)}
                 </div>
-                <div className="font-kr mt-1 text-[12px] text-ink-mid sm:text-[13px]">
+                <div className="font-kr mt-1 text-[11px] text-ink-mid sm:text-[13px]">
                   {s.kr}
                 </div>
               </motion.li>
