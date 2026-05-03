@@ -17,11 +17,35 @@ import { prisma } from "@/lib/prisma";
 
 export type HomeHeroVariant = "typography" | "video" | "collage";
 
+/**
+ * One product slot in the color-block carousel. The carousel cycles
+ * through these on the vermilion side; clicking the image takes the
+ * visitor to `href`. Empty `imageUrl` slots are skipped at render time.
+ */
+export type ColorBlockProduct = {
+  label: string;     // e.g. "Cushion Foundation"
+  imageUrl: string;  // public URL — paste from /admin/media or any CDN
+  href: string;      // /shop/cushion-foundation or external — locale-aware Link handles relatives
+};
+
 export type HomeHeroSettings = {
   variant: HomeHeroVariant;
   videoUrl: string;
   videoPoster: string;
+  /** Legacy single-image fields. Kept for backwards compat — still
+   *  consumed by the color-block hero when `colorBlockProducts` is empty. */
   collageUrls: [string, string, string];
+  /**
+   * The new shape for the Color Block hero — up to 5 products in a
+   * carousel. Empty array = fall back to legacy `collageUrls[0]`.
+   */
+  colorBlockProducts: ColorBlockProduct[];
+};
+
+const EMPTY_PRODUCT: ColorBlockProduct = {
+  label: "",
+  imageUrl: "",
+  href: "",
 };
 
 export const HOME_HERO_DEFAULTS: HomeHeroSettings = {
@@ -29,6 +53,7 @@ export const HOME_HERO_DEFAULTS: HomeHeroSettings = {
   videoUrl: "",
   videoPoster: "",
   collageUrls: ["", "", ""],
+  colorBlockProducts: [EMPTY_PRODUCT, EMPTY_PRODUCT, EMPTY_PRODUCT, EMPTY_PRODUCT, EMPTY_PRODUCT],
 };
 
 function asString(v: unknown): string {
@@ -53,6 +78,23 @@ export async function readHomeHeroSettings(): Promise<HomeHeroSettings> {
     if (!v || typeof v !== "object") return HOME_HERO_DEFAULTS;
 
     const rawCollage = Array.isArray(v.collageUrls) ? v.collageUrls : [];
+    const rawProducts = Array.isArray(v.colorBlockProducts)
+      ? v.colorBlockProducts
+      : [];
+
+    // Normalise the product array to exactly 5 slots so the admin form
+    // sees a stable shape on every read.
+    const colorBlockProducts: ColorBlockProduct[] = Array.from(
+      { length: 5 },
+      (_, i) => {
+        const r = rawProducts[i] as Record<string, unknown> | undefined;
+        return {
+          label: asString(r?.label),
+          imageUrl: asString(r?.imageUrl),
+          href: asString(r?.href),
+        };
+      },
+    );
 
     return {
       variant: isVariant(v.variant) ? v.variant : "typography",
@@ -63,6 +105,7 @@ export async function readHomeHeroSettings(): Promise<HomeHeroSettings> {
         asString(rawCollage[1]),
         asString(rawCollage[2]),
       ],
+      colorBlockProducts,
     };
   } catch (err) {
     console.error("[home-hero] read failed, using defaults", err);
@@ -78,14 +121,25 @@ export async function writeHomeHeroSettings(
     next.collageUrls[1] ?? "",
     next.collageUrls[2] ?? "",
   ];
+  // Normalise products to exactly 5 slots before persisting, so the
+  // read side always sees the same shape and the admin form's input
+  // names stay stable.
+  const colorBlockProducts: ColorBlockProduct[] = Array.from(
+    { length: 5 },
+    (_, i) => ({
+      label: next.colorBlockProducts?.[i]?.label ?? "",
+      imageUrl: next.colorBlockProducts?.[i]?.imageUrl ?? "",
+      href: next.colorBlockProducts?.[i]?.href ?? "",
+    }),
+  );
   await prisma.setting.upsert({
     where: { key: "home.hero" },
     create: {
       key: "home.hero",
-      valueJson: { ...next, collageUrls },
+      valueJson: { ...next, collageUrls, colorBlockProducts },
     },
     update: {
-      valueJson: { ...next, collageUrls },
+      valueJson: { ...next, collageUrls, colorBlockProducts },
     },
   });
 }

@@ -126,30 +126,43 @@ export default async function AdminHeroVariantPage({
           </div>
         </div>
 
-        {/* ── color block config ─────────────────────────────────── */}
+        {/* ── color block carousel config ──────────────────────── */}
         <div className="border-t border-ink/10 pt-6">
           <h2 className="font-display text-[16px] text-ink">
-            Color block product — only used when the Color block variant is selected
+            Color block carousel — only used when the Color block variant is selected
           </h2>
-          <p className="mt-1 text-[12px] text-ink-mid">
-            One hero product photograph. It sits in a cream-card frame
-            on the vermilion side of the split. Square crops work best
-            (1:1, ~1000×1000). The product can be photographed on any
-            background — the cream card gives it a clean frame against
-            the brand-color wall.
+          <p className="mt-1 text-[12px] leading-relaxed text-ink-mid">
+            Up to 5 products show on the vermilion side. Visitors click
+            the chevrons on the left/right edges to cycle, or click the
+            product image itself to jump to its product page. Empty
+            slots are skipped — leave a slot blank to fewer products.
           </p>
-          <div className="mt-4 space-y-4">
-            <Field
-              label="Hero product photo"
-              name="collage0"
-              defaultValue={cfg.collageUrls[0]}
-              placeholder="https://…/cushion.jpg"
-              hint="Recommend a 1:1 square. The cushion image you already have works well — it lands centered on the vermilion."
-            />
+          <p className="mt-2 text-[11px] leading-relaxed text-ink-mid">
+            <span className="font-medium text-ink">Tip —</span> use 1:1
+            square crops (~1000×1000). The product can be on any
+            background — the cream-card frame gives it a clean edge
+            against the brand-color wall.
+          </p>
+
+          <div className="mt-6 space-y-3">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <ProductSlot
+                key={i}
+                index={i}
+                label={cfg.colorBlockProducts[i]?.label ?? ""}
+                imageUrl={cfg.colorBlockProducts[i]?.imageUrl ?? ""}
+                href={cfg.colorBlockProducts[i]?.href ?? ""}
+              />
+            ))}
           </div>
-          {/* Slots 2 + 3 are kept in the schema for forward-compat
-              (a future variant might use them). They're hidden from
-              the form because the Color block layout uses only one. */}
+
+          {/* Legacy single-image fields, hidden — preserved on save so a
+              site that hasn't migrated still has a fallback. */}
+          <input
+            type="hidden"
+            name="collage0"
+            value={cfg.collageUrls[0]}
+          />
           <input
             type="hidden"
             name="collage1"
@@ -238,6 +251,90 @@ function VariantCard({
         </div>
       )}
     </label>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// One row of the carousel-product editor — three side-by-side fields
+// (Label / Image / Link) plus a slot index pill on the left so Sofia
+// can match the form to the carousel order.
+// ─────────────────────────────────────────────────────────────────────────
+
+function ProductSlot({
+  index,
+  label,
+  imageUrl,
+  href,
+}: {
+  index: number;
+  label: string;
+  imageUrl: string;
+  href: string;
+}) {
+  const num = (index + 1).toString().padStart(2, "0");
+  const filled = imageUrl.trim().length > 0;
+  return (
+    <div
+      className={
+        "border bg-white/60 p-4 transition-colors " +
+        (filled
+          ? "border-ink/15"
+          : "border-dashed border-ink/15")
+      }
+    >
+      <div className="mb-3 flex items-center gap-3">
+        <span className="border border-ink/15 bg-rice-dim/50 px-2 py-0.5 font-mono text-[11px] text-ink-mid">
+          N°{num}
+        </span>
+        <span className="text-[12px] text-ink-mid">
+          {filled ? "Filled" : "Empty — leave blank to skip this slot"}
+        </span>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
+        <div className="md:col-span-3">
+          <label className="block">
+            <span className="mb-1 block text-[11px] uppercase tracking-label text-ink-mid">
+              Label
+            </span>
+            <input
+              name={`product${index}Label`}
+              defaultValue={label}
+              placeholder="Cushion"
+              className="w-full border border-ink/15 bg-white px-3 py-2 text-[13px] text-ink placeholder:text-ink-mid/60 focus:border-ink focus:outline-none"
+              maxLength={120}
+            />
+          </label>
+        </div>
+        <div className="md:col-span-5">
+          <label className="block">
+            <span className="mb-1 block text-[11px] uppercase tracking-label text-ink-mid">
+              Image URL
+            </span>
+            <input
+              name={`product${index}Image`}
+              defaultValue={imageUrl}
+              placeholder="https://…/cushion.jpg"
+              className="w-full border border-ink/15 bg-white px-3 py-2 text-[13px] text-ink placeholder:text-ink-mid/60 focus:border-ink focus:outline-none"
+              maxLength={2000}
+            />
+          </label>
+        </div>
+        <div className="md:col-span-4">
+          <label className="block">
+            <span className="mb-1 block text-[11px] uppercase tracking-label text-ink-mid">
+              Link to product
+            </span>
+            <input
+              name={`product${index}Href`}
+              defaultValue={href}
+              placeholder="/shop/cushion-foundation"
+              className="w-full border border-ink/15 bg-white px-3 py-2 text-[13px] text-ink placeholder:text-ink-mid/60 focus:border-ink focus:outline-none"
+              maxLength={2000}
+            />
+          </label>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -14,6 +14,14 @@ import {
   type HomeHeroSettings,
 } from "@/lib/queries/home-hero";
 
+// Build a Zod schema entry for one product slot in the carousel.
+// Reused 5 times below — keeps the schema declaration short.
+const productSlot = (i: number) => ({
+  [`product${i}Label`]: z.string().trim().max(120).optional().default(""),
+  [`product${i}Image`]: z.string().trim().max(2000).optional().default(""),
+  [`product${i}Href`]: z.string().trim().max(2000).optional().default(""),
+});
+
 const Schema = z.object({
   variant: z.enum(["typography", "video", "collage"]),
   videoUrl: z.string().trim().max(2000).optional().default(""),
@@ -21,6 +29,11 @@ const Schema = z.object({
   collage0: z.string().trim().max(2000).optional().default(""),
   collage1: z.string().trim().max(2000).optional().default(""),
   collage2: z.string().trim().max(2000).optional().default(""),
+  ...productSlot(0),
+  ...productSlot(1),
+  ...productSlot(2),
+  ...productSlot(3),
+  ...productSlot(4),
 });
 
 export async function saveHomeHeroAction(formData: FormData): Promise<void> {
@@ -28,11 +41,19 @@ export async function saveHomeHeroAction(formData: FormData): Promise<void> {
 
   const parsed = Schema.parse(Object.fromEntries(formData));
 
+  // Lift the flat product fields back into an array of {label, imageUrl, href}.
+  const colorBlockProducts = Array.from({ length: 5 }, (_, i) => ({
+    label: parsed[`product${i}Label` as keyof typeof parsed] as string,
+    imageUrl: parsed[`product${i}Image` as keyof typeof parsed] as string,
+    href: parsed[`product${i}Href` as keyof typeof parsed] as string,
+  }));
+
   const next: HomeHeroSettings = {
     variant: parsed.variant,
     videoUrl: parsed.videoUrl,
     videoPoster: parsed.videoPoster,
     collageUrls: [parsed.collage0, parsed.collage1, parsed.collage2],
+    colorBlockProducts,
   };
 
   await writeHomeHeroSettings(next);

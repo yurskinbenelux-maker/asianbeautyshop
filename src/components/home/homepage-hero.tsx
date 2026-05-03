@@ -25,11 +25,14 @@ export async function HomepageHero({ copy }: { copy: HeroCopy }) {
   if (cfg.variant === "video" && !cfg.videoUrl.trim()) {
     return <HeroMoonJar copy={copy} />;
   }
-  if (
-    cfg.variant === "collage" &&
-    cfg.collageUrls.every((u) => !u.trim())
-  ) {
-    return <HeroMoonJar copy={copy} />;
+  if (cfg.variant === "collage") {
+    const hasProductInList = cfg.colorBlockProducts.some(
+      (p) => p.imageUrl.trim().length > 0,
+    );
+    const hasLegacy = cfg.collageUrls.some((u) => u.trim().length > 0);
+    if (!hasProductInList && !hasLegacy) {
+      return <HeroMoonJar copy={copy} />;
+    }
   }
 
   switch (cfg.variant) {
@@ -42,7 +45,13 @@ export async function HomepageHero({ copy }: { copy: HeroCopy }) {
         />
       );
     case "collage":
-      return <HeroCollage copy={copy} imageUrls={cfg.collageUrls} />;
+      return (
+        <HeroCollage
+          copy={copy}
+          products={cfg.colorBlockProducts}
+          legacyImageUrl={cfg.collageUrls[0]}
+        />
+      );
     default:
       return <HeroMoonJar copy={copy} />;
   }
