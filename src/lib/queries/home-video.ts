@@ -45,6 +45,15 @@ export const HOME_VIDEO_DEFAULTS: HomeVideoSettings = {
   headline: "",
 };
 
+/**
+ * Coerce an unknown value to a clean string. We use this everywhere we
+ * read user-provided data from JSON — protects render code from `null`,
+ * `undefined`, numbers, or other shapes that crash `.trim()`.
+ */
+function asString(v: unknown): string {
+  return typeof v === "string" ? v : "";
+}
+
 /** Type guard — used after JSON parsing to keep render code branch-free. */
 function isHomeVideoSettings(v: unknown): v is HomeVideoSettings {
   if (!v || typeof v !== "object") return false;
@@ -56,24 +65,39 @@ function isHomeVideoSettings(v: unknown): v is HomeVideoSettings {
 }
 
 export async function readHomeVideoSettings(): Promise<HomeVideoSettings> {
-  const row = await prisma.setting.findUnique({
-    where: { key: "home.video" },
-    select: { valueJson: true },
-  });
-  if (!row) return HOME_VIDEO_DEFAULTS;
+  // The Setting table is a raw key/value store, so any read here is a
+  // soft-trust boundary — we never assume the JSON exactly matches the
+  // type. Wrap in try/catch so a corrupt row can't crash the homepage.
+  try {
+    const row = await prisma.setting.findUnique({
+      where: { key: "home.video" },
+      select: { valueJson: true },
+    });
+    if (!row) return HOME_VIDEO_DEFAULTS;
 
-  const parsed = row.valueJson;
-  if (!isHomeVideoSettings(parsed)) return HOME_VIDEO_DEFAULTS;
+    const parsed = row.valueJson;
+    if (!isHomeVideoSettings(parsed)) return HOME_VIDEO_DEFAULTS;
 
-  // Merge with defaults so a partial stored shape still renders cleanly
-  // (e.g. when we add a new optional field later).
-  return {
-    mode: parsed.mode,
-    urls: [...parsed.urls, "", "", ""].slice(0, 3),
-    poster: typeof parsed.poster === "string" ? parsed.poster : "",
-    eyebrow: typeof parsed.eyebrow === "string" ? parsed.eyebrow : "",
-    headline: typeof parsed.headline === "string" ? parsed.headline : "",
-  };
+    // Coerce every URL slot through asString so a stale row containing
+    // null/undefined/numbers can never crash the render code.
+    const rawUrls = Array.isArray(parsed.urls) ? parsed.urls : [];
+    const urls = [
+      asString(rawUrls[0]),
+      asString(rawUrls[1]),
+      asString(rawUrls[2]),
+    ];
+
+    return {
+      mode: parsed.mode,
+      urls,
+      poster: asString(parsed.poster),
+      eyebrow: asString(parsed.eyebrow),
+      headline: asString(parsed.headline),
+    };
+  } catch (err) {
+    console.error("[home-video] read failed, using defaults", err);
+    return HOME_VIDEO_DEFAULTS;
+  }
 }
 
 export async function writeHomeVideoSettings(

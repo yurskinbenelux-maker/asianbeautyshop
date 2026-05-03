@@ -17,14 +17,32 @@
 
 import { readHomeVideoSettings } from "@/lib/queries/home-video";
 
+/**
+ * Coerce + trim defensively. The query layer already returns strings,
+ * but this component runs at request time on every homepage hit and a
+ * server-component crash here takes the whole page down — belt-and-
+ * braces is cheap.
+ */
+function safeUrl(v: unknown): string {
+  if (typeof v !== "string") return "";
+  return v.trim();
+}
+
 export async function HomepageVideoReel() {
   const cfg = await readHomeVideoSettings();
   if (cfg.mode === "off") return null;
 
-  // Defensive: if mode is set but no URLs are populated, hide the section
-  // rather than render an empty black rectangle.
-  const usableUrls = cfg.urls.filter((u) => u.trim().length > 0);
+  // Normalise every URL slot up front so we never call .trim() on
+  // something non-string downstream. Also strips whitespace-only entries.
+  const cleanUrls = [
+    safeUrl(cfg.urls[0]),
+    safeUrl(cfg.urls[1]),
+    safeUrl(cfg.urls[2]),
+  ];
+  const usableUrls = cleanUrls.filter((u) => u.length > 0);
   if (usableUrls.length === 0) return null;
+
+  const poster = safeUrl(cfg.poster);
 
   return (
     <section className="container mt-24 md:mt-32" aria-label="Video reel">
@@ -43,24 +61,29 @@ export async function HomepageVideoReel() {
 
       {cfg.mode === "single" ? (
         <div className="relative aspect-[16/9] w-full overflow-hidden bg-ink/5">
-          <video
-            // eslint-disable-next-line jsx-a11y/media-has-caption
-            className="h-full w-full object-cover"
-            src={cfg.urls[0]}
-            poster={cfg.poster || undefined}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-          />
+          {cleanUrls[0] && (
+            <video
+              // eslint-disable-next-line jsx-a11y/media-has-caption
+              className="h-full w-full object-cover"
+              src={cleanUrls[0]}
+              poster={poster || undefined}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+            />
+          )}
         </div>
       ) : (
-        // Trio — three 9:16 cards side by side on desktop, stacked on
-        // mobile with a generous gap.
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-5">
+        // Trio — three 9:16 cards side by side at every breakpoint. The
+        // gap shrinks on small screens so each reel keeps a usable size
+        // (~110 px wide on a 360 px phone) while the IG-style triptych
+        // aesthetic survives. Same source video works on every viewport;
+        // the browser scales 1080×1920 down without re-encoding.
+        <ul className="grid grid-cols-3 gap-2 md:gap-5">
           {[0, 1, 2].map((i) => {
-            const url = cfg.urls[i] ?? "";
+            const url = cleanUrls[i] ?? "";
             return (
               <li
                 key={i}
@@ -71,7 +94,7 @@ export async function HomepageVideoReel() {
                     // eslint-disable-next-line jsx-a11y/media-has-caption
                     className="h-full w-full object-cover"
                     src={url}
-                    poster={cfg.poster || undefined}
+                    poster={poster || undefined}
                     autoPlay
                     muted
                     loop
