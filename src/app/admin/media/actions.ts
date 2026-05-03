@@ -421,6 +421,70 @@ export async function linkMediaToProductAction(
   return { ok: true, message: "Linked.", createdId: created.id };
 }
 
+// ──────── attach to a journal article ──────────────────────────────────
+//
+// Journal images live as plain `coverUrl` / `heroUrl` strings on the
+// JournalPost row (not via the polymorphic Media junction). So linking
+// here is just a row update — no new Media row is created. The action
+// reads the source URL from the chosen Media item, then writes it to
+// the requested slot on the chosen post.
+
+const JournalLinkSchema = z.object({
+  mediaId: z.string().uuid(),
+  postId: z.string().uuid(),
+  slot: z.enum(["cover", "hero"]),
+});
+
+export async function linkMediaToJournalAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+
+  const parsed = JournalLinkSchema.safeParse({
+    mediaId: formData.get("mediaId"),
+    postId: formData.get("postId"),
+    slot: formData.get("slot"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Pick a post and a slot before applying.",
+    };
+  }
+  const { mediaId, postId, slot } = parsed.data;
+
+  const source = await prisma.media.findUnique({
+    where: { id: mediaId },
+    select: { url: true },
+  });
+  if (!source) return { ok: false, message: "Source image not found." };
+
+  const post = await prisma.journalPost.findUnique({
+    where: { id: postId },
+    select: { id: true },
+  });
+  if (!post) return { ok: false, message: "Journal post not found." };
+
+  await prisma.journalPost.update({
+    where: { id: postId },
+    data: slot === "cover"
+      ? { coverUrl: source.url }
+      : { heroUrl: source.url },
+  });
+
+  refresh();
+  revalidatePath(`/admin/journal/${postId}`);
+  revalidatePath(`/admin/journal`);
+  return {
+    ok: true,
+    message:
+      slot === "cover"
+        ? "Set as journal card thumbnail."
+        : "Set as journal article hero.",
+  };
+}
+
 // ──────── set primary for a product ────────────────────────────────────
 
 export async function setPrimaryMediaAction(

@@ -15,6 +15,7 @@ import Link from "next/link";
 import { ImageIcon } from "lucide-react";
 import {
   listAdminMedia,
+  listJournalPostsForMediaPicker,
   listProductsForMediaPicker,
   MEDIA_PAGE_SIZE,
   type MediaScope,
@@ -50,9 +51,10 @@ export default async function MediaPage({
 
   // The grid + the picker that lives inside each card's drawer share
   // the request — fetched in parallel because they're independent.
-  const [result, pickerProducts] = await Promise.all([
+  const [result, pickerProducts, pickerJournalPosts] = await Promise.all([
     listAdminMedia({ scope, q }, page),
     listProductsForMediaPicker(),
+    listJournalPostsForMediaPicker(),
   ]);
   const totalPages = Math.max(1, Math.ceil(result.total / MEDIA_PAGE_SIZE));
 
@@ -105,6 +107,7 @@ export default async function MediaPage({
                 key={m.id}
                 media={m}
                 pickerProducts={pickerProducts}
+                pickerJournalPosts={pickerJournalPosts}
               />
             ))}
           </div>

@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import type {
   AdminMediaRow,
+  MediaPickerJournalPost,
   MediaPickerProduct,
 } from "@/lib/queries/admin-media";
 import { MediaDrawer } from "./media-drawer";
@@ -23,9 +24,11 @@ import { MediaDrawer } from "./media-drawer";
 export function MediaCard({
   media,
   pickerProducts,
+  pickerJournalPosts,
 }: {
   media: AdminMediaRow;
   pickerProducts: MediaPickerProduct[];
+  pickerJournalPosts: MediaPickerJournalPost[];
 }) {
   const [open, setOpen] = useState(false);
   const orphan = !media.productId && media.bannerCount === 0;
@@ -107,6 +110,7 @@ export function MediaCard({
         <MediaDrawer
           media={media}
           pickerProducts={pickerProducts}
+          pickerJournalPosts={pickerJournalPosts}
           onClose={() => setOpen(false)}
         />
       )}

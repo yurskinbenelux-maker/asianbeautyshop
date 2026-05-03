@@ -152,6 +152,48 @@ export async function listProductsForMediaPicker(): Promise<
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Journal-post picker — feeds the "Attach to a journal article" section
+// in the media drawer. We use the EN translation as the human label
+// (every post is required to have an EN row for the listing fallback).
+// ─────────────────────────────────────────────────────────────────────────
+
+export type MediaPickerJournalPost = {
+  id: string;
+  title: string;
+  /** Indicates whether each slot already has an image — admin UI can show
+   *  "(replace)" hints so Sofia knows what she's overwriting. */
+  hasCover: boolean;
+  hasHero: boolean;
+};
+
+export async function listJournalPostsForMediaPicker(): Promise<
+  MediaPickerJournalPost[]
+> {
+  const posts = await prisma.journalPost.findMany({
+    orderBy: { updatedAt: "desc" },
+    select: {
+      id: true,
+      coverUrl: true,
+      heroUrl: true,
+      translations: {
+        where: { locale: Locale.EN },
+        select: { title: true },
+        take: 1,
+      },
+    },
+  });
+
+  return posts
+    .map((p) => ({
+      id: p.id,
+      title: p.translations[0]?.title ?? "(untitled)",
+      hasCover: !!p.coverUrl,
+      hasHero: !!p.heroUrl,
+    }))
+    .sort((a, b) => a.title.localeCompare(b.title));
+}
+
 /**
  * For a given URL, who references it? Used by the drawer to surface
  * "this image is linked to N products" so Sofia can see reuse at a
