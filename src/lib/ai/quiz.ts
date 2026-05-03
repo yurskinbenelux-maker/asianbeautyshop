@@ -1,112 +1,149 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Rule-based skin quiz (Layer 1)
+// Rule-based skin quiz (Layer 1) — V2.
 //
-// This is the always-on fallback that runs when Groq is unavailable or
-// the admin has disabled the LLM path. It asks five short questions,
-// maps the answers to skinType + concern slugs, then calls buildRitual()
-// from catalog.ts to produce a 4-step routine.
+// Replaces the previous 5-question quiz with a 7-question flow that
+// reads more like a dermatologist intake:
 //
-// Why not store questions in the DB:
-//   · The answer → tag mapping is logic, not content. Keeping it in
-//     code lets us reason about it and keeps non-technical Elie from
-//     accidentally breaking the routine builder.
-//   · The question TEXT is translated via next-intl (concierge.quiz.*),
-//     so copy can still be edited without code. Only the option IDs
-//     (which are stable tokens) are hard-coded here.
+//   Q1 skinType (single)         — dry / combo / oily / sensitive / normal
+//   Q2 primaryConcern (single)   — the one thing they'd fix tomorrow
+//   Q3 secondaryConcerns (MULTI) — chip set, "anything else on your mind"
+//   Q4 reactivity (single)       — how often skin reacts; bumps sensitive
+//   Q5 sunExposure (single)      — drives whether SPF is in the ritual
+//   Q6 ageBand (single)          — informs ageing/firmness weighting +
+//                                   product-line preference (Yu.R PRO etc.)
+//   Q7 ritualDepth (single)      — how many steps to surface
+//
+// Why we dropped budget: the catalogue is small enough that the cheapest
+// vs most expensive cleanser are €15 apart — filtering by budget mostly
+// hides products instead of helping. Sofia preferred to surface the right
+// products and let the customer decide.
+//
+// Scoring is ingredient-driven (see catalog.ts) because none of the
+// imported products carry skinType/concern slugs in the DB — but every
+// product has its full INCI list. Reading INCI is exactly how a derm
+// would match a product to a concern.
+//
+// The question TEXT is translated via next-intl (concierge.quiz.*) so
+// copy stays editable without touching this file.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { z } from "zod";
-import type { RitualPick } from "./catalog";
-import { buildRitual } from "./catalog";
+import type { RitualPick, ConcernKey, QuizBrief } from "./catalog";
+import { buildRitual, deriveLinePreference } from "./catalog";
 
 // ──────── Question schema ───────────────────────────────────────────────
 
-/**
- * Each option declares which skin type and/or concern slugs it implies.
- * Quiz answers are aggregated at the end — the union of all picked
- * option tags becomes the filter passed to buildRitual().
- */
 export type QuizOption = {
-  id: string;                 // stable; used in translations + answer payload
-  skinTypeSlugs?: string[];
-  concernSlugs?: string[];
+  // Stable identifier — used in translations and on the wire.
+  id: string;
 };
 
 export type QuizQuestion = {
-  id: string;                 // stable; paired with translations
+  id: string;
   options: QuizOption[];
-  /** Multi-select allowed? (concerns usually, skin-type usually not) */
+  // True for Q3 — the "anything else?" chip multi-select.
   multi?: boolean;
 };
 
 // ──────── The actual quiz ───────────────────────────────────────────────
 
 export const QUIZ: ReadonlyArray<QuizQuestion> = [
-  // Q1 — skin type (single select)
+  // Q1 — what's your skin type day to day?
   {
     id: "skinType",
     options: [
-      { id: "dry",       skinTypeSlugs: ["dry"] },
-      { id: "oily",      skinTypeSlugs: ["oily"] },
-      { id: "combo",     skinTypeSlugs: ["combo", "combination"] },
-      { id: "sensitive", skinTypeSlugs: ["sensitive"] },
-      { id: "normal",    skinTypeSlugs: ["normal"] },
+      { id: "dry" },
+      { id: "combo" },
+      { id: "oily" },
+      { id: "sensitive" },
+      { id: "normal" },
     ],
   },
 
-  // Q2 — top concern (single select, because recommendation hinges on this)
+  // Q2 — your number-one concern? (single)
   {
-    id: "concern",
+    id: "primaryConcern",
     options: [
-      { id: "hydration",    concernSlugs: ["dehydration", "dryness"] },
-      { id: "dullness",     concernSlugs: ["dullness", "uneven-tone"] },
-      { id: "acne",         concernSlugs: ["acne", "breakouts"] },
-      { id: "ageing",       concernSlugs: ["fine-lines", "ageing"] },
-      { id: "sensitivity",  concernSlugs: ["redness", "sensitivity"] },
-      { id: "darkSpots",    concernSlugs: ["hyperpigmentation", "dark-spots"] },
-      { id: "pores",        concernSlugs: ["enlarged-pores", "texture"] },
+      { id: "hydration" },
+      { id: "dullness" },
+      { id: "acne" },
+      { id: "fine-lines" },
+      { id: "dark-spots" },
+      { id: "pores" },
+      { id: "redness" },
     ],
   },
 
-  // Q3 — sensitivity trigger (informational — bumps sensitive skin type)
+  // Q3 — anything else on your mind? (MULTI)
+  // Pure secondary concerns; lighter weight than the primary in scoring.
   {
-    id: "sensitivity",
+    id: "secondaryConcerns",
+    multi: true,
     options: [
-      { id: "never"    /* no tag */ },
-      { id: "sometimes", skinTypeSlugs: ["sensitive"] },
-      { id: "often",     skinTypeSlugs: ["sensitive"], concernSlugs: ["redness"] },
+      { id: "tightness" },
+      { id: "texture" },
+      { id: "dark-circles" },
+      { id: "sun-damage" },
+      { id: "firmness" },
+      { id: "sensitive-eyes" },
     ],
   },
 
-  // Q4 — routine depth (informational — affects ritual length preference)
+  // Q4 — how does your skin react to new products?
+  {
+    id: "reactivity",
+    options: [
+      { id: "never" },
+      { id: "sometimes" },
+      { id: "often" },
+    ],
+  },
+
+  // Q5 — sun exposure?
+  // Drives whether SPF is included in the routine. "indoors" → no SPF
+  // step (we don't have non-SPF day creams flagged), everything else
+  // surfaces the Clear sun block collagen.
+  {
+    id: "sunExposure",
+    options: [
+      { id: "indoors" },
+      { id: "commute" },
+      { id: "outdoor" },
+      { id: "strong" },
+    ],
+  },
+
+  // Q6 — age range. Used to weight the Yu.R PRO line (peptide-heavy)
+  // for 35+ and to bump fine-lines/firmness scoring even when not the
+  // primary concern.
+  {
+    id: "ageBand",
+    options: [
+      { id: "u25" },
+      { id: "25-34" },
+      { id: "35-44" },
+      { id: "45+" },
+    ],
+  },
+
+  // Q7 — routine length. minimal = 3 steps (cleanse + cream + spf if
+  // needed), balanced = 4-5, full = 5-6 (adds toner + mask).
   {
     id: "ritualDepth",
     options: [
       { id: "minimal" },
       { id: "balanced" },
-      { id: "complete" },
-    ],
-  },
-
-  // Q5 — budget bucket (maps to maxPriceEur)
-  {
-    id: "budget",
-    options: [
-      { id: "under_30" },
-      { id: "30_to_60" },
-      { id: "over_60" },
-      { id: "no_limit" },
+      { id: "full" },
     ],
   },
 ];
 
 // ──────── Input validation ──────────────────────────────────────────────
+//
+// Quiz answers payload: `{ [questionId]: optionId | optionId[] }`.
+// Q3 (secondaryConcerns) sends an array; everything else sends a string.
+// We accept both shapes and normalise inside answerQuiz().
 
-/**
- * Quiz answers payload: `{ [questionId]: optionId | optionId[] }`.
- * Zod validates every id against the allowlist so we never trust the
- * client to invent tags.
- */
 export const QuizAnswersSchema = z.record(
   z.string(),
   z.union([z.string(), z.array(z.string())]),
@@ -117,60 +154,131 @@ export type QuizAnswers = z.infer<typeof QuizAnswersSchema>;
 
 export type QuizResult = {
   ritual: RitualPick[];
-  /** What we inferred from the answers — useful for "we chose for dry skin" copy. */
-  inferred: {
-    skinTypeSlugs: string[];
-    concernSlugs: string[];
-    maxPriceEur: number | undefined;
-    ritualDepth: "minimal" | "balanced" | "complete";
-  };
+  // What we inferred — used by the result page for the "diagnosis" line
+  // and the "why these picks" expander.
+  brief: QuizBrief;
 };
+
+const VALID_SKIN_TYPES = new Set<QuizBrief["skinType"]>([
+  "dry",
+  "oily",
+  "combo",
+  "sensitive",
+  "normal",
+]);
+const VALID_PRIMARY: ConcernKey[] = [
+  "hydration",
+  "dullness",
+  "acne",
+  "fine-lines",
+  "dark-spots",
+  "pores",
+  "redness",
+];
+const VALID_SECONDARY: ConcernKey[] = [
+  "tightness",
+  "texture",
+  "dark-circles",
+  "sun-damage",
+  "firmness",
+  "sensitive-eyes",
+];
+
+function pickOne<T extends string>(
+  raw: unknown,
+  allowed: readonly T[],
+  fallback: T,
+): T {
+  const v = typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : "";
+  return (allowed as readonly string[]).includes(v) ? (v as T) : fallback;
+}
+
+function pickMany<T extends string>(
+  raw: unknown,
+  allowed: readonly T[],
+): T[] {
+  const arr = Array.isArray(raw) ? raw : typeof raw === "string" ? [raw] : [];
+  const set = new Set<T>();
+  for (const v of arr) {
+    if ((allowed as readonly string[]).includes(v)) set.add(v as T);
+  }
+  return [...set];
+}
 
 export async function answerQuiz(opts: {
   locale: string;
   answers: QuizAnswers;
 }): Promise<QuizResult> {
-  const skinTypeSlugs = new Set<string>();
-  const concernSlugs = new Set<string>();
+  // ── Normalise + validate every answer into a typed brief.
+  // Anything missing/unknown falls back to a sensible default so a
+  // half-completed payload still produces a recommendation.
+  let skinType = pickOne(
+    opts.answers.skinType,
+    [...VALID_SKIN_TYPES] as QuizBrief["skinType"][],
+    "normal" as QuizBrief["skinType"],
+  );
+  const primaryConcern = pickOne(
+    opts.answers.primaryConcern,
+    VALID_PRIMARY,
+    "hydration" as ConcernKey,
+  );
+  const secondaryConcerns = pickMany(
+    opts.answers.secondaryConcerns,
+    VALID_SECONDARY,
+  );
+  const reactivity = pickOne(
+    opts.answers.reactivity,
+    ["never", "sometimes", "often"] as const,
+    "sometimes",
+  );
+  const sunExposure = pickOne(
+    opts.answers.sunExposure,
+    ["indoors", "commute", "outdoor", "strong"] as const,
+    "commute",
+  );
+  const ageBand = pickOne(
+    opts.answers.ageBand,
+    ["u25", "25-34", "35-44", "45+"] as const,
+    "25-34",
+  );
+  const ritualDepth = pickOne(
+    opts.answers.ritualDepth,
+    ["minimal", "balanced", "full"] as const,
+    "balanced",
+  );
 
-  for (const q of QUIZ) {
-    const raw = opts.answers[q.id];
-    if (!raw) continue;
-    const picked = Array.isArray(raw) ? raw : [raw];
-
-    for (const opt of q.options) {
-      if (!picked.includes(opt.id)) continue;
-      opt.skinTypeSlugs?.forEach((s) => skinTypeSlugs.add(s));
-      opt.concernSlugs?.forEach((s) => concernSlugs.add(s));
-    }
+  // Reactivity bumps skin type to "sensitive" if the user said they
+  // react often. Q1 "normal/dry/combo + Q4 often" really means
+  // sensitive in practice — we'd rather pick gentler products.
+  if (reactivity === "often" && skinType !== "sensitive") {
+    skinType = "sensitive";
   }
 
-  // Map budget answer → a max price (EUR) handed to buildRitual.
-  const budget = opts.answers.budget;
-  const maxPriceEur =
-    budget === "under_30" ? 30 :
-    budget === "30_to_60" ? 60 :
-    budget === "over_60"  ? 150 :
-    undefined; // "no_limit" or missing
-
-  const depth = opts.answers.ritualDepth;
-  const ritualDepth: QuizResult["inferred"]["ritualDepth"] =
-    depth === "minimal" || depth === "complete" ? depth : "balanced";
+  const brief: QuizBrief = {
+    skinType,
+    primaryConcern,
+    secondaryConcerns,
+    reactivity,
+    sunExposure,
+    ageBand,
+    ritualDepth,
+    // Derived line preference (Yu.R PRO / Yu.R Me / Centella) lives in
+    // catalog so the scoring function and the brief stay in lockstep.
+    linePreference: deriveLinePreference({
+      ageBand,
+      primaryConcern,
+      skinType,
+    }),
+    // SPF is only added to the routine when the user gets non-trivial
+    // sun exposure. "indoors" means we save them a product they likely
+    // wouldn't apply anyway.
+    needsSpf: sunExposure !== "indoors",
+  };
 
   const ritual = await buildRitual({
     locale: opts.locale,
-    skinTypeSlugs: [...skinTypeSlugs],
-    concernSlugs: [...concernSlugs],
-    maxPriceEur,
+    brief,
   });
 
-  return {
-    ritual,
-    inferred: {
-      skinTypeSlugs: [...skinTypeSlugs],
-      concernSlugs: [...concernSlugs],
-      maxPriceEur,
-      ritualDepth,
-    },
-  };
+  return { ritual, brief };
 }

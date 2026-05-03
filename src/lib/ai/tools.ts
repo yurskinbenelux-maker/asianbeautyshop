@@ -90,8 +90,9 @@ export function buildAiTools(locale: string) {
     // ── buildRitual ───────────────────────────────────────────────────
     buildRitual: tool({
       description:
-        "Build a complete 4-step skincare ritual (cleanse → essence → " +
-        "moisturise → protect) tailored to a skin type and concern. Use " +
+        "Build a complete skincare ritual (cleanse → toner → treat → " +
+        "cream → mask → SPF) tailored to a skin type and concern. Steps " +
+        "are scored by ingredient match against the user's brief. Use " +
         "this when the user asks for a full routine, not individual products.",
       parameters: z.object({
         skinTypeSlugs: z.array(z.string()).optional(),

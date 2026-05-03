@@ -163,7 +163,11 @@ export function Nav({
             stay simple text anchors. */}
         <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
           <ShopMegaMenu categories={shopCategories} />
-          <NavLink href="/rituals">{t("nav.rituals")}</NavLink>
+          {/* Skin quiz replaces the old "Rituals" header link — the quiz
+              is the higher-intent funnel into product recommendations.
+              The /rituals editorial page still exists and is reachable
+              from the footer + journal entries. */}
+          <NavLink href="/quiz">{t("nav.skin_quiz")}</NavLink>
           <NavLink href="/ingredients">{t("nav.ingredients")}</NavLink>
           <NavLink href="/journal">{t("nav.journal")}</NavLink>
           <NavLink href="/about">{t("nav.about")}</NavLink>
@@ -315,9 +319,12 @@ export function Nav({
                 </div>
               </li>
 
-              {/* Remaining primary links — plain anchors. */}
+              {/* Remaining primary links — plain anchors.
+                  Skin quiz replaces the old Rituals link to align with
+                  the desktop nav (the page itself is still reachable
+                  via the footer). */}
               {[
-                { href: "/rituals", key: "rituals" as const },
+                { href: "/quiz", key: "skin_quiz" as const },
                 { href: "/ingredients", key: "ingredients" as const },
                 { href: "/journal", key: "journal" as const },
                 { href: "/about", key: "about" as const },

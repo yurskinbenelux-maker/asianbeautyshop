@@ -1,34 +1,34 @@
 // ─────────────────────────────────────────────────────────────────────────
 // /[locale]/quiz — client-side stepper + result.
 //
-// Mirrors the flow of ConciergeQuiz (the small orb version) but scaled to
-// editorial size: question text is display-sized, options are cards with
-// left-aligned bullet indicators, and the result is shown as a grid of
-// product cards with direct add-to-cart buttons.
+// Mirrors ConciergeQuiz (the orb) but scaled to editorial size:
+// question text is display-sized, options are cards with bullet
+// indicators, and the result is a grid of product cards with
+// add-to-cart.
 //
-// POSTs to /api/ai/quiz — the same rule-based endpoint the orb uses, so
-// this page stays functional even when GROQ_API_KEY isn't set.
+// Q3 (secondaryConcerns) is multi-select — chips toggle on/off and
+// the user advances explicitly with Continue. Every other question
+// is single-select and advances on tap.
+//
+// POSTs to /api/ai/quiz — the same rule-based endpoint the orb uses.
 // ─────────────────────────────────────────────────────────────────────────
 
 "use client";
 
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowRight, ArrowLeft, Loader2, RotateCcw } from "lucide-react";
+import { ArrowRight, ArrowLeft, Check, Loader2, RotateCcw } from "lucide-react";
 
 import { QUIZ } from "@/lib/ai/quiz";
 import type { QuizAnswers } from "@/lib/ai/quiz";
-import type { RitualPick } from "@/lib/ai/catalog";
+import type { RitualPick, QuizBrief } from "@/lib/ai/catalog";
 import { RitualResult } from "./result-card";
 
 type Phase = "asking" | "loading" | "result" | "error";
 
 type QuizResponse = {
   ritual: RitualPick[];
-  inferred: {
-    skinTypeSlugs: string[];
-    concernSlugs: string[];
-  };
+  brief: QuizBrief;
 };
 
 export function QuizClient({ locale }: { locale: string }) {
@@ -63,13 +63,30 @@ export function QuizClient({ locale }: { locale: string }) {
     }
   }
 
-  function pickOption(questionId: string, optionId: string) {
+  function pickSingle(questionId: string, optionId: string) {
     const nextAnswers: QuizAnswers = { ...answers, [questionId]: optionId };
     setAnswers(nextAnswers);
     if (step + 1 < total) {
       setStep(step + 1);
     } else {
       void submit(nextAnswers);
+    }
+  }
+
+  function toggleMulti(questionId: string, optionId: string) {
+    const existing = answers[questionId];
+    const arr = Array.isArray(existing) ? existing : [];
+    const next = arr.includes(optionId)
+      ? arr.filter((id) => id !== optionId)
+      : [...arr, optionId];
+    setAnswers({ ...answers, [questionId]: next });
+  }
+
+  function advanceMulti() {
+    if (step + 1 < total) {
+      setStep(step + 1);
+    } else {
+      void submit(answers);
     }
   }
 
@@ -86,7 +103,12 @@ export function QuizClient({ locale }: { locale: string }) {
 
   // ── asking ─────────────────────────────────────────────────────────
   if (phase === "asking" && current) {
-    const selectedForThisStep = answers[current.id];
+    const isMulti = current.multi === true;
+    const raw = answers[current.id];
+    const selectedSet = new Set(
+      Array.isArray(raw) ? raw : typeof raw === "string" ? [raw] : [],
+    );
+
     return (
       <div className="border border-ink/10 bg-white/70 backdrop-blur-sm">
         {/* Progress bar */}
@@ -120,41 +142,79 @@ export function QuizClient({ locale }: { locale: string }) {
           <h2 className="mt-4 font-display text-[26px] leading-tight text-ink md:text-[34px]">
             {tConcierge(`quiz.${current.id}.question`)}
           </h2>
+          {isMulti ? (
+            <p className="mt-2 text-[12px] italic text-ink-mid">
+              {tConcierge("quiz_select_multi_hint")}
+            </p>
+          ) : null}
 
           <ul className="mt-8 grid gap-3 md:grid-cols-2">
             {current.options.map((opt) => {
-              const isActive = selectedForThisStep === opt.id;
+              const isActive = selectedSet.has(opt.id);
               return (
                 <li key={opt.id}>
                   <button
                     type="button"
-                    onClick={() => pickOption(current.id, opt.id)}
+                    onClick={() =>
+                      isMulti
+                        ? toggleMulti(current.id, opt.id)
+                        : pickSingle(current.id, opt.id)
+                    }
                     className={`group flex w-full items-center justify-between gap-4 border px-5 py-4 text-left transition-colors ${
                       isActive
-                        ? "border-vermilion bg-vermilion/5"
+                        ? "border-vermilion bg-vermilion/10"
                         : "border-ink/15 bg-white/60 hover:border-vermilion/50 hover:bg-vermilion/5"
                     }`}
                   >
                     <span className="text-[14px] leading-snug text-ink">
                       {tConcierge(`quiz.${current.id}.options.${opt.id}`)}
                     </span>
-                    <ArrowRight
-                      className={`h-4 w-4 flex-shrink-0 transition-colors ${
-                        isActive
-                          ? "text-vermilion"
-                          : "text-ink-mid group-hover:text-vermilion"
-                      }`}
-                      aria-hidden
-                    />
+                    {isMulti ? (
+                      <span
+                        aria-hidden
+                        className={`flex h-4 w-4 flex-shrink-0 items-center justify-center border ${
+                          isActive
+                            ? "border-vermilion bg-vermilion text-rice"
+                            : "border-ink/30"
+                        }`}
+                      >
+                        {isActive ? <Check className="h-3 w-3" /> : null}
+                      </span>
+                    ) : (
+                      <ArrowRight
+                        className={`h-4 w-4 flex-shrink-0 transition-colors ${
+                          isActive
+                            ? "text-vermilion"
+                            : "text-ink-mid group-hover:text-vermilion"
+                        }`}
+                        aria-hidden
+                      />
+                    )}
                   </button>
                 </li>
               );
             })}
           </ul>
 
-          <p className="mt-8 text-[12px] italic leading-relaxed text-ink-mid">
-            {t("privacy_note")}
-          </p>
+          {isMulti ? (
+            <div className="mt-8 flex items-center justify-between">
+              <p className="text-[12px] italic leading-relaxed text-ink-mid">
+                {t("privacy_note")}
+              </p>
+              <button
+                type="button"
+                onClick={advanceMulti}
+                className="inline-flex items-center gap-2 bg-ink px-5 py-3 text-[11px] uppercase tracking-label text-rice hover:bg-vermilion"
+              >
+                {tConcierge("quiz_continue")}
+                <ArrowRight className="h-3 w-3" aria-hidden />
+              </button>
+            </div>
+          ) : (
+            <p className="mt-8 text-[12px] italic leading-relaxed text-ink-mid">
+              {t("privacy_note")}
+            </p>
+          )}
         </div>
       </div>
     );
@@ -204,6 +264,7 @@ export function QuizClient({ locale }: { locale: string }) {
 
       <RitualResult
         ritual={result?.ritual ?? []}
+        brief={result?.brief}
         locale={locale}
         onRetake={retake}
       />

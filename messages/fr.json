@@ -23,6 +23,7 @@
   "nav": {
     "shop": "Boutique",
     "shop_all": "Voir tous les produits",
+    "skin_quiz": "Test de peau",
     "rituals": "Rituels",
     "ingredients": "Ingrédients",
     "journal": "Journal",
@@ -354,75 +355,123 @@
     "result_empty": "Nous n'avons pas encore assez de produits correspondants — explorez la boutique pour voir toute la collection.",
     "result_cta": "Voir la boutique",
     "step_cleanse": "Nettoyer",
-    "step_essence": "Essence",
-    "step_moisturise": "Hydrater",
-    "step_protect": "Protéger",
+    "step_toner": "Tonique",
+    "step_treat": "Soigner",
+    "step_cream": "Hydrater",
+    "step_mask": "Masque",
+    "step_spf": "Protéger",
     "chat_greeting": "Bonjour — je suis votre concierge peau. Posez-moi vos questions.",
     "chat_thinking": "Réflexion…",
     "chat_error": "Une erreur s'est produite. Réessayez ou faites le quiz pour un rituel rapide.",
     "chat_log_label": "Conversation avec votre concierge peau",
     "chat_input_hint": "Appuyez sur Entrée pour envoyer votre message.",
+    "quiz_select_multi_hint": "Cochez ce qui s'applique",
+    "quiz_continue": "Continuer",
+    "result_diagnosis_label": "Votre peau",
+    "result_diagnosis_goal": "Objectif principal",
+    "result_why_label": "Pourquoi ces choix",
+    "result_why_intro": "Chaque produit a été choisi parce que sa liste INCI contient des ingrédients qui répondent à vos réponses.",
+    "result_why_matched": "Match : ",
+    "result_add_full_ritual": "Ajouter tout le rituel",
+    "skin_label_dry": "Sèche",
+    "skin_label_oily": "Grasse",
+    "skin_label_combo": "Mixte",
+    "skin_label_sensitive": "Sensible",
+    "skin_label_normal": "Équilibrée",
+    "concern_label_hydration": "Hydratation",
+    "concern_label_dullness": "Éclat",
+    "concern_label_acne": "Imperfections",
+    "concern_label_fine-lines": "Ridules",
+    "concern_label_dark-spots": "Taches",
+    "concern_label_pores": "Pores",
+    "concern_label_redness": "Apaisement",
+    "concern_label_tightness": "Tiraillements",
+    "concern_label_texture": "Grain de peau",
+    "concern_label_dark-circles": "Cernes",
+    "concern_label_sun-damage": "Dommages soleil",
+    "concern_label_firmness": "Fermeté",
+    "concern_label_sensitive-eyes": "Yeux sensibles",
     "quiz": {
       "skinType": {
-        "question": "Comment votre peau se sent-elle en général?",
+        "question": "Quel est votre type de peau ?",
         "options": {
-          "dry": "Tiraillée, sèche, rugueuse",
-          "oily": "Brillante, sujette aux imperfections",
-          "combo": "Zone T grasse, joues sèches",
-          "sensitive": "Réactive, souvent rouge",
-          "normal": "Équilibrée, sans problèmes majeurs"
+          "dry": "Sèche",
+          "combo": "Mixte",
+          "oily": "Grasse",
+          "sensitive": "Sensible",
+          "normal": "Équilibrée"
         }
       },
-      "concern": {
-        "question": "Quel est votre objectif principal?",
+      "primaryConcern": {
+        "question": "Votre préoccupation principale ?",
         "options": {
-          "hydration": "Hydratation profonde",
-          "dullness": "Éclat et lumière",
-          "acne": "Apaiser les imperfections",
-          "ageing": "Ridules et fermeté",
-          "sensitivity": "Apaiser les rougeurs",
-          "darkSpots": "Taches et teint unifié",
-          "pores": "Pores resserrés et grain de peau"
+          "hydration": "Déshydratation",
+          "dullness": "Teint terne",
+          "acne": "Imperfections",
+          "fine-lines": "Ridules",
+          "dark-spots": "Taches",
+          "pores": "Pores & grain",
+          "redness": "Rougeurs"
         }
       },
-      "sensitivity": {
-        "question": "À quelle fréquence votre peau réagit-elle aux nouveaux produits?",
+      "secondaryConcerns": {
+        "question": "Autre chose ?",
         "options": {
-          "never": "Rarement ou jamais",
-          "sometimes": "De temps en temps",
-          "often": "Souvent — très réactive"
+          "tightness": "Tiraillements",
+          "texture": "Grain de peau",
+          "dark-circles": "Cernes",
+          "sun-damage": "Dommages du soleil",
+          "firmness": "Perte de fermeté",
+          "sensitive-eyes": "Yeux sensibles"
+        }
+      },
+      "reactivity": {
+        "question": "Comment votre peau réagit-elle aux nouveaux produits ?",
+        "options": {
+          "never": "Jamais",
+          "sometimes": "Parfois",
+          "often": "Souvent"
+        }
+      },
+      "sunExposure": {
+        "question": "Quelle exposition au soleil ?",
+        "options": {
+          "indoors": "Surtout en intérieur",
+          "commute": "Trajets quotidiens",
+          "outdoor": "Souvent dehors",
+          "strong": "Soleil fort / plage"
+        }
+      },
+      "ageBand": {
+        "question": "Votre tranche d'âge ?",
+        "options": {
+          "u25": "Moins de 25",
+          "25-34": "25 – 34",
+          "35-44": "35 – 44",
+          "45+": "45 et plus"
         }
       },
       "ritualDepth": {
-        "question": "Combien de temps avez-vous chaque jour?",
+        "question": "Quelle longueur de routine ?",
         "options": {
-          "minimal": "2 minutes — l'essentiel",
-          "balanced": "5 à 7 minutes — un rituel équilibré",
-          "complete": "10+ minutes — j'aime le rituel complet"
-        }
-      },
-      "budget": {
-        "question": "Quel est votre budget par produit?",
-        "options": {
-          "under_30": "Moins de 30 €",
-          "30_to_60": "30 € – 60 €",
-          "over_60": "60 € et plus",
-          "no_limit": "Sans préférence"
+          "minimal": "Essentiel (3 étapes)",
+          "balanced": "Équilibré (4 étapes)",
+          "full": "Rituel complet (5–6 étapes)"
         }
       }
     }
   },
   "quizPage": {
-    "meta_title": "Quiz de peau — YU.R Skin Solution",
-    "meta_description": "Cinq questions rapides et nous composons un rituel coréen en quatre étapes, adapté à votre type de peau, vos préoccupations et votre rythme.",
-    "eyebrow": "Quiz de peau",
-    "title": "Composez votre rituel en cinq réponses.",
-    "lede": "Une conversation posée autour de votre peau — puis un rituel en quatre étapes issu des maisons coréennes que nous aimons.",
+    "meta_title": "Test de peau — YU.R Skin Solution",
+    "meta_description": "Sept questions rapides et nous composons un rituel coréen, chaque produit choisi à partir des ingrédients sur l'étiquette.",
+    "eyebrow": "Test de peau",
+    "title": "Quelques questions calmes sur votre peau.",
+    "lede": "Dites-nous comment elle se comporte et ce que vous aimeriez changer. Nous vous proposons une routine — chaque produit choisi par sa liste d'ingrédients.",
     "back": "Retour",
     "privacy_note": "Vos réponses restent sur cet appareil. Nous les utilisons uniquement pour choisir des produits qui vous correspondent.",
-    "loading_hint": "Nous ajustons les ingrédients, les textures et la profondeur du rituel à vos réponses.",
-    "result_title": "Votre rituel en quatre étapes.",
-    "result_lede": "Un nettoyage, une essence, une crème et une protection quotidienne — choisis pour la peau que vous venez de décrire.",
+    "loading_hint": "Nous lisons les listes INCI et associons les ingrédients à vos réponses.",
+    "result_title": "Votre rituel.",
+    "result_lede": "Chaque produit ci-dessous a été noté selon sa liste d'ingrédients — comme un dermatologue lit une étiquette.",
     "add_to_cart": "Ajouter au panier",
     "adding": "Ajout…",
     "added": "Ajouté",

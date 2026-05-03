@@ -23,6 +23,7 @@
   "nav": {
     "shop": "Shop",
     "shop_all": "View all products",
+    "skin_quiz": "Skin quiz",
     "rituals": "Rituals",
     "ingredients": "Ingredients",
     "journal": "Journal",
@@ -354,75 +355,123 @@
     "result_empty": "We don't have enough matching products yet — browse the shop to explore the full catalogue.",
     "result_cta": "Explore the shop",
     "step_cleanse": "Cleanse",
-    "step_essence": "Essence",
-    "step_moisturise": "Moisturise",
-    "step_protect": "Protect",
+    "step_toner": "Tone",
+    "step_treat": "Treat",
+    "step_cream": "Moisturise",
+    "step_mask": "Mask",
+    "step_spf": "Protect",
     "chat_greeting": "Hi — I'm your skin concierge. Ask me anything.",
     "chat_thinking": "Thinking…",
     "chat_error": "Something went wrong. Try again or take the quiz for a quick routine.",
     "chat_log_label": "Conversation with your skin concierge",
     "chat_input_hint": "Press Enter to send your message.",
+    "quiz_select_multi_hint": "Pick any that apply",
+    "quiz_continue": "Continue",
+    "result_diagnosis_label": "Your skin",
+    "result_diagnosis_goal": "Main goal",
+    "result_why_label": "Why these picks",
+    "result_why_intro": "Each product was chosen because its INCI list contains ingredients that target what you told us.",
+    "result_why_matched": "Matched: ",
+    "result_add_full_ritual": "Add full ritual to cart",
+    "skin_label_dry": "Dry",
+    "skin_label_oily": "Oily",
+    "skin_label_combo": "Combination",
+    "skin_label_sensitive": "Sensitive",
+    "skin_label_normal": "Balanced",
+    "concern_label_hydration": "Hydration",
+    "concern_label_dullness": "Radiance",
+    "concern_label_acne": "Breakouts",
+    "concern_label_fine-lines": "Fine lines",
+    "concern_label_dark-spots": "Dark spots",
+    "concern_label_pores": "Pores",
+    "concern_label_redness": "Calm",
+    "concern_label_tightness": "Tightness",
+    "concern_label_texture": "Texture",
+    "concern_label_dark-circles": "Dark circles",
+    "concern_label_sun-damage": "Sun damage",
+    "concern_label_firmness": "Firmness",
+    "concern_label_sensitive-eyes": "Sensitive eyes",
     "quiz": {
       "skinType": {
-        "question": "How does your skin usually feel?",
+        "question": "What's your skin type?",
         "options": {
-          "dry": "Tight, flaky, rough",
-          "oily": "Shiny, breakout-prone",
-          "combo": "Oily T-zone, dry cheeks",
-          "sensitive": "Reacts easily, often red",
-          "normal": "Balanced, no major issues"
+          "dry": "Dry",
+          "combo": "Combination",
+          "oily": "Oily",
+          "sensitive": "Sensitive",
+          "normal": "Balanced"
         }
       },
-      "concern": {
-        "question": "What's your top skin goal?",
+      "primaryConcern": {
+        "question": "Your number-one concern?",
         "options": {
-          "hydration": "Deep hydration",
-          "dullness": "Radiance and glow",
-          "acne": "Calm breakouts",
-          "ageing": "Fine lines and firmness",
-          "sensitivity": "Soothe redness",
-          "darkSpots": "Dark spots and even tone",
-          "pores": "Refined pores and texture"
+          "hydration": "Dehydration",
+          "dullness": "Dullness",
+          "acne": "Breakouts",
+          "fine-lines": "Fine lines",
+          "dark-spots": "Dark spots",
+          "pores": "Pores & texture",
+          "redness": "Redness"
         }
       },
-      "sensitivity": {
-        "question": "How often does your skin react to new products?",
+      "secondaryConcerns": {
+        "question": "Anything else on your mind?",
         "options": {
-          "never": "Rarely or never",
-          "sometimes": "Once in a while",
-          "often": "Often — very reactive"
+          "tightness": "Tightness",
+          "texture": "Texture",
+          "dark-circles": "Dark circles",
+          "sun-damage": "Sun damage",
+          "firmness": "Loss of firmness",
+          "sensitive-eyes": "Sensitive eyes"
+        }
+      },
+      "reactivity": {
+        "question": "How does your skin react to new products?",
+        "options": {
+          "never": "Never",
+          "sometimes": "Sometimes",
+          "often": "Often"
+        }
+      },
+      "sunExposure": {
+        "question": "Sun exposure?",
+        "options": {
+          "indoors": "Mostly indoors",
+          "commute": "Daily commutes",
+          "outdoor": "Outdoors often",
+          "strong": "Strong sun / beach"
+        }
+      },
+      "ageBand": {
+        "question": "Your age range?",
+        "options": {
+          "u25": "Under 25",
+          "25-34": "25 – 34",
+          "35-44": "35 – 44",
+          "45+": "45 and over"
         }
       },
       "ritualDepth": {
-        "question": "How much time do you have each day?",
+        "question": "Routine length you want?",
         "options": {
-          "minimal": "2 minutes — the essentials",
-          "balanced": "5 to 7 minutes — a balanced ritual",
-          "complete": "10+ minutes — I love the full ritual"
-        }
-      },
-      "budget": {
-        "question": "What's your budget per product?",
-        "options": {
-          "under_30": "Under €30",
-          "30_to_60": "€30 – €60",
-          "over_60": "€60 and above",
-          "no_limit": "No preference"
+          "minimal": "Essentials (3 steps)",
+          "balanced": "Balanced (4 steps)",
+          "full": "Full ritual (5–6 steps)"
         }
       }
     }
   },
   "quizPage": {
     "meta_title": "Skin quiz — YU.R Skin Solution",
-    "meta_description": "Five quick questions and we'll compose a four-step Korean skincare ritual tailored to your skin type, concerns, and routine depth.",
+    "meta_description": "Seven quick questions and we'll compose a Korean skincare ritual matched to your skin, ingredient by ingredient.",
     "eyebrow": "Skin quiz",
-    "title": "Build your ritual in five answers.",
-    "lede": "A quiet, considered conversation about your skin — then a four-step routine sourced from the Korean houses we trust.",
+    "title": "A few quiet questions about your skin.",
+    "lede": "Tell us how it behaves and what you'd like to change. We'll match you to a routine — every product picked by the ingredients on its label.",
     "back": "Back",
     "privacy_note": "Your answers stay on this device. We only use them to pick products you'll love.",
-    "loading_hint": "Matching ingredients, textures, and step depth to your answers.",
-    "result_title": "Your four-step ritual.",
-    "result_lede": "A cleanse, an essence, a moisturiser, and a daily protector — chosen for the skin you just described.",
+    "loading_hint": "Reading INCI lists. Matching ingredients to your answers.",
+    "result_title": "Your skin ritual.",
+    "result_lede": "Each product below was scored against your answers using its ingredient list — same way a dermatologist would read a label.",
     "add_to_cart": "Add to cart",
     "adding": "Adding…",
     "added": "Added",

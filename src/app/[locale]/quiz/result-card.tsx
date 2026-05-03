@@ -1,15 +1,15 @@
 // ─────────────────────────────────────────────────────────────────────────
 // /[locale]/quiz — ritual result component.
 //
-// Renders the 4-step ritual returned by /api/ai/quiz as a gallery of
-// product cards. Each card has:
-//   · step label (Cleanse / Essence / …) with Korean step index
-//   · product image (deep-linked to PDP)
-//   · quick Add to cart button (uses the shared CartProvider)
-//   · link to the product page for more detail
-//
-// Steps that have no matching product in the catalogue are skipped
-// entirely — same graceful-degrade rule as the orb.
+// V2 changes:
+//   · Renders up to 6 steps (cleanse → toner → treat → cream → mask → spf)
+//     instead of 4. The number actually shown depends on the user's
+//     ritualDepth + needsSpf, decided server-side in catalog.ts.
+//   · One-line diagnosis above the grid: "Your skin: dry · main goal:
+//     hydration" — generated from the QuizBrief the API returns.
+//   · "Why these picks" expander shows which ingredients matched per
+//     product (matchedIngredients on each RitualPick).
+//   · "Add full ritual" CTA adds every product in one click.
 // ─────────────────────────────────────────────────────────────────────────
 
 "use client";
@@ -17,38 +17,76 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
-import { Check, Loader2, RotateCcw, ShoppingBag } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Loader2,
+  Plus,
+  RotateCcw,
+  ShoppingBag,
+} from "lucide-react";
 
 import { Link } from "@/i18n/routing";
 import { useCart } from "@/components/cart/cart-provider";
-import type { RitualPick } from "@/lib/ai/catalog";
+import type { RitualPick, RitualStep, QuizBrief } from "@/lib/ai/catalog";
 import { formatEur, priceLocale } from "@/lib/utils";
 
-// Display labels per step id.  We don't translate these slugs — we pull
-// the localised label from the `concierge` namespace.
-const STEP_KEYS: Record<RitualPick["step"], string> = {
+// Step id → translation key in the concierge namespace.
+const STEP_KEYS: Record<RitualStep, string> = {
   cleanse: "step_cleanse",
-  essence: "step_essence",
-  moisturise: "step_moisturise",
-  protect: "step_protect",
+  toner: "step_toner",
+  treat: "step_treat",
+  cream: "step_cream",
+  mask: "step_mask",
+  spf: "step_spf",
 };
 
 export function RitualResult({
   ritual,
+  brief,
   locale,
   onRetake,
 }: {
   ritual: RitualPick[];
+  brief: QuizBrief | undefined;
   locale: string;
   onRetake: () => void;
 }) {
   const t = useTranslations("quizPage");
   const tConcierge = useTranslations("concierge");
   const uiLocale = useLocale();
+  const { addItem } = useCart();
 
-  // Only render steps that found a product.  The rule-based engine may
+  // Add-all-to-cart state. We don't open the drawer between adds — it
+  // would be a nightmare on mobile. Drawer opens once after the last add.
+  const [bundleAdding, setBundleAdding] = useState(false);
+  const [bundleAdded, setBundleAdded] = useState(false);
+  const [whyOpen, setWhyOpen] = useState(false);
+
+  // Only render steps that found a product. The rule-based engine may
   // return nulls when the catalogue is thin in a category.
   const filled = ritual.filter((r) => r.product !== null);
+
+  // Total price for the "Add full ritual" CTA.
+  const totalEur = filled.reduce(
+    (sum, r) => sum + (r.product?.priceEur ?? 0),
+    0,
+  );
+
+  async function addAllToCart() {
+    if (bundleAdding || bundleAdded) return;
+    setBundleAdding(true);
+    try {
+      for (const pick of filled) {
+        if (!pick.product) continue;
+        await addItem({ productId: pick.product.id, quantity: 1 });
+      }
+      setBundleAdded(true);
+      setTimeout(() => setBundleAdded(false), 2400);
+    } finally {
+      setBundleAdding(false);
+    }
+  }
 
   return (
     <div className="border border-ink/10 bg-white/70 px-6 py-10 md:px-12 md:py-14">
@@ -61,11 +99,48 @@ export function RitualResult({
         <p className="mx-auto mt-4 max-w-xl text-[14px] leading-relaxed text-ink-mid">
           {t("result_lede")}
         </p>
+
+        {/* Diagnosis line — quick "we read your answers as X" reassurance.
+            Built from the QuizBrief returned by the API so it reflects
+            any reactivity bumps the server applied (e.g. dry + often
+            reacts → server reclassified to sensitive). */}
+        {brief ? (
+          <p className="mx-auto mt-6 inline-flex max-w-xl flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[12px] uppercase tracking-label text-ink-mid">
+            <span>
+              {tConcierge("result_diagnosis_label")}:{" "}
+              <span className="text-ink">
+                {tConcierge(`skin_label_${brief.skinType}`)}
+              </span>
+            </span>
+            <span aria-hidden className="text-vermilion/60">
+              ·
+            </span>
+            <span>
+              {tConcierge("result_diagnosis_goal")}:{" "}
+              <span className="text-ink">
+                {tConcierge(`concern_label_${brief.primaryConcern}`)}
+              </span>
+            </span>
+            {brief.secondaryConcerns.length > 0 ? (
+              <>
+                <span aria-hidden className="text-vermilion/60">
+                  ·
+                </span>
+                <span className="text-ink">
+                  {brief.secondaryConcerns
+                    .slice(0, 3)
+                    .map((c) => tConcierge(`concern_label_${c}`))
+                    .join(" / ")}
+                </span>
+              </>
+            ) : null}
+          </p>
+        ) : null}
       </div>
 
       {/* steps grid */}
       {filled.length > 0 ? (
-        <ul className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filled.map((pick, idx) => (
             <RitualCard
               key={pick.step}
@@ -87,6 +162,62 @@ export function RitualResult({
         </p>
       )}
 
+      {/* "Why these picks" — collapsed by default. Surfaces the matched
+          INCI ingredients per product so the customer can see we didn't
+          just throw popular products at them. */}
+      {filled.length > 0 ? (
+        <div className="mt-10 border-t border-ink/10 pt-6">
+          <button
+            type="button"
+            onClick={() => setWhyOpen((v) => !v)}
+            className="inline-flex items-center gap-2 text-[12px] uppercase tracking-label text-ink-mid transition-colors hover:text-vermilion"
+            aria-expanded={whyOpen}
+          >
+            <ChevronDown
+              className={`h-3.5 w-3.5 transition-transform ${
+                whyOpen ? "rotate-180" : ""
+              }`}
+              aria-hidden
+            />
+            {tConcierge("result_why_label")}
+          </button>
+
+          {whyOpen ? (
+            <div className="mt-4 space-y-3 text-[13px] leading-relaxed text-ink-mid">
+              <p>{tConcierge("result_why_intro")}</p>
+              <ul className="space-y-2">
+                {filled.map((pick) => {
+                  if (!pick.product) return null;
+                  return (
+                    <li key={pick.step} className="flex flex-col gap-1">
+                      <span className="text-[11px] uppercase tracking-label text-ink">
+                        {tConcierge(STEP_KEYS[pick.step])} ·{" "}
+                        {pick.product.name}
+                      </span>
+                      {pick.matchedIngredients.length > 0 ? (
+                        <span className="text-[12px] text-ink-mid">
+                          {tConcierge("result_why_matched")}
+                          <span className="text-ink">
+                            {/* Slugs are humanised by replacing dashes with
+                                spaces and lowercasing — not perfect for
+                                things like "ascorbyl-glucoside" but reads
+                                fine and avoids a separate translation. */}
+                            {pick.matchedIngredients
+                              .slice(0, 5)
+                              .map((s) => s.replace(/-/g, " "))
+                              .join(", ")}
+                          </span>
+                        </span>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       {/* footer controls */}
       <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-ink/10 pt-8 sm:flex-row">
         <button
@@ -97,12 +228,45 @@ export function RitualResult({
           <RotateCcw className="h-3.5 w-3.5" aria-hidden />
           {tConcierge("quiz_retake")}
         </button>
-        <Link
-          href="/shop"
-          className="inline-flex items-center gap-2 bg-ink px-5 py-3 text-[11px] uppercase tracking-label text-rice hover:bg-vermilion"
-        >
-          {tConcierge("result_cta")}
-        </Link>
+
+        <div className="flex flex-col items-center gap-3 sm:flex-row">
+          {filled.length > 1 ? (
+            <button
+              type="button"
+              onClick={addAllToCart}
+              disabled={bundleAdding}
+              className={`inline-flex items-center gap-2 px-5 py-3 text-[11px] uppercase tracking-label transition-colors ${
+                bundleAdded
+                  ? "bg-celadon text-rice"
+                  : "bg-vermilion text-rice hover:bg-ink"
+              } ${bundleAdding ? "cursor-wait opacity-80" : ""}`}
+            >
+              {bundleAdded ? (
+                <>
+                  <Check className="h-3.5 w-3.5" aria-hidden />
+                  {t("added")}
+                </>
+              ) : bundleAdding ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                  {t("adding")}
+                </>
+              ) : (
+                <>
+                  <Plus className="h-3.5 w-3.5" aria-hidden />
+                  {tConcierge("result_add_full_ritual")} ·{" "}
+                  {formatEur(totalEur, priceLocale(uiLocale))}
+                </>
+              )}
+            </button>
+          ) : null}
+          <Link
+            href="/shop"
+            className="inline-flex items-center gap-2 bg-ink px-5 py-3 text-[11px] uppercase tracking-label text-rice hover:bg-vermilion"
+          >
+            {tConcierge("result_cta")}
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -123,8 +287,8 @@ function RitualCard({
 }: {
   pick: RitualPick;
   index: number;
-  locale: string; // UI locale — used for price formatting
-  urlLocale: string; // locale segment for PDP links (redundant but explicit)
+  locale: string; // UI locale for price formatting
+  urlLocale: string; // locale segment for PDP links
   stepLabel: string;
   addCtaLabel: string;
   addingCtaLabel: string;
@@ -143,8 +307,6 @@ function RitualCard({
     try {
       await addItem({ productId: product.id, quantity: 1 });
       setJustAdded(true);
-      // Revert the "Added" confirmation after a beat so the user can add
-      // again if they want (the cart drawer opens anyway).
       setTimeout(() => setJustAdded(false), 2400);
     } finally {
       setLocalPending(false);
@@ -153,9 +315,6 @@ function RitualCard({
 
   const pending = localPending || (isPending && justAdded === false);
 
-  // We don't use urlLocale for <Link> href because next-intl's Link
-  // already prepends the active locale.  It's kept in the props as
-  // documentation / future-proofing.
   void urlLocale;
 
   return (
@@ -170,7 +329,7 @@ function RitualCard({
             src={product.imageUrl}
             alt={product.name}
             fill
-            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
+            sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
             className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
           />
         ) : null}
@@ -195,6 +354,17 @@ function RitualCard({
         {product.tagline ? (
           <div className="mt-1 text-[12px] text-ink-mid line-clamp-2">
             {product.tagline}
+          </div>
+        ) : null}
+        {/* Surface up to 2 matched ingredients as a quick "why this fits
+            you" line — keeps the explanation visible without forcing a
+            click on the expander below. */}
+        {pick.matchedIngredients.length > 0 ? (
+          <div className="mt-2 text-[11px] uppercase tracking-label text-vermilion/80">
+            {pick.matchedIngredients
+              .slice(0, 2)
+              .map((s) => s.replace(/-/g, " "))
+              .join(" · ")}
           </div>
         ) : null}
         <div className="mt-3 text-[14px] text-ink">

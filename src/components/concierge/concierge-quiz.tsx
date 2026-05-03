@@ -1,15 +1,15 @@
 // ─────────────────────────────────────────────────────────────────────────
-// ConciergeQuiz — step-by-step rule-based skin quiz (Layer 1)
+// ConciergeQuiz — step-by-step rule-based skin quiz inside the floating orb.
 //
-// Walks the user through the 5 questions defined in src/lib/ai/quiz.ts,
-// POSTs the answers to /api/ai/quiz, then renders the 4-step ritual the
+// Walks the user through the 7 questions defined in src/lib/ai/quiz.ts,
+// POSTs the answers to /api/ai/quiz, then renders the routine the
 // server returned. Because the quiz definition is imported directly, the
 // client never has to re-declare the question ids — single source of
 // truth.
 //
-// Only the option ids are shared across the wire; the human-readable
-// copy (question text + option labels) comes from next-intl, so Elie
-// can edit the wording in messages/*.json without touching code.
+// Q3 (secondaryConcerns) is multi-select — chips you can toggle, then
+// press Continue. Every other question is single-select and advances
+// the moment you tap an option.
 // ─────────────────────────────────────────────────────────────────────────
 
 "use client";
@@ -17,29 +17,28 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowRight, Loader2, SparklesIcon } from "lucide-react";
+import { ArrowRight, Check, Loader2, SparklesIcon } from "lucide-react";
 
 import { Link } from "@/i18n/routing";
 import { QUIZ } from "@/lib/ai/quiz";
 import type { QuizAnswers } from "@/lib/ai/quiz";
-import type { RitualPick } from "@/lib/ai/catalog";
+import type { RitualPick, RitualStep, QuizBrief } from "@/lib/ai/catalog";
 import { formatEur, priceLocale } from "@/lib/utils";
 
 type Phase = "asking" | "loading" | "result" | "error";
 
 type QuizResponse = {
   ritual: RitualPick[];
-  inferred: {
-    skinTypeSlugs: string[];
-    concernSlugs: string[];
-  };
+  brief: QuizBrief;
 };
 
-const STEP_KEYS: Record<RitualPick["step"], string> = {
+const STEP_KEYS: Record<RitualStep, string> = {
   cleanse: "step_cleanse",
-  essence: "step_essence",
-  moisturise: "step_moisturise",
-  protect: "step_protect",
+  toner: "step_toner",
+  treat: "step_treat",
+  cream: "step_cream",
+  mask: "step_mask",
+  spf: "step_spf",
 };
 
 export function ConciergeQuiz({ onClose }: { onClose: () => void }) {
@@ -53,7 +52,9 @@ export function ConciergeQuiz({ onClose }: { onClose: () => void }) {
 
   const total = QUIZ.length;
   const current = QUIZ[step];
-  const progress = Math.round(((step + (phase === "result" ? 1 : 0)) / total) * 100);
+  const progress = Math.round(
+    ((step + (phase === "result" ? 1 : 0)) / total) * 100,
+  );
 
   async function submit(final: QuizAnswers) {
     setPhase("loading");
@@ -72,7 +73,7 @@ export function ConciergeQuiz({ onClose }: { onClose: () => void }) {
     }
   }
 
-  function pickOption(questionId: string, optionId: string) {
+  function pickSingle(questionId: string, optionId: string) {
     const nextAnswers = { ...answers, [questionId]: optionId };
     setAnswers(nextAnswers);
     if (step + 1 < total) {
@@ -82,8 +83,33 @@ export function ConciergeQuiz({ onClose }: { onClose: () => void }) {
     }
   }
 
+  // Q3 (secondaryConcerns) keeps a Set of selected ids and advances on
+  // Continue rather than on tap.
+  function toggleMulti(questionId: string, optionId: string) {
+    const existing = answers[questionId];
+    const arr = Array.isArray(existing) ? existing : [];
+    const next = arr.includes(optionId)
+      ? arr.filter((id) => id !== optionId)
+      : [...arr, optionId];
+    setAnswers({ ...answers, [questionId]: next });
+  }
+
+  function advanceMulti() {
+    if (step + 1 < total) {
+      setStep(step + 1);
+    } else {
+      void submit(answers);
+    }
+  }
+
   // ── asking ────────────────────────────────────────────────────────
   if (phase === "asking" && current) {
+    const isMulti = current.multi === true;
+    const raw = answers[current.id];
+    const selectedSet = new Set(
+      Array.isArray(raw) ? raw : typeof raw === "string" ? [raw] : [],
+    );
+
     return (
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Progress bar */}
@@ -101,22 +127,64 @@ export function ConciergeQuiz({ onClose }: { onClose: () => void }) {
           <h3 className="font-display text-[20px] leading-tight text-ink">
             {t(`quiz.${current.id}.question`)}
           </h3>
+          {isMulti ? (
+            <p className="mt-1 text-[11px] italic text-ink-mid">
+              {t("quiz_select_multi_hint")}
+            </p>
+          ) : null}
 
           <div className="mt-5 space-y-2">
-            {current.options.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => pickOption(current.id, opt.id)}
-                className="group flex w-full items-center justify-between gap-4 border border-ink/10 bg-white/60 px-4 py-3 text-left transition-colors hover:border-vermilion/40 hover:bg-vermilion/5"
-              >
-                <span className="text-[13px] leading-snug text-ink">
-                  {t(`quiz.${current.id}.options.${opt.id}`)}
-                </span>
-                <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 text-ink-mid transition-colors group-hover:text-vermilion" />
-              </button>
-            ))}
+            {current.options.map((opt) => {
+              const active = selectedSet.has(opt.id);
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() =>
+                    isMulti
+                      ? toggleMulti(current.id, opt.id)
+                      : pickSingle(current.id, opt.id)
+                  }
+                  className={`group flex w-full items-center justify-between gap-4 border px-4 py-3 text-left transition-colors ${
+                    active
+                      ? "border-vermilion bg-vermilion/10"
+                      : "border-ink/10 bg-white/60 hover:border-vermilion/40 hover:bg-vermilion/5"
+                  }`}
+                >
+                  <span className="text-[13px] leading-snug text-ink">
+                    {t(`quiz.${current.id}.options.${opt.id}`)}
+                  </span>
+                  {isMulti ? (
+                    <span
+                      aria-hidden
+                      className={`flex h-4 w-4 flex-shrink-0 items-center justify-center border ${
+                        active
+                          ? "border-vermilion bg-vermilion text-rice"
+                          : "border-ink/30"
+                      }`}
+                    >
+                      {active ? <Check className="h-3 w-3" /> : null}
+                    </span>
+                  ) : (
+                    <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 text-ink-mid transition-colors group-hover:text-vermilion" />
+                  )}
+                </button>
+              );
+            })}
           </div>
+
+          {/* Continue button only on multi-select questions. Single-select
+              advances on tap so this would just add a click. */}
+          {isMulti ? (
+            <button
+              type="button"
+              onClick={advanceMulti}
+              className="mt-5 inline-flex items-center gap-2 bg-ink px-4 py-2 text-[11px] uppercase tracking-label text-rice hover:bg-vermilion"
+            >
+              {t("quiz_continue")}
+              <ArrowRight className="h-3 w-3" aria-hidden />
+            </button>
+          ) : null}
         </div>
       </div>
     );
@@ -171,6 +239,20 @@ export function ConciergeQuiz({ onClose }: { onClose: () => void }) {
             </h3>
           </div>
         </div>
+
+        {/* Tiny diagnosis line — quick "we read your answers as X" reassurance. */}
+        {result?.brief ? (
+          <p className="mt-3 text-[11px] leading-relaxed text-ink-mid">
+            {t("result_diagnosis_label")}:{" "}
+            <span className="text-ink">
+              {t(`skin_label_${result.brief.skinType}`)}
+            </span>{" "}
+            · {t("result_diagnosis_goal")}:{" "}
+            <span className="text-ink">
+              {t(`concern_label_${result.brief.primaryConcern}`)}
+            </span>
+          </p>
+        ) : null}
 
         <ul className="mt-5 space-y-3">
           {result?.ritual

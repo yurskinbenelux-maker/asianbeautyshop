@@ -23,6 +23,7 @@
   "nav": {
     "shop": "Shop",
     "shop_all": "Alle producten bekijken",
+    "skin_quiz": "Huidquiz",
     "rituals": "Rituelen",
     "ingredients": "Ingrediënten",
     "journal": "Journaal",
@@ -354,75 +355,123 @@
     "result_empty": "We hebben nog niet genoeg matchende producten — ontdek de volledige collectie in de shop.",
     "result_cta": "Ontdek de shop",
     "step_cleanse": "Reinigen",
-    "step_essence": "Essentie",
-    "step_moisturise": "Hydrateren",
-    "step_protect": "Beschermen",
+    "step_toner": "Toner",
+    "step_treat": "Behandelen",
+    "step_cream": "Hydrateren",
+    "step_mask": "Masker",
+    "step_spf": "Beschermen",
     "chat_greeting": "Hoi — ik ben je huidconcierge. Stel gerust je vraag.",
     "chat_thinking": "Even denken…",
     "chat_error": "Er ging iets mis. Probeer het opnieuw of doe de quiz voor een snel ritueel.",
     "chat_log_label": "Gesprek met je huidconcierge",
     "chat_input_hint": "Druk op Enter om je bericht te versturen.",
+    "quiz_select_multi_hint": "Kies wat van toepassing is",
+    "quiz_continue": "Verder",
+    "result_diagnosis_label": "Jouw huid",
+    "result_diagnosis_goal": "Hoofddoel",
+    "result_why_label": "Waarom deze keuze",
+    "result_why_intro": "Elk product is gekozen omdat de INCI-lijst ingrediënten bevat die aansluiten op wat je hebt verteld.",
+    "result_why_matched": "Match: ",
+    "result_add_full_ritual": "Volledig ritueel toevoegen",
+    "skin_label_dry": "Droog",
+    "skin_label_oily": "Vet",
+    "skin_label_combo": "Gemengd",
+    "skin_label_sensitive": "Gevoelig",
+    "skin_label_normal": "In balans",
+    "concern_label_hydration": "Hydratatie",
+    "concern_label_dullness": "Glow",
+    "concern_label_acne": "Puistjes",
+    "concern_label_fine-lines": "Fijne lijntjes",
+    "concern_label_dark-spots": "Pigmentvlekken",
+    "concern_label_pores": "Poriën",
+    "concern_label_redness": "Verzachting",
+    "concern_label_tightness": "Trekkerig gevoel",
+    "concern_label_texture": "Textuur",
+    "concern_label_dark-circles": "Donkere kringen",
+    "concern_label_sun-damage": "Zonschade",
+    "concern_label_firmness": "Stevigheid",
+    "concern_label_sensitive-eyes": "Gevoelige ogen",
     "quiz": {
       "skinType": {
-        "question": "Hoe voelt je huid meestal?",
+        "question": "Wat is je huidtype?",
         "options": {
-          "dry": "Strak, schilferig, ruw",
-          "oily": "Glanzend, puistjes",
-          "combo": "Vette T-zone, droge wangen",
-          "sensitive": "Reageert snel, vaak rood",
-          "normal": "In balans, weinig problemen"
+          "dry": "Droog",
+          "combo": "Gemengd",
+          "oily": "Vet",
+          "sensitive": "Gevoelig",
+          "normal": "In balans"
         }
       },
-      "concern": {
-        "question": "Wat is je belangrijkste huiddoel?",
+      "primaryConcern": {
+        "question": "Jouw belangrijkste huidzorg?",
         "options": {
-          "hydration": "Diepe hydratatie",
-          "dullness": "Glow & stralen",
-          "acne": "Puistjes kalmeren",
-          "ageing": "Fijne lijntjes & stevigheid",
-          "sensitivity": "Roodheid verzachten",
-          "darkSpots": "Pigmentvlekken & egale teint",
-          "pores": "Verfijnde poriën & textuur"
+          "hydration": "Uitdroging",
+          "dullness": "Doffe huid",
+          "acne": "Puistjes",
+          "fine-lines": "Fijne lijntjes",
+          "dark-spots": "Pigmentvlekken",
+          "pores": "Poriën & textuur",
+          "redness": "Roodheid"
         }
       },
-      "sensitivity": {
-        "question": "Hoe vaak reageert je huid op nieuwe producten?",
+      "secondaryConcerns": {
+        "question": "Nog iets anders?",
         "options": {
-          "never": "Zelden of nooit",
-          "sometimes": "Af en toe",
-          "often": "Vaak — erg reactief"
+          "tightness": "Trekkerig gevoel",
+          "texture": "Textuur",
+          "dark-circles": "Donkere kringen",
+          "sun-damage": "Zonschade",
+          "firmness": "Verlies van stevigheid",
+          "sensitive-eyes": "Gevoelige ogen"
+        }
+      },
+      "reactivity": {
+        "question": "Hoe reageert je huid op nieuwe producten?",
+        "options": {
+          "never": "Nooit",
+          "sometimes": "Soms",
+          "often": "Vaak"
+        }
+      },
+      "sunExposure": {
+        "question": "Hoeveel zon krijg je?",
+        "options": {
+          "indoors": "Vooral binnen",
+          "commute": "Dagelijks woon-werk",
+          "outdoor": "Vaak buiten",
+          "strong": "Sterke zon / strand"
+        }
+      },
+      "ageBand": {
+        "question": "Je leeftijd?",
+        "options": {
+          "u25": "Onder 25",
+          "25-34": "25 – 34",
+          "35-44": "35 – 44",
+          "45+": "45 en ouder"
         }
       },
       "ritualDepth": {
-        "question": "Hoeveel tijd heb je elke dag?",
+        "question": "Welke routinelengte wil je?",
         "options": {
-          "minimal": "2 minuten — het essentiële",
-          "balanced": "5 tot 7 minuten — een uitgebalanceerd ritueel",
-          "complete": "10+ minuten — ik hou van het volledige ritueel"
-        }
-      },
-      "budget": {
-        "question": "Wat is je budget per product?",
-        "options": {
-          "under_30": "Minder dan €30",
-          "30_to_60": "€30 – €60",
-          "over_60": "€60 en meer",
-          "no_limit": "Geen voorkeur"
+          "minimal": "Essentieel (3 stappen)",
+          "balanced": "Gebalanceerd (4 stappen)",
+          "full": "Volledig ritueel (5–6 stappen)"
         }
       }
     }
   },
   "quizPage": {
     "meta_title": "Huidquiz — YU.R Skin Solution",
-    "meta_description": "Vijf korte vragen en wij stellen een Koreaans huidritueel in vier stappen samen, afgestemd op jouw huidtype, zorgen en tijd.",
+    "meta_description": "Zeven korte vragen en wij stellen een Koreaans huidritueel samen, gekozen op basis van de ingrediënten op de verpakking.",
     "eyebrow": "Huidquiz",
-    "title": "Jouw ritueel in vijf antwoorden.",
-    "lede": "Een rustig gesprek over jouw huid — daarna een viertraps routine uit de Koreaanse huizen die wij vertrouwen.",
+    "title": "Een paar rustige vragen over je huid.",
+    "lede": "Vertel ons hoe ze zich gedraagt en wat je wilt veranderen. Wij matchen je aan een routine — elk product gekozen op basis van de ingrediëntenlijst.",
     "back": "Terug",
     "privacy_note": "Je antwoorden blijven op dit toestel. Wij gebruiken ze alleen om producten te kiezen die bij jou passen.",
-    "loading_hint": "We stemmen ingrediënten, texturen en ritueelduur af op jouw antwoorden.",
-    "result_title": "Jouw ritueel in vier stappen.",
-    "result_lede": "Een reiniging, een essence, een moisturiser en een dagelijkse beschermer — gekozen voor de huid die je net beschreef.",
+    "loading_hint": "We lezen INCI-lijsten en koppelen ingrediënten aan je antwoorden.",
+    "result_title": "Jouw huidritueel.",
+    "result_lede": "Elk product hieronder is gescoord op basis van de ingrediëntenlijst — net zoals een dermatoloog een label leest.",
     "add_to_cart": "In winkelmand",
     "adding": "Toevoegen…",
     "added": "Toegevoegd",
