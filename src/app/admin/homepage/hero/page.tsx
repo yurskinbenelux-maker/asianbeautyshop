@@ -86,9 +86,9 @@ export default async function AdminHeroVariantPage({
             <VariantCard
               value="collage"
               currentValue={cfg.variant}
-              title="Editorial collage"
-              tagline="Asymmetric products"
-              description="Three product shots in a magazine-style asymmetric layout — large hero left, two smaller stacked right, type in the middle column."
+              title="Color block"
+              tagline="Cream + vermilion"
+              description="A 58/42 split. The cream side carries the editorial typography; the vermilion side is a saturated brand-color gallery wall with a single hero product framed at its center."
             />
           </div>
         </fieldset>
@@ -126,37 +126,40 @@ export default async function AdminHeroVariantPage({
           </div>
         </div>
 
-        {/* ── collage config ─────────────────────────────────────── */}
+        {/* ── color block config ─────────────────────────────────── */}
         <div className="border-t border-ink/10 pt-6">
           <h2 className="font-display text-[16px] text-ink">
-            Collage products — only used when the Collage variant is selected
+            Color block product — only used when the Color block variant is selected
           </h2>
           <p className="mt-1 text-[12px] text-ink-mid">
-            Three image URLs. Slot 1 is the large hero on the left
-            (recommend 4:5 portrait, ~1200×1500). Slots 2 and 3 are the
-            smaller stacked products on the right (square or 3:4
-            portrait, ~800px on the long edge).
+            One hero product photograph. It sits in a cream-card frame
+            on the vermilion side of the split. Square crops work best
+            (1:1, ~1000×1000). The product can be photographed on any
+            background — the cream card gives it a clean frame against
+            the brand-color wall.
           </p>
           <div className="mt-4 space-y-4">
             <Field
-              label="Hero product (large left)"
+              label="Hero product photo"
               name="collage0"
               defaultValue={cfg.collageUrls[0]}
-              placeholder="https://…/product-hero.jpg"
-            />
-            <Field
-              label="Smaller product 1 (upper right)"
-              name="collage1"
-              defaultValue={cfg.collageUrls[1]}
-              placeholder="https://…/product-2.jpg"
-            />
-            <Field
-              label="Smaller product 2 (lower right)"
-              name="collage2"
-              defaultValue={cfg.collageUrls[2]}
-              placeholder="https://…/product-3.jpg"
+              placeholder="https://…/cushion.jpg"
+              hint="Recommend a 1:1 square. The cushion image you already have works well — it lands centered on the vermilion."
             />
           </div>
+          {/* Slots 2 + 3 are kept in the schema for forward-compat
+              (a future variant might use them). They're hidden from
+              the form because the Color block layout uses only one. */}
+          <input
+            type="hidden"
+            name="collage1"
+            value={cfg.collageUrls[1]}
+          />
+          <input
+            type="hidden"
+            name="collage2"
+            value={cfg.collageUrls[2]}
+          />
         </div>
 
         {/* ── save ───────────────────────────────────────────────── */}
