@@ -28,7 +28,13 @@ const nextConfig: NextConfig = {
   experimental: {
     // React 19 + RSC — required for streaming the AI concierge
     serverActions: {
-      bodySizeLimit: "10mb", // product photos travel through the server action on upload
+      // 16 MB cap covers our two upload paths:
+      //  · product photos (8 MB max enforced in lib/admin/media/actions)
+      //  · hero + reel videos (12 MB max for an mp4 H.264 loop)
+      // Plus a few MB of FormData overhead. Bumping above 16 MB starts
+      // to push at Hostinger's nginx body limit, so don't grow this
+      // without testing.
+      bodySizeLimit: "16mb",
     },
     // View Transitions API — wraps client-side route changes in
     // document.startViewTransition() so elements with matching
