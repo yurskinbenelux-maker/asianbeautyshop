@@ -8,7 +8,8 @@
 // Why Groq specifically:
 //   · Free tier with no credit card (1,000 RPD / 30 RPM)
 //   · Supports tool calling, which we need for catalog lookups
-//   · Llama 3.3 70B is fast enough to feel snappy on the orb
+//   · Llama 4 Scout 17B is fast and gives us the most token headroom
+//     of any free-tier model
 //
 // Swapping providers later is a two-line change — import a different
 // `createX` from `@ai-sdk/*` and point at its model id. The routes
@@ -19,8 +20,16 @@ import { createGroq } from "@ai-sdk/groq";
 import type { LanguageModelV1 } from "ai";
 
 // Model id — kept here so we can swap models by editing one string.
-// Llama 3.3 70B: free tier, supports parallel tool calling, 128K context.
-const GROQ_MODEL_ID = "llama-3.3-70b-versatile";
+//
+// Llama 4 Scout (17B, 16-expert MoE): the right pick for the orb on
+// Groq's free tier. Compared to llama-3.3-70b-versatile we used to use:
+//   · TPM 30K vs 12K  (2.5× the per-minute headroom)
+//   · TPD 500K vs 100K (5× the daily ceiling — ~300 chats/day vs ~60)
+//   · Same RPD (1K) — the request count is never the bottleneck
+//   · Same tool-calling support, no code changes elsewhere
+//   · Multimodal — opens the door to "show me your skin concern" photo
+//     uploads later without another model swap
+const GROQ_MODEL_ID = "meta-llama/llama-4-scout-17b-16e-instruct";
 
 /**
  * Returns a ready-to-use Groq model, or null if Groq isn't configured.
