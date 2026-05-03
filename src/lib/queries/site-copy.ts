@@ -295,6 +295,32 @@ export function isFieldVoided<S extends SiteCopySection>(
   return sectionDict?.[field as string] === SITE_COPY_VOID;
 }
 
+/**
+ * Same contract as siteCopy() but takes a literal fallback string rather
+ * than a translator. Used by callers where the JSON catalogue key doesn't
+ * line up 1:1 with our (section, field) schema — e.g. our
+ * `home.bestsellers::eyebrow` maps to `section.bestsellers`, not
+ * `bestsellers.eyebrow`. The caller resolves the right t() value first
+ * and passes it in.
+ *
+ * Critically, this honours the SITE_COPY_VOID sentinel — if Sofia has
+ * marked the field hidden in admin, this returns "" instead of leaking
+ * the literal sentinel string to the page (which is what the inline
+ * `?? tSection(...)` call sites used to do).
+ */
+export function siteCopyOr<S extends SiteCopySection>(
+  dict: SiteCopyDict,
+  section: S,
+  field: SiteCopyField<S>,
+  fallback: string,
+): string {
+  const sectionDict = dict[section] as Record<string, string> | undefined;
+  const override = sectionDict?.[field as string];
+  if (override === SITE_COPY_VOID) return "";
+  if (typeof override === "string" && override.length > 0) return override;
+  return fallback;
+}
+
 // ── 4. Admin queries ──────────────────────────────────────────────────────
 
 export type SiteCopyRow = {

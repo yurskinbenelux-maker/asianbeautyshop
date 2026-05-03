@@ -32,8 +32,10 @@ export async function Bestsellers({
   if (products.length === 0) {
     return (
       <section className="container py-32">
-        <div className="eyebrow">{copy.eyebrow}</div>
-        <h2 className="mt-3 max-w-[22ch] text-display-md">{copy.lede}</h2>
+        {copy.eyebrow ? <div className="eyebrow">{copy.eyebrow}</div> : null}
+        {copy.lede ? (
+          <h2 className="mt-3 max-w-[22ch] text-display-md">{copy.lede}</h2>
+        ) : null}
         <p className="mt-8 text-ink-mid">
           {/* Intentionally plain — Sofia never sees this in production. */}
           No bestsellers yet.
@@ -47,8 +49,12 @@ export async function Bestsellers({
       {/* ── section header ───────────────────────────────────── */}
       <div className="mb-16 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <div className="eyebrow">{copy.eyebrow}</div>
-          <h2 className="mt-3 max-w-[22ch] text-display-md">{copy.lede}</h2>
+          {/* Both lines are conditional so a voided field (siteCopyOr → "")
+              doesn't leave an empty wrapper occupying space. */}
+          {copy.eyebrow ? <div className="eyebrow">{copy.eyebrow}</div> : null}
+          {copy.lede ? (
+            <h2 className="mt-3 max-w-[22ch] text-display-md">{copy.lede}</h2>
+          ) : null}
         </div>
         <Link
           href="/shop"

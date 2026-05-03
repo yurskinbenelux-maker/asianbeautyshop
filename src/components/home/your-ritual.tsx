@@ -35,10 +35,17 @@ export function YourRitual({ copy }: { copy: RitualCopy }) {
       </div>
 
       <div className="container relative">
-        <div className="mb-20 max-w-[26ch]">
-          <div className="eyebrow">{copy.eyebrow}</div>
-          <h2 className="mt-3 text-display-md">{copy.lede}</h2>
-        </div>
+        {/* Voided fields ("" from siteCopyOr) collapse the wrapper entirely
+            so the section header doesn't reserve a 20-row chunk of vertical
+            space for invisible text. */}
+        {(copy.eyebrow || copy.lede) ? (
+          <div className="mb-20 max-w-[26ch]">
+            {copy.eyebrow ? <div className="eyebrow">{copy.eyebrow}</div> : null}
+            {copy.lede ? (
+              <h2 className="mt-3 text-display-md">{copy.lede}</h2>
+            ) : null}
+          </div>
+        ) : null}
 
         <ol className="grid grid-cols-1 gap-x-10 gap-y-16 md:grid-cols-2">
           {steps.map((s, i) => (

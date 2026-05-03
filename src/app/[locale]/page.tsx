@@ -21,7 +21,7 @@ import { YourRitual } from "@/components/home/your-ritual";
 import { Testimonials } from "@/components/home/testimonials";
 import { JournalTeaser } from "@/components/home/journal-teaser";
 import { Newsletter } from "@/components/home/newsletter";
-import { getSiteCopy, siteCopy } from "@/lib/queries/site-copy";
+import { getSiteCopy, siteCopy, siteCopyOr } from "@/lib/queries/site-copy";
 import { listActiveTestimonials } from "@/lib/queries/testimonial";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -61,41 +61,39 @@ export default async function Home({ params }: Props) {
 
   // For the `section` namespace the JSON keys don't line up 1:1 with our
   // (section, field) schema — e.g. our "home.bestsellers::lede" maps to
-  // `section.bestsellers_lede`. We inline the translation key to keep the
-  // fallback working for rows Sofia hasn't overridden yet.
+  // `section.bestsellers_lede`. siteCopyOr() takes a literal fallback string
+  // (we resolve the right t() value first) and — critically — still honours
+  // the SITE_COPY_VOID sentinel, returning "" when Sofia has marked the
+  // field hidden. Inline `?? tSection(...)` would have leaked the sentinel.
   const bestsellersCopy = {
-    eyebrow:
-      copy["home.bestsellers"]?.eyebrow ?? tSection("bestsellers"),
-    lede:
-      copy["home.bestsellers"]?.lede ?? tSection("bestsellers_lede"),
+    eyebrow: siteCopyOr(copy, "home.bestsellers", "eyebrow", tSection("bestsellers")),
+    lede: siteCopyOr(copy, "home.bestsellers", "lede", tSection("bestsellers_lede")),
   };
   const ritualCopy = {
-    eyebrow: copy["home.ritual"]?.eyebrow ?? tSection("ritual"),
-    lede: copy["home.ritual"]?.lede ?? tSection("ritual_lede"),
+    eyebrow: siteCopyOr(copy, "home.ritual", "eyebrow", tSection("ritual")),
+    lede: siteCopyOr(copy, "home.ritual", "lede", tSection("ritual_lede")),
   };
   const testimonialsCopy = {
-    eyebrow:
-      copy["home.testimonials"]?.eyebrow ?? tSection("testimonials"),
-    lede:
-      copy["home.testimonials"]?.lede ?? tSection("testimonials_lede"),
+    eyebrow: siteCopyOr(copy, "home.testimonials", "eyebrow", tSection("testimonials")),
+    lede: siteCopyOr(copy, "home.testimonials", "lede", tSection("testimonials_lede")),
     verified: tSection("testimonial_verified"),
   };
   const journalCopy = {
-    eyebrow: copy["home.journal"]?.eyebrow ?? tSection("journal"),
-    lede: copy["home.journal"]?.lede ?? tSection("journal_lede"),
-    read_all:
-      copy["home.journal"]?.read_all ?? tSection("journal_read_all"),
+    eyebrow: siteCopyOr(copy, "home.journal", "eyebrow", tSection("journal")),
+    lede: siteCopyOr(copy, "home.journal", "lede", tSection("journal_lede")),
+    read_all: siteCopyOr(copy, "home.journal", "read_all", tSection("journal_read_all")),
     coming_soon: tSection("journal_coming_soon"),
   };
   const newsletterCopy = {
-    title:
-      copy["home.newsletter"]?.title ?? tSection("newsletter_title"),
-    lede:
-      copy["home.newsletter"]?.lede ?? tSection("newsletter_lede"),
-    cta: copy["home.newsletter"]?.cta ?? tSection("newsletter_cta"),
-    placeholder:
-      copy["home.newsletter"]?.placeholder ??
+    title: siteCopyOr(copy, "home.newsletter", "title", tSection("newsletter_title")),
+    lede: siteCopyOr(copy, "home.newsletter", "lede", tSection("newsletter_lede")),
+    cta: siteCopyOr(copy, "home.newsletter", "cta", tSection("newsletter_cta")),
+    placeholder: siteCopyOr(
+      copy,
+      "home.newsletter",
+      "placeholder",
       tSection("newsletter_placeholder"),
+    ),
   };
 
   return (

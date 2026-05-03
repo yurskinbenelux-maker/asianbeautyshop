@@ -19,7 +19,7 @@ import { listPublishedJournalPosts } from "@/lib/queries/journal";
 import { priceLocale } from "@/lib/utils";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { JournalCard } from "@/components/home/journal-card";
-import { getSiteCopy } from "@/lib/queries/site-copy";
+import { getSiteCopy, siteCopyOr } from "@/lib/queries/site-copy";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -47,11 +47,13 @@ export default async function JournalIndexPage({ params }: Props) {
   ]);
 
   // Header trio is admin-editable. Empty-state, meta titles and the
-  // by-line fallback stay in the messages catalogue.
+  // by-line fallback stay in the messages catalogue. siteCopyOr() honours
+  // the SITE_COPY_VOID sentinel — if Sofia hides a field, this returns ""
+  // and the page conditionally drops the wrapper below.
   const header = {
-    eyebrow: copy["journal.index"]?.eyebrow ?? t("eyebrow"),
-    title: copy["journal.index"]?.title ?? t("title"),
-    lede: copy["journal.index"]?.lede ?? t("lede"),
+    eyebrow: siteCopyOr(copy, "journal.index", "eyebrow", t("eyebrow")),
+    title: siteCopyOr(copy, "journal.index", "title", t("title")),
+    lede: siteCopyOr(copy, "journal.index", "lede", t("lede")),
   };
 
   const dateFmt = new Intl.DateTimeFormat(priceLocale(locale), {
@@ -63,13 +65,17 @@ export default async function JournalIndexPage({ params }: Props) {
     <section className="container py-20 md:py-28">
       {/* ── header ─────────────────────────────────────────────── */}
       <div className="max-w-2xl">
-        <div className="eyebrow">{header.eyebrow}</div>
-        <h1 className="mt-3 font-display text-display-lg leading-tight text-ink">
-          {header.title}
-        </h1>
-        <p className="mt-6 text-[15px] leading-relaxed text-ink-mid">
-          {header.lede}
-        </p>
+        {header.eyebrow ? <div className="eyebrow">{header.eyebrow}</div> : null}
+        {header.title ? (
+          <h1 className="mt-3 font-display text-display-lg leading-tight text-ink">
+            {header.title}
+          </h1>
+        ) : null}
+        {header.lede ? (
+          <p className="mt-6 text-[15px] leading-relaxed text-ink-mid">
+            {header.lede}
+          </p>
+        ) : null}
       </div>
 
       <div className="rule my-12" />

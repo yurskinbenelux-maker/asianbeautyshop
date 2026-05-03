@@ -70,12 +70,16 @@ export function Testimonials({
 
   return (
     <section className="container py-32">
-      <div className="mb-16 text-center">
-        <div className="eyebrow">{copy.eyebrow}</div>
-        <p className="mx-auto mt-4 max-w-[48ch] text-[15px] leading-relaxed text-ink-mid">
-          {copy.lede}
-        </p>
-      </div>
+      {(copy.eyebrow || copy.lede) ? (
+        <div className="mb-16 text-center">
+          {copy.eyebrow ? <div className="eyebrow">{copy.eyebrow}</div> : null}
+          {copy.lede ? (
+            <p className="mx-auto mt-4 max-w-[48ch] text-[15px] leading-relaxed text-ink-mid">
+              {copy.lede}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
         {rows.map((q, i) => (

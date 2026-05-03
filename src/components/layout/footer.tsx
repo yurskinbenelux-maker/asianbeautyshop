@@ -11,7 +11,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { MaehwaBranch } from "@/components/home/maehwa-branch";
 import { CookiePreferencesLink } from "@/components/consent/cookie-preferences-link";
-import { getSiteCopy } from "@/lib/queries/site-copy";
+import { getSiteCopy, siteCopyOr } from "@/lib/queries/site-copy";
 import { Logo } from "@/components/brand/logo";
 
 export async function Footer() {
@@ -27,9 +27,10 @@ export async function Footer() {
   // SiteCopy override > JSON fallback. The JSON paths are brand.tagline
   // (historical reason — the catalogue groups it with the masthead) and
   // footer.rights; the SiteCopy "footer" section flattens both under one
-  // editable surface in /admin/homepage.
-  const tagline = copy["footer"]?.tagline ?? tBrand("tagline");
-  const rights = copy["footer"]?.rights ?? t("footer.rights");
+  // editable surface in /admin/homepage. siteCopyOr() honours the
+  // SITE_COPY_VOID sentinel and returns "" when Sofia hides the field.
+  const tagline = siteCopyOr(copy, "footer", "tagline", tBrand("tagline"));
+  const rights = siteCopyOr(copy, "footer", "rights", t("footer.rights"));
 
   return (
     <footer className="relative mt-32 border-t border-ink/10 bg-rice-dim/40 pt-20 pb-10">
@@ -47,7 +48,9 @@ export async function Footer() {
             mark for translated marketing copy (not part of the logo). */}
         <div className="mb-16 flex flex-col items-start gap-4">
           <Logo variant="lockup" height={72} alt={t("brand.name")} />
-          <div className="text-[13px] text-ink-mid">{tagline}</div>
+          {tagline ? (
+            <div className="text-[13px] text-ink-mid">{tagline}</div>
+          ) : null}
         </div>
 
         {/* ── columns ──────────────────────────────────────────── */}
@@ -87,7 +90,7 @@ export async function Footer() {
         <div className="mt-16 rule" />
         <div className="mt-6 flex flex-col gap-3 text-[11px] uppercase tracking-caps text-ink-mid md:flex-row md:items-center md:justify-between">
           <div>© {year} K'Elmus Group BV · Boomsesteenweg 41/4b, 2630 Aartselaar, BE</div>
-          <div>{rights}</div>
+          {rights ? <div>{rights}</div> : null}
         </div>
       </div>
     </footer>

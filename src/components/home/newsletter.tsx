@@ -55,10 +55,12 @@ export function Newsletter({
         transition={{ duration: 0.8 }}
         className="mx-auto max-w-[52ch] text-center"
       >
-        <div className="eyebrow">{copy.title}</div>
-        <h2 className="mt-4 font-display text-[36px] leading-tight text-ink md:text-[48px]">
-          {copy.lede}
-        </h2>
+        {copy.title ? <div className="eyebrow">{copy.title}</div> : null}
+        {copy.lede ? (
+          <h2 className="mt-4 font-display text-[36px] leading-tight text-ink md:text-[48px]">
+            {copy.lede}
+          </h2>
+        ) : null}
 
         {state?.ok ? (
           // Gentle success state — no CTA, no "share on twitter", just

@@ -62,15 +62,19 @@ export async function JournalTeaser({ locale, copy }: Props) {
       <div className="container">
         <div className="mb-16 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <div className="eyebrow">{copy.eyebrow}</div>
-            <h2 className="mt-3 max-w-[26ch] text-display-md">{copy.lede}</h2>
+            {copy.eyebrow ? <div className="eyebrow">{copy.eyebrow}</div> : null}
+            {copy.lede ? (
+              <h2 className="mt-3 max-w-[26ch] text-display-md">{copy.lede}</h2>
+            ) : null}
           </div>
-          <Link
-            href="/journal"
-            className="text-[12px] uppercase tracking-label text-ink underline decoration-vermilion underline-offset-8 hover:text-vermilion"
-          >
-            {copy.read_all}
-          </Link>
+          {copy.read_all ? (
+            <Link
+              href="/journal"
+              className="text-[12px] uppercase tracking-label text-ink underline decoration-vermilion underline-offset-8 hover:text-vermilion"
+            >
+              {copy.read_all}
+            </Link>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-1 gap-10 md:grid-cols-3">

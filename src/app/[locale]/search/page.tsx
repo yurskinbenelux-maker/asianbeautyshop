@@ -37,7 +37,7 @@ import { BestsellerCard } from "@/components/home/bestseller-card";
 import { SortSelect } from "@/components/shop/sort-select";
 import { ShopFiltersShell } from "@/components/shop/shop-filters-shell";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import { getSiteCopy } from "@/lib/queries/site-copy";
+import { getSiteCopy, siteCopyOr } from "@/lib/queries/site-copy";
 
 // Cap the number of hits the /search page renders. The catalog is small
 // enough that 36 is effectively "all of them" for any realistic query;
@@ -149,9 +149,12 @@ export default async function SearchPage({ params, searchParams }: Props) {
   // The zero-result title + body are admin-editable so Sofia can speak to
   // "nothing to show" visitors in her own voice. Everything else on this
   // page (eyebrow, counts, ritual tiles, brand strip) stays in messages.
+  // siteCopyOr() honours the SITE_COPY_VOID sentinel — returns "" when
+  // Sofia hides the field, so the literal "__SITE_COPY_VOID__" string
+  // never leaks into the rendered output.
   const copy = await getSiteCopy(locale, ["search.empty"]);
-  const emptyTitle = copy["search.empty"]?.title ?? t("empty_title");
-  const emptyBody = copy["search.empty"]?.body ?? t("empty_body");
+  const emptyTitle = siteCopyOr(copy, "search.empty", "title", t("empty_title"));
+  const emptyBody = siteCopyOr(copy, "search.empty", "body", t("empty_body"));
 
   // ── Parse facet + sort params identically to /shop ────────────────
   const sort = parseSort(sp.sort);
