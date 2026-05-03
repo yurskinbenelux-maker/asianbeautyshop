@@ -63,11 +63,17 @@ type Props = {
   productId: string;
   initial: {
     /**
-     * Currently-selected line slug. Falls back to "yur" (the default
-     * line — null/empty productLine in DB) for legacy products that
-     * predate the picker.
+     * Currently-selected line slugs (multi-select). For most products
+     * this is a single entry — but a gift card or any other product
+     * Sofia wants on every tab can hold ["yur", "yur-pro", "yur-me"].
+     *
+     * On save the first slug becomes Product.productLine (primary) and
+     * the rest are written to Product.extraLines.
+     *
+     * Empty array → defaults to ["yur"] (the default Yu•R line — null
+     * productLine in DB).
      */
-    productLineSlug: ProductLineSlug;
+    productLineSlugs: ProductLineSlug[];
     categoryIds: string[];
     skinTypeIds: string[];
     concernIds: string[];
@@ -111,12 +117,35 @@ export function OrganiseForm({ productId, initial, options }: Props) {
     () => new Set(initial.ingredientIds),
   );
 
-  // Single-select line picker. Backed by a hidden input named
-  // "productLineSlug" so the existing FormData-only server action
-  // contract holds — no JSON round-trips, no separate save.
-  const [lineSlug, setLineSlug] = useState<ProductLineSlug>(
-    initial.productLineSlug,
+  // Multi-select line picker. Sofia can tick any combination of the
+  // three lines — for the most common case (single line) the UX is
+  // identical to a radio. For the gift-card case (one product on every
+  // tab), she ticks all three.
+  //
+  // Hidden inputs named "productLineSlugs" (note the s) feed the Set
+  // into the server action. The first slug — in PRODUCT_LINES order —
+  // becomes the primary productLine column; the rest go to extraLines.
+  // Empty Set falls back to ["yur"] on save.
+  const [lineSlugs, setLineSlugs] = useState<Set<ProductLineSlug>>(
+    () => new Set(initial.productLineSlugs.length > 0 ? initial.productLineSlugs : ["yur"]),
   );
+
+  function toggleLine(slug: ProductLineSlug) {
+    setLineSlugs((cur) => {
+      const next = new Set(cur);
+      if (next.has(slug)) {
+        // Don't let the admin uncheck the last remaining line — every
+        // product has to belong to at least one tab. Falling through to
+        // an empty set would silently re-add "yur" on save anyway, but
+        // doing nothing here keeps the UI honest.
+        if (next.size === 1) return cur;
+        next.delete(slug);
+      } else {
+        next.add(slug);
+      }
+      return next;
+    });
+  }
 
   // Options mirror the server-provided lists but allow local growth when
   // the admin creates a new taxonomy item inline. We keep them sorted by
@@ -156,32 +185,47 @@ export function OrganiseForm({ productId, initial, options }: Props) {
 
   return (
     <form action={formAction} className="space-y-12">
-      {/* ── Line ───────────────────────────────────────────────────── */}
-      {/* Single-select. Hidden input feeds productLineSlug into the
-          updateOrganise server action; the UI is a row of pill buttons
-          mirroring the front-end LineTabs visual language. */}
+      {/* ── Lines ──────────────────────────────────────────────────── */}
+      {/* Multi-select. Each ticked slug fires a hidden input named
+          "productLineSlugs" so updateOrganise can read formData.getAll
+          and treat them as a list. The UI is the same pill row as the
+          front-end LineTabs — just with multiple pills allowed to be
+          active at once. */}
       <section>
         <header className="flex items-baseline justify-between gap-4">
           <div>
-            <h3 className="font-display text-[18px] text-ink">Line</h3>
+            <h3 className="font-display text-[18px] text-ink">Lines</h3>
             <p className="mt-1 max-w-prose text-[13px] leading-relaxed text-ink-mid">
-              Which YU.R line this product belongs to. Drives the line
-              tabs on /shop and the line landing pages.
+              Which YU.R line(s) this product belongs to. Tick all that
+              apply — a gift card on every tab is just three ticks. The
+              first ticked line (in Yu•R · Pro · Me order) becomes the
+              primary line shown on the PDP.
             </p>
           </div>
           <div className="text-[11px] uppercase tracking-label text-ink-mid">
-            {LINE_OPTIONS.find((o) => o.slug === lineSlug)?.label ?? "—"}
+            {LINE_OPTIONS.filter((o) => lineSlugs.has(o.slug))
+              .map((o) => o.label)
+              .join(" · ") || "—"}
           </div>
         </header>
-        <input type="hidden" name="productLineSlug" value={lineSlug} />
+        {/* One hidden input per ticked slug — server reads them via
+            formData.getAll("productLineSlugs"). */}
+        {LINE_OPTIONS.filter((o) => lineSlugs.has(o.slug)).map((o) => (
+          <input
+            key={o.slug}
+            type="hidden"
+            name="productLineSlugs"
+            value={o.slug}
+          />
+        ))}
         <div className="mt-5 flex flex-wrap gap-2">
           {LINE_OPTIONS.map((opt) => {
-            const isOn = lineSlug === opt.slug;
+            const isOn = lineSlugs.has(opt.slug);
             return (
               <button
                 type="button"
                 key={opt.slug}
-                onClick={() => setLineSlug(opt.slug)}
+                onClick={() => toggleLine(opt.slug)}
                 aria-pressed={isOn}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-[12px] transition-colors",

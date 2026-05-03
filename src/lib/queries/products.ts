@@ -181,19 +181,33 @@ export const PRODUCT_LINES = [
 
 export type ProductLineSlug = (typeof PRODUCT_LINES)[number]["slug"];
 
-/** Returns the Prisma `productLine` predicate for a given list of line slugs. */
+/**
+ * Returns the Prisma predicate for a given list of line slugs.
+ *
+ * A product belongs to line X when EITHER:
+ *   · its primary `productLine` matches one of X's dbValues, OR
+ *   · its `extraLines` array contains one of X's non-null dbValues
+ *
+ * The second arm is what lets a single product (e.g. a gift card) live
+ * under every line tab — Sofia ticks all 3 boxes in admin and the rest
+ * of the line's non-primary memberships go into extraLines.
+ */
 function lineWhere(slugs: string[]): Prisma.ProductWhereInput {
-  // Build an OR of per-line predicates. The default line ("yur") has the
-  // tricky case of matching both NULL and empty string.
   const orClauses: Prisma.ProductWhereInput[] = [];
   for (const s of slugs) {
     const def = PRODUCT_LINES.find((l) => l.slug === s);
     if (!def) continue;
     for (const v of def.dbValues) {
       if (v === null) {
+        // Default Yu•R line covers null/empty AND any product whose
+        // extraLines contains an explicit "Yu.R" sentinel for opt-in.
         orClauses.push({ productLine: null });
       } else {
+        // Primary match.
         orClauses.push({ productLine: v });
+        // Secondary match — product opted into this line via the
+        // multi-select on the Organise tab.
+        orClauses.push({ extraLines: { has: v } });
       }
     }
   }
@@ -583,14 +597,15 @@ export async function getShopFilters(
         _min: { price: true },
         _max: { price: true },
       }),
-      // groupBy productLine — gives us a tiny rowset like
-      //   [ { productLine: null, _count: 16 }, { productLine: 'Yu.R PRO', _count: 8 }, ... ]
-      // which we then bucket into PRODUCT_LINES below. Cheaper than 3 separate
-      // counts and survives any future line additions without a query change.
-      prisma.product.groupBy({
-        by: ["productLine"],
+      // Pull every published product's productLine + extraLines so we can
+      // count line memberships in JS. We can't use a single groupBy here
+      // because extraLines is a Postgres text[] — Prisma's groupBy doesn't
+      // expand array elements. With 35-100 products the JS aggregation is
+      // a few microseconds, well under the savings of avoiding 3 extra
+      // count queries.
+      prisma.product.findMany({
         where: publishedProduct,
-        _count: { _all: true },
+        select: { productLine: true, extraLines: true },
       }),
     ]);
 
@@ -623,19 +638,25 @@ export async function getShopFilters(
         count: b._count.products,
       }))
       .filter((b) => b.count > 0),
-    // Lines come from a groupBy on Product.productLine, then re-bucketed
-    // through PRODUCT_LINES so the order + labels match the design system
-    // (Yu•R first, Pro, then Me) regardless of how the rows happened to
-    // come back from the DB. We deliberately do NOT filter zero-count lines
-    // out here — the strip should always show all three so customers can
-    // tap into a line that's still being merchandised, and so admins can
-    // see at a glance which line has nothing published yet.
+    // Line counts are computed by walking every published product once
+    // and bumping each line bucket the product belongs to (primary
+    // productLine match OR extraLines membership). A single product
+    // appearing in all three lines (e.g. a gift card) is therefore
+    // counted three times — which is exactly what the line tabs want
+    // to surface.
     lines: PRODUCT_LINES.map((l) => {
-      const count = lineGroups
-        .filter((g) =>
-          (l.dbValues as readonly (string | null)[]).includes(g.productLine),
-        )
-        .reduce((sum, g) => sum + g._count._all, 0);
+      const dbValues = l.dbValues as readonly (string | null)[];
+      const nonNullValues = dbValues.filter(
+        (v): v is string => v !== null,
+      );
+      let count = 0;
+      for (const p of lineGroups) {
+        const matchesPrimary = dbValues.includes(p.productLine);
+        const matchesExtra = nonNullValues.some((v) =>
+          p.extraLines.includes(v),
+        );
+        if (matchesPrimary || matchesExtra) count += 1;
+      }
       return { slug: l.slug, label: l.label, count };
     }),
     ingredients: ingredients

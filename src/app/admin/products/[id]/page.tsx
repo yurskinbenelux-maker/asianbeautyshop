@@ -393,16 +393,30 @@ export default async function ProductEditPage({
           <OrganiseForm
             productId={product.id}
             initial={{
-              // Resolve the stored productLine string back to a slug so
-              // the picker can highlight the right radio. Anything we
-              // don't recognise falls back to the default Yu•R line —
-              // safer than crashing the editor on a stale value.
-              productLineSlug:
-                PRODUCT_LINES.find((l) =>
+              // Resolve the stored productLine + extraLines back into a
+              // list of slugs so the multi-select picker can re-tick
+              // them on load. Order: primary first (matches the line
+              // defined by productLine), then any extraLines values.
+              // Unknown DB values are silently dropped — safer than
+              // crashing the editor on a stale value.
+              productLineSlugs: (() => {
+                const slugs: ("yur" | "yur-pro" | "yur-me")[] = [];
+                const primarySlug = (PRODUCT_LINES.find((l) =>
                   (l.dbValues as readonly (string | null)[]).includes(
                     product.productLine,
                   ),
-                )?.slug ?? "yur",
+                )?.slug ?? "yur") as "yur" | "yur-pro" | "yur-me";
+                slugs.push(primarySlug);
+                for (const v of product.extraLines) {
+                  const def = PRODUCT_LINES.find((l) =>
+                    (l.dbValues as readonly (string | null)[]).includes(v),
+                  );
+                  if (def && !slugs.includes(def.slug as typeof primarySlug)) {
+                    slugs.push(def.slug as typeof primarySlug);
+                  }
+                }
+                return slugs;
+              })(),
               categoryIds: product.categories.map((x) => x.categoryId),
               skinTypeIds: product.skinTypes.map((x) => x.skinTypeId),
               concernIds: product.concerns.map((x) => x.concernId),

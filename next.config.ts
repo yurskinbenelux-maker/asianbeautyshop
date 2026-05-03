@@ -35,6 +35,29 @@ const nextConfig: NextConfig = {
       // to push at Hostinger's nginx body limit, so don't grow this
       // without testing.
       bodySizeLimit: "16mb",
+      // Stable action IDs across builds + worker processes.
+      //
+      // Server Actions are referenced by hash. Without a fixed key,
+      // Next.js generates a new hash per build and per worker process,
+      // so:
+      //   · A page held open from before a redeploy points at the OLD
+      //     action id; the new server bundle doesn't recognise it →
+      //     "Server Action ... was not found on the server".
+      //   · Hostinger's Node clustering can run >1 worker with
+      //     different action maps; round-robin'd requests fail
+      //     intermittently for the same reason.
+      //
+      // Setting NEXT_SERVER_ACTIONS_ENCRYPTION_KEY (a base64-encoded
+      // 32-byte secret) on the Hostinger env panel makes the hashes
+      // deterministic — old tabs still 404 after a deploy (the action
+      // signature genuinely changed if Sofia edited the form), but
+      // workers stay in lockstep and routine redeploys stop breaking
+      // open tabs unless the action body actually changed.
+      //
+      // The encryptionKey value is read from env at runtime — see
+      // https://nextjs.org/docs/app/api-reference/next-config-js/serverActions
+      // We don't reference process.env here so the absence of the env
+      // var falls through to the auto-generated default in dev.
     },
     // View Transitions API — wraps client-side route changes in
     // document.startViewTransition() so elements with matching

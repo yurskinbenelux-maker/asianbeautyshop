@@ -989,18 +989,45 @@ export async function updateOrganise(
   const benefitIds = collectIds(formData, "benefitIds");
   const ingredientIds = collectIds(formData, "ingredientIds");
 
-  // Line picker — single-select. Empty / missing / unrecognised → null
-  // (default Yu•R line). The PRODUCT_LINES list in queries/products.ts
-  // is the canonical source of slug → DB-string mapping.
-  const lineSlugRaw = String(formData.get("productLineSlug") ?? "").trim();
-  const lineDef = PRODUCT_LINES.find((l) => l.slug === lineSlugRaw);
+  // Line picker — MULTI-select. The form sends one or more
+  // "productLineSlugs" entries; we resolve each to its canonical
+  // PRODUCT_LINES def, drop unknowns, then walk them in PRODUCT_LINES
+  // order so the "primary" (first ticked) is deterministic regardless
+  // of click order in the UI.
+  //
+  // Empty submission falls back to the default Yu•R line.
+  const rawSlugs = formData
+    .getAll("productLineSlugs")
+    .map((v) => String(v).trim());
+  const tickedSlugs = new Set(rawSlugs);
+  const orderedDefs = PRODUCT_LINES.filter((l) => tickedSlugs.has(l.slug));
+
+  // First ticked line in canonical order is the "primary" — written to
+  // Product.productLine. The slug "yur" maps to null (the historical
+  // sentinel for the default line); the others write their dbValue.
+  const primary = orderedDefs[0];
   const productLineDbValue: string | null =
-    lineDef && lineDef.slug !== "yur"
-      ? // First non-null DB value for the line — that's what we write.
-        ((lineDef.dbValues as readonly (string | null)[]).find(
+    !primary || primary.slug === "yur"
+      ? null
+      : ((primary.dbValues as readonly (string | null)[]).find(
           (v) => v !== null,
-        ) ?? null)
-      : null;
+        ) ?? null);
+
+  // The remaining ticked lines become extraLines. We never write the
+  // primary's value into extraLines (that would be a self-redundant
+  // duplicate), and the default Yu•R line never goes there at all
+  // because its dbValue is null and it's already covered by the
+  // null-productLine fallback in lineWhere().
+  const extraLines: string[] = [];
+  for (const def of orderedDefs.slice(1)) {
+    if (def.slug === "yur") continue;
+    const v = (def.dbValues as readonly (string | null)[]).find(
+      (x) => x !== null,
+    );
+    if (typeof v === "string" && v !== productLineDbValue) {
+      extraLines.push(v);
+    }
+  }
 
   try {
     // Persist the line column outside the per-relation transactions.
@@ -1009,7 +1036,7 @@ export async function updateOrganise(
     // line edit, which Sofia would find surprising.
     await prisma.product.update({
       where: { id: productId },
-      data: { productLine: productLineDbValue },
+      data: { productLine: productLineDbValue, extraLines },
     });
     // One transaction per relation — small, fast, and a failure on one
     // relation won't poison the others (they'd have succeeded already,

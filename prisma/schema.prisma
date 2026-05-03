@@ -226,7 +226,13 @@ model Product {
   // trip is lossless. They are language-agnostic (numbers, codes, ISO
   // country) — translatable copy lives on ProductTranslation instead.
 
-  productLine      String?                          // sub-line within the brand, e.g. "Yu.R PRO"
+  productLine      String?                          // primary line within the brand, e.g. "Yu.R PRO".
+                                                    // null/empty = the default Yu•R line.
+  extraLines       String[] @default([])            // ADDITIONAL lines this product also appears under
+                                                    // on /shop. Stores the same DB values as productLine
+                                                    // (e.g. ["Yu.R PRO","Yu.R Me"]). A gift card with
+                                                    // productLine=null + extraLines=["Yu.R PRO","Yu.R Me"]
+                                                    // shows under all three tabs. Empty array = single-line.
   barcode          String?  @unique                 // EAN-13, used by retail scanners + returns
   shelfLifeMonths  Int?                             // unopened shelf life. Cosmetics convention is months,
                                                     // not years (PAO is opened-life — separate concept).
