@@ -149,9 +149,16 @@ export function LibraryUploader() {
               Upload to library
             </p>
             <p className="mt-0.5 text-[12px] text-ink-mid">
-              Drop images here, or use the button. JPG / PNG / WEBP / AVIF
-              · up to 8&nbsp;MB each. Library uploads aren&apos;t linked
-              to a product yet — open one and link it from the drawer.
+              Drop files here, or use the button. Images: JPG / PNG / WEBP /
+              AVIF up to 8&nbsp;MB. Videos: MP4 / WEBM up to 12&nbsp;MB.
+              Library uploads aren&apos;t linked to a product yet — open
+              one and link it from the drawer.
+            </p>
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-mid/80">
+              <span className="font-medium">Video tip —</span> for the
+              homepage reel, use H.264 mp4 with audio stripped, 5–10 s
+              loop, target ≤ 5 MB landscape / ≤ 2.5 MB portrait. Larger
+              files burn through Supabase egress.
             </p>
           </div>
         </div>
@@ -166,7 +173,7 @@ export function LibraryUploader() {
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/avif"
+          accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm"
           multiple
           className="hidden"
           onChange={(e) => {

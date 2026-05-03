@@ -25,16 +25,43 @@ export type ActionState = {
 
 const OK_SAVED: ActionState = { ok: true, message: "Saved." };
 
-/** Max upload size in bytes — matches the bucket's "8 MB each" hint. */
-const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+/**
+ * Per-MIME upload caps. Videos are allowed up to 12 MB to fit a 1080p H.264
+ * loop comfortably; images stay at 8 MB. The numbers are also enforced in
+ * the storage bucket policy so a stale tab can't blow past them.
+ */
+const MAX_BYTES_IMAGE = 8 * 1024 * 1024;
+const MAX_BYTES_VIDEO = 12 * 1024 * 1024;
 
-/** Allowed MIME types — same allowlist as the product editor uploader. */
-const ALLOWED_MIME = [
+/** Allowed image MIME types. */
+const ALLOWED_IMAGE_MIME = [
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/avif",
 ] as const;
+
+/**
+ * Allowed video MIME types. H.264-in-mp4 is the universal choice — plays
+ * everywhere including iOS Safari. WebM/VP9 is included as a future-proof
+ * fallback for admins who already encode in that format. We deliberately
+ * exclude .mov (HEVC quirks on Android) and .avi (unplayable on iOS).
+ */
+const ALLOWED_VIDEO_MIME = ["video/mp4", "video/webm"] as const;
+
+/** Combined allowlist for the upload validator. */
+const ALLOWED_MIME = [
+  ...ALLOWED_IMAGE_MIME,
+  ...ALLOWED_VIDEO_MIME,
+] as const;
+
+function isVideoMime(m: string): boolean {
+  return (ALLOWED_VIDEO_MIME as readonly string[]).includes(m);
+}
+
+function maxBytesFor(mime: string): number {
+  return isVideoMime(mime) ? MAX_BYTES_VIDEO : MAX_BYTES_IMAGE;
+}
 
 /**
  * Make a filename safe for a Supabase Storage object key. Strips path
@@ -255,16 +282,19 @@ export async function uploadLibraryMediaAction(
   if (!(file instanceof File) || file.size === 0) {
     return { ok: false, message: "No file selected." };
   }
-  if (file.size > MAX_UPLOAD_BYTES) {
-    return {
-      ok: false,
-      message: `File is too large. Max ${MAX_UPLOAD_BYTES / 1024 / 1024} MB.`,
-    };
-  }
   if (!(ALLOWED_MIME as readonly string[]).includes(file.type)) {
     return {
       ok: false,
-      message: "Unsupported file type. Use JPG, PNG, WEBP, or AVIF.",
+      message:
+        "Unsupported file type. Images: JPG / PNG / WEBP / AVIF. Videos: MP4 / WEBM.",
+    };
+  }
+  // Per-MIME size cap — videos get a slightly higher ceiling.
+  const cap = maxBytesFor(file.type);
+  if (file.size > cap) {
+    return {
+      ok: false,
+      message: `File is too large. Max ${cap / 1024 / 1024} MB for this format.`,
     };
   }
 
@@ -292,7 +322,9 @@ export async function uploadLibraryMediaAction(
   const created = await prisma.media.create({
     data: {
       productId: null,
-      kind: MediaKind.IMAGE,
+      // Stamp the right MediaKind so the library grid can render
+      // <video> previews for clips and <img> for stills.
+      kind: isVideoMime(file.type) ? MediaKind.VIDEO : MediaKind.IMAGE,
       url: publicUrl,
       // Best-effort placeholder alt — Sofia can override in the drawer.
       alt: safeName.replace(/\.[^.]+$/, "").replace(/-/g, " "),

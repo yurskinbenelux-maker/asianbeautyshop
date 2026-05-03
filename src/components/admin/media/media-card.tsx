@@ -48,16 +48,47 @@ export function MediaCard({
           onClick={() => setOpen(true)}
           className="relative block aspect-square w-full overflow-hidden bg-rice/60"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={media.url}
-            alt={media.alt ?? ""}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
-          />
+          {media.kind === "VIDEO" ? (
+            // Videos preview inline, muted, looping, NOT autoplay (we
+            // don't want a wall of videos all firing at once on the
+            // grid). They start playing on hover via CSS-driven JS,
+            // but the cheap solution: leave paused with a poster-less
+            // first-frame so Sofia can still tell what's in it.
+            // eslint-disable-next-line jsx-a11y/media-has-caption
+            <video
+              src={media.url}
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLVideoElement).play().catch(() => {});
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLVideoElement).pause();
+              }}
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={media.url}
+              alt={media.alt ?? ""}
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+              }}
+            />
+          )}
+          {media.kind === "VIDEO" && (
+            <span
+              className="absolute bottom-2 right-2 inline-flex items-center gap-1 border border-ink/30 bg-rice/90 px-1.5 py-0.5 text-[9px] uppercase tracking-label text-ink backdrop-blur"
+              title="Video clip"
+            >
+              Video
+            </span>
+          )}
           {media.isPrimary && (
             <span
               title="Primary image"
