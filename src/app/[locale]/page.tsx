@@ -15,6 +15,7 @@
 
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { HeroMoonJar } from "@/components/home/hero-moon-jar";
+import { HomepageVideoReel } from "@/components/home/homepage-video-reel";
 import { Bestsellers } from "@/components/home/bestsellers";
 import { YourRitual } from "@/components/home/your-ritual";
 import { Testimonials } from "@/components/home/testimonials";
@@ -100,6 +101,9 @@ export default async function Home({ params }: Props) {
   return (
     <>
       <HeroMoonJar copy={heroCopy} />
+      {/* Optional editorial video reel — admin picks "off / single 16:9 /
+          trio 9:16" in /admin/homepage. Self-hides when off or empty. */}
+      <HomepageVideoReel />
       <Bestsellers locale={locale} copy={bestsellersCopy} />
       <YourRitual copy={ritualCopy} />
       <Testimonials copy={testimonialsCopy} items={testimonials} />
