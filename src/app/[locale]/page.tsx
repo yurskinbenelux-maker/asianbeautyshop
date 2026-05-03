@@ -14,7 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { HeroMoonJar } from "@/components/home/hero-moon-jar";
+import { HomepageHero } from "@/components/home/homepage-hero";
 import { HomepageVideoReel } from "@/components/home/homepage-video-reel";
 import { Bestsellers } from "@/components/home/bestsellers";
 import { YourRitual } from "@/components/home/your-ritual";
@@ -100,7 +100,10 @@ export default async function Home({ params }: Props) {
 
   return (
     <>
-      <HeroMoonJar copy={heroCopy} />
+      {/* Switchable hero: typography / video / collage. Variant picked
+          in /admin/homepage/hero. Falls back to typography if the chosen
+          variant has no usable assets. */}
+      <HomepageHero copy={heroCopy} />
       {/* Optional editorial video reel — admin picks "off / single 16:9 /
           trio 9:16" in /admin/homepage. Self-hides when off or empty. */}
       <HomepageVideoReel />

@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
-import { ArrowRight, FileEdit, Film } from "lucide-react";
+import { ArrowRight, FileEdit, Film, LayoutTemplate } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import {
   SITE_COPY_SCHEMA,
@@ -104,28 +104,50 @@ export default async function AdminHomepageIndex() {
         ))}
       </div>
 
-      {/* ── beyond text: video reel ─────────────────────────────────── */}
+      {/* ── beyond text: hero variant + video reel ──────────────────── */}
       <div className="mt-12 border-t border-ink/10 pt-8">
         <div className="eyebrow">Beyond text</div>
         <h2 className="mt-2 font-display text-[20px] text-ink">
           Cinematic content
         </h2>
-        <Link
-          href="/admin/homepage/video"
-          className="group mt-4 flex items-start gap-4 border border-ink/10 bg-white/60 p-5 transition-colors hover:border-ink/25 hover:bg-white/80"
-        >
-          <Film className="mt-0.5 h-4 w-4 flex-shrink-0 text-ink-mid group-hover:text-ink" />
-          <div className="min-w-0 flex-1">
-            <div className="font-display text-[18px] text-ink">
-              Homepage video reel
+        <div className="mt-4 grid grid-cols-1 gap-3">
+          <Link
+            href="/admin/homepage/hero"
+            className="group flex items-start gap-4 border border-ink/10 bg-white/60 p-5 transition-colors hover:border-ink/25 hover:bg-white/80"
+          >
+            <LayoutTemplate className="mt-0.5 h-4 w-4 flex-shrink-0 text-ink-mid group-hover:text-ink" />
+            <div className="min-w-0 flex-1">
+              <div className="font-display text-[18px] text-ink">
+                Homepage hero variant
+              </div>
+              <p className="mt-1 text-[12px] leading-relaxed text-ink-mid">
+                Switch the very first thing visitors see — typography
+                (default), full-bleed cinematic video, or an asymmetric
+                three-product editorial collage. Same headline copy in
+                every variant.
+              </p>
             </div>
-            <p className="mt-1 text-[12px] leading-relaxed text-ink-mid">
-              Pick between one cinematic 16:9 clip or a trio of 9:16
-              Instagram-style portrait reels under the hero. Off by default.
-            </p>
-          </div>
-          <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-ink-mid/0 transition-opacity group-hover:text-ink group-hover:opacity-100" />
-        </Link>
+            <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-ink-mid/0 transition-opacity group-hover:text-ink group-hover:opacity-100" />
+          </Link>
+
+          <Link
+            href="/admin/homepage/video"
+            className="group flex items-start gap-4 border border-ink/10 bg-white/60 p-5 transition-colors hover:border-ink/25 hover:bg-white/80"
+          >
+            <Film className="mt-0.5 h-4 w-4 flex-shrink-0 text-ink-mid group-hover:text-ink" />
+            <div className="min-w-0 flex-1">
+              <div className="font-display text-[18px] text-ink">
+                Homepage video reel
+              </div>
+              <p className="mt-1 text-[12px] leading-relaxed text-ink-mid">
+                Pick between one cinematic 16:9 clip or a trio of 9:16
+                Instagram-style portrait reels under the hero. Off by
+                default.
+              </p>
+            </div>
+            <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-ink-mid/0 transition-opacity group-hover:text-ink group-hover:opacity-100" />
+          </Link>
+        </div>
       </div>
 
       <div className="mt-10 border-t border-ink/10 pt-6 text-[12px] leading-relaxed text-ink-mid">
