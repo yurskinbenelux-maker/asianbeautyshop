@@ -45,11 +45,20 @@ export function JournalCard({
           // Using <img> rather than next/image since cover URLs can come
           // from Supabase Storage without the next.config remote pattern
           // being pre-declared for every environment.
+          //
+          // The card frame stays a fixed 4:5 portrait so the grid keeps
+          // its rhythm — but `object-contain` (was object-cover) shows
+          // the WHOLE image inside instead of cropping to fill. Wider
+          // 16:9 article-hero uploads now letterbox into the cream
+          // background instead of being cropped on both sides; portrait
+          // 4:5 thumbnails fill the frame naturally as before. The
+          // background is `bg-rice-dim` so the letterboxing reads as
+          // intentional editorial framing rather than a missing image.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={coverUrl}
             alt={title}
-            className="aspect-[4/5] w-full object-cover transition-opacity group-hover:opacity-90"
+            className="aspect-[4/5] w-full bg-rice-dim object-contain transition-opacity group-hover:opacity-90"
           />
         ) : (
           <div

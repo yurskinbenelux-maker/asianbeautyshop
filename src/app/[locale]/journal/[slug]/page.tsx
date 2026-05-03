@@ -155,12 +155,18 @@ export default async function JournalPostPage({ params }: Props) {
           <div className="container mt-12">
             {/* next/image would require remotePatterns pre-declared; for
                 now the <img> tag matches the rest of the site's editorial
-                image handling. */}
+                image handling.
+
+                Frame stays a fixed 16:9 so the page rhythm holds, but
+                `object-contain` shows the WHOLE image inside instead of
+                cropping when Sofia (or anyone) uploads a portrait into
+                the hero slot. The cream `bg-rice-dim` lets the
+                letterboxing read as intentional editorial framing. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={post.heroUrl ?? post.coverUrl ?? ""}
               alt={post.title}
-              className="aspect-[16/9] w-full object-cover"
+              className="aspect-[16/9] w-full bg-rice-dim object-contain"
             />
           </div>
         )}
