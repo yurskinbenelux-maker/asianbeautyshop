@@ -458,7 +458,8 @@ export default async function ProductDetailPage({
         {related.length > 0 && (
           <section className="container mt-24">
             <div className="eyebrow">{t("related")}</div>
-            <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3">
+            {/* 2-up on phones — matches /shop and /search density. */}
+            <div className="mt-8 grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-8">
               {related.map((p, i) => (
                 <BestsellerCard
                   key={p.id}

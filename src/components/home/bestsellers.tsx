@@ -65,7 +65,10 @@ export async function Bestsellers({
       </div>
 
       {/* ── product grid ─────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+      {/* 2-up on phones (was 1-up) to match the /shop density and let
+          customers see at least two bestsellers above the fold on a
+          360 px screen. Tighter gap on mobile so 2 cols breathe. */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-8">
         {products.map((p, i) => (
           <BestsellerCard key={p.id} product={p} index={i} locale={locale} />
         ))}

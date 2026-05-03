@@ -104,7 +104,12 @@ export function ShopInfiniteGrid({
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      {/* 2-up on phones (was 1-up) so a customer sees two products
+          above the fold on a 360 px screen — same density as Sephora,
+          peonybeauty, Glossier mobile. The card-internal type sizes
+          adapt below sm:. Tighter gap on mobile so 2 cols actually
+          fit comfortably. */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-8 lg:grid-cols-3">
         {items.map((p, i) => (
           <BestsellerCard
             key={p.id}

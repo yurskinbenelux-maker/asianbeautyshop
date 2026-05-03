@@ -65,18 +65,20 @@ export function BestsellerCard({
           className="relative aspect-[4/5] overflow-hidden bg-rice-dim"
           style={{ viewTransitionName: `product-image-${product.slug}` }}
         >
-          <div className="absolute left-4 top-4 font-kr text-[12px] text-ink-mid">
+          <div className="absolute left-2 top-2 font-kr text-[10px] text-ink-mid sm:left-4 sm:top-4 sm:text-[12px]">
             {label}
           </div>
           {product.isFeatured && (
-            <div className="seal absolute right-4 top-4" aria-label="Featured">
+            <div className="seal absolute right-2 top-2 sm:right-4 sm:top-4" aria-label="Featured">
               ★
             </div>
           )}
 
-          {/* Quick-view trigger — desktop: fades in on hover from the
-              bottom; mobile: always visible (hover doesn't exist). The
-              button stops the Link click so the modal opens in place. */}
+          {/* Quick-view trigger — desktop only. On mobile the card is
+              now too narrow (~170 px) for a useful quick-view button
+              AND the customer is one tap away from the PDP anyway, so
+              we hide it under sm: instead of forcing it always-visible
+              like before. */}
           {onQuickView && (
             <button
               type="button"
@@ -85,7 +87,7 @@ export function BestsellerCard({
                 e.stopPropagation();
                 onQuickView(product);
               }}
-              className="absolute inset-x-4 bottom-4 z-10 flex h-10 items-center justify-center bg-rice/95 text-[11px] uppercase tracking-label text-ink opacity-100 transition-all duration-300 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100"
+              className="absolute inset-x-4 bottom-4 z-10 hidden h-10 items-center justify-center bg-rice/95 text-[11px] uppercase tracking-label text-ink opacity-0 transition-all duration-300 md:flex md:translate-y-2 md:group-hover:translate-y-0 md:group-hover:opacity-100"
               aria-label={`${t("quick_view")}: ${product.name}`}
             >
               {t("quick_view")}
@@ -150,47 +152,55 @@ export function BestsellerCard({
         {/* ── social proof badges (#150) ──────────────────── */}
         {/* Bestseller pill is the highest-priority signal — only one
             shown per card to avoid badge clutter. Featured products
-            without bestseller status get the editorial mark instead. */}
+            without bestseller status get the editorial mark instead.
+            Tighter top margin + smaller text on mobile so the meta
+            block doesn't dominate a 170 px card. */}
         {(product.isBestseller || product.isFeatured) && (
-          <p className="mt-4 text-[10px] uppercase tracking-label text-vermilion">
+          <p className="mt-2 text-[9px] uppercase tracking-label text-vermilion sm:mt-4 sm:text-[10px]">
             {product.isBestseller ? "Bestseller" : "Editor's pick"}
           </p>
         )}
 
         {/* ── meta row ─────────────────────────────────────── */}
+        {/* Mobile: name/tagline/price stack vertically (gap too tight to
+            fit them side-by-side at 170 px width). Desktop: original
+            row layout with name left, price right. */}
         <div
           className={cn(
-            "flex items-baseline justify-between gap-4",
-            product.isBestseller || product.isFeatured ? "mt-2" : "mt-5",
+            "flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4",
+            product.isBestseller || product.isFeatured ? "mt-1 sm:mt-2" : "mt-3 sm:mt-5",
           )}
         >
-          <div>
-            <h3 className="font-display text-[20px] leading-tight text-ink">
+          <div className="min-w-0">
+            <h3 className="font-display text-[14px] leading-tight text-ink sm:text-[20px]">
               {product.name}
             </h3>
             {product.tagline && (
-              <p className="mt-1 text-[13px] text-ink-mid">{product.tagline}</p>
+              <p className="mt-0.5 hidden text-[11px] text-ink-mid sm:mt-1 sm:block sm:text-[13px]">
+                {product.tagline}
+              </p>
             )}
           </div>
-          <div className="flex flex-col items-end whitespace-nowrap">
+          <div className="flex flex-row items-baseline gap-2 whitespace-nowrap sm:flex-col sm:items-end sm:gap-0">
             {product.comparePriceEur &&
               product.comparePriceEur > product.priceEur && (
-                <span className="text-[12px] text-ink-mid line-through">
+                <span className="text-[10px] text-ink-mid line-through sm:text-[12px]">
                   {formatEur(product.comparePriceEur, priceLocale(locale))}
                 </span>
               )}
-            <span className="text-[15px] text-ink">
+            <span className="text-[13px] text-ink sm:text-[15px]">
               {formatEur(product.priceEur, priceLocale(locale))}
             </span>
           </div>
         </div>
 
         {/* ── rating row (#150) ──────────────────────────────
-            Quiet typography — the count earns the trust, not the
-            star colour. Hidden when there are no published reviews
-            to avoid screaming "0 reviews" at customers. */}
+            Hidden on mobile — the card is too narrow to pair stars +
+            count + "review/reviews" without wrapping. Customers still
+            see ratings on the PDP and the bestseller badge above
+            already signals social proof on the listing. */}
         {product.reviewCount > 0 && product.reviewAvg !== null && (
-          <p className="mt-2 flex items-center gap-1.5 text-[12px] text-ink-mid">
+          <p className="mt-2 hidden items-center gap-1.5 text-[12px] text-ink-mid sm:flex">
             <span aria-hidden className="text-vermilion">
               ★
             </span>

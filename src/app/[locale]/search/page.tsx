@@ -262,7 +262,8 @@ export default async function SearchPage({ params, searchParams }: Props) {
             <div>
               {hasResults && (
                 <>
-                  <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                  {/* 2-up on phones to match /shop grid density. */}
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-8 lg:grid-cols-3">
                     {results.map((p, i) => (
                       <BestsellerCard
                         key={p.id}
