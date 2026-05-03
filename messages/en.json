@@ -36,6 +36,9 @@
     "close_menu": "Close menu",
     "instagram": "Instagram"
   },
+  "announcement": {
+    "free_shipping": "Free delivery from {amount}"
+  },
   "hero": {
     "eyebrow": "New arrival — spring collection",
     "title_pre": "The first",

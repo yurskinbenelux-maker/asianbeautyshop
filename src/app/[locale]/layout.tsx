@@ -17,6 +17,7 @@ import { routing } from "@/i18n/routing";
 import { Nav } from "@/components/layout/nav";
 import { Footer } from "@/components/layout/footer";
 import { SkipLink } from "@/components/layout/skip-link";
+import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { ConciergeOrb } from "@/components/concierge/orb";
 import { MotionProvider } from "@/components/motion/motion-provider";
 import { CartProvider } from "@/components/cart/cart-provider";
@@ -163,8 +164,9 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   // Free-shipping threshold — surfaced as a progress indicator inside
   // the cart drawer so customers see "€X to go for free shipping"
-  // every time they add an item. Reads Sofia's admin override (or
-  // default €99.99) at request time.
+  // every time they add an item, and as the headline value in the
+  // sitewide announcement banner. Reads Sofia's admin override (or
+  // default €50) at request time.
   const shippingSettings = await readSetting("shipping");
   const freeShippingThresholdEur =
     shippingSettings.freeThresholdCents / 100;
@@ -188,6 +190,16 @@ export default async function LocaleLayout({ children, params }: Props) {
             >
               {/* WCAG 2.4.1 — first tabbable, jumps past nav/locale/cart */}
               <SkipLink />
+              {/* Sitewide announcement bar — sits above the nav so the
+                  nav's sticky behaviour and z-index aren't disturbed.
+                  Currently the only message is the free-shipping
+                  threshold; the component reads the live setting so
+                  Sofia changing it in /admin/settings/shipping updates
+                  this bar AND the cart progress meter together. */}
+              <AnnouncementBar
+                thresholdEur={freeShippingThresholdEur}
+                locale={locale}
+              />
               <Nav shopCategories={shopCategories} />
               <main id="main" className="relative">{children}</main>
               <Footer />

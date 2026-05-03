@@ -36,6 +36,9 @@
     "close_menu": "Закрыть меню",
     "instagram": "Instagram"
   },
+  "announcement": {
+    "free_shipping": "Бесплатная доставка от {amount}"
+  },
   "hero": {
     "eyebrow": "Новое — весенняя коллекция",
     "title_pre": "Первый",

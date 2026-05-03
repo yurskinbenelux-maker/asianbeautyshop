@@ -36,6 +36,9 @@
     "close_menu": "Menu sluiten",
     "instagram": "Instagram"
   },
+  "announcement": {
+    "free_shipping": "Gratis bezorging vanaf {amount}"
+  },
   "hero": {
     "eyebrow": "Nieuw — lentecollectie",
     "title_pre": "Het eerste",

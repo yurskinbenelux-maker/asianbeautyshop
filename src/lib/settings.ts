@@ -76,14 +76,16 @@ const DEFAULTS = {
   } satisfies StoreSettings,
 
   shipping: {
-    // Free shipping threshold raised to €99.99 (#169) — high enough to
-    // pull AOV upward (typical YU.R basket sits around €40-60), low
-    // enough that a 2-3 product ritual reaches it.
-    freeThresholdCents: 9999,
+    // Free-shipping threshold lowered to €50 — low enough that a single
+    // mid-priced product or a 2-product ritual reaches it. The previous
+    // €99.99 made customers do mental math; €50 is a clean conversion
+    // signal Sofia can also use as marketing copy ("From €50, delivery
+    // is free"). Live override still editable in /admin/settings/shipping.
+    freeThresholdCents: 5000,
     flatRateCents: 595,
     allowedCountries: ["BE", "NL", "FR", "LU", "DE"],
     disclaimer:
-      "Free shipping on orders over €99.99. Orders ship within 1–2 working days from Belgium. Delivery takes 2–5 days depending on destination.",
+      "Free shipping on orders over €50. Orders ship within 1–2 working days from Belgium. Delivery takes 2–5 days depending on destination.",
   } satisfies ShippingSettings,
 
   tax: {
