@@ -71,7 +71,13 @@ export async function signUpAction(
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      emailRedirectTo: `${site}/auth/callback?next=${encodeURIComponent(next)}`,
+      // Pass the locale-aware account URL as `emailRedirectTo`. Supabase
+      // surfaces this back to the email template as `{{ .RedirectTo }}`,
+      // which we plug into the token-hash confirm URL — see
+      // src/app/auth/confirm/route.ts and the Supabase email template
+      // for the full flow. The customer's email button will land them
+      // straight on /ru/account (or whichever locale) already signed in.
+      emailRedirectTo: `${site}${next}`,
       data: {
         first_name: parsed.data.firstName,
         last_name: parsed.data.lastName,
