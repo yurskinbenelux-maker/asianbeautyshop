@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { Link } from "@/i18n/routing";
-import { Instagram, Menu, Search, User, X } from "lucide-react";
+import { ChevronDown, Instagram, Menu, Search, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LocaleSwitcher } from "./locale-switcher";
 import { CartButton } from "@/components/cart/cart-button";
@@ -33,6 +33,10 @@ export function Nav({
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Shop accordion state inside the mobile drawer. Defaults closed so
+  // visitors who only want a different section don't see a wall of
+  // categories first.
+  const [mobileShopOpen, setMobileShopOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -88,11 +92,22 @@ export function Nav({
     setMobileOpen(false);
   }, [pathname]);
 
+  // Collapse the Shop accordion whenever the drawer fully closes so the
+  // next open starts from a clean primary list rather than mid-expansion.
+  useEffect(() => {
+    if (!mobileOpen) setMobileShopOpen(false);
+  }, [mobileOpen]);
+
   return (
     <header
+      // z-[60] sits above the AI concierge orb (~z-50) and any cookie
+      // banner — without it the hamburger button can become un-tappable
+      // on scroll when an absolutely-positioned element above the fold
+      // (hero gradient, decorative SVG) creates a stacking context that
+      // catches taps. Belt-and-braces.
       className={cn(
-        "sticky top-0 z-40 w-full transition-colors duration-300",
-        scrolled ? "glass border-b border-ink/5" : "bg-transparent"
+        "sticky top-0 z-[60] w-full transition-colors duration-300",
+        scrolled ? "glass border-b border-ink/5" : "bg-transparent",
       )}
     >
       <div className="container flex h-16 items-center justify-between gap-3 md:h-20 md:gap-6">
@@ -188,7 +203,7 @@ export function Nav({
         aria-modal="true"
         aria-label={t("nav.menu")}
         className={cn(
-          "fixed inset-0 z-50 md:hidden",
+          "fixed inset-0 z-[80] md:hidden",
           mobileOpen ? "pointer-events-auto" : "pointer-events-none",
         )}
       >
@@ -227,14 +242,81 @@ export function Nav({
           </div>
 
           {/* Primary links — large, generous spacing so they're easy to
-              tap on a phone. 56px row height beats Apple HIG's 44px floor. */}
+              tap on a phone. 56px row height beats Apple HIG's 44px floor.
+              Shop is special: it's a button that expands an inline
+              accordion of live-product categories. The "Shop" label
+              itself does NOT navigate to /shop — the accordion's "View
+              all products" link does, so a single tap on Shop never
+              dumps the visitor onto a generic listing when they
+              probably wanted a specific category. */}
           <nav
             className="flex-1 overflow-y-auto px-5 py-6"
             aria-label="Mobile primary"
           >
             <ul className="flex flex-col">
+              {/* Shop accordion */}
+              <li>
+                <button
+                  type="button"
+                  aria-expanded={mobileShopOpen}
+                  aria-controls="mobile-shop-categories"
+                  onClick={() => setMobileShopOpen((v) => !v)}
+                  className="flex h-14 w-full items-center justify-between text-[15px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
+                >
+                  <span>{t("nav.shop")}</span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform duration-200",
+                      mobileShopOpen ? "rotate-180" : "rotate-0",
+                    )}
+                  />
+                </button>
+                {/* Categories — inline accordion, not a flyout. Tap any
+                    category to land on /shop/category/[slug]. The "View
+                    all" row at the bottom takes the visitor to /shop
+                    if no specific category fits. Shown only when at
+                    least one category has live products. */}
+                <div
+                  id="mobile-shop-categories"
+                  className={cn(
+                    "overflow-hidden border-l-2 border-vermilion/20 pl-3 transition-[max-height,opacity] duration-300",
+                    mobileShopOpen
+                      ? "max-h-[600px] opacity-100"
+                      : "max-h-0 opacity-0",
+                  )}
+                >
+                  <ul className="flex flex-col py-2">
+                    {shopCategories.map((c) => (
+                      <li key={c.slug}>
+                        <Link
+                          href={`/shop/category/${c.slug}`}
+                          onClick={() => setMobileOpen(false)}
+                          className="flex h-11 items-center justify-between text-[13px] text-ink transition-colors hover:text-vermilion"
+                        >
+                          <span>{c.name}</span>
+                          <span className="text-[11px] text-ink-mid">
+                            {c.count}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                    {/* Always offer the broad "View all" — useful when
+                        the visitor doesn't know which category fits. */}
+                    <li>
+                      <Link
+                        href="/shop"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex h-11 items-center text-[11px] uppercase tracking-label text-ink-mid transition-colors hover:text-vermilion"
+                      >
+                        {t("nav.shop_all")}
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+
+              {/* Remaining primary links — plain anchors. */}
               {[
-                { href: "/shop", key: "shop" as const },
                 { href: "/rituals", key: "rituals" as const },
                 { href: "/ingredients", key: "ingredients" as const },
                 { href: "/journal", key: "journal" as const },

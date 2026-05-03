@@ -98,7 +98,7 @@ export function HeroCollage({
 
             <h1
               id="hero-headline"
-              className="mt-6 font-display text-display-md leading-[0.96] text-ink md:text-[56px] lg:text-[72px]"
+              className="mt-6 font-display text-[40px] leading-[1.08] text-ink sm:text-[48px] sm:leading-[1.02] md:text-[56px] md:leading-[0.96] lg:text-[72px]"
             >
               {copy.title_pre}{" "}
               <span className="italic text-vermilion">{copy.title_kr}</span>

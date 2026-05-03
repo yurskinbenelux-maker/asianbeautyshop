@@ -109,7 +109,11 @@ export function HeroVideo({
           </div>
           <h1
             id="hero-headline"
-            className="mt-3 font-display text-display-md leading-[0.95] text-rice md:text-[88px] lg:text-[112px]"
+            // Mobile uses looser leading (1.08) so a wrapped headline +
+            // the Korean character below it has breathing room and
+            // descenders don't kiss the next line. Tightens to 0.95 on
+            // desktop where the type sets in single lines.
+            className="mt-3 font-display text-[44px] leading-[1.08] text-rice sm:text-[56px] sm:leading-[1.02] md:text-[88px] md:leading-[0.95] lg:text-[112px]"
           >
             {copy.title_pre}{" "}
             <span className="italic text-vermilion/90">{copy.title_kr}</span>
