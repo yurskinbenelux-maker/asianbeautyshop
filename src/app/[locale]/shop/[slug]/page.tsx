@@ -187,11 +187,24 @@ export default async function ProductDetailPage({
   // Build the map the LocaleSwitcher uses to jump to the right translated
   // URL. slugByLocale is keyed by Prisma's uppercase enum (EN/NL/FR/RU);
   // URL locales are lowercase, so we normalise here.
+  //
+  // For locales that don't have their own translated slug yet (Sofia
+  // hasn't filled NL/FR/RU on this product) we fall back to the EN
+  // slug. The PDP query then resolves /ru/shop/<en-slug> via its
+  // EN-slug fallback so the visitor sees the product with EN copy and
+  // localized page chrome, instead of a 404.
+  const enSlugForFallback =
+    product.slugByLocale[PrismaLocale.EN] ?? product.slug;
   const localeAlternates: Record<string, string> = {};
-  for (const [loc, slugForLocale] of Object.entries(product.slugByLocale)) {
-    if (slugForLocale) {
-      localeAlternates[loc.toLowerCase()] = `/shop/${slugForLocale}`;
-    }
+  for (const targetLocale of [
+    PrismaLocale.EN,
+    PrismaLocale.NL,
+    PrismaLocale.FR,
+    PrismaLocale.RU,
+  ] as const) {
+    const slugForLocale =
+      product.slugByLocale[targetLocale] ?? enSlugForFallback;
+    localeAlternates[targetLocale.toLowerCase()] = `/shop/${slugForLocale}`;
   }
 
   // Build the Product JSON-LD payload. We mark it in-stock if any variant

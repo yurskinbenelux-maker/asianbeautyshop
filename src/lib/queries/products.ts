@@ -746,32 +746,53 @@ export async function getProductBySlug({
 }): Promise<ProductDetail | null> {
   const loc = toPrismaLocale(locale);
 
-  // We look up by (locale, slug) — unique in our schema.
-  const tr = await prisma.productTranslation.findFirst({
-    where: { locale: loc, slug },
-    include: {
-      product: {
-        include: {
-          brand: { include: { translations: { where: { locale: loc } } } },
-          translations: true, // every locale (for the switcher)
-          media: {
-            where: { kind: "IMAGE" },
-            orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
-          },
-          categories: {
-            include: {
-              category: {
-                include: {
-                  translations: { where: { locale: { in: [loc, Locale.EN] } } },
-                },
-              },
-            },
-            take: 1,
+  // Lookup strategy:
+  //   1. Strict match on (URL locale, slug) — the happy path.
+  //   2. If that returns null, fall back to the EN translation with the
+  //      same slug. This catches the case where Sofia hasn't translated a
+  //      product into the visitor's chosen locale yet — the LocaleSwitcher
+  //      sends them to /ru/shop/<EN slug> rather than 404'ing, and we
+  //      surface the EN copy with localized chrome (nav, footer) around it.
+  //
+  // We INCLUDE every translation row on the product so we can pick the
+  // best-fit one for rendering after the lookup succeeds. Wrapped in a
+  // factory so each call gets a fresh mutable object — Prisma's types
+  // reject `as const`-frozen includes.
+  const buildProductInclude = () => ({
+    brand: { include: { translations: { where: { locale: loc } } } },
+    translations: true, // every locale (for switcher + fallback rendering)
+    media: {
+      where: { kind: "IMAGE" as const },
+      orderBy: [
+        { isPrimary: "desc" as const },
+        { sortOrder: "asc" as const },
+      ],
+    },
+    categories: {
+      include: {
+        category: {
+          include: {
+            translations: { where: { locale: { in: [loc, Locale.EN] } } },
           },
         },
       },
+      take: 1,
     },
   });
+
+  let tr = await prisma.productTranslation.findFirst({
+    where: { locale: loc, slug },
+    include: { product: { include: buildProductInclude() } },
+  });
+
+  // Fallback: same slug but EN locale. Catches /ru/shop/<en-slug> when
+  // the product has no RU translation yet.
+  if (!tr && loc !== Locale.EN) {
+    tr = await prisma.productTranslation.findFirst({
+      where: { locale: Locale.EN, slug },
+      include: { product: { include: buildProductInclude() } },
+    });
+  }
 
   if (!tr || tr.product.deletedAt) {
     return null;
@@ -782,8 +803,19 @@ export async function getProductBySlug({
 
   const p = tr.product;
 
+  // Pick the translation we actually want to render: prefer URL locale,
+  // then EN, then whatever the lookup matched as a last resort. Note
+  // that field-level fallback (e.g. RU translation that has only `name`
+  // filled) isn't handled — translations are upserted as a unit.
+  const renderTr =
+    p.translations.find((t) => t.locale === loc) ??
+    p.translations.find((t) => t.locale === Locale.EN) ??
+    tr;
+
   // Build a { EN: "rice-water-cleanser", NL: "rijstwater-reiniger", … } map
-  // so the language switcher can preserve context across languages.
+  // so the language switcher can preserve context across languages. For
+  // locales without their own slug we fall back to the EN slug — the page
+  // load on the other side then triggers the EN-fallback lookup above.
   const slugByLocale: Partial<Record<Locale, string>> = {};
   for (const t of p.translations) slugByLocale[t.locale] = t.slug;
 
@@ -804,12 +836,12 @@ export async function getProductBySlug({
     brand: p.brand
       ? { name: p.brand.name, slug: p.brand.slug, country: p.brand.country }
       : null,
-    name: tr.name,
-    slug: tr.slug,
-    tagline: tr.shortDescription,
-    descriptionHtml: tr.description,
-    howToUseHtml: tr.howToUse,
-    warningsText: tr.warnings,
+    name: renderTr.name,
+    slug: renderTr.slug,
+    tagline: renderTr.shortDescription,
+    descriptionHtml: renderTr.description,
+    howToUseHtml: renderTr.howToUse,
+    warningsText: renderTr.warnings,
     productLine: p.productLine,
     barcode: p.barcode,
     shelfLifeMonths: p.shelfLifeMonths,
