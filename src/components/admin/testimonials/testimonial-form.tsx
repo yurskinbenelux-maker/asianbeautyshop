@@ -28,6 +28,7 @@ import {
   StatusBanner,
 } from "@/components/admin/settings/settings-chrome";
 import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
+import { setNativeInputValue } from "@/lib/admin/native-input";
 
 const INITIAL_STATE: ActionState = { ok: false };
 
@@ -89,8 +90,7 @@ export function TestimonialForm({
     translations: Record<string, string>,
   ) {
     for (const [name, value] of Object.entries(translations)) {
-      const el = inputRefs.current[`${locale}.${name}`];
-      if (el) el.value = value;
+      setNativeInputValue(inputRefs.current[`${locale}.${name}`], value);
     }
   }
 

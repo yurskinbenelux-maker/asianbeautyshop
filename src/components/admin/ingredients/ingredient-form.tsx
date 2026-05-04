@@ -32,6 +32,7 @@ import {
   StatusBanner,
 } from "@/components/admin/settings/settings-chrome";
 import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
+import { setNativeInputValue } from "@/lib/admin/native-input";
 
 const INITIAL_STATE: ActionState = { ok: false };
 
@@ -87,8 +88,7 @@ export function IngredientForm({
   >({});
 
   function setInputValue(locale: Locale, key: string, value: string) {
-    const el = inputRefs.current[`${locale}.${key}`];
-    if (el) el.value = value;
+    setNativeInputValue(inputRefs.current[`${locale}.${key}`], value);
   }
 
   function getEnSource(): Record<string, string> {

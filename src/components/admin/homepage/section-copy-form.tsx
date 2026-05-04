@@ -32,6 +32,7 @@ import {
   StatusBanner,
 } from "@/components/admin/settings/settings-chrome";
 import { translateFieldsAction } from "@/app/admin/translate/actions";
+import { setNativeInputValue } from "@/lib/admin/native-input";
 import { cn } from "@/lib/utils";
 
 const INITIAL_STATE: ActionState = { ok: false };
@@ -184,8 +185,7 @@ function FieldFieldset({
             fieldName={fb.field}
             getEnValue={() => inputRefs.current[Locale.EN]?.value ?? ""}
             setLocaleValue={(locale, value) => {
-              const el = inputRefs.current[locale];
-              if (el) el.value = value;
+              setNativeInputValue(inputRefs.current[locale], value);
             }}
             getCurrentValueForLocale={(locale) =>
               inputRefs.current[locale]?.value ??

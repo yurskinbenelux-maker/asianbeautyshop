@@ -29,6 +29,7 @@ import {
 } from "@/app/admin/categories/actions";
 import type { SimpleTaxonomyKind } from "@/lib/queries/admin-taxonomies";
 import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
+import { setNativeInputValue } from "@/lib/admin/native-input";
 
 const INITIAL: ActionState = { ok: false };
 const LOCALES: Locale[] = [Locale.EN, Locale.NL, Locale.FR, Locale.RU];
@@ -152,9 +153,8 @@ function EditForm({
     locale: Locale,
     translations: Record<string, string>,
   ) {
-    const el = inputRefs.current[locale];
-    if (el && typeof translations.label === "string") {
-      el.value = translations.label;
+    if (typeof translations.label === "string") {
+      setNativeInputValue(inputRefs.current[locale], translations.label);
     }
   }
 

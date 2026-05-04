@@ -26,6 +26,7 @@ import {
   type ActionState,
 } from "@/app/admin/products/actions";
 import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
+import { setNativeInputValue } from "@/lib/admin/native-input";
 
 export type TranslationData = {
   locale: Locale;
@@ -146,8 +147,7 @@ function LocalePanel({
   const inputRefs = useRef<Record<string, HTMLInputElement | HTMLTextAreaElement | null>>({});
 
   function setInput(name: string, value: string) {
-    const el = inputRefs.current[name];
-    if (el) el.value = value;
+    setNativeInputValue(inputRefs.current[name], value);
   }
 
   function applyTranslations(translations: Record<string, string>) {

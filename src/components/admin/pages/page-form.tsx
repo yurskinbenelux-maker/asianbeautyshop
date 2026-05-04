@@ -20,6 +20,7 @@ import {
   StatusBanner,
 } from "@/components/admin/settings/settings-chrome";
 import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
+import { setNativeInputValue } from "@/lib/admin/native-input";
 import { cn } from "@/lib/utils";
 
 const LOCALES: Locale[] = [Locale.EN, Locale.NL, Locale.FR, Locale.RU];
@@ -115,8 +116,7 @@ export function PageForm({
     translations: Record<string, string>,
   ) {
     for (const [name, value] of Object.entries(translations)) {
-      const el = inputRefs.current[`${locale}.${name}`];
-      if (el) el.value = value;
+      setNativeInputValue(inputRefs.current[`${locale}.${name}`], value);
     }
   }
 
