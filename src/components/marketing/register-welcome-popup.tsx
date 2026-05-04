@@ -193,11 +193,28 @@ export function RegisterWelcomePopup({ isSignedIn }: { isSignedIn: boolean }) {
           Create your <em className="not-italic font-display italic text-vermilion" style={{ fontWeight: 400 }}>YU.R</em> account.
         </h2>
 
-        <p className="mb-7 text-[14px] leading-relaxed text-ink-mid">
+        <p className="mb-5 text-[14px] leading-relaxed text-ink-mid">
           Register in under a minute and we&rsquo;ll send a 10% off code straight
           to your inbox &mdash; plus order tracking, saved addresses, and your
           skin-quiz results next time you visit.
         </p>
+
+        {/* Bonus callout — surfaces the second incentive (the +15% quiz
+            reward) before the customer clicks. The two offers DON'T
+            stack on the same cart, but they apply to different baskets:
+            10% on a regular cart, 15% on the post-quiz personalised
+            routine. Visually distinct from the lede so it reads as a
+            separate, additional benefit. */}
+        <div className="mb-6 flex items-start gap-2 border-l-2 border-vermilion bg-vermilion/5 px-3 py-2.5 text-[12.5px] leading-snug text-ink">
+          <span className="font-display italic font-semibold text-vermilion">
+            +15%
+          </span>
+          <span className="text-ink-mid">
+            extra after you register, when you take the{" "}
+            <span className="text-ink">skin quiz</span> &mdash; applied to the
+            personalised routine we recommend.
+          </span>
+        </div>
 
         <Link
           href="/en/sign-up"

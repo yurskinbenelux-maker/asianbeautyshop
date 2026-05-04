@@ -57,7 +57,6 @@ export async function Footer() {
         <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
           <FooterCol title={t("footer.shop")}>
             <FooterLink href="/shop">{t("nav.shop")}</FooterLink>
-            <FooterLink href="/rituals">{t("nav.rituals")}</FooterLink>
             <FooterLink href="/ingredients">{t("nav.ingredients")}</FooterLink>
           </FooterCol>
 
