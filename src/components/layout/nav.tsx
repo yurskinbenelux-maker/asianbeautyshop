@@ -166,8 +166,17 @@ export function Nav({
           {/* Skin quiz replaces the old "Rituals" header link — the quiz
               is the higher-intent funnel into product recommendations.
               The /rituals editorial page still exists and is reachable
-              from the footer + journal entries. */}
-          <NavLink href="/quiz">{t("nav.skin_quiz")}</NavLink>
+              from the footer + journal entries.
+              Tiny vermilion -15% chip below the link is the visible
+              hook that drives quiz starts: registered customers who
+              complete the quiz get 15% off the recommended bundle
+              (see /lib/quiz/reward.ts). Pure CSS, no runtime cost. */}
+          <span className="relative inline-flex flex-col items-center">
+            <NavLink href="/quiz">{t("nav.skin_quiz")}</NavLink>
+            <span className="pointer-events-none absolute top-full mt-1 inline-flex items-center bg-vermilion px-1.5 py-px text-[9px] font-medium uppercase tracking-label text-rice">
+              −15%
+            </span>
+          </span>
           <NavLink href="/ingredients">{t("nav.ingredients")}</NavLink>
           <NavLink href="/journal">{t("nav.journal")}</NavLink>
           <NavLink href="/about">{t("nav.about")}</NavLink>
@@ -322,9 +331,21 @@ export function Nav({
               {/* Remaining primary links — plain anchors.
                   Skin quiz replaces the old Rituals link to align with
                   the desktop nav (the page itself is still reachable
-                  via the footer). */}
+                  via the footer). The quiz row carries an inline
+                  −15% chip — same visual hook as the desktop nav. */}
+              <li>
+                <Link
+                  href="/quiz"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex h-14 items-center gap-2 text-[15px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
+                >
+                  {t("nav.skin_quiz")}
+                  <span className="inline-flex items-center bg-vermilion px-1.5 py-px text-[10px] font-medium uppercase tracking-label text-rice">
+                    −15%
+                  </span>
+                </Link>
+              </li>
               {[
-                { href: "/quiz", key: "skin_quiz" as const },
                 { href: "/ingredients", key: "ingredients" as const },
                 { href: "/journal", key: "journal" as const },
                 { href: "/about", key: "about" as const },
