@@ -38,6 +38,12 @@ import {
   mapLocaleToMollie,
 } from "@/lib/mollie/client";
 import { lookupGiftCard } from "@/lib/gift-cards/db";
+import { hashShippingAddress } from "./address-hash";
+import {
+  markQuizRewardRedeemed,
+  quizCouponCodeForUser,
+} from "@/lib/quiz/reward";
+import { QUIZ_REWARD_DISCOUNT_REASON } from "@/lib/cart/quiz-ritual";
 import { drainAttachedGiftCards } from "./sync-mollie";
 import { sendOrderConfirmationEmail } from "@/lib/email/order-confirmation";
 import { sendAdminNewOrderEmail } from "@/lib/email/admin-new-order";
@@ -168,6 +174,58 @@ export async function placeOrder(
     throw new Error("COUNTRY_NOT_SHIPPABLE");
   }
 
+  // Quiz reward anti-fraud — Max's rules A + B.
+  //
+  //   A (per-account): the deterministic coupon code is `YUR-QUIZ-{userId}`,
+  //      so the same logged-in account can never claim twice. Enforced by
+  //      the unique Coupon row + the per-user QuizCompletion (set
+  //      redeemedAt below once this order is committed).
+  //
+  //   B (per-shipping-address): hash the destination address. If a prior
+  //      order with a quiz reward already shipped to the same hash, refuse
+  //      this one — stops the "make a fresh account, ship to the same
+  //      house" scam. We compute the hash for EVERY quiz-reward order so
+  //      the dedup catches future attempts.
+  //
+  // We detect a quiz-reward order by looking for the per-line discount
+  // marker on any cart item. Items added through /quiz/result or the
+  // /quiz/restore email link carry `discountReason = "quiz_reward"`.
+  const cartHasQuizReward = cart.items.some(
+    (i) => i.discountReason === QUIZ_REWARD_DISCOUNT_REASON,
+  );
+
+  let shippingAddressHashForOrder: string | null = null;
+  if (cartHasQuizReward && input.shipping) {
+    shippingAddressHashForOrder = hashShippingAddress({
+      line1: input.shipping.line1,
+      line2: input.shipping.line2,
+      city: input.shipping.city,
+      postalCode: input.shipping.postcode,
+      country: input.shipping.country,
+    });
+    if (shippingAddressHashForOrder) {
+      const prior = await prisma.order.findFirst({
+        where: {
+          shippingAddressHash: shippingAddressHashForOrder,
+          // Only count orders that successfully passed payment — failed /
+          // cancelled attempts shouldn't burn a customer's address.
+          paymentStatus: "PAID",
+          // And specifically those that used a quiz reward (couponCode
+          // starts with the YUR-QUIZ- prefix).
+          couponCode: { startsWith: "YUR-QUIZ-" },
+          // Different user than this one — same user repeating is blocked
+          // by rule A (the unique deterministic code), and we don't want
+          // to spuriously trip on the same person re-buying.
+          NOT: input.userId ? { userId: input.userId } : undefined,
+        },
+        select: { id: true },
+      });
+      if (prior) {
+        throw new Error("QUIZ_REWARD_ADDRESS_USED");
+      }
+    }
+  }
+
   // Edge case: gift card balance covers the entire order. We can't ask
   // Mollie to charge €0, so we run a "free order" path further down —
   // mark the order PAID inline, drain the gift cards, fire the same
@@ -280,6 +338,10 @@ export async function placeOrder(
         taxTotal: new Prisma.Decimal(pricing.taxEur.toFixed(2)),
         grandTotal: new Prisma.Decimal(pricing.grandTotalEur.toFixed(2)),
         couponCode: coupon?.code ?? null,
+        // Persist the shipping-address hash on quiz-reward orders so a
+        // future repeat attempt can be blocked by rule B above. Null
+        // for non-quiz orders to keep the column light.
+        shippingAddressHash: shippingAddressHashForOrder,
         notes: input.notes ?? null,
         items: {
           create: cart.items.map((item) => {

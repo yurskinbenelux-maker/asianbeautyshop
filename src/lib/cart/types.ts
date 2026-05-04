@@ -34,6 +34,15 @@ export type CartItemView = {
    * across the cart to decide whether to charge shipping at all.
    */
   requiresShipping: boolean;
+  /**
+   * Per-line discount marker. Populated when the line was added through
+   * a flow that grants a fixed % off — currently only the quiz reward
+   * (discountReason = "quiz_reward", discountPercent = 15). Standard
+   * lines leave both null. Coupon-codes are mutually exclusive with
+   * any line that carries a per-line discount. See lib/checkout/pricing.ts.
+   */
+  discountReason: string | null;
+  discountPercent: number | null;
 };
 
 export type CartSummary = {

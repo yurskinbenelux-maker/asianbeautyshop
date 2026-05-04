@@ -84,6 +84,9 @@ const orderSelect = {
   paymentStatus: true,
   paidAt: true,
   grandTotal: true,
+  // Needed on the PAID transition to detect quiz-reward orders and
+  // mark the user's QuizCompletion as redeemed (rule A enforcement).
+  couponCode: true,
 } satisfies Prisma.OrderSelect;
 
 type OrderForSync = Prisma.OrderGetPayload<{ select: typeof orderSelect }>;
@@ -211,6 +214,28 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
   // If the API call fails, the order still flipped to PAID; Sofia can
   // retry the parcel creation manually from the admin order page.
   if (willFlipToPaid) {
+    // Quiz reward redemption — if this order was placed with a YUR-QUIZ-…
+    // coupon, stamp redeemedAt on the user's QuizCompletion. That
+    // permanently disables their cart-restore email link AND blocks any
+    // future quiz-reward issuance for the account (rule A enforcement
+    // at the application layer; the deterministic coupon code already
+    // enforces it at the DB layer). Idempotent.
+    if (order.couponCode && order.couponCode.startsWith("YUR-QUIZ-")) {
+      try {
+        const { markQuizRewardRedeemed } = await import("@/lib/quiz/reward");
+        await markQuizRewardRedeemed(prisma, order.couponCode);
+      } catch (err) {
+        // Non-blocking — payment already cleared. Log and move on; the
+        // unique-coupon constraint is the actual security gate, this is
+        // just bookkeeping.
+        console.error(
+          "[sync-mollie] markQuizRewardRedeemed failed",
+          order.id,
+          err,
+        );
+      }
+    }
+
     // Drain any gift cards that were applied at checkout. Order of
     // operations matters: drain BEFORE the customer confirmation email
     // so the email reads the post-credit grandTotal correctly. Each call

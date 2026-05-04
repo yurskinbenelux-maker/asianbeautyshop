@@ -138,12 +138,41 @@ export function computeOrderTotals(input: PricingInput): PricingResult {
     shippingReason = "flat_rate";
   }
 
-  // 4. Coupon → discountEur + possibly override shippingEur.
+  // 4a. Per-line discounts — currently only the quiz reward (15%
+  //     applied to the items added via "Add my ritual to cart"). Each
+  //     line carries its own discountPercent; we sum them into a
+  //     single line-discount total. Coupons CANNOT stack with per-line
+  //     discounts (Max's rule), so any coupon submitted alongside a
+  //     line discount is silently ignored. The cart UI is expected to
+  //     hide the coupon-code input in this case — this is defence in
+  //     depth.
+  let lineDiscountEur = 0;
+  for (const item of cart.items) {
+    if (
+      item.discountPercent &&
+      item.discountPercent > 0 &&
+      item.discountPercent <= 100
+    ) {
+      const lineGross = round2(item.unitPriceEur * item.quantity);
+      lineDiscountEur += round2(
+        (lineGross * item.discountPercent) / 100,
+      );
+    }
+  }
+  lineDiscountEur = round2(lineDiscountEur);
+
+  // 4b. Coupon → discountEur + possibly override shippingEur.
   //    minSubtotal gate: if the cart doesn't clear the threshold, the
   //    coupon silently doesn't apply. The UI is expected to validate
   //    this BEFORE calling us — but we defend anyway.
-  let discountEur = 0;
-  if (coupon && (coupon.minSubtotal ?? 0) <= subtotalEur) {
+  //
+  //    SKIP entirely if the cart already has any per-line discount.
+  let discountEur = lineDiscountEur;
+  if (
+    lineDiscountEur === 0 &&
+    coupon &&
+    (coupon.minSubtotal ?? 0) <= subtotalEur
+  ) {
     if (coupon.kind === "PERCENT") {
       discountEur = round2((subtotalEur * coupon.value) / 100);
     } else if (coupon.kind === "FIXED") {

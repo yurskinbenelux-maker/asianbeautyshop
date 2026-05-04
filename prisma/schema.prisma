@@ -72,6 +72,7 @@ model User {
   returns       ReturnRequest[]
   subscriptions ProductSubscription[]
   loyaltyAccount LoyaltyAccount?
+  quizCompletion QuizCompletion?
 
   @@index([role])
   @@index([deletedAt])
@@ -565,6 +566,16 @@ model CartItem {
   // Quantity-bump dedup for STANDARD lines is now enforced in code, where
   // we can branch on `kind === GIFT_CARD`.
   giftCardConfig Json?
+
+  // Per-line discount markers — populated when an item is added via the
+  // quiz "Add my ritual to cart" flow (discountReason = "quiz_reward",
+  // discountPercent = 15). Standard adds leave both null. The pricing
+  // engine subtracts the per-line discount from the subtotal BEFORE any
+  // coupon code is applied; coupon-codes are refused entirely if any
+  // line carries a discount. See lib/checkout/pricing.ts.
+  discountReason  String?         // e.g. "quiz_reward"
+  discountPercent Int?            // 0–100
+
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
 
@@ -631,6 +642,13 @@ model Order {
   notes             String?                 // customer's order note
   adminNotes        String?                 // internal
 
+  // SHA-256 hash of the canonicalised shipping address. Populated by
+  // place-order whenever the order uses a quiz-reward coupon, so the
+  // checkout server action can refuse a SECOND quiz-reward order to
+  // the same address (per Max's anti-fraud rule B). Indexed for the
+  // dedup query. Null for non-quiz orders to keep the column light.
+  shippingAddressHash String?    @db.VarChar(64)
+
   // Subscription cycle that minted this order, if any. NULL = ad-hoc
   // checkout. Populated by the recurring-charge cron in #181 so admin
   // can answer "is this a sub renewal?" at a glance.
@@ -652,6 +670,73 @@ model Order {
   @@index([status])
   @@index([paymentStatus])
   @@index([placedAt])
+  @@index([shippingAddressHash])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  QUIZ REWARD
+// ────────────────────────────────────────────────────────────────────────────
+//
+// One row per registered customer who has completed the skin quiz. Tracks
+// the deterministic 15%-off coupon they were issued, the recommended
+// product set, the cart-restore magic-link token (hashed), and the
+// soft-log fields (IP / UA) for the per-IP fraud signal.
+//
+// Lifecycle:
+//   1. User completes the 7-question quiz while signed in → upsert this
+//      row. completedAt set, coupon minted (deterministic so re-completing
+//      doesn't issue a second one), cartLinkTokenHash rotated, email sent.
+//   2. User can click the email's "Open my ritual cart" button up to 60
+//      days after the most recent completion. The link route validates
+//      the token, restores the cart, and lands them on /cart with the
+//      15% per-line discount applied.
+//   3. When an order is placed using the quiz coupon, redeemedAt is
+//      stamped, which permanently disables the cart-restore link and
+//      blocks any future quiz-reward issuance for this account.
+//
+// Re-taking the quiz before redemption: we update the recommendations,
+// rotate the token, and resend the email. Single 60-day window at any
+// time per account.
+//
+// Re-taking AFTER redemption: recommendations still render on screen,
+// but no email and no new coupon (redeemedAt set → terminal state).
+//
+model QuizCompletion {
+  id                  String   @id @default(uuid()) @db.Uuid
+  userId              String   @unique @db.Uuid
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // The 15%-off coupon code issued for this user. Same row in the
+  // Coupon table (`YUR-QUIZ-{userId8}`). NULL only briefly between
+  // completion and coupon mint — should be filled in production.
+  couponCode          String?  @unique
+  // Coupon validity mirror — same as Coupon.endsAt but cached here for
+  // fast checks at restore-link click time without a JOIN.
+  expiresAt           DateTime
+  // Stamped when an order using the quiz coupon is paid. Renders
+  // future quiz rewards for this user a no-op (terminal).
+  redeemedAt          DateTime?
+
+  // Hashed cart-restore token — the email link contains the raw token,
+  // we store SHA-256(token) here so a leaked DB doesn't expose live
+  // links. Rotated whenever the user re-takes the quiz before redeeming.
+  cartLinkTokenHash   String?  @unique @db.VarChar(64)
+
+  // Snapshot of recommended product UUIDs in display order. Populated
+  // at completion time so the cart-restore link rebuilds the EXACT set
+  // the customer was shown — even if the underlying quiz logic changes.
+  recommendedProductIds String[] @db.Uuid
+
+  // Soft-log fields for the per-IP/per-device fraud signal (Max's "C
+  // soft log" tier). Surfaced in /admin/audit-log.
+  ipAddress           String?  @db.VarChar(64)
+  userAgent           String?
+
+  completedAt         DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@index([redeemedAt])
 }
 
 // Sequential VAT invoice issued on the PAID transition. Belgian Royal

@@ -252,8 +252,29 @@ function CartLine({
             </div>
           )}
 
-          <div className="mt-2 text-[13px] text-ink-mid">
-            {formatEur(item.unitPriceEur, currencyLocale)}
+          <div className="mt-2 flex items-center gap-2 text-[13px] text-ink-mid">
+            {/* Per-line discount visualisation — currently only the
+                quiz reward (discountReason="quiz_reward", 15%). Show the
+                original price struck through and the discounted price in
+                vermilion, with a small −15% chip. */}
+            {item.discountPercent && item.discountPercent > 0 ? (
+              <>
+                <span className="text-ink-mid/70 line-through">
+                  {formatEur(item.unitPriceEur, currencyLocale)}
+                </span>
+                <span className="text-vermilion">
+                  {formatEur(
+                    item.unitPriceEur * (1 - item.discountPercent / 100),
+                    currencyLocale,
+                  )}
+                </span>
+                <span className="inline-flex items-center bg-vermilion px-1.5 py-0.5 text-[10px] uppercase tracking-label text-rice">
+                  −{item.discountPercent}%
+                </span>
+              </>
+            ) : (
+              <span>{formatEur(item.unitPriceEur, currencyLocale)}</span>
+            )}
           </div>
         </div>
 
@@ -274,9 +295,23 @@ function CartLine({
           )}
 
           <div className="flex items-center gap-3">
-            <span className="font-display text-[15px] text-ink">
-              {formatEur(item.lineTotalEur, currencyLocale)}
-            </span>
+            {item.discountPercent && item.discountPercent > 0 ? (
+              <div className="flex flex-col items-end leading-tight">
+                <span className="text-[11px] text-ink-mid/70 line-through">
+                  {formatEur(item.lineTotalEur, currencyLocale)}
+                </span>
+                <span className="font-display text-[15px] text-vermilion">
+                  {formatEur(
+                    item.lineTotalEur * (1 - item.discountPercent / 100),
+                    currencyLocale,
+                  )}
+                </span>
+              </div>
+            ) : (
+              <span className="font-display text-[15px] text-ink">
+                {formatEur(item.lineTotalEur, currencyLocale)}
+              </span>
+            )}
             <button
               type="button"
               onClick={() => removeLine(item.id)}

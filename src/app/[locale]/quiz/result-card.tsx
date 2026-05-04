@@ -14,7 +14,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
 import {
@@ -30,6 +30,7 @@ import { Link } from "@/i18n/routing";
 import { useCart } from "@/components/cart/cart-provider";
 import type { RitualPick, RitualStep, QuizBrief } from "@/lib/ai/catalog";
 import { formatEur, priceLocale } from "@/lib/utils";
+import { claimQuizRitualAction } from "./actions";
 
 // Step id → translation key in the concierge namespace.
 const STEP_KEYS: Record<RitualStep, string> = {
@@ -57,35 +58,60 @@ export function RitualResult({
   const uiLocale = useLocale();
   const { addItem } = useCart();
 
-  // Add-all-to-cart state. We don't open the drawer between adds — it
-  // would be a nightmare on mobile. Drawer opens once after the last add.
-  const [bundleAdding, setBundleAdding] = useState(false);
-  const [bundleAdded, setBundleAdded] = useState(false);
+  // "Add my ritual" → server-side claim flow. Server action handles
+  // auth-gating, mints the deterministic 15% coupon, fires the
+  // restore-link email, and replaces the cart with the recommended
+  // products carrying the per-line discount markers. We only need
+  // pending + result state here — the redirect happens server-side.
+  const [bundlePending, startBundleTransition] = useTransition();
+  const [bundleError, setBundleError] = useState<string | null>(null);
   const [whyOpen, setWhyOpen] = useState(false);
 
   // Only render steps that found a product. The rule-based engine may
   // return nulls when the catalogue is thin in a category.
   const filled = ritual.filter((r) => r.product !== null);
 
-  // Total price for the "Add full ritual" CTA.
+  // Total prices for the headline CTA. We show the original sum struck
+  // through and the post-discount total in vermilion so the saving is
+  // tangible before the customer clicks.
   const totalEur = filled.reduce(
     (sum, r) => sum + (r.product?.priceEur ?? 0),
     0,
   );
+  const discountedEur = totalEur * 0.85;
 
-  async function addAllToCart() {
-    if (bundleAdding || bundleAdded) return;
-    setBundleAdding(true);
-    try {
-      for (const pick of filled) {
-        if (!pick.product) continue;
-        await addItem({ productId: pick.product.id, quantity: 1 });
+  function claimRitual() {
+    if (bundlePending) return;
+    setBundleError(null);
+    startBundleTransition(async () => {
+      const ids = filled
+        .map((r) => r.product?.id)
+        .filter((id): id is string => typeof id === "string");
+      if (ids.length === 0) return;
+      const result = await claimQuizRitualAction({
+        productIds: ids,
+        locale,
+      });
+      if (!result.ok) {
+        if (result.reason === "not-signed-in") {
+          // Server tells us where to send them — sign-up with a
+          // next= param that comes back to /quiz/result&ritual=…
+          // so the full claim flow continues post-auth.
+          window.location.href = result.redirectTo;
+          return;
+        }
+        setBundleError(
+          result.reason === "no-products"
+            ? "Your ritual has no available products yet — try retaking the quiz."
+            : "Something went wrong. Please try again or refresh the page.",
+        );
+        return;
       }
-      setBundleAdded(true);
-      setTimeout(() => setBundleAdded(false), 2400);
-    } finally {
-      setBundleAdding(false);
-    }
+      // Success — redirect to /cart where the −15% chip + cart-line
+      // strikethroughs render. Full reload so the cart provider picks
+      // up the new server state.
+      window.location.href = result.redirectTo;
+    });
   }
 
   return (
@@ -231,34 +257,47 @@ export function RitualResult({
 
         <div className="flex flex-col items-center gap-3 sm:flex-row">
           {filled.length > 1 ? (
-            <button
-              type="button"
-              onClick={addAllToCart}
-              disabled={bundleAdding}
-              className={`inline-flex items-center gap-2 px-5 py-3 text-[11px] uppercase tracking-label transition-colors ${
-                bundleAdded
-                  ? "bg-celadon text-rice"
-                  : "bg-vermilion text-rice hover:bg-ink"
-              } ${bundleAdding ? "cursor-wait opacity-80" : ""}`}
-            >
-              {bundleAdded ? (
-                <>
-                  <Check className="h-3.5 w-3.5" aria-hidden />
-                  {t("added")}
-                </>
-              ) : bundleAdding ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                  {t("adding")}
-                </>
-              ) : (
-                <>
-                  <Plus className="h-3.5 w-3.5" aria-hidden />
-                  {tConcierge("result_add_full_ritual")} ·{" "}
-                  {formatEur(totalEur, priceLocale(uiLocale))}
-                </>
-              )}
-            </button>
+            <div className="flex flex-col items-center gap-1.5 sm:items-stretch">
+              <button
+                type="button"
+                onClick={claimRitual}
+                disabled={bundlePending}
+                className={`inline-flex items-center justify-center gap-2 px-5 py-3 text-[11px] uppercase tracking-label transition-colors bg-vermilion text-rice hover:bg-ink ${
+                  bundlePending ? "cursor-wait opacity-80" : ""
+                }`}
+              >
+                {bundlePending ? (
+                  <>
+                    <Loader2
+                      className="h-3.5 w-3.5 animate-spin"
+                      aria-hidden
+                    />
+                    {t("adding")}
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-3.5 w-3.5" aria-hidden />
+                    {tConcierge("result_add_full_ritual")}
+                    <span className="ml-1 inline-flex items-baseline gap-2">
+                      <span className="text-rice/70 line-through">
+                        {formatEur(totalEur, priceLocale(uiLocale))}
+                      </span>
+                      <span className="font-semibold">
+                        {formatEur(discountedEur, priceLocale(uiLocale))}
+                      </span>
+                    </span>
+                  </>
+                )}
+              </button>
+              <p className="text-center text-[10.5px] uppercase tracking-label text-vermilion sm:text-right">
+                −15% · registered customers · 60-day code
+              </p>
+              {bundleError ? (
+                <p className="text-center text-[11px] text-vermilion sm:text-right">
+                  {bundleError}
+                </p>
+              ) : null}
+            </div>
           ) : null}
           <Link
             href="/shop"

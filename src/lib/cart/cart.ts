@@ -209,6 +209,11 @@ export async function getCartSummary(args: {
       lineTotalEur: round2(unitPriceEur * i.quantity),
       giftCardConfig,
       requiresShipping: i.product.kind !== ProductKind.GIFT_CARD,
+      // Carry the per-line discount markers through to the view-model
+      // so the cart UI can render the strikethrough + −15% chip and the
+      // pricing engine can compute the discount + reject coupon codes.
+      discountReason: i.discountReason ?? null,
+      discountPercent: i.discountPercent ?? null,
     };
   });
 
