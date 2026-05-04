@@ -34,3 +34,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local-only artifacts that should never go to the repo
+# (data exports, design previews, throw-away CSVs)
+welcome-popup-preview.html
+ingredients-*.csv
+ingredients-enriched-*.csv
+*.draft.html
