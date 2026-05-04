@@ -90,7 +90,11 @@ export default async function CheckoutSuccessPage({
           skuSnapshot: true,
           product: {
             select: {
-              slug: true,
+              // Note: Product itself has no `slug` — slugs live on
+              // ProductTranslation (per-locale). For GA4 item_id we use
+              // the OrderItem's skuSnapshot instead, which is stable and
+              // already locale-agnostic. We only need the live Product
+              // here for the brand line + first category.
               productLine: true,
               categories: {
                 select: { category: { select: { slug: true } } },
@@ -128,11 +132,11 @@ export default async function CheckoutSuccessPage({
         currency: order.currency || "EUR",
         coupon: order.couponCode ?? undefined,
         items: order.items.map((item) => ({
-          // Prefer product slug as item_id — stable, human-readable in
-          // GA4 reports. Falls back to SKU snapshot if a product was
-          // deleted between order placement and now (rare, but the
-          // success page must not throw).
-          item_id: item.product?.slug ?? item.skuSnapshot,
+          // skuSnapshot is the stable per-product identifier captured at
+          // order placement time. Survives later product renames /
+          // deletions, and matches what's printed on the invoice +
+          // shipping label so cross-tool reconciliation works.
+          item_id: item.skuSnapshot,
           item_name: item.nameSnapshot,
           price: Number(item.unitPrice),
           quantity: item.quantity,
