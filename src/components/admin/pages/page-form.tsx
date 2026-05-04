@@ -7,7 +7,7 @@
 // would break every link to the page, so we lock it after save.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import {
   createPageAction,
   updatePageAction,
@@ -19,9 +19,35 @@ import {
   SaveBar,
   StatusBanner,
 } from "@/components/admin/settings/settings-chrome";
+import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
 import { cn } from "@/lib/utils";
 
 const LOCALES: Locale[] = [Locale.EN, Locale.NL, Locale.FR, Locale.RU];
+
+/** Fields fed through DeepL. Body carries HTML so it gets the
+ *  tag_handling=html flag on the DeepL side. */
+const TRANSLATABLE_FIELDS: ReadonlyArray<{
+  name: "title" | "body" | "seoTitle" | "seoDescription";
+  isHtml: boolean;
+}> = [
+  { name: "title", isHtml: false },
+  { name: "body", isHtml: true },
+  { name: "seoTitle", isHtml: false },
+  { name: "seoDescription", isHtml: false },
+];
+
+/** Page keys that contain legally-binding text. Auto-translation is
+ *  permitted as a starting draft but the UI surfaces a warning so Sofia
+ *  knows to have a native speaker review before publishing. */
+const LEGAL_PAGE_KEYS = new Set([
+  "privacy",
+  "terms",
+  "cookies",
+  "returns",
+  "imprint",
+  "legal-notice",
+  "refund-policy",
+]);
 
 const INITIAL_STATE: ActionState = { ok: false };
 
@@ -69,6 +95,30 @@ export function PageForm({
   const [state, dispatch] = useActionState(action, INITIAL_STATE);
   const err = state.fieldErrors ?? {};
   const [activeLocale, setActiveLocale] = useState<Locale>("EN");
+
+  const isLegalPage = data.key ? LEGAL_PAGE_KEYS.has(data.key) : false;
+
+  const inputRefs = useRef<
+    Record<string, HTMLInputElement | HTMLTextAreaElement | null>
+  >({});
+
+  function getEnSource(): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const f of TRANSLATABLE_FIELDS) {
+      out[f.name] = inputRefs.current[`EN.${f.name}`]?.value ?? "";
+    }
+    return out;
+  }
+
+  function applyTranslations(
+    locale: Locale,
+    translations: Record<string, string>,
+  ) {
+    for (const [name, value] of Object.entries(translations)) {
+      const el = inputRefs.current[`${locale}.${name}`];
+      if (el) el.value = value;
+    }
+  }
 
   return (
     <form action={dispatch} className="max-w-3xl space-y-6">
@@ -155,6 +205,35 @@ export function PageForm({
               className={on ? "space-y-3" : "hidden"}
               aria-hidden={!on}
             >
+              {/* Auto-translate button on every non-EN tab.
+                  Legal pages get an extra warning since auto-translated
+                  legal text is a liability if not human-reviewed. */}
+              {l !== "EN" && (
+                <>
+                  {isLegalPage && (
+                    <p className="border border-vermilion/40 bg-vermilion/5 px-3 py-2 text-[11px] leading-relaxed text-vermilion">
+                      <strong>Legal page:</strong> auto-translated text is a
+                      starting draft only. Have a native speaker review the
+                      output before saving — mistranslations of refund
+                      windows, jurisdiction, or warranty terms can be held
+                      against you.
+                    </p>
+                  )}
+                  <TranslateFromEnglishButton
+                    targetLocale={l}
+                    fields={TRANSLATABLE_FIELDS.map((f) => ({
+                      name: f.name,
+                      isHtml: f.isHtml,
+                      currentValue:
+                        inputRefs.current[`${l}.${f.name}`]?.value ??
+                        (t[f.name] ?? ""),
+                    }))}
+                    getSource={getEnSource}
+                    onTranslated={(tr) => applyTranslations(l, tr)}
+                  />
+                </>
+              )}
+
               <Field
                 label={l === "EN" ? "Title (required)" : "Title"}
                 hint={
@@ -165,6 +244,9 @@ export function PageForm({
                 error={err[`translations.${l}.title`]?.[0]}
               >
                 <input
+                  ref={(el) => {
+                    inputRefs.current[`${l}.title`] = el;
+                  }}
                   name={`translations.${l}.title`}
                   defaultValue={t.title}
                   className="input"
@@ -178,6 +260,9 @@ export function PageForm({
                 error={err[`translations.${l}.body`]?.[0]}
               >
                 <textarea
+                  ref={(el) => {
+                    inputRefs.current[`${l}.body`] = el;
+                  }}
                   name={`translations.${l}.body`}
                   defaultValue={t.body}
                   rows={16}
@@ -188,6 +273,9 @@ export function PageForm({
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="SEO title" hint="Shown in browser tabs and search results.">
                   <input
+                    ref={(el) => {
+                      inputRefs.current[`${l}.seoTitle`] = el;
+                    }}
                     name={`translations.${l}.seoTitle`}
                     defaultValue={t.seoTitle}
                     className="input"
@@ -199,6 +287,9 @@ export function PageForm({
                   hint="Meta description — under 160 chars ideally."
                 >
                   <input
+                    ref={(el) => {
+                      inputRefs.current[`${l}.seoDescription`] = el;
+                    }}
                     name={`translations.${l}.seoDescription`}
                     defaultValue={t.seoDescription}
                     className="input"

@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   AlertCircle,
@@ -24,9 +24,18 @@ import {
   updateIngredientAction,
   type ActionState,
 } from "@/app/admin/categories/actions";
+import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
 
 const INITIAL: ActionState = { ok: false };
 const LOCALES: Locale[] = [Locale.EN, Locale.NL, Locale.FR, Locale.RU];
+
+const TRANSLATABLE_FIELDS: ReadonlyArray<{
+  name: "displayName" | "description";
+  isHtml: boolean;
+}> = [
+  { name: "displayName", isHtml: false },
+  { name: "description", isHtml: true }, // shows on PDP, may carry HTML
+];
 
 export type IngredientFormInitial = {
   id?: string;
@@ -52,6 +61,28 @@ export function IngredientForm({
   );
   const err = state.fieldErrors ?? {};
   const [active, setActive] = useState<Locale>(Locale.EN);
+
+  const inputRefs = useRef<
+    Record<string, HTMLInputElement | HTMLTextAreaElement | null>
+  >({});
+
+  function getEnSource(): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const f of TRANSLATABLE_FIELDS) {
+      out[f.name] = inputRefs.current[`EN.${f.name}`]?.value ?? "";
+    }
+    return out;
+  }
+
+  function applyTranslations(
+    locale: Locale,
+    translations: Record<string, string>,
+  ) {
+    for (const [name, value] of Object.entries(translations)) {
+      const el = inputRefs.current[`${locale}.${name}`];
+      if (el) el.value = value;
+    }
+  }
 
   return (
     <form
@@ -100,11 +131,29 @@ export function IngredientForm({
               key={l}
               className={cn("space-y-5 pt-6", active !== l && "hidden")}
             >
+              {l !== Locale.EN && (
+                <TranslateFromEnglishButton
+                  targetLocale={l}
+                  fields={TRANSLATABLE_FIELDS.map((f) => ({
+                    name: f.name,
+                    isHtml: f.isHtml,
+                    currentValue:
+                      inputRefs.current[`${l}.${f.name}`]?.value ??
+                      (initial.translations[l]?.[f.name] ?? ""),
+                  }))}
+                  getSource={getEnSource}
+                  onTranslated={(tr) => applyTranslations(l, tr)}
+                />
+              )}
+
               <Field
                 label={`Display name (${l})`}
                 hint="What customers see. Leave blank to fall back to INCI."
               >
                 <input
+                  ref={(el) => {
+                    inputRefs.current[`${l}.displayName`] = el;
+                  }}
                   name={`translations.${l}.displayName`}
                   defaultValue={initial.translations[l]?.displayName ?? ""}
                   placeholder="e.g. Niacinamide (Vitamin B3)"
@@ -117,6 +166,9 @@ export function IngredientForm({
                 hint="Appears under the ingredient on product pages."
               >
                 <textarea
+                  ref={(el) => {
+                    inputRefs.current[`${l}.description`] = el;
+                  }}
                   name={`translations.${l}.description`}
                   rows={5}
                   defaultValue={initial.translations[l]?.description ?? ""}

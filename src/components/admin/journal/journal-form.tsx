@@ -8,7 +8,7 @@
 // the tabs. Body is a plain HTML textarea for now — swap in Tiptap later.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import {
   createJournalPostAction,
   updateJournalPostAction,
@@ -20,9 +20,23 @@ import {
   SaveBar,
   StatusBanner,
 } from "@/components/admin/settings/settings-chrome";
+import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
 import { cn } from "@/lib/utils";
 
 const LOCALES: Locale[] = [Locale.EN, Locale.NL, Locale.FR, Locale.RU];
+
+/** Fields we feed through DeepL. Slug is excluded — it's URL-shaped and
+ *  Sofia derives it from the translated title herself. */
+const TRANSLATABLE_FIELDS: ReadonlyArray<{
+  name: "title" | "excerpt" | "body" | "seoTitle" | "seoDescription";
+  isHtml: boolean;
+}> = [
+  { name: "title", isHtml: false },
+  { name: "excerpt", isHtml: false },
+  { name: "body", isHtml: true },
+  { name: "seoTitle", isHtml: false },
+  { name: "seoDescription", isHtml: false },
+];
 
 const INITIAL_STATE: ActionState = { ok: false };
 
@@ -88,6 +102,32 @@ export function JournalForm({
 
   const [activeLocale, setActiveLocale] = useState<Locale>("EN");
   const [status, setStatus] = useState<PostStatus>(data.status);
+
+  // Refs to every translatable input across all locales — keyed
+  // `${locale}.${field}`. The auto-translate button reads EN refs and
+  // writes into the target locale's refs. All locale panels are mounted
+  // (just hidden via CSS) so EN refs are always available.
+  const inputRefs = useRef<
+    Record<string, HTMLInputElement | HTMLTextAreaElement | null>
+  >({});
+
+  function getEnSource(): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const f of TRANSLATABLE_FIELDS) {
+      out[f.name] = inputRefs.current[`EN.${f.name}`]?.value ?? "";
+    }
+    return out;
+  }
+
+  function applyTranslations(
+    locale: Locale,
+    translations: Record<string, string>,
+  ) {
+    for (const [name, value] of Object.entries(translations)) {
+      const el = inputRefs.current[`${locale}.${name}`];
+      if (el) el.value = value;
+    }
+  }
 
   const needsPublishDate = status === "SCHEDULED" || status === "PUBLISHED";
 
@@ -223,6 +263,24 @@ export function JournalForm({
               className={on ? "space-y-3" : "hidden"}
               aria-hidden={!on}
             >
+              {/* Auto-translate button on every non-EN tab. Reads EN refs
+                  live (no save needed first — all locale panels are
+                  mounted, just hidden via CSS). */}
+              {l !== "EN" && (
+                <TranslateFromEnglishButton
+                  targetLocale={l}
+                  fields={TRANSLATABLE_FIELDS.map((f) => ({
+                    name: f.name,
+                    isHtml: f.isHtml,
+                    currentValue:
+                      inputRefs.current[`${l}.${f.name}`]?.value ??
+                      (t[f.name] ?? ""),
+                  }))}
+                  getSource={getEnSource}
+                  onTranslated={(tr) => applyTranslations(l, tr)}
+                />
+              )}
+
               <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
                 <Field
                   label={l === "EN" ? "Title (required)" : "Title"}
@@ -234,6 +292,9 @@ export function JournalForm({
                   error={err[`translations.${l}.title`]?.[0]}
                 >
                   <input
+                    ref={(el) => {
+                      inputRefs.current[`${l}.title`] = el;
+                    }}
                     name={`translations.${l}.title`}
                     defaultValue={t.title}
                     className="input"
@@ -260,6 +321,9 @@ export function JournalForm({
                 hint="One or two lines shown on the journal index and in metadata."
               >
                 <textarea
+                  ref={(el) => {
+                    inputRefs.current[`${l}.excerpt`] = el;
+                  }}
                   name={`translations.${l}.excerpt`}
                   defaultValue={t.excerpt}
                   rows={2}
@@ -274,6 +338,9 @@ export function JournalForm({
                 error={err[`translations.${l}.body`]?.[0]}
               >
                 <textarea
+                  ref={(el) => {
+                    inputRefs.current[`${l}.body`] = el;
+                  }}
                   name={`translations.${l}.body`}
                   defaultValue={t.body}
                   rows={14}
@@ -284,6 +351,9 @@ export function JournalForm({
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="SEO title" hint="Falls back to the post title.">
                   <input
+                    ref={(el) => {
+                      inputRefs.current[`${l}.seoTitle`] = el;
+                    }}
                     name={`translations.${l}.seoTitle`}
                     defaultValue={t.seoTitle}
                     className="input"
@@ -295,6 +365,9 @@ export function JournalForm({
                   hint="Shown in Google search results."
                 >
                   <input
+                    ref={(el) => {
+                      inputRefs.current[`${l}.seoDescription`] = el;
+                    }}
                     name={`translations.${l}.seoDescription`}
                     defaultValue={t.seoDescription}
                     className="input"

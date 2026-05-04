@@ -8,7 +8,7 @@
 // inline thumbnail grid, not a modal.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import {
   createBannerAction,
   updateBannerAction,
@@ -21,10 +21,20 @@ import {
   SaveBar,
   StatusBanner,
 } from "@/components/admin/settings/settings-chrome";
+import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
 import { MediaPicker, type PickerMedia } from "./media-picker";
 import { cn } from "@/lib/utils";
 
 const LOCALES: Locale[] = [Locale.EN, Locale.NL, Locale.FR, Locale.RU];
+
+const TRANSLATABLE_FIELDS: ReadonlyArray<{
+  name: "headline" | "subhead" | "ctaLabel";
+  isHtml: boolean;
+}> = [
+  { name: "headline", isHtml: false },
+  { name: "subhead", isHtml: false },
+  { name: "ctaLabel", isHtml: false },
+];
 
 const INITIAL_STATE: ActionState = { ok: false };
 
@@ -82,6 +92,28 @@ export function BannerForm({
   const err = state.fieldErrors ?? {};
 
   const [activeLocale, setActiveLocale] = useState<Locale>("EN");
+
+  const inputRefs = useRef<
+    Record<string, HTMLInputElement | HTMLTextAreaElement | null>
+  >({});
+
+  function getEnSource(): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const f of TRANSLATABLE_FIELDS) {
+      out[f.name] = inputRefs.current[`EN.${f.name}`]?.value ?? "";
+    }
+    return out;
+  }
+
+  function applyTranslations(
+    locale: Locale,
+    translations: Record<string, string>,
+  ) {
+    for (const [name, value] of Object.entries(translations)) {
+      const el = inputRefs.current[`${locale}.${name}`];
+      if (el) el.value = value;
+    }
+  }
 
   return (
     <form action={dispatch} className="max-w-3xl space-y-6">
@@ -168,6 +200,20 @@ export function BannerForm({
               className={on ? "space-y-3" : "hidden"}
               aria-hidden={!on}
             >
+              {l !== "EN" && (
+                <TranslateFromEnglishButton
+                  targetLocale={l}
+                  fields={TRANSLATABLE_FIELDS.map((f) => ({
+                    name: f.name,
+                    isHtml: f.isHtml,
+                    currentValue:
+                      inputRefs.current[`${l}.${f.name}`]?.value ??
+                      (t[f.name] ?? ""),
+                  }))}
+                  getSource={getEnSource}
+                  onTranslated={(tr) => applyTranslations(l, tr)}
+                />
+              )}
               <Field
                 label={l === "EN" ? "Headline (required)" : "Headline"}
                 hint={
@@ -178,6 +224,9 @@ export function BannerForm({
                 error={err[headlineErrKey]?.[0]}
               >
                 <input
+                  ref={(el) => {
+                    inputRefs.current[`${l}.headline`] = el;
+                  }}
                   name={`translations.${l}.headline`}
                   defaultValue={t.headline}
                   className="input"
@@ -186,6 +235,9 @@ export function BannerForm({
               </Field>
               <Field label="Subhead" hint="Optional secondary line under the headline.">
                 <textarea
+                  ref={(el) => {
+                    inputRefs.current[`${l}.subhead`] = el;
+                  }}
                   name={`translations.${l}.subhead`}
                   defaultValue={t.subhead}
                   rows={2}
@@ -195,6 +247,9 @@ export function BannerForm({
               </Field>
               <Field label="CTA label" hint='e.g. "Shop now", "Discover".'>
                 <input
+                  ref={(el) => {
+                    inputRefs.current[`${l}.ctaLabel`] = el;
+                  }}
                   name={`translations.${l}.ctaLabel`}
                   defaultValue={t.ctaLabel}
                   className="input max-w-xs"

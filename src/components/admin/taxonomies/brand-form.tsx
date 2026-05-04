@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   AlertCircle,
@@ -21,9 +21,18 @@ import {
   updateBrandAction,
   type ActionState,
 } from "@/app/admin/categories/actions";
+import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
 
 const INITIAL: ActionState = { ok: false };
 const LOCALES: Locale[] = [Locale.EN, Locale.NL, Locale.FR, Locale.RU];
+
+const TRANSLATABLE_FIELDS: ReadonlyArray<{
+  name: "tagline" | "story";
+  isHtml: boolean;
+}> = [
+  { name: "tagline", isHtml: false },
+  { name: "story", isHtml: true }, // hint says "supports basic HTML"
+];
 
 export type BrandFormInitial = {
   id?: string;
@@ -46,6 +55,28 @@ export function BrandForm({
   );
   const err = state.fieldErrors ?? {};
   const [active, setActive] = useState<Locale>(Locale.EN);
+
+  const inputRefs = useRef<
+    Record<string, HTMLInputElement | HTMLTextAreaElement | null>
+  >({});
+
+  function getEnSource(): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const f of TRANSLATABLE_FIELDS) {
+      out[f.name] = inputRefs.current[`EN.${f.name}`]?.value ?? "";
+    }
+    return out;
+  }
+
+  function applyTranslations(
+    locale: Locale,
+    translations: Record<string, string>,
+  ) {
+    for (const [name, value] of Object.entries(translations)) {
+      const el = inputRefs.current[`${locale}.${name}`];
+      if (el) el.value = value;
+    }
+  }
 
   return (
     <form
@@ -90,8 +121,26 @@ export function BrandForm({
               key={l}
               className={cn("space-y-5 pt-6", active !== l && "hidden")}
             >
+              {l !== Locale.EN && (
+                <TranslateFromEnglishButton
+                  targetLocale={l}
+                  fields={TRANSLATABLE_FIELDS.map((f) => ({
+                    name: f.name,
+                    isHtml: f.isHtml,
+                    currentValue:
+                      inputRefs.current[`${l}.${f.name}`]?.value ??
+                      (initial.translations[l]?.[f.name] ?? ""),
+                  }))}
+                  getSource={getEnSource}
+                  onTranslated={(tr) => applyTranslations(l, tr)}
+                />
+              )}
+
               <Field label="Tagline (optional)">
                 <input
+                  ref={(el) => {
+                    inputRefs.current[`${l}.tagline`] = el;
+                  }}
                   name={`translations.${l}.tagline`}
                   defaultValue={initial.translations[l]?.tagline ?? ""}
                   placeholder="One sentence above the brand story."
@@ -101,6 +150,9 @@ export function BrandForm({
 
               <Field label="Brand story (optional, supports basic HTML)">
                 <textarea
+                  ref={(el) => {
+                    inputRefs.current[`${l}.story`] = el;
+                  }}
                   name={`translations.${l}.story`}
                   rows={8}
                   defaultValue={initial.translations[l]?.story ?? ""}

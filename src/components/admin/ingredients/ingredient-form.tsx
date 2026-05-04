@@ -12,9 +12,14 @@
 //
 // Only EN is required. Other locales fall back to EN on the public site
 // (see getIngredientBySlug + listActiveIngredients).
+//
+// Each non-EN locale block has an "Auto-translate from English" button
+// (DeepL-backed). It reads the EN inputs that are sitting in the same
+// form (no save needed first — they're right there in the DOM) and
+// fills the locale's empty fields with translations.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { useActionState } from "react";
+import { useActionState, useRef } from "react";
 import { Locale } from "@prisma/client";
 import {
   createIngredientAction,
@@ -26,6 +31,7 @@ import {
   SaveBar,
   StatusBanner,
 } from "@/components/admin/settings/settings-chrome";
+import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
 
 const INITIAL_STATE: ActionState = { ok: false };
 
@@ -50,6 +56,17 @@ export type IngredientFormValues = {
   >;
 };
 
+/** Field keys we feed through DeepL. `displayName` and `description`
+ *  are both translatable; `description` carries HTML and gets the
+ *  tag_handling=html flag on the DeepL side. */
+const TRANSLATABLE_FIELDS: ReadonlyArray<{
+  key: "displayName" | "description";
+  isHtml: boolean;
+}> = [
+  { key: "displayName", isHtml: false },
+  { key: "description", isHtml: true },
+];
+
 export function IngredientForm({
   mode,
   values,
@@ -60,6 +77,28 @@ export function IngredientForm({
   const action =
     mode === "create" ? createIngredientAction : updateIngredientAction;
   const [state, dispatch] = useActionState(action, INITIAL_STATE);
+
+  // Refs to every translation input — keyed `${locale}.${field}` so the
+  // auto-translate button can read EN and write into a target locale
+  // without prop-drilling state. Inputs stay uncontrolled (defaultValue)
+  // for everything else; only the auto-translate button mutates them.
+  const inputRefs = useRef<
+    Record<string, HTMLInputElement | HTMLTextAreaElement | null>
+  >({});
+
+  function setInputValue(locale: Locale, key: string, value: string) {
+    const el = inputRefs.current[`${locale}.${key}`];
+    if (el) el.value = value;
+  }
+
+  function getEnSource(): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const f of TRANSLATABLE_FIELDS) {
+      const el = inputRefs.current[`${Locale.EN}.${f.key}`];
+      out[f.key] = el?.value ?? "";
+    }
+    return out;
+  }
 
   return (
     <form action={dispatch} className="space-y-10">
@@ -130,7 +169,9 @@ export function IngredientForm({
         <p className="-mt-1 mb-6 text-[12px] leading-relaxed text-ink-mid">
           English is required — it's the fallback for every visitor. For
           any other language, leave the display name blank to skip that
-          translation entirely.
+          translation entirely. Use the &ldquo;Translate from EN&rdquo;
+          button on each non-English block to auto-fill from your English
+          copy.
         </p>
 
         <div className="space-y-8">
@@ -145,14 +186,34 @@ export function IngredientForm({
                 key={locale}
                 className="border border-ink/5 bg-rice/20 p-5"
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between gap-3">
                   <div className="font-mono text-[11px] uppercase tracking-label text-ink-mid">
                     {LOCALE_LABEL[locale]}
                   </div>
-                  {isEn && (
+                  {isEn ? (
                     <span className="text-[10px] uppercase tracking-label text-vermilion">
                       Required
                     </span>
+                  ) : (
+                    <TranslateFromEnglishButton
+                      compact
+                      targetLocale={locale}
+                      fields={TRANSLATABLE_FIELDS.map((f) => ({
+                        name: f.key,
+                        isHtml: f.isHtml,
+                        currentValue:
+                          inputRefs.current[`${locale}.${f.key}`]?.value ??
+                          v[f.key],
+                      }))}
+                      getSource={getEnSource}
+                      onTranslated={(translations) => {
+                        for (const [key, value] of Object.entries(
+                          translations,
+                        )) {
+                          setInputValue(locale, key, value);
+                        }
+                      }}
+                    />
                   )}
                 </div>
 
@@ -167,6 +228,9 @@ export function IngredientForm({
                     error={errMsg(state, `translations.${locale}.displayName`)}
                   >
                     <input
+                      ref={(el) => {
+                        inputRefs.current[`${locale}.displayName`] = el;
+                      }}
                       name={`translations.${locale}.displayName`}
                       defaultValue={v.displayName}
                       maxLength={120}
@@ -181,6 +245,9 @@ export function IngredientForm({
                     error={errMsg(state, `translations.${locale}.description`)}
                   >
                     <textarea
+                      ref={(el) => {
+                        inputRefs.current[`${locale}.description`] = el;
+                      }}
                       name={`translations.${locale}.description`}
                       defaultValue={v.description}
                       rows={6}

@@ -19,8 +19,8 @@
 // `${field}.__void` carries the hide state.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { useActionState, useState } from "react";
-import { EyeOff } from "lucide-react";
+import { useActionState, useRef, useState, useTransition } from "react";
+import { EyeOff, Sparkles } from "lucide-react";
 import { Locale } from "@prisma/client";
 import {
   saveSectionAction,
@@ -31,6 +31,8 @@ import {
   SaveBar,
   StatusBanner,
 } from "@/components/admin/settings/settings-chrome";
+import { translateFieldsAction } from "@/app/admin/translate/actions";
+import { cn } from "@/lib/utils";
 
 const INITIAL_STATE: ActionState = { ok: false };
 
@@ -118,6 +120,15 @@ function FieldFieldset({
   const isLong = LONG_FIELDS.has(fb.field);
   const max = MAX_LENGTH[fb.field];
 
+  // Refs to each locale's input — used by the per-field "Translate from
+  // English" button to read EN and write into NL / FR / RU. The homepage
+  // editor stacks all 4 locales per field, so a single click translating
+  // all three target languages at once is the natural UX (versus the
+  // tabbed forms which translate one locale at a time).
+  const inputRefs = useRef<
+    Record<string, HTMLInputElement | HTMLTextAreaElement | null>
+  >({});
+
   return (
     <fieldset
       className={
@@ -165,6 +176,25 @@ function FieldFieldset({
         }
         aria-hidden={voided}
       >
+        {/* Translate from EN button — sits above the locale stack, fills
+            NL / FR / RU at once. Field-level (not section-level) so Sofia
+            can translate one card without touching others. */}
+        {!voided && (
+          <TranslateAllNonEnButton
+            fieldName={fb.field}
+            getEnValue={() => inputRefs.current[Locale.EN]?.value ?? ""}
+            setLocaleValue={(locale, value) => {
+              const el = inputRefs.current[locale];
+              if (el) el.value = value;
+            }}
+            getCurrentValueForLocale={(locale) =>
+              inputRefs.current[locale]?.value ??
+              fb.valueByLocale[locale] ??
+              ""
+            }
+          />
+        )}
+
         {locales.map((locale) => {
           const value = fb.valueByLocale[locale] ?? "";
           const fallback = fb.fallbackByLocale[locale] ?? "";
@@ -181,6 +211,9 @@ function FieldFieldset({
             >
               {isLong ? (
                 <textarea
+                  ref={(el) => {
+                    inputRefs.current[locale] = el;
+                  }}
                   name={name}
                   defaultValue={value}
                   placeholder={fallback}
@@ -191,6 +224,9 @@ function FieldFieldset({
                 />
               ) : (
                 <input
+                  ref={(el) => {
+                    inputRefs.current[locale] = el;
+                  }}
                   name={name}
                   defaultValue={value}
                   placeholder={fallback}
@@ -204,6 +240,151 @@ function FieldFieldset({
         })}
       </div>
     </fieldset>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// TranslateAllNonEnButton — fan-out variant. Calls the translate action
+// once per target locale (NL, FR, RU) in parallel. This is the only place
+// in the codebase where one click fills three locales at once — it fits
+// the per-field-card layout where all 4 locales are visible together.
+// ─────────────────────────────────────────────────────────────────────────
+
+const TARGET_LOCALES: Locale[] = [Locale.NL, Locale.FR, Locale.RU];
+const LOCALE_SHORT: Record<Locale, string> = {
+  EN: "EN",
+  NL: "NL",
+  FR: "FR",
+  RU: "RU",
+};
+
+function TranslateAllNonEnButton({
+  fieldName,
+  getEnValue,
+  setLocaleValue,
+  getCurrentValueForLocale,
+}: {
+  fieldName: string;
+  getEnValue: () => string;
+  setLocaleValue: (locale: Locale, value: string) => void;
+  getCurrentValueForLocale: (locale: Locale) => string;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [overwrite, setOverwrite] = useState(false);
+  const [message, setMessage] = useState<
+    | { kind: "ok"; text: string }
+    | { kind: "error"; text: string }
+    | null
+  >(null);
+
+  function run() {
+    setMessage(null);
+    const enValue = getEnValue().trim();
+    if (enValue.length === 0) {
+      setMessage({
+        kind: "ok",
+        text: "Fill in the English value first, then translate.",
+      });
+      return;
+    }
+
+    // Decide which target locales to actually hit. Skip ones already
+    // filled unless overwrite is on.
+    const targets = TARGET_LOCALES.filter((l) => {
+      if (overwrite) return true;
+      return getCurrentValueForLocale(l).trim().length === 0;
+    });
+
+    if (targets.length === 0) {
+      setMessage({
+        kind: "ok",
+        text: "Already translated. Tick 'Overwrite' to redo.",
+      });
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        // Three parallel calls — one per locale. Could batch into one
+        // call by extending the action to accept a multi-locale shape,
+        // but in practice 3 parallel HTTP calls to DeepL complete in
+        // ~1s and the action signature stays simple this way.
+        const results = await Promise.all(
+          targets.map((locale) =>
+            translateFieldsAction({
+              fields: {
+                [fieldName]: { value: enValue, isHtml: false },
+              },
+              targetLocale: locale,
+            }).then((r) => ({ locale, result: r })),
+          ),
+        );
+
+        const errors: string[] = [];
+        for (const { locale, result } of results) {
+          if (!result.ok) {
+            errors.push(`${LOCALE_SHORT[locale]}: ${result.message}`);
+            continue;
+          }
+          const translated = result.translations[fieldName];
+          if (typeof translated === "string") {
+            setLocaleValue(locale, translated);
+          }
+        }
+        if (errors.length > 0) {
+          setMessage({ kind: "error", text: errors.join(" · ") });
+        } else {
+          setMessage({
+            kind: "ok",
+            text: `Translated to ${targets.map((l) => LOCALE_SHORT[l]).join(", ")}. Review before saving.`,
+          });
+        }
+      } catch (err) {
+        setMessage({
+          kind: "error",
+          text:
+            err instanceof Error
+              ? err.message
+              : "Something went wrong calling the translator.",
+        });
+      }
+    });
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border border-dashed border-ink/20 bg-rice/30 px-3 py-2">
+      <button
+        type="button"
+        onClick={run}
+        disabled={pending}
+        className={cn(
+          "inline-flex items-center gap-1.5 border border-ink bg-white px-3 py-1 text-[10.5px] uppercase tracking-label text-ink transition-colors",
+          pending ? "opacity-60" : "hover:bg-ink hover:text-rice",
+        )}
+      >
+        <Sparkles className="h-3 w-3" aria-hidden />
+        {pending ? "Translating…" : "Translate EN → NL · FR · RU"}
+      </button>
+      <label className="inline-flex items-center gap-1.5 text-[10.5px] text-ink-mid">
+        <input
+          type="checkbox"
+          checked={overwrite}
+          onChange={(e) => setOverwrite(e.target.checked)}
+          className="h-3 w-3 accent-vermilion"
+        />
+        Overwrite
+      </label>
+      {message && (
+        <span
+          className={cn(
+            "text-[10.5px]",
+            message.kind === "error" ? "text-vermilion" : "text-ink-mid",
+          )}
+        >
+          {message.text}
+        </span>
+      )}
+    </div>
   );
 }
 

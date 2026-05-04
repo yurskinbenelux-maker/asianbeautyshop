@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   AlertCircle,
@@ -28,6 +28,7 @@ import {
   type ActionState,
 } from "@/app/admin/categories/actions";
 import type { SimpleTaxonomyKind } from "@/lib/queries/admin-taxonomies";
+import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
 
 const INITIAL: ActionState = { ok: false };
 const LOCALES: Locale[] = [Locale.EN, Locale.NL, Locale.FR, Locale.RU];
@@ -141,6 +142,22 @@ function EditForm({
   const err = state.fieldErrors ?? {};
   const [active, setActive] = useState<Locale>(Locale.EN);
 
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  function getEnSource(): Record<string, string> {
+    return { label: inputRefs.current[Locale.EN]?.value ?? "" };
+  }
+
+  function applyTranslations(
+    locale: Locale,
+    translations: Record<string, string>,
+  ) {
+    const el = inputRefs.current[locale];
+    if (el && typeof translations.label === "string") {
+      el.value = translations.label;
+    }
+  }
+
   return (
     <form action={action} className="space-y-5">
       <input type="hidden" name="kind" value={kind} />
@@ -169,11 +186,32 @@ function EditForm({
 
           {LOCALES.map((l) => (
             <div key={l} className={cn("pt-3", active !== l && "hidden")}>
+              {l !== Locale.EN && (
+                <div className="mb-3">
+                  <TranslateFromEnglishButton
+                    compact
+                    targetLocale={l}
+                    fields={[
+                      {
+                        name: "label",
+                        isHtml: false,
+                        currentValue:
+                          inputRefs.current[l]?.value ?? row.labels[l] ?? "",
+                      },
+                    ]}
+                    getSource={getEnSource}
+                    onTranslated={(tr) => applyTranslations(l, tr)}
+                  />
+                </div>
+              )}
               <label className="block">
                 <span className="mb-1 block text-[11px] uppercase tracking-label text-ink-mid">
                   Label ({l})
                 </span>
                 <input
+                  ref={(el) => {
+                    inputRefs.current[l] = el;
+                  }}
                   name={`translations.${l}.label`}
                   defaultValue={row.labels[l] ?? ""}
                   placeholder={

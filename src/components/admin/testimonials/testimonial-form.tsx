@@ -15,7 +15,7 @@
 // the dispatch wiring.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { useActionState } from "react";
+import { useActionState, useRef } from "react";
 import { Locale } from "@prisma/client";
 import {
   createTestimonialAction,
@@ -27,8 +27,18 @@ import {
   SaveBar,
   StatusBanner,
 } from "@/components/admin/settings/settings-chrome";
+import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
 
 const INITIAL_STATE: ActionState = { ok: false };
+
+const TRANSLATABLE_FIELDS: ReadonlyArray<{
+  name: "quote" | "authorName" | "productName";
+  isHtml: boolean;
+}> = [
+  { name: "quote", isHtml: false },
+  { name: "authorName", isHtml: false },
+  { name: "productName", isHtml: false },
+];
 
 const LOCALE_LABEL: Record<Locale, string> = {
   EN: "English",
@@ -61,6 +71,28 @@ export function TestimonialForm({
   // Shared action-state shape — both actions return the same contract.
   const action = mode === "create" ? createTestimonialAction : updateTestimonialAction;
   const [state, dispatch] = useActionState(action, INITIAL_STATE);
+
+  const inputRefs = useRef<
+    Record<string, HTMLInputElement | HTMLTextAreaElement | null>
+  >({});
+
+  function getEnSource(): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const f of TRANSLATABLE_FIELDS) {
+      out[f.name] = inputRefs.current[`EN.${f.name}`]?.value ?? "";
+    }
+    return out;
+  }
+
+  function applyTranslations(
+    locale: Locale,
+    translations: Record<string, string>,
+  ) {
+    for (const [name, value] of Object.entries(translations)) {
+      const el = inputRefs.current[`${locale}.${name}`];
+      if (el) el.value = value;
+    }
+  }
 
   return (
     <form action={dispatch} className="space-y-10">
@@ -151,14 +183,28 @@ export function TestimonialForm({
                 key={locale}
                 className="border border-ink/5 bg-rice/20 p-5"
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between gap-3">
                   <div className="font-mono text-[11px] uppercase tracking-label text-ink-mid">
                     {LOCALE_LABEL[locale]}
                   </div>
-                  {isEn && (
+                  {isEn ? (
                     <span className="text-[10px] uppercase tracking-label text-vermilion">
                       Required
                     </span>
+                  ) : (
+                    <TranslateFromEnglishButton
+                      compact
+                      targetLocale={locale}
+                      fields={TRANSLATABLE_FIELDS.map((f) => ({
+                        name: f.name,
+                        isHtml: f.isHtml,
+                        currentValue:
+                          inputRefs.current[`${locale}.${f.name}`]?.value ??
+                          (v[f.name] ?? ""),
+                      }))}
+                      getSource={getEnSource}
+                      onTranslated={(tr) => applyTranslations(locale, tr)}
+                    />
                   )}
                 </div>
 
@@ -169,6 +215,9 @@ export function TestimonialForm({
                     error={errMsg(state, `translations.${locale}.quote`)}
                   >
                     <textarea
+                      ref={(el) => {
+                        inputRefs.current[`${locale}.quote`] = el;
+                      }}
                       name={`translations.${locale}.quote`}
                       defaultValue={v.quote}
                       rows={3}
@@ -189,6 +238,9 @@ export function TestimonialForm({
                       error={errMsg(state, `translations.${locale}.authorName`)}
                     >
                       <input
+                        ref={(el) => {
+                          inputRefs.current[`${locale}.authorName`] = el;
+                        }}
                         name={`translations.${locale}.authorName`}
                         defaultValue={v.authorName}
                         maxLength={80}
@@ -201,6 +253,9 @@ export function TestimonialForm({
                       error={errMsg(state, `translations.${locale}.productName`)}
                     >
                       <input
+                        ref={(el) => {
+                          inputRefs.current[`${locale}.productName`] = el;
+                        }}
                         name={`translations.${locale}.productName`}
                         defaultValue={v.productName}
                         maxLength={80}
