@@ -18,7 +18,15 @@
 
 declare global {
   interface Window {
-    dataLayer?: Array<Record<string, unknown> | IArguments>;
+    /** GTM dataLayer accepts:
+     *   · plain objects (the canonical event-push form),
+     *   · IArguments (what gtag('config', ...) pushes under the hood),
+     *   · plain arrays (the same command tuple, just spelled out from a
+     *     React component where `arguments` isn't available).
+     *  The third form is what the consent-update listener uses. GTM's
+     *  command processor reads entry[0]/[1]/[2] regardless of whether
+     *  the entry is an Array or an arguments object. */
+    dataLayer?: Array<Record<string, unknown> | IArguments | unknown[]>;
   }
 }
 

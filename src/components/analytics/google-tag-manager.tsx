@@ -39,7 +39,6 @@ import Script from "next/script";
 import { useEffect } from "react";
 import {
   consentStateFromPrefs,
-  pushDataLayer,
   type ConsentState,
 } from "@/lib/analytics/dataLayer";
 import type { ConsentPrefs } from "@/lib/consent/types";
@@ -69,13 +68,13 @@ export function GoogleTagManager({ initialConsent }: Props) {
       }>).detail;
       if (!detail) return;
       const next: ConsentState = consentStateFromPrefs(detail);
-      // gtag('consent', 'update', { ... }) → dataLayer.push(arguments).
-      // We push the IArguments-shaped payload directly so the embedded
-      // `gtag()` shim doesn't need to be re-declared here.
-      pushDataLayer({
-        event: "yur_consent_update",
-      });
-      window.dataLayer?.push(["consent", "update", next] as unknown as Record<string, unknown>);
+      // gtag('consent', 'update', state) is `dataLayer.push(arguments)`
+      // under the hood — the entry that lands in dataLayer is array-like
+      // with index 0 = "consent", 1 = "update", 2 = state. We can't use
+      // `arguments` from a React handler, so we push the equivalent
+      // plain array. GTM's consent processor handles both shapes.
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push(["consent", "update", next]);
     }
 
     window.addEventListener("yur:consent-updated", onConsentUpdated);
