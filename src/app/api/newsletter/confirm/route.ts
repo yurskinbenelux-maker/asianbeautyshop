@@ -11,14 +11,15 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { NextResponse, type NextRequest } from "next/server";
-import { Locale } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { generateToken, hashToken } from "@/lib/newsletter/tokens";
-import {
-  mintWelcomeCoupon,
-  WELCOME_COUPON_PERCENT,
-} from "@/lib/newsletter/welcome-coupon";
-import { sendNewsletterWelcomeEmail } from "@/lib/email/newsletter-welcome";
+// Newsletter no longer carries a 10%-off coupon — that incentive moved
+// to account registration (see /lib/coupons/registration-welcome.ts +
+// the homepage RegisterWelcomePopup). The newsletter still works as a
+// double-opt-in subscriber list; we just don't hand out a coupon at
+// confirm-time anymore. mintWelcomeCoupon + sendNewsletterWelcomeEmail
+// stay in the codebase so Sofia can wire up a separate welcome email
+// later (e.g. for journal teasers) without rebuilding the plumbing.
 
 function localePath(locale: string | null | undefined, path: string): string {
   const l = (locale ?? "en").toLowerCase();
@@ -46,11 +47,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(invalidUrl);
   }
 
-  // Detect a genuine first-time confirmation. Re-clicking the link
-  // (or someone forwarding it to a friend) reuses the same token and
-  // we don't want to mint a fresh coupon on every replay.
-  const isFirstConfirm = sub.confirmedAt === null;
-
   // Rotate the token so the confirm link can't be reused, and stamp the
   // confirmedAt timestamp. The new tokenHash will be embedded in future
   // newsletter sends for one-click unsubscribe.
@@ -64,44 +60,9 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  // First-time confirm → mint a single-use 10% coupon and send the
-  // welcome email. Any failure here is non-blocking: we still want
-  // the user to land on /newsletter/confirmed even if Resend is down.
-  if (isFirstConfirm) {
-    void mintAndSendWelcome({
-      email: sub.email,
-      locale: (sub.locale as Locale | null) ?? Locale.EN,
-    });
-  }
-
   const confirmedUrl = new URL(
     localePath(sub.locale, "/newsletter/confirmed"),
     origin,
   );
   return NextResponse.redirect(confirmedUrl);
-}
-
-/**
- * Mint a fresh single-use coupon and send the welcome email. Wrapped
- * in its own function so the redirect path stays clean and so any
- * failure can be caught + logged without blocking the redirect.
- */
-async function mintAndSendWelcome(args: {
-  email: string;
-  locale: Locale;
-}): Promise<void> {
-  try {
-    const couponCode = await mintWelcomeCoupon();
-    await sendNewsletterWelcomeEmail({
-      email: args.email,
-      locale: args.locale,
-      couponCode,
-      percentOff: WELCOME_COUPON_PERCENT,
-    });
-  } catch (err) {
-    console.error(
-      "[newsletter/confirm] failed to mint+send welcome",
-      err,
-    );
-  }
 }

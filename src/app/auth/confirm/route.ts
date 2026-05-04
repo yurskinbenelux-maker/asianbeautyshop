@@ -37,6 +37,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { issueRegistrationWelcomeCoupon } from "@/lib/coupons/registration-welcome";
 
 // Whitelist of OTP types we accept. Mirrors Supabase's EmailOtpType union
 // — keeps a hostile querystring from passing a bogus type to verifyOtp.
@@ -88,7 +89,7 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.verifyOtp({
+  const { data, error } = await supabase.auth.verifyOtp({
     type,
     token_hash,
   });
@@ -101,6 +102,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(
       `${site}/sign-in?error=${encodeURIComponent(error.message)}`,
     );
+  }
+
+  // First-time signup confirmation → mint the welcome 10% coupon and
+  // email it. Idempotent (deterministic code per user.id), so a repeat
+  // click on the same confirm link is a no-op. Other OTP types
+  // (recovery, email_change, magiclink) deliberately don't issue —
+  // those aren't account-creation events.
+  //
+  // We deliberately don't await this: the redirect must always complete
+  // even if Resend or DB hiccups. Errors are logged inside the helper.
+  if (type === "signup" && data?.user?.id && data.user.email) {
+    void issueRegistrationWelcomeCoupon({
+      userId: data.user.id,
+      email: data.user.email,
+    });
   }
 
   return NextResponse.redirect(`${site}${safeNext()}`);

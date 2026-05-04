@@ -27,8 +27,9 @@ import { peekCartSummary } from "@/lib/cart/cart";
 import { getShopCategories } from "@/lib/queries/products";
 import { readSetting } from "@/lib/settings";
 import { CookieBanner } from "@/components/consent/cookie-banner";
-import { ExitIntentPopup } from "@/components/marketing/exit-intent-popup";
+import { RegisterWelcomePopup } from "@/components/marketing/register-welcome-popup";
 import { SwRegister } from "@/components/pwa/sw-register";
+import { getCurrentUser } from "@/lib/auth";
 import { readConsentCookie } from "@/lib/consent/consent";
 import { JsonLd } from "@/components/seo/json-ld";
 import { organizationJsonLd, websiteJsonLd, siteOrigin } from "@/lib/seo/json-ld";
@@ -155,6 +156,14 @@ export default async function LocaleLayout({ children, params }: Props) {
   // returning visitors — no flash of "we use cookies" on every page view.
   const consent = await readConsentCookie();
 
+  // Whether the visitor is already a registered customer. The on-load
+  // welcome popup uses this flag to suppress itself for signed-in
+  // accounts (no point dangling a "create account" CTA at someone who
+  // already has one). getCurrentUser is cheap — reads the Supabase
+  // session cookie and looks up the matching Prisma User by email.
+  const currentUser = await getCurrentUser();
+  const isSignedIn = currentUser !== null;
+
   // Fetch the canonical category list once at the layout level — the
   // header's SHOP hover menu uses it on every page, and the layout is
   // the cheapest level to fetch from (one DB read per request rather
@@ -207,11 +216,14 @@ export default async function LocaleLayout({ children, params }: Props) {
               <ConciergeOrb />
               <CartDrawer />
               <CookieBanner initialHasConsent={consent !== null} />
-              {/* Exit-intent — funnels into the same newsletter pipeline
-                  as the footer form, so the welcome email + 10% coupon
-                  flow lights up automatically. Self-suppresses on
-                  cart/checkout/account/admin and after dismissal. */}
-              <ExitIntentPopup />
+              {/* Welcome popup — fires 3s after first paint on public
+                  pages, offers 10% off in exchange for account
+                  registration (replaces the older newsletter-coupon
+                  flow). Self-suppresses for signed-in users, on auth /
+                  admin / cart / checkout routes, and for 14 days after
+                  dismissal. English-only on purpose — the popup needs
+                  to convert before the user picks a language. */}
+              <RegisterWelcomePopup isSignedIn={isSignedIn} />
               {/* PWA — registers /sw.js once on production paint so the
                   brand PNG icons + Next static chunks get cached. Skips
                   localhost so dev-mode hot-reload isn't poisoned. */}
