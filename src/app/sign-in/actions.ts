@@ -31,11 +31,17 @@ export async function sendMagicLink(
 
   const supabase = await createSupabaseServerClient();
 
-  // Build an absolute callback URL; Supabase needs it on the server side.
+  // Build an absolute URL pointing at the post-verification destination.
+  // We deliberately do NOT include /auth/callback in this string — the
+  // branded magic-link email template uses our token-hash flow (route
+  // /auth/confirm) and consumes {{ .RedirectTo }} as a plain `next`
+  // target. Supabase still uses this value for its own redirect-allow-
+  // list check, so the safe `https://yurskinsolution.eu/...` shape
+  // matters.
   const site =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
     "http://localhost:3000";
-  const emailRedirectTo = `${site}/auth/callback?next=${encodeURIComponent(next)}`;
+  const emailRedirectTo = `${site}${next}`;
 
   const { error } = await supabase.auth.signInWithOtp({
     email,

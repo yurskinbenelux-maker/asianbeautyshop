@@ -23,6 +23,15 @@ import {
   buildAuthConfirmEmail,
   buildAuthConfirmEmailMultiLocale,
 } from "@/lib/email/auth-confirm";
+import { buildAuthMagicLinkEmail } from "@/lib/email/auth-magic-link";
+import {
+  buildAuthResetPasswordEmail,
+  buildAuthResetPasswordEmailMultiLocale,
+} from "@/lib/email/auth-reset-password";
+import {
+  buildAuthChangeEmailEmail,
+  buildAuthChangeEmailEmailMultiLocale,
+} from "@/lib/email/auth-change-email";
 import {
   fixtureAbandonedCart,
   fixtureLowStockReport,
@@ -86,6 +95,66 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     localised: false,
     render: () => {
       const r = buildAuthConfirmEmailMultiLocale();
+      return { subject: r.subject, html: r.html, text: r.text };
+    },
+  },
+  {
+    key: "auth-magic-link",
+    label: "Admin sign-in (magic link)",
+    description:
+      "Sent when an admin types their email at /sign-in. EN-only — admins are Belgium-based and signInWithOtp doesn't accept locale metadata. Paste this HTML into Supabase → Authentication → Email Templates → Magic link.",
+    audience: "admin",
+    localised: false,
+    render: () => {
+      const r = buildAuthMagicLinkEmail();
+      return { subject: r.subject, html: r.html, text: r.text };
+    },
+  },
+  {
+    key: "auth-reset-password",
+    label: "Reset password (per-locale preview)",
+    description:
+      "Per-locale preview only — the multilingual entry below is what actually goes into Supabase.",
+    audience: "customer",
+    localised: true,
+    render: (locale) => {
+      const r = buildAuthResetPasswordEmail(locale);
+      return { subject: r.subject, html: r.html, text: r.text };
+    },
+  },
+  {
+    key: "auth-reset-password-multilingual",
+    label: "Reset password (multilingual)",
+    description:
+      "Paste this HTML into Supabase → Authentication → Email Templates → Reset password. Contains all 4 languages; Supabase picks one based on the customer's signup locale.",
+    audience: "customer",
+    localised: false,
+    render: () => {
+      const r = buildAuthResetPasswordEmailMultiLocale();
+      return { subject: r.subject, html: r.html, text: r.text };
+    },
+  },
+  {
+    key: "auth-change-email",
+    label: "Change email address (per-locale preview)",
+    description:
+      "Per-locale preview only — the multilingual entry below is what actually goes into Supabase.",
+    audience: "customer",
+    localised: true,
+    render: (locale) => {
+      const r = buildAuthChangeEmailEmail(locale);
+      return { subject: r.subject, html: r.html, text: r.text };
+    },
+  },
+  {
+    key: "auth-change-email-multilingual",
+    label: "Change email address (multilingual)",
+    description:
+      "Paste this HTML into Supabase → Authentication → Email Templates → Change email address. Contains all 4 languages; Supabase picks one based on the customer's signup locale.",
+    audience: "customer",
+    localised: false,
+    render: () => {
+      const r = buildAuthChangeEmailEmailMultiLocale();
       return { subject: r.subject, html: r.html, text: r.text };
     },
   },

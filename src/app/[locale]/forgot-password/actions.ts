@@ -40,13 +40,20 @@ export async function sendResetLinkAction(
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
     "http://localhost:3000";
 
-  // After the user clicks the reset link in their email, Supabase routes
-  // them to /auth/callback?code=… which exchanges for a session, then
-  // bounces to /[locale]/reset-password where they can set a new password.
+  // After the user clicks the reset link in their email, the branded
+  // template (in Supabase) routes them to our /auth/confirm route with
+  // type=recovery + the token_hash. /auth/confirm calls verifyOtp,
+  // which mints the recovery session, then redirects to `next` —
+  // /[locale]/reset-password where the customer sets a new password.
+  //
+  // We pass the locale-aware path as `redirectTo` (NOT a /auth/callback
+  // URL) so Supabase surfaces it as `{{ .RedirectTo }}` in the email
+  // template. Supabase still validates this against its redirect
+  // allow-list — yurskinsolution.eu/** is already permitted there.
   const next = `/${parsed.data.locale}/reset-password`;
 
   await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${site}/auth/callback?next=${encodeURIComponent(next)}`,
+    redirectTo: `${site}${next}`,
   });
 
   // Don't reveal whether the email exists — always confirm.
