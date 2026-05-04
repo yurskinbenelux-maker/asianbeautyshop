@@ -81,6 +81,14 @@ export async function signUpAction(
       data: {
         first_name: parsed.data.firstName,
         last_name: parsed.data.lastName,
+        // Locale picked at signup — surfaced to Supabase email
+        // templates as `{{ .Data.locale }}`. The "Confirm signup"
+        // template uses a Go conditional to render the right
+        // language. ensureUserProfile mirrors this to
+        // user.preferredLocale so every Resend-sent email post-signup
+        // (order confirmation, shipped, abandoned cart, etc.) picks
+        // up the same value automatically.
+        locale: parsed.data.locale,
       },
     },
   });

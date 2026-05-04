@@ -20,6 +20,10 @@ import { buildReviewRequestEmail } from "@/lib/email/review-request";
 import { buildAbandonedCartEmail } from "@/lib/email/abandoned-cart";
 import { buildLowStockEmail } from "@/lib/email/low-stock-alert";
 import {
+  buildAuthConfirmEmail,
+  buildAuthConfirmEmailMultiLocale,
+} from "@/lib/email/auth-confirm";
+import {
   fixtureAbandonedCart,
   fixtureLowStockReport,
   fixtureOrder,
@@ -61,6 +65,30 @@ export type EmailTemplate = {
  * admin). Grouping handled in the page itself.
  */
 export const EMAIL_TEMPLATES: EmailTemplate[] = [
+  {
+    key: "auth-confirm",
+    label: "Account confirmation (per-locale preview)",
+    description:
+      "Per-locale preview of the YU.R-branded confirm-signup email. Supabase only ships ONE template at a time — for production, use the 'Account confirmation (multilingual)' entry below instead.",
+    audience: "customer",
+    localised: true,
+    render: (locale) => {
+      const r = buildAuthConfirmEmail(locale);
+      return { subject: r.subject, html: r.html, text: r.text };
+    },
+  },
+  {
+    key: "auth-confirm-multilingual",
+    label: "Account confirmation (multilingual)",
+    description:
+      "THIS is the version you paste into Supabase → Authentication → Email Templates → Confirm signup. It contains all 4 languages wrapped in Go-template conditionals; Supabase picks the right one at send time based on the customer's signup locale (defaults to EN if unknown). Mustache tokens like {{ .TokenHash }} appear unrendered in this preview — that's expected.",
+    audience: "customer",
+    localised: false,
+    render: () => {
+      const r = buildAuthConfirmEmailMultiLocale();
+      return { subject: r.subject, html: r.html, text: r.text };
+    },
+  },
   {
     key: "order-confirmation",
     label: "Order confirmation",

@@ -148,10 +148,26 @@ const STRINGS: Record<Locale, Strings> = {
 // These get replaced by Supabase at send time. We use sentinels in our
 // HTML composer (which goes through esc()) and swap them for the real
 // tokens at the very end. See PLACEHOLDER STRATEGY note above.
+//
+// We deliberately DON'T use {{ .ConfirmationURL }} — that resolves to
+// `https://<project>.supabase.co/auth/v1/verify?...` which (a) looks
+// like a phishing redirect to customers and (b) puts us on Supabase's
+// PKCE flow which is fragile across browsers and pre-fetches.
+//
+// Instead, the URL points at our own /auth/confirm route on
+// yurskinsolution.eu. Supabase substitutes:
+//   {{ .SiteURL }}    → "https://yurskinsolution.eu"
+//   {{ .TokenHash }}  → the email-token hash for verifyOtp()
+//   {{ .RedirectTo }} → whatever emailRedirectTo we set in signUp() —
+//                       in our case the locale-aware /[locale]/account URL
+//
+// Our /auth/confirm route handler does the verifyOtp call and 302s
+// the customer to the `next` query param.
 const URL_SENTINEL = "__SUPABASE_CONFIRM_URL__";
 const EMAIL_SENTINEL = "__SUPABASE_EMAIL__";
 
-const MUSTACHE_URL = "{{ .ConfirmationURL }}";
+const MUSTACHE_URL =
+  "{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next={{ .RedirectTo }}";
 const MUSTACHE_EMAIL = "{{ .Email }}";
 
 // ────────── Public API ──────────────────────────────────────────────────
@@ -256,4 +272,139 @@ export function buildAuthConfirmEmail(locale: Locale): AuthConfirmRendered {
   ].join("\n");
 
   return { subject: s.subject, html, text };
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Multi-locale variant — Supabase Go-template conditionals
+// ──────────────────────────────────────────────────────────────────────────
+//
+// Supabase email templates run through Go's text/template engine, which
+// supports `{{ if eq .Field "value" }}…{{ end }}` conditionals. We pass
+// the customer's locale via signUp's `data.locale` field — accessible
+// in the template as `{{ index .Data "locale" }}`.
+//
+// Strategy: compose a single big HTML doc where each translated string
+// is wrapped in:
+//
+//   {{ if eq (index .Data "locale") "ru" }}<russian>{{ else if eq … }}…
+//   {{ else }}<english default>{{ end }}
+//
+// The template still has all 4 languages baked in; Supabase renders the
+// matching arm at send time. EN is the `else` branch — used both when
+// the user picked "en" AND when locale is missing entirely (e.g. an
+// older account that signed up before we added the metadata).
+
+type LocalisedKey = keyof Strings;
+
+/**
+ * Wrap a per-key string set in a Go-template if/else chain.
+ * EN is the default fallback so anyone without a locale value still
+ * gets a readable email.
+ */
+function localised(key: LocalisedKey): string {
+  const en = STRINGS.EN[key];
+  const nl = STRINGS.NL[key];
+  const fr = STRINGS.FR[key];
+  const ru = STRINGS.RU[key];
+  // Go template syntax — Supabase substitutes at send time. The strings
+  // we drop in are pre-escaped via esc() to keep & < > safe in HTML.
+  return [
+    `{{ if eq (index .Data "locale") "ru" }}${esc(ru)}`,
+    `{{ else if eq (index .Data "locale") "nl" }}${esc(nl)}`,
+    `{{ else if eq (index .Data "locale") "fr" }}${esc(fr)}`,
+    `{{ else }}${esc(en)}{{ end }}`,
+  ].join("");
+}
+
+/**
+ * Same as buildAuthConfirmEmail but produces a SINGLE HTML doc that
+ * switches all four languages at Supabase send time. This is what we
+ * actually paste into Supabase — covers every customer regardless of
+ * the locale they picked at signup, with EN as a graceful default.
+ *
+ * The subject line is tricky: Supabase only allows ONE subject. We pick
+ * EN — short, recognisable, the most likely default for a Belgium-based
+ * shop. The body is fully localised so the email itself reads correctly.
+ */
+export function buildAuthConfirmEmailMultiLocale(): AuthConfirmRendered {
+  const body = `
+    <h1 style="margin:24px 0 16px 0;font-family:Georgia,serif;font-size:32px;line-height:1.2;color:#121110;font-weight:400;">
+      ${localised("heading")}
+    </h1>
+    <p style="margin:0 0 24px 0;font-size:15px;line-height:1.7;color:#3D3935;">
+      ${localised("lede")}
+    </p>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 28px 0;">
+      <tr>
+        <td style="background:#1A1A1A;">
+          <a href="${URL_SENTINEL}"
+             style="display:inline-block;padding:14px 26px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;letter-spacing:0.22em;text-transform:uppercase;color:#FBF7EF;text-decoration:none;">
+            ${localised("cta")}
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:24px 0 8px 0;font-size:12px;line-height:1.6;color:#6F6A65;">
+      ${localised("fallbackIntro")}
+    </p>
+    <p style="margin:0 0 8px 0;font-size:12px;line-height:1.6;word-break:break-all;">
+      <a href="${URL_SENTINEL}" style="color:#C8102E;text-decoration:underline;">${URL_SENTINEL}</a>
+    </p>
+    <p style="margin:0 0 28px 0;font-size:11px;line-height:1.6;color:#8A8A8A;font-style:italic;">
+      ${localised("expiry")}
+    </p>
+
+    <hr style="border:none;border-top:1px solid rgba(26,26,26,0.08);margin:28px 0 20px 0;" />
+
+    <p style="margin:0 0 8px 0;font-size:13px;line-height:1.6;color:#3D3935;font-weight:500;">
+      ${localised("notYouHeading")}
+    </p>
+    <p style="margin:0 0 28px 0;font-size:13px;line-height:1.6;color:#6F6A65;">
+      ${localised("notYouBody")}
+    </p>
+
+    <p style="margin:32px 0 0 0;font-size:13px;line-height:1.6;color:#3D3935;white-space:pre-line;">
+      ${localised("signoff")}
+    </p>
+  `;
+
+  // Shell `lang` attribute — we pick EN since the doc itself contains
+  // every language. Mail clients use this for hyphenation only.
+  const shell = renderEmailShell({
+    title: STRINGS.EN.subject,
+    preheader: STRINGS.EN.preheader,
+    lang: "en",
+    body,
+    footerNote: STRINGS.EN.footer,
+  });
+
+  const html = shell
+    .replaceAll(URL_SENTINEL, MUSTACHE_URL)
+    .replaceAll(EMAIL_SENTINEL, MUSTACHE_EMAIL);
+
+  // Plain-text fallback also gets the conditional treatment so the
+  // text-only client of a Russian customer still reads in Russian.
+  const text = [
+    localised("heading"),
+    "",
+    localised("lede"),
+    "",
+    `${localised("cta")}: ${MUSTACHE_URL}`,
+    "",
+    localised("expiry"),
+    "",
+    `${localised("notYouHeading")} ${localised("notYouBody")}`,
+    "",
+    localised("signoff").replace(/\n/g, " — "),
+    "",
+    localised("footer"),
+  ].join("\n");
+
+  return {
+    subject: STRINGS.EN.subject,
+    html,
+    text,
+  };
 }
