@@ -103,7 +103,9 @@ export default async function CheckoutSuccessPage({
             },
           },
           variant: {
-            select: { name: true },
+            // ProductVariant.label is the customer-facing string like
+            // "50 ml" / "Travel size" — what GA4 expects in item_variant.
+            select: { label: true },
           },
         },
       },
@@ -142,7 +144,7 @@ export default async function CheckoutSuccessPage({
           quantity: item.quantity,
           item_category: item.product?.categories[0]?.category.slug,
           item_brand: item.product?.productLine ?? "YU.R",
-          item_variant: item.variant?.name,
+          item_variant: item.variant?.label,
         })),
       }
     : null;
