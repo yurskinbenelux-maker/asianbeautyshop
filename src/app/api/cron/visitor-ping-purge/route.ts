@@ -10,9 +10,9 @@
 // At 5,000 visitors/day a row each, the table would otherwise grow by
 // ~1.5M rows/year. Daily purge keeps it under ~10K rows at any time.
 //
-// Schedule via Hostinger cron jobs:
+// Schedule via cron-job.org:
 //   0 4 * * *   GET https://yurskinsolution.eu/api/cron/visitor-ping-purge
-//   Header:     x-cron-secret: $CRON_SECRET
+//   Header:     Authorization: Bearer $CRON_SECRET
 // ─────────────────────────────────────────────────────────────────────────
 
 import { NextResponse, type NextRequest } from "next/server";
@@ -22,11 +22,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  // Same secret-header pattern every other cron uses — see
-  // src/app/api/cron/* for the convention.
-  const provided = req.headers.get("x-cron-secret");
-  const expected = process.env.CRON_SECRET;
-  if (!expected || provided !== expected) {
+  // Authorization: Bearer <CRON_SECRET> — matches the convention used by
+  // every other route under /api/cron/* (low-stock, abandoned-carts,
+  // replenishment, birthday, etc.). The shared helper would be nice
+  // long-term; for now we inline the check.
+  const secret = process.env.CRON_SECRET;
+  const auth = req.headers.get("authorization") ?? "";
+  if (!secret || auth !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "unauthorised" }, { status: 401 });
   }
 
