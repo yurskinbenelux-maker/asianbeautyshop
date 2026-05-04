@@ -23,6 +23,7 @@ import { formatEur, priceLocale } from "@/lib/utils";
 import { syncByPublicNumber } from "@/lib/checkout/sync-mollie";
 import { Link } from "@/i18n/routing";
 import { Check, Clock } from "lucide-react";
+import { PurchaseTracker } from "@/components/analytics/purchase-tracker";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -59,6 +60,13 @@ export default async function CheckoutSuccessPage({
   await syncByPublicNumber(publicNumber);
 
   // 2. Re-read the fresh order state.
+  //    We pull the line items + tax/shipping/coupon too — the success
+  //    page renders only the totals visually, but the analytics
+  //    PurchaseTracker needs the full breakdown to push a GA4-shaped
+  //    `purchase` event for both GA4 ecommerce reports and the Google
+  //    Ads conversion. Skipping the join would mean GA4 sees revenue
+  //    but no items, which breaks the product-performance reports
+  //    Sofia will care about most.
   const order = await prisma.order.findUnique({
     where: { publicNumber },
     select: {
@@ -67,9 +75,34 @@ export default async function CheckoutSuccessPage({
       email: true,
       status: true,
       paymentStatus: true,
+      subtotal: true,
+      taxTotal: true,
+      shippingTotal: true,
       grandTotal: true,
       currency: true,
+      couponCode: true,
       molliePaymentUrl: true,
+      items: {
+        select: {
+          quantity: true,
+          unitPrice: true,
+          nameSnapshot: true,
+          skuSnapshot: true,
+          product: {
+            select: {
+              slug: true,
+              productLine: true,
+              categories: {
+                select: { category: { select: { slug: true } } },
+                take: 1,
+              },
+            },
+          },
+          variant: {
+            select: { name: true },
+          },
+        },
+      },
     },
   });
 
@@ -81,8 +114,41 @@ export default async function CheckoutSuccessPage({
   const paid = order.paymentStatus === PaymentStatus.PAID;
   const grandTotalEur = Number(order.grandTotal);
 
+  // Build the GA4 purchase payload from the order. We only fire when
+  // paymentStatus === PAID — pending / failed orders are not conversions
+  // and would otherwise inflate Smart Bidding's signal. Idempotency is
+  // already handled at the GA4 + Ads side via `transaction_id`, but the
+  // PurchaseTracker also guards against double-fire in dev (Strict Mode).
+  const purchasePayload = paid
+    ? {
+        transaction_id: order.publicNumber,
+        value: grandTotalEur,
+        tax: Number(order.taxTotal ?? 0),
+        shipping: Number(order.shippingTotal ?? 0),
+        currency: order.currency || "EUR",
+        coupon: order.couponCode ?? undefined,
+        items: order.items.map((item) => ({
+          // Prefer product slug as item_id — stable, human-readable in
+          // GA4 reports. Falls back to SKU snapshot if a product was
+          // deleted between order placement and now (rare, but the
+          // success page must not throw).
+          item_id: item.product?.slug ?? item.skuSnapshot,
+          item_name: item.nameSnapshot,
+          price: Number(item.unitPrice),
+          quantity: item.quantity,
+          item_category: item.product?.categories[0]?.category.slug,
+          item_brand: item.product?.productLine ?? "YU.R",
+          item_variant: item.variant?.name,
+        })),
+      }
+    : null;
+
   return (
     <section className="mx-auto max-w-2xl px-6 pb-24 pt-20 text-center md:px-10">
+      {/* GA4 + Google Ads conversion. Renders only when the order is
+          confirmed PAID; the component itself is a render-null sink that
+          fires `dataLayer.push({event: 'purchase', ...})` once on mount. */}
+      {purchasePayload ? <PurchaseTracker {...purchasePayload} /> : null}
       <div
         aria-hidden
         className={

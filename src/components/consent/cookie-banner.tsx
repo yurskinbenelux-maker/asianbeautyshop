@@ -104,6 +104,16 @@ export function CookieBanner({
       const result = await recordConsentAction(choice);
       if (result.ok) {
         setVisible(false);
+        // Fan-out the new consent state to anything listening — the
+        // GoogleTagManager component picks this up and pushes the
+        // matching Consent Mode v2 update to gtag, so GA4 / Ads
+        // immediately start (or stop) honouring the user's choice
+        // without waiting for the next page navigation.
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("yur:consent-updated", { detail: choice }),
+          );
+        }
       }
       // If the server rejected the call we stay open silently — the user
       // can try again. We don't toast-error here because the banner is

@@ -29,6 +29,7 @@ import { readSetting } from "@/lib/settings";
 import { CookieBanner } from "@/components/consent/cookie-banner";
 import { RegisterWelcomePopup } from "@/components/marketing/register-welcome-popup";
 import { SwRegister } from "@/components/pwa/sw-register";
+import { GoogleTagManager } from "@/components/analytics/google-tag-manager";
 import { getCurrentUser } from "@/lib/auth";
 import { readConsentCookie } from "@/lib/consent/consent";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -187,6 +188,17 @@ export default async function LocaleLayout({ children, params }: Props) {
       className={`${fraunces.variable} ${notoKR.variable} ${inter.variable}`}
     >
       <body className="min-h-screen">
+        {/* Google Tag Manager + Consent Mode v2 — loads as early as
+            possible so the privacy-safe defaults are in place before
+            any tag fires. The component itself decides whether to
+            actually emit script tags based on NEXT_PUBLIC_GTM_ID +
+            the user's saved consent. Loading order:
+              1. Push consent defaults (all denied except necessary)
+              2. If a consent cookie exists, push the user's choice
+              3. Load the GTM container script
+            All three happen synchronously inside two Next.js Script
+            tags with strategy="afterInteractive". */}
+        <GoogleTagManager initialConsent={consent} />
         {/* Sitewide schema.org blocks — identifies the organisation and
             primes the sitelinks search box. Emitted once per page via the
             root layout so every route benefits. */}
