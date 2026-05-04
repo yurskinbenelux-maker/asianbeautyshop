@@ -9,7 +9,14 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
-import { Plus, Sparkles, AlertTriangle, Beaker } from "lucide-react";
+import {
+  Plus,
+  Sparkles,
+  AlertTriangle,
+  Beaker,
+  Upload,
+  Download,
+} from "lucide-react";
 import { listAdminIngredients } from "@/lib/queries/admin-ingredients";
 import { requireCapability } from "@/lib/auth-roles";
 import { toggleIngredientFlagAction } from "./actions";
@@ -43,13 +50,34 @@ export default async function AdminIngredientsPage() {
             product detail pages.
           </p>
         </div>
-        <Link
-          href="/admin/ingredients/new"
-          className="inline-flex items-center gap-2 border border-ink bg-ink px-4 py-2 text-[12px] uppercase tracking-label text-white hover:bg-ink/90"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          New ingredient
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* CSV export — produces a downloadable snapshot of every
+              ingredient + its 4-locale translations. Common workflow:
+              export → enrich missing descriptions in a spreadsheet (or
+              hand to an LLM) → re-import. */}
+          <a
+            href="/admin/ingredients/export"
+            className="inline-flex items-center gap-2 border border-ink/15 bg-white/60 px-3 py-2 text-[12px] uppercase tracking-label text-ink-mid transition-colors hover:border-ink hover:text-ink"
+            title="Download every ingredient as CSV"
+          >
+            <Download className="h-3.5 w-3.5" aria-hidden />
+            Export
+          </a>
+          <Link
+            href="/admin/ingredients/import"
+            className="inline-flex items-center gap-2 border border-ink/15 bg-white/60 px-3 py-2 text-[12px] uppercase tracking-label text-ink-mid transition-colors hover:border-ink hover:text-ink"
+          >
+            <Upload className="h-3.5 w-3.5" aria-hidden />
+            Import
+          </Link>
+          <Link
+            href="/admin/ingredients/new"
+            className="inline-flex items-center gap-2 border border-ink bg-ink px-4 py-2 text-[12px] uppercase tracking-label text-white hover:bg-ink/90"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New ingredient
+          </Link>
+        </div>
       </header>
 
       {rows.length === 0 ? (
