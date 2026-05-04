@@ -27,6 +27,10 @@ import {
   parseProductCsv,
   type ValidatedRow,
 } from "@/lib/admin/product-csv";
+import {
+  ensureIngredients,
+  deslugifyToTitle,
+} from "@/lib/admin/ingredient-upsert";
 
 // ────────── public result types (JSON-safe) ──────────────────────────────
 
@@ -205,8 +209,12 @@ export async function previewProductImport(
       (s) => !ingredientSet.has(s),
     );
     if (missingIngs.length) {
+      // Unlike the other taxonomy types we DO auto-create missing
+      // ingredients on commit (so the master library grows organically
+      // when Sofia imports a new K-beauty supplier sheet). Surface this
+      // as an info-style warning so she knows what's about to happen.
       warnings.push(
-        `ingredients not found: ${missingIngs.join(", ")} — will be skipped`,
+        `ingredients will be auto-created in the master library: ${missingIngs.join(", ")}`,
       );
     }
     const missingBens = row.benefitSlugs.filter((s) => !benefitSet.has(s));
@@ -347,6 +355,29 @@ export async function commitProductImport(
   const benefitIdBySlug = new Map(benefits.map((b) => [b.slug, b.id]));
   const skinTypeIdBySlug = new Map(skinTypes.map((s) => [s.slug, s.id]));
   const concernIdBySlug = new Map(concerns.map((c) => [c.slug, c.id]));
+
+  // Auto-grow the master Ingredient library. Any slug from the CSV that
+  // doesn't exist yet gets a stub Ingredient + EN translation row so the
+  // ProductIngredient links land properly. Sofia can refine the
+  // displayName / description / extra locales from /admin/ingredients
+  // afterwards. We only do this for ingredients (not the other
+  // taxonomies) because INCI lists arrive in bulk from supplier sheets,
+  // whereas categories / benefits / skin types / concerns are a small
+  // curated set Sofia maintains by hand.
+  const missingIngredientSlugs = allIngredientSlugs.filter(
+    (s) => !ingredientIdBySlug.has(s),
+  );
+  if (missingIngredientSlugs.length > 0) {
+    const upserted = await ensureIngredients(
+      missingIngredientSlugs.map((slug) => ({
+        slug,
+        inciName: deslugifyToTitle(slug),
+      })),
+    );
+    for (const [slug, id] of upserted) {
+      ingredientIdBySlug.set(slug, id);
+    }
+  }
 
   let created = 0;
   let updated = 0;

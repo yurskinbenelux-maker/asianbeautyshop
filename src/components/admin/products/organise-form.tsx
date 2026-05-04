@@ -302,6 +302,35 @@ export function OrganiseForm({ productId, initial, options }: Props) {
         searchable
       />
 
+      {/* ── Quick-add from INCI list ────────────────────────────────
+          Companion to the pill picker above. Sofia pastes a comma- or
+          semicolon-separated INCI declaration and on Save the server
+          action upserts each name into the master Ingredient library
+          (creating an English stub translation), then links them to
+          this product. Means she never has to pre-seed ingredients
+          one-by-one for a new K-beauty supplier sheet — same auto-grow
+          behaviour the CSV import gets. */}
+      <section className="border border-dashed border-ink/20 p-5">
+        <header>
+          <h3 className="font-display text-[16px] text-ink">
+            Or paste an INCI list
+          </h3>
+          <p className="mt-1 max-w-prose text-[12.5px] leading-relaxed text-ink-mid">
+            Paste a comma-separated INCI declaration here (e.g.{" "}
+            <em>Aqua, Glycerin, Niacinamide, Hyaluronic Acid</em>). On
+            Save, any unknown ingredients are added to the master library
+            and linked to this product. You can refine names + descriptions
+            later in <strong>Ingredients</strong>.
+          </p>
+        </header>
+        <textarea
+          name="ingredientFreeText"
+          rows={3}
+          placeholder="Aqua, Glycerin, Niacinamide, Sodium Hyaluronate, Centella Asiatica Extract…"
+          className="mt-4 w-full border border-ink/15 bg-white/80 p-3 font-mono text-[12.5px] leading-relaxed text-ink placeholder:text-ink-mid/60 focus:border-ink focus:outline-none"
+        />
+      </section>
+
       {/* ── Save row ─────────────────────────────────────────────── */}
       <div className="flex items-center gap-4 border-t border-ink/10 pt-6">
         <SaveButton />

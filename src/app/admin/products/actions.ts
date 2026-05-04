@@ -34,6 +34,10 @@ import {
 import { upsertAutoRedirect } from "@/lib/redirects/db";
 import { applyMovement } from "@/lib/inventory/movements";
 import { logAudit } from "@/lib/audit/log";
+import {
+  ensureIngredients,
+  parseInciTextarea,
+} from "@/lib/admin/ingredient-upsert";
 
 // ──────── helpers ────────────────────────────────────────────────────────
 
@@ -988,6 +992,24 @@ export async function updateOrganise(
   const concernIds = collectIds(formData, "concernIds");
   const benefitIds = collectIds(formData, "benefitIds");
   const ingredientIds = collectIds(formData, "ingredientIds");
+
+  // Optional free-text INCI textarea on the Organise tab. Sofia pastes
+  // a comma-separated INCI declaration ("Aqua, Glycerin, Niacinamide…")
+  // and we (a) upsert each into the master Ingredient library, then
+  // (b) merge the resulting IDs into the link set so they're saved
+  // alongside the pill-picker selections. This is the manual-editor
+  // counterpart to the auto-upsert behaviour in the CSV import — same
+  // helper, same data shape.
+  const inciFreeText = String(formData.get("ingredientFreeText") ?? "");
+  if (inciFreeText.trim().length > 0) {
+    const seeds = parseInciTextarea(inciFreeText);
+    if (seeds.length > 0) {
+      const upserted = await ensureIngredients(seeds);
+      for (const id of upserted.values()) {
+        if (!ingredientIds.includes(id)) ingredientIds.push(id);
+      }
+    }
+  }
 
   // Line picker — MULTI-select. The form sends one or more
   // "productLineSlugs" entries; we resolve each to its canonical
