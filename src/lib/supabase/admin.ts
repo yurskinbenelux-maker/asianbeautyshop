@@ -27,6 +27,9 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 /** Name of the bucket holding product imagery. Change here only. */
 export const PRODUCT_MEDIA_BUCKET = "products";
 
+/** Private bucket holding generated VAT invoice PDFs (10-year retention). */
+export const INVOICES_BUCKET = "invoices";
+
 let cached: SupabaseClient | null = null;
 
 /**

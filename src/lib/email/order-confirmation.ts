@@ -360,8 +360,17 @@ export function buildOrderConfirmationEmail(
  * Never throws — the payment/status pipelines upstream must keep flowing
  * even if email transport is down.
  */
+/** Optional VAT-invoice PDF attachment — produced by the issue-invoice
+ *  pipeline before this email fires. Resend takes attachments as a
+ *  Buffer + filename so we forward them straight through. */
+export type OrderConfirmationAttachment = {
+  filename: string;
+  content: Buffer;
+};
+
 export async function sendOrderConfirmationEmail(
   orderId: string,
+  options: { invoicePdf?: OrderConfirmationAttachment } = {},
 ): Promise<{ sent: boolean; reason?: string }> {
   const order = await getOrderForEmail(orderId);
   if (!order) {
@@ -380,6 +389,18 @@ export async function sendOrderConfirmationEmail(
     return { sent: false, reason: "resend-not-configured" };
   }
 
+  // Resend accepts attachments as `{ filename, content }` where content
+  // is either a Buffer or a base64 string. Buffer is what our PDF
+  // pipeline produces, so we forward it directly.
+  const attachments = options.invoicePdf
+    ? [
+        {
+          filename: options.invoicePdf.filename,
+          content: options.invoicePdf.content,
+        },
+      ]
+    : undefined;
+
   try {
     await client.emails.send({
       from: fromTransactional(),
@@ -388,6 +409,7 @@ export async function sendOrderConfirmationEmail(
       html,
       text,
       replyTo: replyToAddress(),
+      attachments,
       // Tag outbound so we can filter bounces/complaints by email type
       // in the Resend dashboard (and in our webhook later).
       tags: [

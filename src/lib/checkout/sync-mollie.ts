@@ -19,6 +19,7 @@ import { Prisma, OrderStatus, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getMollie, isPaidStatus } from "@/lib/mollie/client";
 import { sendOrderConfirmationEmail } from "@/lib/email/order-confirmation";
+import { issueInvoiceForOrder } from "@/lib/invoices/issue";
 import { sendAdminNewOrderEmail } from "@/lib/email/admin-new-order";
 import { applyMovement } from "@/lib/inventory/movements";
 import { syncOrderToSendcloud } from "@/lib/sendcloud/sync";
@@ -217,8 +218,36 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
     // retry is a no-op.
     await drainAttachedGiftCards(order.id);
 
+    // Issue the VAT invoice BEFORE we fan out the post-paid emails. The
+    // confirmation email needs the PDF buffer for its attachment; doing
+    // it in series here means we always have it. Other emails
+    // (admin-new-order, sendcloud sync, gift-card minting) don't need
+    // the PDF and run in parallel below.
+    //
+    // The helper is idempotent on the (orderId) unique index — webhook
+    // retries return the existing invoice instantly, no duplicate row,
+    // no duplicate PDF render.
+    let invoice: Awaited<ReturnType<typeof issueInvoiceForOrder>> | null = null;
+    try {
+      invoice = await issueInvoiceForOrder(order.id);
+    } catch (err) {
+      // A failure here shouldn't roll back the order's PAID state — the
+      // payment is real money in the merchant's account. We log + move
+      // on; admin can re-issue from /admin/invoices manually if the row
+      // is missing.
+      console.error(
+        "[sync-mollie] invoice issue failed",
+        order.id,
+        err,
+      );
+    }
+
     await Promise.allSettled([
-      sendOrderConfirmationEmail(order.id),
+      sendOrderConfirmationEmail(order.id, {
+        invoicePdf: invoice
+          ? { filename: `${invoice.number}.pdf`, content: invoice.pdfBuffer }
+          : undefined,
+      }),
       sendAdminNewOrderEmail(order.id),
       syncOrderToSendcloud(order.id),
       // Mint gift cards from any GIFT_CARD line items + send recipient

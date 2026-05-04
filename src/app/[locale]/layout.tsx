@@ -18,6 +18,7 @@ import { Nav } from "@/components/layout/nav";
 import { Footer } from "@/components/layout/footer";
 import { SkipLink } from "@/components/layout/skip-link";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
+import { VisitorTracker } from "@/components/visitor/visitor-tracker";
 import { ConciergeOrb } from "@/components/concierge/orb";
 import { MotionProvider } from "@/components/motion/motion-provider";
 import { CartProvider } from "@/components/cart/cart-provider";
@@ -215,6 +216,11 @@ export default async function LocaleLayout({ children, params }: Props) {
                   brand PNG icons + Next static chunks get cached. Skips
                   localhost so dev-mode hot-reload isn't poisoned. */}
               <SwRegister />
+              {/* Heartbeat to /api/track — powers the admin dashboard's
+                  "visitors online" widget so Sofia sees when traffic is
+                  approaching Hostinger's Max Processes ceiling. Fires
+                  once on mount + every 60s while the tab is visible. */}
+              <VisitorTracker />
               <Toaster
                 position="bottom-center"
                 toastOptions={{

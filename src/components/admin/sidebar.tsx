@@ -33,6 +33,7 @@ import {
   History,
   Beaker,
   Gift,
+  FileSpreadsheet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -60,6 +61,7 @@ const SECTIONS: Section[] = [
   { href: "/admin/categories",  label: "Categories",  icon: Tag,              cap: "categories.edit" },
   { href: "/admin/ingredients", label: "Ingredients", icon: Beaker,           cap: "ingredients.edit" },
   { href: "/admin/orders",     label: "Orders",     icon: ShoppingBag,      cap: "orders.view" },
+  { href: "/admin/invoices",   label: "Invoices",   icon: FileSpreadsheet,  cap: "orders.view" },
   { href: "/admin/returns",    label: "Returns",    icon: RotateCcw,        cap: "returns.view" },
   { href: "/admin/customers",  label: "Customers",  icon: Users,            cap: "customers.view" },
   { href: "/admin/coupons",    label: "Coupons",    icon: BadgePercent,     cap: "coupons.edit" },

@@ -646,11 +646,84 @@ model Order {
   items             OrderItem[]
   events            OrderEvent[]
   returns           ReturnRequest[]
+  invoice           Invoice?
 
   @@index([userId])
   @@index([status])
   @@index([paymentStatus])
   @@index([placedAt])
+}
+
+// Sequential VAT invoice issued on the PAID transition. Belgian Royal
+// Decree no. 1, art. 5 mandates a unique sequential number with no
+// gaps — we enforce that via the (year, sequence) atomic counter in
+// src/lib/invoices/numbering.ts. Records here serve as the legal
+// archive (10-year retention, art. 60 Belgian VAT Code).
+//
+// The PDF itself lives in Supabase Storage at
+//   invoices/{year}/{number}.pdf
+// in a private bucket — Sofia downloads via a signed URL from the
+// admin invoices page. The customer receives the PDF as an email
+// attachment on the order confirmation email; we don't expose a
+// public URL.
+//
+// `issuerSnapshot` and `customerSnapshot` capture every billing
+// detail at issue time so a later K'Elmus address change or customer
+// rename doesn't retroactively rewrite already-issued invoices.
+model Invoice {
+  id                String   @id @default(uuid()) @db.Uuid
+  orderId           String   @unique @db.Uuid
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  number            String   @unique                 // "INV-2026-00042"
+  year              Int                              // 2026 — supports per-year sequence
+  sequence          Int                              // 42 — supports gap detection in audits
+  issuedAt          DateTime @default(now())
+  // Supabase Storage path (relative to bucket). Signed URL minted on demand.
+  pdfPath           String
+  // Frozen-at-issue copies of issuer + customer details. Stored as JSON so
+  // a later legal-entity move or customer rename doesn't rewrite history.
+  issuerSnapshot    Json
+  customerSnapshot  Json
+  // Frozen totals — same numbers visible on the PDF. Stored separately so
+  // admin reports + OSS quarterly returns don't have to re-parse the PDF.
+  subtotalExclVat   Decimal  @db.Decimal(10, 2)
+  vatTotal          Decimal  @db.Decimal(10, 2)
+  shippingTotal     Decimal  @db.Decimal(10, 2)      // ex-VAT shipping (zero for free / digital)
+  grandTotal        Decimal  @db.Decimal(10, 2)
+  // Customer's destination country (ISO-3166 alpha-2). Drives the
+  // BE-domestic vs cross-border bucket on the OSS €10k tracking widget.
+  destinationCountry String                          // "BE", "NL", "FR", "LU", "DE"
+  vatRate           Decimal  @db.Decimal(5, 4)       // 0.2100 for BE 21%
+
+  createdAt         DateTime @default(now())
+
+  @@index([year, sequence])
+  @@index([destinationCountry, issuedAt])
+  @@index([issuedAt])
+}
+
+// Lightweight presence ping — every public page sends one heartbeat per
+// minute via /api/track. The admin dashboard's "visitors online" widget
+// counts unique sessionIds with a lastSeenAt in the last 2 minutes, so
+// Sofia sees when traffic is climbing toward Hostinger's Max Processes
+// ceiling (120 on the Business plan).
+//
+// sessionId is an opaque random UUID stored in a `yur_session` cookie —
+// no IP, no fingerprint, no PII. Strictly-necessary under GDPR (the
+// cookie's only purpose is service capacity), so no consent banner.
+//
+// Old rows are purged daily by /api/cron/visitor-ping-purge (>24h old).
+model VisitorPing {
+  id          String   @id @default(uuid()) @db.Uuid
+  sessionId   String   @unique             // opaque cookie value
+  path        String                       // last URL path the user was on
+  userAgent   String?                      // raw UA — used by bot filter
+  isBot       Boolean  @default(false)     // pre-classified at insert time
+  isAdmin     Boolean  @default(false)     // exclude Sofia/Max from count
+  lastSeenAt  DateTime @default(now())
+
+  @@index([lastSeenAt])
+  @@index([isBot, isAdmin, lastSeenAt])
 }
 
 model OrderItem {

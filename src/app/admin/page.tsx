@@ -25,6 +25,10 @@ import { Role } from "@prisma/client";
 import { getAdminAnalytics } from "@/lib/queries/admin-analytics";
 import { Sparkline } from "@/components/admin/analytics/sparkline";
 import { ORDER_STATUS_LABELS } from "@/lib/orders/labels";
+import { getVatYtdSnapshot } from "@/lib/queries/vat-ytd";
+import { VatYtdWidget } from "@/components/admin/dashboard/vat-ytd-widget";
+import { getVisitorCount } from "@/lib/queries/visitor-count";
+import { VisitorCountWidget } from "@/components/admin/dashboard/visitor-count-widget";
 
 export const dynamic = "force-dynamic";
 
@@ -54,12 +58,16 @@ export default async function AdminOverviewPage() {
     orderCount,
     customerCount,
     analytics,
+    vatSnapshot,
+    visitorCount,
   ] = await Promise.all([
     prisma.product.count({ where: { deletedAt: null } }),
     prisma.category.count(),
     prisma.order.count(),
     prisma.user.count({ where: { role: Role.CUSTOMER, deletedAt: null } }),
     getAdminAnalytics(),
+    getVatYtdSnapshot(),
+    getVisitorCount(),
   ]);
 
   const counters: Counter[] = [
@@ -137,6 +145,14 @@ export default async function AdminOverviewPage() {
           );
         })}
       </div>
+
+      {/* Live visitors + VAT YTD tracker — paired strip. Visitors on
+          the left, VAT on the right. Sofia checks visitors when "is it
+          slow?" and VAT when "are we approaching €10k cross-border?". */}
+      <section className="mt-14 grid gap-6 lg:grid-cols-[1fr_1fr]">
+        <VisitorCountWidget data={visitorCount} />
+        <VatYtdWidget snapshot={vatSnapshot} />
+      </section>
 
       {/* revenue + AOV strip */}
       <section className="mt-14 grid gap-6 lg:grid-cols-[2fr_1fr]">
