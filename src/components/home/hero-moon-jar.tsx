@@ -197,15 +197,18 @@ export function HeroMoonJar({ copy }: { copy: HeroCopy }) {
             {copy.cta_primary}
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
           </Link>
-          {/* Anchor to the four-step ritual section further down the
-              homepage. Plain `<a>` — next-intl's <Link> would treat the
-              hash as a route and prepend /[locale]. */}
-          <a
-            href="#ritual"
+          {/* Hero secondary CTA — funnels to the skin quiz. Was an
+              anchor to the on-page "Your routine" section; we now drive
+              quiz starts from here because (a) the quiz is the strongest
+              conversion path on the site and (b) it ties into the −15%
+              quiz-reward funnel. Uses next-intl's <Link> so the locale
+              prefix is preserved automatically. */}
+          <Link
+            href="/quiz"
             className="inline-flex items-center gap-2 border-b border-ink/30 pb-1 text-[12px] uppercase tracking-label text-ink transition-colors hover:border-vermilion hover:text-vermilion"
           >
             {copy.cta_secondary}
-          </a>
+          </Link>
         </motion.div>
       </motion.div>
 

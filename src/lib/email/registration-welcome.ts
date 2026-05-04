@@ -31,12 +31,12 @@ export type RegistrationWelcomeSendResult =
   | { sent: false; reason: "resend-not-configured" | "send-failed" };
 
 const SUBJECT = "Welcome to YU.R — your 10% is inside";
-const PREHEADER = "Your code is waiting, and so is the ritual.";
+const PREHEADER = "Your code is waiting, and so is your skincare routine.";
 const HEADING = "Welcome.";
 const LEDE =
   "Thank you for joining us. Your account is ready — order tracking, saved addresses, and your skin-quiz history all live there from now on. As a small hello, here's a single-use code for your first order.";
 const CODE_LABEL = "Your welcome code";
-const CTA = "Begin a ritual";
+const CTA = "Start your skincare routine";
 const SIGNOFF = "With care,\nSofia · YU.R Skin Solution";
 const FOOTER = "K'Elmus Group BV · Aartselaar, Belgium";
 

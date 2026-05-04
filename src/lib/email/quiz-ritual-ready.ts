@@ -32,7 +32,7 @@ export type QuizRitualReadySendResult =
   | { sent: true }
   | { sent: false; reason: "resend-not-configured" | "send-failed" };
 
-const SUBJECT = "Your YU.R ritual is ready · save 15%";
+const SUBJECT = "Your YU.R skincare routine is ready · save 15%";
 const PREHEADER = "Your skin quiz, packaged. Open it any time in the next 60 days.";
 
 export async function sendQuizRitualReadyEmail(
@@ -97,7 +97,7 @@ function renderHtml(p: QuizRitualReadyPayload, restoreUrl: string): string {
       Your skin quiz, packaged.
     </h1>
     <p style="margin:0 0 24px 0;font-size:15px;line-height:1.7;color:#3D3935;">
-      Based on your quiz answers, we put a personal ritual together for you.
+      Based on your quiz answers, we put a personal skincare routine together for you.
       Tap the button below any time in the next 60 days and we'll restore
       this exact cart with ${p.percentOff}% off the items below.
     </p>
@@ -105,7 +105,7 @@ function renderHtml(p: QuizRitualReadyPayload, restoreUrl: string): string {
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 18px 0;border:1px solid rgba(26,26,26,0.10);">
       <tr>
         <td style="padding:18px 18px 6px 18px;font-family:Georgia,serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8A8A8A;">
-          Your ritual
+          Your skincare routine
         </td>
       </tr>
       <tr>
@@ -137,7 +137,7 @@ function renderHtml(p: QuizRitualReadyPayload, restoreUrl: string): string {
       price. Once you place an order with this code, the link goes quiet.
     </p>
 
-    ${renderCtaButton(restoreUrl, "Open my ritual cart")}
+    ${renderCtaButton(restoreUrl, "Open my routine cart")}
 
     <p style="margin:40px 0 0 0;font-size:14px;line-height:1.6;color:#3D3935;">
       With care,<br>
