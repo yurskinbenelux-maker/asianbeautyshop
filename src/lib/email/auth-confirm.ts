@@ -81,7 +81,7 @@ type Strings = {
 const STRINGS: Record<Locale, Strings> = {
   EN: {
     subject: "Confirm your YU.R account",
-    preheader: "One tap to confirm your email and start your ritual.",
+    preheader: "One tap to confirm your email and start your skincare routine.",
     heading: "Welcome to YU.R.",
     lede: "We're glad you're here. Tap the button below to confirm your email and finish setting up your account — it keeps your basket safe and lets us send your order updates.",
     cta: "Confirm my email",
@@ -96,7 +96,7 @@ const STRINGS: Record<Locale, Strings> = {
   },
   NL: {
     subject: "Bevestig je YU.R-account",
-    preheader: "Eén tik om je e-mail te bevestigen en je ritueel te starten.",
+    preheader: "Eén tik om je e-mail te bevestigen en je huidverzorgingsroutine te starten.",
     heading: "Welkom bij YU.R.",
     lede: "Fijn dat je er bent. Tik op de knop hieronder om je e-mail te bevestigen en je account af te ronden — zo blijft je winkelmand bewaard en kunnen we je bestellingsupdates sturen.",
     cta: "Bevestig mijn e-mail",
@@ -112,7 +112,7 @@ const STRINGS: Record<Locale, Strings> = {
   FR: {
     subject: "Confirmez votre compte YU.R",
     preheader:
-      "Un clic pour confirmer votre adresse et commencer votre rituel.",
+      "Un clic pour confirmer votre adresse et commencer votre routine de soin.",
     heading: "Bienvenue chez YU.R.",
     lede: "Heureux de vous accueillir. Cliquez sur le bouton ci-dessous pour confirmer votre adresse et finaliser la création de votre compte — cela conserve votre panier et nous permet de vous envoyer les mises à jour de commande.",
     cta: "Confirmer mon e-mail",

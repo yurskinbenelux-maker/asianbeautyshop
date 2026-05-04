@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Quiz claim server action — the "Add my ritual to cart" button on the
+// Quiz claim server action — the "Add my skincare routine to cart" button on the
 // /[locale]/quiz/result page funnels here.
 //
 // Does four things atomically (or as close as we can get):
@@ -42,7 +42,7 @@ export type ClaimQuizRitualResult =
   | {
       ok: true;
       added: number;
-      /** "Add my ritual" client redirects here after a successful claim. */
+      /** "Add my skincare routine" client redirects here after a successful claim. */
       redirectTo: string;
     }
   | {
@@ -68,7 +68,7 @@ export async function claimQuizRitualAction(
     // Logged out — bounce to sign-up with a return URL that comes back
     // here. We URL-encode the product IDs in the next param so the
     // post-auth flow knows what to add. Capped at 6 IDs to keep the URL
-    // sensible and to match the max ritual length.
+    // sensible and to match the max skincare routine length.
     const ids = input.productIds.slice(0, 6).join(",");
     const next = encodeURIComponent(
       `/${localePrefix}/quiz/result?ritual=${ids}`,

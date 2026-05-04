@@ -17,22 +17,22 @@ export const metadata: Metadata = {
 const COPY: Record<string, { title: string; body: string; cta: string }> = {
   en: {
     title: "You're unsubscribed.",
-    body: "No more newsletters from us. Your skin rituals are still welcome here whenever you'd like to visit.",
+    body: "No more newsletters from us. Your skincare routines are still welcome here whenever you'd like to visit.",
     cta: "Return to the shop",
   },
   nl: {
     title: "Je bent uitgeschreven.",
-    body: "Geen nieuwsbrieven meer van ons. Je skin rituals zijn hier altijd welkom wanneer je ons weer wilt bezoeken.",
+    body: "Geen nieuwsbrieven meer van ons. Je skin skincare routines zijn hier altijd welkom wanneer je ons weer wilt bezoeken.",
     cta: "Terug naar de shop",
   },
   fr: {
     title: "Vous êtes désabonné·e.",
-    body: "Plus de lettres de notre part. Vos rituels de soin sont toujours les bienvenus ici, quand vous voudrez revenir.",
+    body: "Plus de lettres de notre part. Vos routines de soin de soin sont toujours les bienvenus ici, quand vous voudrez revenir.",
     cta: "Retour à la boutique",
   },
   ru: {
     title: "Вы отписаны.",
-    body: "Больше писем от нас не будет. Ваши ритуалы ухода за кожей всегда будут рады вам, когда захотите вернуться.",
+    body: "Больше писем от нас не будет. Ваши рутины ухода за кожей всегда будут рады вам, когда захотите вернуться.",
     cta: "Вернуться в магазин",
   },
 };

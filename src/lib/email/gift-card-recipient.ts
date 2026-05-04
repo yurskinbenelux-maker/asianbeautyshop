@@ -37,7 +37,7 @@ const STRINGS: Record<Locale, Strings> = {
         ? `${s} sent you a YU•R gift card`
         : "You've received a YU•R gift card",
     subjectSelf: "Your YU•R gift card is ready",
-    preheader: "A small balance for a slow Korean ritual.",
+    preheader: "A small balance for a slow Korean skincare routine.",
     greet: (n) => (n ? `Hello ${n},` : "Hello,"),
     introFriend: (s, amount) =>
       s
@@ -59,7 +59,7 @@ const STRINGS: Record<Locale, Strings> = {
         ? `${s} heeft je een YU•R cadeaubon gestuurd`
         : "Je hebt een YU•R cadeaubon ontvangen",
     subjectSelf: "Je YU•R cadeaubon is klaar",
-    preheader: "Een klein saldo voor een langzaam Koreaans ritueel.",
+    preheader: "Een klein saldo voor een langzaam Koreaans huidverzorgingsroutine.",
     greet: (n) => (n ? `Hallo ${n},` : "Hallo,"),
     introFriend: (s, amount) =>
       s
@@ -81,7 +81,7 @@ const STRINGS: Record<Locale, Strings> = {
         ? `${s} vous a envoyé une carte cadeau YU•R`
         : "Vous avez reçu une carte cadeau YU•R",
     subjectSelf: "Votre carte cadeau YU•R est prête",
-    preheader: "Un solde discret pour un rituel coréen lent.",
+    preheader: "Un solde discret pour un routine de soin coréen lent.",
     greet: (n) => (n ? `Bonjour ${n},` : "Bonjour,"),
     introFriend: (s, amount) =>
       s
@@ -103,7 +103,7 @@ const STRINGS: Record<Locale, Strings> = {
         ? `${s} прислал(а) вам подарочную карту YU•R`
         : "Вы получили подарочную карту YU•R",
     subjectSelf: "Ваша подарочная карта YU•R готова",
-    preheader: "Небольшой баланс для медленного корейского ритуала.",
+    preheader: "Небольшой баланс для медленного корейского рутины.",
     greet: (n) => (n ? `Здравствуйте, ${n},` : "Здравствуйте,"),
     introFriend: (s, amount) =>
       s

@@ -1,9 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Quiz ritual cart helper — adds the recommended product set to a cart
+// Quiz skincare routine cart helper — adds the recommended product set to a cart
 // with the per-line `quiz_reward` 15% discount markers.
 //
 // Called from two places:
-//   1. The "Add my ritual to cart" button on /quiz/result (the user has
+//   1. The "Add my skincare routine to cart" button on /quiz/result (the user has
 //      just completed the quiz and is logged in).
 //   2. The /quiz/restore?token=… email-link route (the user is returning
 //      after dismissing the quiz, possibly days later).
@@ -24,7 +24,7 @@ import { QUIZ_REWARD_PERCENT } from "@/lib/quiz/reward";
 export const QUIZ_REWARD_DISCOUNT_REASON = "quiz_reward";
 
 /**
- * Replace the cart contents with the quiz-recommended ritual.
+ * Replace the cart contents with the quiz-recommended skincare routine.
  *
  * We deliberately CLEAR the existing cart rather than merge — the email
  * link's promise is "we'll restore the EXACT cart you saw after the quiz".
@@ -63,7 +63,7 @@ export async function loadQuizRitualIntoCart(args: {
 
   await prisma.$transaction(async (tx) => {
     // Wipe whatever was in the cart — the email link is a "restore the
-    // exact ritual" affordance, not "merge into your existing basket".
+    // exact skincare routine" affordance, not "merge into your existing basket".
     await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
 
     // Add each recommended product as a quantity-1 line with the discount

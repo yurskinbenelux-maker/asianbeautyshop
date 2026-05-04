@@ -13,7 +13,7 @@ import { Sun, Moon, Sparkles } from "lucide-react";
 import type { PdpRitualStep } from "@/lib/queries/pdp";
 
 type Labels = {
-  eyebrow: string;        // "The ritual"
+  eyebrow: string;        // "The skincare routine"
   morning: string;        // "Morning"
   evening: string;        // "Evening"
   anyTime: string;        // "Any time"

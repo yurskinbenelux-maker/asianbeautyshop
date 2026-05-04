@@ -37,7 +37,7 @@ const STRINGS: Record<Locale, Strings> = {
     subject: "You left something in your bag — YU.R Skin Solution",
     preheader: "Pick up where you left off.",
     heading: (f) =>
-      f ? `${f}, your ritual is waiting.` : "Your ritual is waiting.",
+      f ? `${f}, your skincare routine is waiting.` : "Your skincare routine is waiting.",
     lede:
       "We saved the pieces you were looking at. Whenever you're ready, pick up where you left off — everything is still there.",
     cta: "Return to my bag",
@@ -49,7 +49,7 @@ const STRINGS: Record<Locale, Strings> = {
     subject: "Je hebt iets achtergelaten in je tas — YU.R Skin Solution",
     preheader: "Ga verder waar je was gebleven.",
     heading: (f) =>
-      f ? `${f}, je ritueel wacht op je.` : "Je ritueel wacht op je.",
+      f ? `${f}, je huidverzorgingsroutine wacht op je.` : "Je huidverzorgingsroutine wacht op je.",
     lede:
       "We hebben de producten waar je naar keek voor je bewaard. Wanneer je er klaar voor bent, ga je verder waar je was gebleven — alles staat nog klaar.",
     cta: "Terug naar mijn tas",
@@ -61,7 +61,7 @@ const STRINGS: Record<Locale, Strings> = {
     subject: "Vous avez laissé quelque chose dans votre panier — YU.R Skin Solution",
     preheader: "Reprenez là où vous en étiez.",
     heading: (f) =>
-      f ? `${f}, votre rituel vous attend.` : "Votre rituel vous attend.",
+      f ? `${f}, votre routine de soin vous attend.` : "Votre routine de soin vous attend.",
     lede:
       "Nous avons gardé les produits que vous regardiez. Quand vous êtes prêt·e, reprenez là où vous en étiez — tout est encore là.",
     cta: "Retour à mon panier",
@@ -73,7 +73,7 @@ const STRINGS: Record<Locale, Strings> = {
     subject: "В вашей корзине остались товары — YU.R Skin Solution",
     preheader: "Вернитесь к тому, что выбирали.",
     heading: (f) =>
-      f ? `${f}, ваш ритуал ждёт.` : "Ваш ритуал ждёт.",
+      f ? `${f}, ваш рутина ждёт.` : "Ваш рутина ждёт.",
     lede:
       "Мы сохранили то, что вы смотрели. Когда будет удобно, вернитесь и продолжите — всё на месте.",
     cta: "Вернуться в корзину",

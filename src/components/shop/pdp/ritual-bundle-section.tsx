@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────────────────────
-// RitualBundleSection — "Complete your ritual" block on the PDP.
+// RitualBundleSection — "Complete your skincare routine" block on the PDP.
 //
 // Renders a small horizontal strip of bundle suggestions curated by Sofia
-// in ProductRelated (reason ∋ "bundle"/"ritual"). Each card is a link to
+// in ProductRelated (reason ∋ "bundle"/"skincare routine"). Each card is a link to
 // the product's own PDP plus an "Add" quick-link that fires the cart
 // context. If the list is empty the section renders nothing.
 // ─────────────────────────────────────────────────────────────────────────
@@ -19,7 +19,7 @@ import { formatEur } from "@/lib/utils";
 import type { PdpBundleItem } from "@/lib/queries/pdp";
 
 type Labels = {
-  eyebrow: string;        // "Complete your ritual"
+  eyebrow: string;        // "Complete your skincare routine"
   title: string;          // "Pairs beautifully with"
   add: string;            // "Add"
 };

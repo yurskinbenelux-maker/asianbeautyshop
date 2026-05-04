@@ -36,9 +36,9 @@ const FALLBACK: TestimonialCard[] = [
     id: "fallback-2",
     rating: 5,
     verified: true,
-    quote: "The ritual is the best part of my day. Quiet, warm, slow.",
+    quote: "The skincare routine is the best part of my day. Quiet, warm, slow.",
     authorName: "S. — Rotterdam",
-    productName: "Evening ritual set",
+    productName: "Evening skincare routine set",
   },
   {
     id: "fallback-3",

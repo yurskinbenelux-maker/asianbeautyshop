@@ -3,7 +3,7 @@
 //
 // The homepage has a #ritual anchor that renders the same idea
 // compactly, but that's a section, not a URL we can link to from menus,
-// search engines, or marketing. This page gives the ritual its own
+// search engines, or marketing. This page gives the skincare routine its own
 // address and pairs each step with:
 //
 //   · Category link — "Cleansers", "Treatments", …  so shoppers who
@@ -26,7 +26,7 @@ import { buildPageMetadata } from "@/lib/seo/metadata";
 
 type Props = { params: Promise<{ locale: string }> };
 
-// Mapping from ritual step → category slug. If a slug doesn't exist
+// Mapping from skincare routine step → category slug. If a slug doesn't exist
 // yet in the DB (Sofia hasn't seeded that category), we fall back to
 // /shop as a soft landing, with the correct category filter pre-applied.
 // Key names stay stable (cleanse/treat/moisturise/protect) because they
@@ -80,8 +80,8 @@ export default async function RitualsPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const t = await getTranslations("rituals");
-  const tRitual = await getTranslations("ritual");
+  const t = await getTranslations("skincare routines");
+  const tRitual = await getTranslations("skincare routine");
 
   // Fetch live categories so the step cards can deep-link into the
   // right shop filter when the slug actually exists. We still render

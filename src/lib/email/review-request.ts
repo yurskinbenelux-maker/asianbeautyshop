@@ -34,12 +34,12 @@ type Strings = {
 
 const STRINGS: Record<Locale, Strings> = {
   EN: {
-    subject: (n) => `How did your ${n} ritual go? — YU.R Skin Solution`,
+    subject: (n) => `How did your ${n} skincare routine go? — YU.R Skin Solution`,
     preheader: "Share a few words about your products.",
     heading: (f) =>
       f ? `${f}, how did it go?` : "How did it go?",
     lede:
-      "It's been a couple of weeks since your order arrived. We'd love to hear how the products have felt on your skin. A short review helps others find the right ritual — and tells us what's working.",
+      "It's been a couple of weeks since your order arrived. We'd love to hear how the products have felt on your skin. A short review helps others find the right skincare routine — and tells us what's working.",
     incentive:
       "A few honest lines is plenty. No forms, no pressure — just your words.",
     cta: "Leave a review",
@@ -52,7 +52,7 @@ const STRINGS: Record<Locale, Strings> = {
     heading: (f) =>
       f ? `${f}, hoe was het?` : "Hoe was het?",
     lede:
-      "Het is inmiddels een paar weken geleden dat je bestelling is aangekomen. We horen graag hoe de producten op je huid voelen. Een korte review helpt anderen om de juiste ritueel te vinden.",
+      "Het is inmiddels een paar weken geleden dat je bestelling is aangekomen. We horen graag hoe de producten op je huid voelen. Een korte review helpt anderen om de juiste huidverzorgingsroutine te vinden.",
     incentive:
       "Een paar eerlijke zinnen is ruim voldoende. Geen formulieren, geen druk — gewoon jouw woorden.",
     cta: "Review achterlaten",
@@ -60,12 +60,12 @@ const STRINGS: Record<Locale, Strings> = {
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
-    subject: (n) => `Comment s'est passé votre rituel ${n} ? — YU.R Skin Solution`,
+    subject: (n) => `Comment s'est passé votre routine de soin ${n} ? — YU.R Skin Solution`,
     preheader: "Partagez votre expérience en quelques mots.",
     heading: (f) =>
       f ? `${f}, comment ça s'est passé ?` : "Comment ça s'est passé ?",
     lede:
-      "Cela fait maintenant quelques semaines que votre commande est arrivée. Nous aimerions savoir comment les produits se sont comportés sur votre peau. Quelques lignes aident d'autres à trouver le bon rituel.",
+      "Cela fait maintenant quelques semaines que votre commande est arrivée. Nous aimerions savoir comment les produits se sont comportés sur votre peau. Quelques lignes aident d'autres à trouver le bon routine de soin.",
     incentive:
       "Quelques mots sincères suffisent. Pas de formulaire, aucune pression — juste votre ressenti.",
     cta: "Laisser un avis",
@@ -73,12 +73,12 @@ const STRINGS: Record<Locale, Strings> = {
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
-    subject: (n) => `Как прошёл ваш ритуал по заказу ${n}? — YU.R Skin Solution`,
+    subject: (n) => `Как прошёл ваш рутина по заказу ${n}? — YU.R Skin Solution`,
     preheader: "Поделитесь впечатлениями от продуктов.",
     heading: (f) =>
       f ? `${f}, как впечатления?` : "Как впечатления?",
     lede:
-      "Прошло пару недель с момента получения заказа. Нам важно знать, как продукты проявили себя на вашей коже. Короткий отзыв поможет другим найти свой ритуал.",
+      "Прошло пару недель с момента получения заказа. Нам важно знать, как продукты проявили себя на вашей коже. Короткий отзыв поможет другим найти свой рутина.",
     incentive:
       "Достаточно нескольких искренних строк. Без форм и давления — просто ваши слова.",
     cta: "Оставить отзыв",

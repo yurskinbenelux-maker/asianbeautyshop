@@ -1,12 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Your Ritual — editorial four-dot timeline.
+// Your Skincare routine — editorial four-dot timeline.
 //
 // Replaced the old 2x2 grid (which made the section ~720px tall) with a
 // horizontal hairline timeline that strings four vermilion dots together.
 // One row of four cells, each holding the dot, an "01 · Cleanse" caption
 // and the Korean character below. ~280px tall on desktop, ~340px on
 // mobile — roughly half the previous footprint, and reads more like a
-// ritual (a process) than a feature list.
+// skincare routine (a process) than a feature list.
 //
 // The connector line passes through the dot centres on the line `top-[7px]`
 // because each dot is 14px tall and the line is positioned in absolute
@@ -22,14 +22,14 @@ import { MaehwaBranch } from "./maehwa-branch";
 
 // Section heading comes from the admin-editable SiteCopy pipeline; the step
 // labels (Cleanse/Treat/…) stay in messages/{locale}.json because they're
-// tightly coupled to the ritual namespace and not in Sofia's editing scope.
+// tightly coupled to the skincare routine namespace and not in Sofia's editing scope.
 export type RitualCopy = {
   eyebrow: string;
   lede: string;
 };
 
 export function YourRitual({ copy }: { copy: RitualCopy }) {
-  const tRitual = useTranslations("ritual");
+  const tRitual = useTranslations("skincare routine");
 
   const steps = [
     { n: "01", key: "cleanse", kr: "세안" },
@@ -40,7 +40,7 @@ export function YourRitual({ copy }: { copy: RitualCopy }) {
 
   return (
     <section
-      id="ritual"
+      id="skincare routine"
       // py-14 mobile / py-20 desktop. Earlier values left the section
       // floating with whitespace — the timeline is so visually small
       // (just four 14px dots) that bigger padding looks broken.

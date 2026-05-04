@@ -58,14 +58,14 @@ type Strings = {
 const STRINGS: Record<Locale, Strings> = {
   EN: {
     subject: (n) => `Your order ${n} is confirmed — YU.R Skin Solution`,
-    preheader: "Thank you for your order. A ritual is on its way to you.",
+    preheader: "Thank you for your order. A skincare routine is on its way to you.",
     heading: (f) => (f ? `Thank you, ${f}.` : "Thank you."),
     lede:
       "Your order has been received and payment confirmed. We'll begin preparing it carefully — you'll hear from us again the moment it ships.",
     ledeDigital:
       "Your order has been received and payment confirmed. Your gift card code has been delivered to your inbox just now.",
     orderLabel: "Order",
-    itemsLabel: "Your ritual",
+    itemsLabel: "Your skincare routine",
     subtotalLabel: "Subtotal",
     discountLabel: "Discount",
     shippingLabel: "Shipping",
@@ -83,14 +83,14 @@ const STRINGS: Record<Locale, Strings> = {
   },
   NL: {
     subject: (n) => `Je bestelling ${n} is bevestigd — YU.R Skin Solution`,
-    preheader: "Bedankt voor je bestelling. Je ritueel is onderweg.",
+    preheader: "Bedankt voor je bestelling. Je huidverzorgingsroutine is onderweg.",
     heading: (f) => (f ? `Bedankt, ${f}.` : "Bedankt."),
     lede:
       "Je bestelling is ontvangen en de betaling is bevestigd. We beginnen haar zorgvuldig klaar te maken — zodra ze verstuurd is, hoor je opnieuw van ons.",
     ledeDigital:
       "Je bestelling is ontvangen en de betaling is bevestigd. Je cadeaubon-code is zojuist in je inbox bezorgd.",
     orderLabel: "Bestelling",
-    itemsLabel: "Jouw ritueel",
+    itemsLabel: "Jouw huidverzorgingsroutine",
     subtotalLabel: "Subtotaal",
     discountLabel: "Korting",
     shippingLabel: "Verzending",
@@ -108,14 +108,14 @@ const STRINGS: Record<Locale, Strings> = {
   },
   FR: {
     subject: (n) => `Votre commande ${n} est confirmée — YU.R Skin Solution`,
-    preheader: "Merci pour votre commande. Un rituel est en route.",
+    preheader: "Merci pour votre commande. Un routine de soin est en route.",
     heading: (f) => (f ? `Merci, ${f}.` : "Merci."),
     lede:
       "Votre commande a bien été reçue et le paiement est confirmé. Nous allons la préparer avec soin — nous vous écrirons à nouveau dès qu'elle sera expédiée.",
     ledeDigital:
       "Votre commande a bien été reçue et le paiement est confirmé. Votre code carte cadeau vient d'être envoyé dans votre boîte mail.",
     orderLabel: "Commande",
-    itemsLabel: "Votre rituel",
+    itemsLabel: "Votre routine de soin",
     subtotalLabel: "Sous-total",
     discountLabel: "Remise",
     shippingLabel: "Livraison",
@@ -133,14 +133,14 @@ const STRINGS: Record<Locale, Strings> = {
   },
   RU: {
     subject: (n) => `Ваш заказ ${n} подтверждён — YU.R Skin Solution`,
-    preheader: "Спасибо за заказ. Ваш ритуал уже в пути.",
+    preheader: "Спасибо за заказ. Ваш рутина уже в пути.",
     heading: (f) => (f ? `Спасибо, ${f}.` : "Спасибо."),
     lede:
       "Мы получили ваш заказ, оплата подтверждена. Начинаем бережно его собирать — как только посылка отправится, вы получите от нас сообщение.",
     ledeDigital:
       "Мы получили ваш заказ, оплата подтверждена. Код подарочной карты только что отправлен на вашу почту.",
     orderLabel: "Заказ",
-    itemsLabel: "Ваш ритуал",
+    itemsLabel: "Ваш рутина",
     subtotalLabel: "Сумма",
     discountLabel: "Скидка",
     shippingLabel: "Доставка",

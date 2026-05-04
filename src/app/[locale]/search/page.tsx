@@ -15,7 +15,7 @@
 //
 // Zero-result behaviour:
 //   · Query set, no facet filters, no matches → editorial strips
-//     (ritual steps + brand suggestions). This is the recovery state
+//     (skincare routine steps + brand suggestions). This is the recovery state
 //     for ambiguous or typo'd queries.
 //   · Query set, facet filters active, no matches → terse "relax a
 //     filter" message with the sidebar still visible so they can.
@@ -103,7 +103,7 @@ export async function generateMetadata({
   };
 }
 
-// Ritual-step tiles rendered on the zero-result state. Each maps a
+// Skincare routine-step tiles rendered on the zero-result state. Each maps a
 // conceptual step onto a real `?category=` slug from our taxonomy.
 const RITUAL_STEPS = [
   {
@@ -148,7 +148,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
 
   // The zero-result title + body are admin-editable so Sofia can speak to
   // "nothing to show" visitors in her own voice. Everything else on this
-  // page (eyebrow, counts, ritual tiles, brand strip) stays in messages.
+  // page (eyebrow, counts, skincare routine tiles, brand strip) stays in messages.
   // siteCopyOr() honours the SITE_COPY_VOID sentinel — returns "" when
   // Sofia hides the field, so the literal "__SITE_COPY_VOID__" string
   // never leaks into the rendered output.
@@ -321,7 +321,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
             {t("no_results")}
           </p>
 
-          {/* ── ritual-step strip ───────────────────────────────── */}
+          {/* ── skincare routine-step strip ───────────────────────────────── */}
           <div>
             <div className="max-w-[36ch]">
               <div className="eyebrow">{t("suggest_heading")}</div>

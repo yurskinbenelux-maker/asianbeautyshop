@@ -1,11 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────
 // /[locale]/quiz/restore?token=… — magic-link landing page from the
-// quiz-ritual-ready email.
+// quiz-skincare routine-ready email.
 //
 // Three states:
 //   · success → restore the cart with the recommended products + 15%
 //     per-line discount, then redirect to /cart with a soft welcome
-//     banner ("Welcome back — your ritual is waiting at 15% off.")
+//     banner ("Welcome back — your skincare routine is waiting at 15% off.")
 //   · expired → polite "Link expired" page with a CTA to retake the quiz
 //   · already-used / not-found → "Already used" page with a "shop full
 //     price" CTA
@@ -25,7 +25,7 @@ import { loadQuizRitualIntoCart } from "@/lib/cart/quiz-ritual";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Your YU.R ritual · 15% off",
+  title: "Your YU.R skincare routine · 15% off",
   // Don't index the magic-link landing page — it's a personal redemption
   // URL, not a public destination.
   robots: { index: false, follow: false },
@@ -54,7 +54,7 @@ export default async function QuizRestorePage({
     return <ErrorState reason={result.reason} localePrefix={localePrefix} />;
   }
 
-  // Token valid → load the ritual into the cart and redirect.
+  // Token valid → load the skincare routine into the cart and redirect.
   // The cart will pick up the per-line discount markers and the cart
   // page UI will render the −15% chip + strikethrough.
   await loadQuizRitualIntoCart({
@@ -82,13 +82,13 @@ function ErrorState({
       ctaLabel: "Take the quiz",
     },
     expired: {
-      heading: "Your ritual link has expired.",
-      body: "Quiz rewards are valid for 60 days from the date of completion. Retake the quiz any time to receive a fresh personalised ritual at −15%.",
+      heading: "Your skincare routine link has expired.",
+      body: "Quiz rewards are valid for 60 days from the date of completion. Retake the quiz any time to receive a fresh personalised skincare routine at −15%.",
       ctaHref: `/${localePrefix}/quiz`,
       ctaLabel: "Retake the quiz",
     },
     redeemed: {
-      heading: "This ritual has been redeemed.",
+      heading: "This skincare routine has been redeemed.",
       body: "You've already used this quiz reward. Browse the full collection at our regular pricing — and thank you for being part of YU.R.",
       ctaHref: `/${localePrefix}/shop`,
       ctaLabel: "Browse the shop",
