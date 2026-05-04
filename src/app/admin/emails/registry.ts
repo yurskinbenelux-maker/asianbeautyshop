@@ -32,6 +32,7 @@ import {
   buildAuthChangeEmailEmail,
   buildAuthChangeEmailEmailMultiLocale,
 } from "@/lib/email/auth-change-email";
+import { buildConfirmationEmail } from "@/lib/newsletter/confirmation-email";
 import {
   fixtureAbandonedCart,
   fixtureLowStockReport,
@@ -157,6 +158,19 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
       const r = buildAuthChangeEmailEmailMultiLocale();
       return { subject: r.subject, html: r.html, text: r.text };
     },
+  },
+  {
+    key: "newsletter-confirm",
+    label: "Newsletter — confirm subscription",
+    description:
+      "Sent the moment someone enters their email in the newsletter form (footer or exit-intent). Double opt-in: nothing happens to the subscriber list until they click.",
+    audience: "customer",
+    localised: true,
+    render: (locale) =>
+      buildConfirmationEmail({
+        confirmUrl: "https://yurskinsolution.eu/api/newsletter/confirm?t=preview",
+        locale,
+      }),
   },
   {
     key: "order-confirmation",
