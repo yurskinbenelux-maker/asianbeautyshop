@@ -31,6 +31,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { DrawerData, DrawerHistoryEntry } from "@/lib/loyalty/drawer-data";
 import type { RedeemableReward } from "@/lib/loyalty/redeem";
+import type { TaskWithStatus } from "@/lib/loyalty/tasks";
 
 type Props = {
   data: DrawerData;
@@ -97,7 +98,7 @@ export function YurClubDrawer({ data, open, onClose }: Props) {
             rewards={data.topRewards}
             balance={data.account.pointsBalance}
           />
-          <WaysToEarnBlock />
+          <WaysToEarnBlock tasks={data.topTasks} />
           <HistoryBlock history={data.history} />
           <DrawerFooter />
         </div>
@@ -450,15 +451,87 @@ function WaysToRedeemBlock({
   );
 }
 
-// ─── ways to earn (placeholder) ───────────────────────────────────────────
+// ─── ways to earn (live data) ─────────────────────────────────────────────
 
-function WaysToEarnBlock() {
+function WaysToEarnBlock({ tasks }: { tasks: TaskWithStatus[] }) {
   const t = useTranslations("yur_club");
+
+  if (tasks.length === 0) {
+    return (
+      <Section title={t("section_earn_ways")}>
+        <p className="text-[13px] leading-relaxed text-ink-mid">
+          {t("earn_ways_placeholder")}
+        </p>
+      </Section>
+    );
+  }
+
   return (
     <Section title={t("section_earn_ways")}>
-      <p className="text-[13px] leading-relaxed text-ink-mid">
-        {t("earn_ways_placeholder")}
-      </p>
+      <ul className="divide-y divide-ink/10 border border-ink/10 bg-white">
+        {tasks.map((task) => {
+          const navigable =
+            task.status === "available" || task.status === "pending";
+          const Body = (
+            <>
+              <div className="min-w-0">
+                <p className="truncate text-[13px] text-ink">{task.title}</p>
+                {task.description ? (
+                  <p className="mt-0.5 truncate text-[11px] text-ink-mid">
+                    {task.description}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {task.points > 0 ? (
+                  <span className="font-display text-[13px] text-vermilion">
+                    +{task.points.toLocaleString()}
+                  </span>
+                ) : null}
+                {task.status === "auto" ? (
+                  <span className="text-[10px] uppercase tracking-label text-ink-mid">
+                    Auto
+                  </span>
+                ) : task.status === "pending" ? (
+                  <span className="text-[10px] uppercase tracking-label text-ink-mid">
+                    Pending
+                  </span>
+                ) : task.status === "approved" ? (
+                  <span className="text-[10px] uppercase tracking-label text-sage">
+                    Done
+                  </span>
+                ) : (
+                  <span className="text-[10px] uppercase tracking-label text-vermilion">
+                    →
+                  </span>
+                )}
+              </div>
+            </>
+          );
+          return (
+            <li key={task.id}>
+              {navigable ? (
+                <a
+                  href={`/account/club/earn/${task.slug}`}
+                  className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-rice-dim/40"
+                >
+                  {Body}
+                </a>
+              ) : (
+                <div className="flex items-center justify-between gap-4 px-4 py-3">
+                  {Body}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <a
+        href="/account/club/earn"
+        className="mt-3 inline-block text-[11px] uppercase tracking-label text-ink-mid transition-colors hover:text-vermilion"
+      >
+        See all ways to earn →
+      </a>
     </Section>
   );
 }

@@ -16,6 +16,7 @@ import {
 import { getLoyaltySettings } from "./settings";
 import { getLoyaltyTiers, resolveTier, type ResolvedTier } from "./tiers";
 import { listRedeemableRewards, type RedeemableReward } from "./redeem";
+import { listTasksForUser, type TaskWithStatus } from "./tasks";
 import { Locale } from "@prisma/client";
 import type { LoyaltyEventKind, LoyaltyTier } from "@prisma/client";
 
@@ -46,6 +47,10 @@ export type DrawerData = {
    *  cheapest 4 sorted by points cost so the customer sees something
    *  actionable without scrolling. */
   topRewards: RedeemableReward[];
+  /** All active tasks with this customer's status — both AUTO rows
+   *  (decorative) and MANUAL_REVIEW rows (claimable). Drawer surfaces
+   *  the top 4 with a "See all" link to /account/club/earn. */
+  topTasks: TaskWithStatus[];
 };
 
 /** Map a next-intl locale code to the Prisma Locale enum. Centralised so
@@ -80,7 +85,7 @@ export async function getDrawerData(opts: {
 
   const prismaLocale = toPrismaLocale(opts.locale);
 
-  const [history, activeCouponCount, topRewards] = await Promise.all([
+  const [history, activeCouponCount, topRewards, allTasks] = await Promise.all([
     readLoyaltyHistory({ userId: opts.userId, limit: 50 }),
     prisma.coupon.count({
       where: {
@@ -97,7 +102,18 @@ export async function getDrawerData(opts: {
       locale: prismaLocale,
       limit: 4,
     }),
+    listTasksForUser({ userId: opts.userId }),
   ]);
+  // Surface the 4 most relevant tasks: AUTO rows + claimable MANUAL_REVIEW
+  // rows take priority over already-approved/pending ones so the drawer
+  // shows actionable copy first.
+  const topTasks = [...allTasks]
+    .sort((a, b) => {
+      const order = (s: TaskWithStatus["status"]) =>
+        s === "available" ? 0 : s === "auto" ? 1 : s === "pending" ? 2 : 3;
+      return order(a.status) - order(b.status);
+    })
+    .slice(0, 4);
 
   const resolved = resolveTier(account.pointsLifetime, tiers);
 
@@ -120,5 +136,6 @@ export async function getDrawerData(opts: {
     })),
     activeCouponCount,
     topRewards,
+    topTasks,
   };
 }
