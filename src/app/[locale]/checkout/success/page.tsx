@@ -179,7 +179,7 @@ export default async function CheckoutSuccessPage({
       </h1>
       <p className="mx-auto mt-5 max-w-md text-[14px] leading-relaxed text-ink-mid">
         {paid
-          ? t("success_lede").replace("{email}", order.email)
+          ? t("success_lede", { email: order.email })
           : t("success_pending_lede")}
       </p>
 

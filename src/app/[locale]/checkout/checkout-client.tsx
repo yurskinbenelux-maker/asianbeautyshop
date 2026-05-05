@@ -893,15 +893,22 @@ function Line({
 
 function shippingReasonLabel(
   totals: PricingResult,
-  t: (key: string) => string,
+  // Wider signature so we can pass ICU placeholder values when needed
+  // (e.g. summary_free_over_threshold uses {amount}). The next-intl
+  // useTranslations() return type already supports the second arg.
+  t: (key: string, values?: Record<string, string | number>) => string,
   shipping: ShippingSettings,
 ): string | null {
   switch (totals.shippingReason) {
     case "free_threshold":
-      return t("summary_free_over_threshold").replace(
-        "{amount}",
-        formatEur(shipping.freeThresholdCents / 100, "nl-BE"),
-      );
+      // ICU placeholder — pass {amount} via the second arg, NOT
+      // .replace() on the result. With strict ICU, next-intl fails to
+      // resolve the key when a declared placeholder isn't supplied,
+      // falling back to the raw key path which then renders as
+      // "checkout.summary_free_over_threshold" on the page.
+      return t("summary_free_over_threshold", {
+        amount: formatEur(shipping.freeThresholdCents / 100, "nl-BE"),
+      });
     case "coupon_free_shipping":
       return t("summary_coupon_free_shipping");
     case "unshippable":
