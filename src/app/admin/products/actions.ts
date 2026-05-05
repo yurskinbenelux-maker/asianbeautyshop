@@ -993,6 +993,37 @@ export async function updateOrganise(
   const benefitIds = collectIds(formData, "benefitIds");
   const ingredientIds = collectIds(formData, "ingredientIds");
 
+  // Brand picker — single-select, optional. The form sends a string
+  // brandId (or "" for "no brand"). We validate the id actually maps to
+  // a real Brand row before writing, so a stale or hand-edited form
+  // can't silently null out the FK with an unknown UUID.
+  //
+  // We also pull the brand's slug here so we can DERIVE Product.productLine
+  // from it below — the dedicated Lines picker was retired in favour of
+  // the single Brand picker, but homepage/shop "Yu•R / Yu•R Pro / Yu•R Me"
+  // tabs still query by Product.productLine. Mapping the brand slug to
+  // the canonical PRODUCT_LINES dbValue keeps those queries working
+  // without any frontend refactor. Non-YU.R brands (when Sofia adds
+  // AHC/COSRX/etc.) get productLine=null — they simply don't appear on
+  // the YU.R-branded line tabs.
+  const rawBrandId = String(formData.get("brandId") ?? "").trim();
+  let brandIdToWrite: string | null = null;
+  let brandSlugForLineDerivation: string | null = null;
+  if (rawBrandId.length > 0) {
+    const brand = await prisma.brand.findUnique({
+      where: { id: rawBrandId },
+      select: { id: true, slug: true },
+    });
+    if (!brand) {
+      return {
+        ok: false,
+        message: "Selected brand no longer exists. Refresh the page.",
+      };
+    }
+    brandIdToWrite = brand.id;
+    brandSlugForLineDerivation = brand.slug;
+  }
+
   // Optional free-text INCI textarea on the Organise tab. Sofia pastes
   // a comma-separated INCI declaration ("Aqua, Glycerin, Niacinamide…")
   // and we (a) upsert each into the master Ingredient library, then
@@ -1011,45 +1042,29 @@ export async function updateOrganise(
     }
   }
 
-  // Line picker — MULTI-select. The form sends one or more
-  // "productLineSlugs" entries; we resolve each to its canonical
-  // PRODUCT_LINES def, drop unknowns, then walk them in PRODUCT_LINES
-  // order so the "primary" (first ticked) is deterministic regardless
-  // of click order in the UI.
+  // Derive Product.productLine from the chosen brand's slug. PRODUCT_LINES
+  // already encodes the brand-slug → DB-value mapping (yur → null,
+  // yur-pro → "Yu.R PRO", yur-me → "Yu.R Me") so we just look it up.
+  // Brands outside that set (future K-beauty additions) get productLine
+  // = null, which means they don't appear on any YU.R-branded line tab —
+  // the right behaviour, since Yu•R / Yu•R Pro / Yu•R Me tabs are
+  // YU.R-house concepts and don't apply to outside brands.
   //
-  // Empty submission falls back to the default Yu•R line.
-  const rawSlugs = formData
-    .getAll("productLineSlugs")
-    .map((v) => String(v).trim());
-  const tickedSlugs = new Set(rawSlugs);
-  const orderedDefs = PRODUCT_LINES.filter((l) => tickedSlugs.has(l.slug));
-
-  // First ticked line in canonical order is the "primary" — written to
-  // Product.productLine. The slug "yur" maps to null (the historical
-  // sentinel for the default line); the others write their dbValue.
-  const primary = orderedDefs[0];
-  const productLineDbValue: string | null =
-    !primary || primary.slug === "yur"
-      ? null
-      : ((primary.dbValues as readonly (string | null)[]).find(
-          (v) => v !== null,
-        ) ?? null);
-
-  // The remaining ticked lines become extraLines. We never write the
-  // primary's value into extraLines (that would be a self-redundant
-  // duplicate), and the default Yu•R line never goes there at all
-  // because its dbValue is null and it's already covered by the
-  // null-productLine fallback in lineWhere().
+  // extraLines is now always [] because the multi-select Lines picker
+  // was retired. If a future requirement re-emerges to put one product
+  // on multiple line tabs (e.g. universal gift card), we can restore a
+  // dedicated control then. Existing extraLines values on already-saved
+  // products remain in the DB until the next time Sofia saves the
+  // Organise tab on that product (at which point they're cleared).
+  const lineDef = brandSlugForLineDerivation
+    ? PRODUCT_LINES.find((l) => l.slug === brandSlugForLineDerivation)
+    : undefined;
+  const productLineDbValue: string | null = lineDef
+    ? ((lineDef.dbValues as readonly (string | null)[]).find(
+        (v) => v !== null,
+      ) ?? null)
+    : null;
   const extraLines: string[] = [];
-  for (const def of orderedDefs.slice(1)) {
-    if (def.slug === "yur") continue;
-    const v = (def.dbValues as readonly (string | null)[]).find(
-      (x) => x !== null,
-    );
-    if (typeof v === "string" && v !== productLineDbValue) {
-      extraLines.push(v);
-    }
-  }
 
   try {
     // Persist the line column outside the per-relation transactions.
@@ -1058,7 +1073,14 @@ export async function updateOrganise(
     // line edit, which Sofia would find surprising.
     await prisma.product.update({
       where: { id: productId },
-      data: { productLine: productLineDbValue, extraLines },
+      data: {
+        productLine: productLineDbValue,
+        extraLines,
+        // Brand FK lives next to the line columns since they're closely
+        // related (line picker + brand picker are both at the top of
+        // the Organise form). Writes null when "(none)" is selected.
+        brandId: brandIdToWrite,
+      },
     });
     // One transaction per relation — small, fast, and a failure on one
     // relation won't poison the others (they'd have succeeded already,
