@@ -58,6 +58,10 @@ model User {
   // sentinel to prevent the daily cron from re-sending if it runs twice
   // on the same day or if Sofia hand-fires it for testing.
   lastBirthdayEmailedYear Int?
+  // Independent sentinel for the YU.R Club birthday points award. Kept
+  // separate from the email sentinel so an admin can disable / re-enable
+  // either pathway without affecting the other.
+  lastBirthdayLoyaltyYear Int?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
   deletedAt     DateTime?  // GDPR soft-delete
@@ -72,6 +76,8 @@ model User {
   returns       ReturnRequest[]
   subscriptions ProductSubscription[]
   loyaltyAccount LoyaltyAccount?
+  loyaltyTaskClaims LoyaltyTaskClaim[]
+  coupons       Coupon[]   @relation("UserCoupons")
   quizCompletion QuizCompletion?
 
   @@index([role])
@@ -264,6 +270,7 @@ model Product {
   cartItems       CartItem[]
   subscriptions   ProductSubscription[]
   ugcPhotos       UgcPhoto[]
+  loyaltyRewards  LoyaltyReward[]
 
   @@index([status])
   @@index([brandId])
@@ -961,7 +968,25 @@ model Coupon {
   isActive      Boolean       @default(true)
   firstOrderOnly Boolean      @default(false)
   createdAt     DateTime      @default(now())
+
+  // Scoped per-user coupons (welcome, referral bonus, loyalty redemptions).
+  // null = global / public code that anyone may try at checkout. When set,
+  // the pricing engine refuses the code if cart.userId !== this userId.
+  userId        String?       @db.Uuid
+  user          User?         @relation("UserCoupons", fields: [userId], references: [id], onDelete: SetNull)
+
+  // Set true for system-issued personal coupons that should trigger an
+  // email reminder N days before endsAt. Public marketing codes leave it
+  // false. The cron at /api/cron/coupon-expiry-reminder reads this flag.
+  sendExpiryReminder Boolean   @default(false)
+  // Idempotency: stamped when a reminder email goes out, so repeated cron
+  // runs don't double-email the same code.
+  reminderSentAt DateTime?
+
   orders        Order[]
+
+  @@index([userId, isActive])
+  @@index([endsAt, sendExpiryReminder, reminderSentAt])
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -1062,11 +1087,17 @@ model GiftCardRedemption {
 // ────────────────────────────────────────────────────────────────────────────
 
 enum LoyaltyEventKind {
-  EARNED_ORDER       // accrued from a paid order
-  REDEEMED_COUPON    // burned points to mint a discount coupon
-  ADJUSTED_ADMIN     // manual admin adjustment (gift / clawback)
-  REFERRAL_BONUS     // bonus points awarded for a successful referral
-  EXPIRED            // points cleared by the annual expiry sweep
+  EARNED_ORDER         // accrued from a paid order (pointsPerEur × subtotal)
+  EARNED_BIRTHDAY      // birthday gift, awarded by daily cron on DoB anniversary
+  EARNED_TASK          // approved manual-review task (Instagram repost etc.)
+  EARNED_MILESTONE     // every Nth order milestone (Sofia-tweakable)
+  EARNED_REFERRAL      // referee placed first paid order → referrer gets bonus
+  REFERRAL_BONUS       // legacy alias kept so older rows decode (not emitted by new code)
+  REDEEMED_COUPON      // burned points → minted a % or fixed coupon
+  REDEEMED_PRODUCT     // burned points → minted a 100%-off product coupon
+  REDEEMED_GIFT_CARD   // burned points → minted a gift card
+  ADJUSTED_ADMIN       // manual admin adjustment (gift / clawback) with a reason
+  EXPIRED              // points cleared by the annual expiry sweep
 }
 
 model LoyaltyAccount {
@@ -1097,13 +1128,171 @@ model LoyaltyEvent {
   delta       Int
   // Free-text reason shown in the customer's history table.
   reason      String
-  // Optional links — order that earned the points, coupon that burnt them, etc.
-  orderId     String?          @db.Uuid
-  couponCode  String?
-  createdAt   DateTime         @default(now())
+  // Optional links — every kind has at most one of these populated:
+  //   · orderId       → EARNED_ORDER, EARNED_MILESTONE
+  //   · couponCode    → REDEEMED_COUPON, REDEEMED_PRODUCT, REDEEMED_GIFT_CARD
+  //   · taskClaimId   → EARNED_TASK
+  //   · rewardId      → REDEEMED_* (back-pointer to the catalogue entry)
+  //   · referralId    → EARNED_REFERRAL
+  // None populated for EARNED_BIRTHDAY / ADJUSTED_ADMIN / EXPIRED.
+  orderId      String?          @db.Uuid
+  couponCode   String?
+  taskClaimId  String?          @db.Uuid
+  rewardId     String?          @db.Uuid
+  referralId   String?          @db.Uuid
+  createdAt    DateTime         @default(now())
 
   @@index([accountId])
   @@index([orderId])
+  @@index([taskClaimId])
+  @@index([rewardId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+//  YU.R Club — admin-tweakable loyalty configuration.
+//
+//  Sofia owns these tables. Every economic lever — points-per-euro, birthday
+//  bonus, referral bonus, milestone cadence, tier thresholds, redemption
+//  costs, manual-task points — is editable from /admin/loyalty/* without
+//  touching code. Defaults live in the migration so a fresh install boots
+//  with sensible numbers.
+// ────────────────────────────────────────────────────────────────────────────
+
+model LoyaltySettings {
+  // Singleton row pattern: the `singleton` boolean is unique-true so only
+  // one row can ever exist. All reads do `findFirst` and the seed creates
+  // exactly one row with the defaults below.
+  id                       String   @id @default(uuid()) @db.Uuid
+  singleton                Boolean  @unique @default(true)
+
+  // Earning rules
+  pointsPerEur             Int      @default(5)    // 5 pts per €1 spent on an order
+  birthdayPoints           Int      @default(150)  // gift on the customer's birthday
+  milestoneOrders          Int      @default(5)    // every Nth paid order …
+  milestonePoints          Int      @default(250)  // … awards this many bonus points
+  milestoneEnabled         Boolean  @default(true)
+
+  // Referral rules
+  referrerBonus            Int      @default(250)  // points awarded to the referrer
+  refereeCouponPercent     Int      @default(5)    // friend's bonus coupon (separate from welcome 10%)
+
+  // Reminders + housekeeping
+  pointsExpiryMonths       Int?     @default(12)   // null = points never expire
+  couponExpiryReminderDays Int      @default(7)    // when to email the customer
+
+  // Master switch — flip to false to hide the drawer + freeze accruals
+  // while still keeping balances intact.
+  isProgramActive          Boolean  @default(true)
+
+  updatedAt                DateTime @updatedAt
+}
+
+model LoyaltyTier {
+  id              String   @id @default(uuid()) @db.Uuid
+  // Customer-facing name. Defaults seeded as Bud / Bloom / Aurora / Atelier;
+  // Sofia can rename.
+  name            String
+  // Lifetime points needed to reach this tier. Customers move up monotonically.
+  pointsThreshold Int
+  // Optional icon key from the design system (matches LoyaltyTask.iconKey).
+  iconKey         String?
+  // For drawer rendering — tiers ordered ascending by threshold by default
+  // but Sofia can override with sortOrder if she wants a different display.
+  sortOrder       Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([pointsThreshold])
+  @@index([isActive, sortOrder])
+}
+
+enum LoyaltyTaskKind {
+  AUTO            // points awarded by code (e.g. order accrual, birthday)
+  MANUAL_REVIEW   // user submits proof, admin reviews → approve/reject
+}
+
+model LoyaltyTask {
+  id               String          @id @default(uuid()) @db.Uuid
+  // Stable handle — used by AUTO tasks the code references directly,
+  // e.g. "place-order" / "celebrate-birthday". Sofia can also create new
+  // MANUAL_REVIEW tasks with arbitrary slugs.
+  slug             String          @unique
+  title            String          // "Repost on Instagram"
+  description      String?         // short tagline shown in drawer
+  instructionsHtml String?         // long-form how-to (rich HTML)
+  points           Int
+  kind             LoyaltyTaskKind @default(MANUAL_REVIEW)
+  iconKey          String?
+  // Whether the customer must paste a URL with their submission.
+  requiresProofUrl Boolean         @default(true)
+  // One claim per user lifetime, or repeatable?
+  isRepeatable     Boolean         @default(false)
+  isActive         Boolean         @default(true)
+  sortOrder        Int             @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  claims           LoyaltyTaskClaim[]
+
+  @@index([isActive, sortOrder])
+}
+
+enum LoyaltyTaskClaimStatus {
+  PENDING    // user submitted, awaiting admin review
+  APPROVED   // admin approved → points awarded + email sent
+  REJECTED   // admin rejected → no points + email sent (with reason)
+}
+
+model LoyaltyTaskClaim {
+  id           String                 @id @default(uuid()) @db.Uuid
+  taskId       String                 @db.Uuid
+  task         LoyaltyTask            @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId       String                 @db.Uuid
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       LoyaltyTaskClaimStatus @default(PENDING)
+  proofUrl     String?
+  notes        String?                // customer-supplied note, e.g. their IG handle
+  adminNote    String?                // why rejected, or any admin commentary
+  reviewedAt   DateTime?
+  reviewedById String?                @db.Uuid
+  createdAt    DateTime               @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([taskId])
+}
+
+enum LoyaltyRewardKind {
+  PRODUCT_FREE       // mints a 100%-off coupon scoped to one specific Product
+  GIFT_CARD          // mints a digital GiftCard with the configured value
+  COUPON_FIXED       // mints a €X off coupon for any cart
+  COUPON_PERCENT     // mints an X% off coupon for any cart
+}
+
+model LoyaltyReward {
+  id           String            @id @default(uuid()) @db.Uuid
+  title        String            // "I'm From Beet Purifying Mask" or "€10 voucher"
+  description  String?
+  kind         LoyaltyRewardKind
+  pointsCost   Int
+
+  // For PRODUCT_FREE: which product the redemption gifts.
+  productId    String?           @db.Uuid
+  product      Product?          @relation(fields: [productId], references: [id])
+
+  // For GIFT_CARD or COUPON_FIXED: euro amount in cents (e.g. 1000 = €10).
+  valueCents   Int?
+  // For COUPON_PERCENT: percentage off (e.g. 10 = 10% off).
+  percentOff   Int?
+
+  iconKey      String?
+  isActive     Boolean           @default(true)
+  sortOrder    Int               @default(0)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([isActive, sortOrder])
 }
 
 // Two-sided referral tracking. A row is created the moment the

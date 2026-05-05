@@ -119,7 +119,7 @@ export async function ensureUserProfile(
   const lastName =
     hints.lastName ?? meta?.last_name ?? null;
 
-  return prisma.user.upsert({
+  const profile = await prisma.user.upsert({
     where: { id: supabaseUser.id },
     update: {
       email,
@@ -152,6 +152,26 @@ export async function ensureUserProfile(
       acceptsTermsAt: new Date(),
     },
   });
+
+  // YU.R Club: auto-create a LoyaltyAccount on first sight so the
+  // customer's referral code exists the moment they hit /account. The
+  // helper is idempotent — fast path (single SELECT) on subsequent
+  // logins, and never throws into auth flow if it fails.
+  if (profile.role === Role.CUSTOMER) {
+    try {
+      const { ensureLoyaltyAccount } = await import("@/lib/loyalty/account");
+      await ensureLoyaltyAccount({
+        userId: profile.id,
+        firstName: profile.firstName,
+      });
+    } catch (err) {
+      // Non-fatal — the customer can still sign in; the drawer's own
+      // ensureLoyaltyAccount call will heal the account on first open.
+      console.error("[auth] ensureLoyaltyAccount failed", profile.id, err);
+    }
+  }
+
+  return profile;
 }
 
 /**

@@ -87,6 +87,14 @@ const orderSelect = {
   // Needed on the PAID transition to detect quiz-reward orders and
   // mark the user's QuizCompletion as redeemed (rule A enforcement).
   couponCode: true,
+  // YU.R Club accrual on the PAID transition needs the customer + the
+  // subtotal (we award on subtotal not grandTotal so shipping/tax don't
+  // earn points). The user relation is optional because guest checkouts
+  // don't earn loyalty points — anonymous orders have no account to
+  // credit and signing up later doesn't retroactively claim past orders.
+  subtotal: true,
+  userId: true,
+  user: { select: { firstName: true } },
 } satisfies Prisma.OrderSelect;
 
 type OrderForSync = Prisma.OrderGetPayload<{ select: typeof orderSelect }>;
@@ -242,6 +250,33 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
     // is idempotent on (giftCardId, orderId), so re-running on a webhook
     // retry is a no-op.
     await drainAttachedGiftCards(order.id);
+
+    // YU.R Club accrual — points for the order + milestone bonus if this
+    // order hit a multiple of LoyaltySettings.milestoneOrders. Both calls
+    // are idempotent on the (orderId, kind) pair, so webhook retries are
+    // safe. Wrapped in try/catch because a loyalty failure must never
+    // roll back a real-money payment.
+    if (order.userId) {
+      try {
+        const subtotalEur = Number(order.subtotal);
+        const { accrueOrderPoints, accrueMilestone } = await import(
+          "@/lib/loyalty/accrue"
+        );
+        await accrueOrderPoints({
+          orderId: order.id,
+          userId: order.userId,
+          subtotalEur,
+          firstName: order.user?.firstName,
+        });
+        await accrueMilestone({
+          orderId: order.id,
+          userId: order.userId,
+          firstName: order.user?.firstName,
+        });
+      } catch (err) {
+        console.error("[sync-mollie] loyalty accrual failed", order.id, err);
+      }
+    }
 
     // Issue the VAT invoice BEFORE we fan out the post-paid emails. The
     // confirmation email needs the PDF buffer for its attachment; doing
