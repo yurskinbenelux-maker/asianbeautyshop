@@ -78,6 +78,12 @@ model User {
   loyaltyAccount LoyaltyAccount?
   loyaltyTaskClaims LoyaltyTaskClaim[]
   coupons       Coupon[]   @relation("UserCoupons")
+  // Two halves of the Referral graph. referredOthers = friends I invited;
+  // referredByOthers = referrals where I'm the new account. referredByOthers
+  // is at most one row in practice (a customer can only be referred once),
+  // but Prisma needs the array shape on the inverse side.
+  referredOthers     Referral[] @relation("referrerReferrals")
+  referredByOthers   Referral[] @relation("refereeReferrals")
   quizCompletion QuizCompletion?
 
   @@index([role])
@@ -1302,7 +1308,14 @@ model LoyaltyReward {
 model Referral {
   id              String     @id @default(uuid()) @db.Uuid
   referrerUserId  String     @db.Uuid
+  // Relations are virtual in Prisma — no DB columns are added here. Both
+  // sides explicit so we can `include: { referrer / referee }` from the
+  // sync-mollie reward flow + the admin referrals queue.
+  referrer        User       @relation("referrerReferrals", fields: [referrerUserId], references: [id], onDelete: Cascade)
+
   refereeUserId   String?    @db.Uuid             // null until the friend places their first order
+  referee         User?      @relation("refereeReferrals", fields: [refereeUserId], references: [id], onDelete: SetNull)
+
   refereeOrderId  String?    @db.Uuid             // first paid order from the referee
   refereeEmail    String                          // captured at checkout for guest cases
   status          ReferralStatus @default(PENDING)
@@ -1311,6 +1324,7 @@ model Referral {
   rewardedAt      DateTime?
 
   @@index([referrerUserId])
+  @@index([refereeUserId])
   @@index([status])
 }
 
