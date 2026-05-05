@@ -19,7 +19,7 @@ import { getCurrentCustomer } from "@/lib/auth";
 import { hasMollieKey } from "@/lib/mollie/client";
 import { listMyAddresses } from "@/lib/queries/addresses";
 import { computeOrderTotals } from "@/lib/checkout/pricing";
-import { logAudit } from "@/lib/audit/log";
+import { prisma } from "@/lib/prisma";
 
 import { CheckoutClient } from "./checkout-client";
 import { CheckoutUnavailable } from "./checkout-unavailable";
@@ -66,38 +66,40 @@ export default async function CheckoutPage(props: Props) {
   try {
     return await CheckoutPageInner(props);
   } catch (err) {
-    if (isNextControlFlowError(err)) throw err;
+    // Log EVERYTHING — including Next.js framework control-flow errors
+    // (NEXT_REDIRECT, NEXT_NOT_FOUND, DynamicServerError) — so the
+    // audit log surfaces the real cause. We re-throw after logging so
+    // the framework still handles legitimate signals.
     const message = err instanceof Error ? err.message : String(err);
     const stack = err instanceof Error ? err.stack ?? "(no stack)" : "(no stack)";
+    const digest =
+      err instanceof Error
+        ? (err as Error & { digest?: string }).digest ?? null
+        : null;
     try {
-      await logAudit({
-        action: "checkout.page_500_diagnostic",
-        entityType: "Cart",
-        entityId: null,
-        summary: `CheckoutPage threw: ${message.slice(0, 180)}`,
-        meta: {
-          message,
-          stack: stack.slice(0, 4000),
+      await prisma.auditLog.create({
+        data: {
+          actorId: null,
+          actorEmail: null,
+          action: "checkout.page_500_diagnostic",
+          entityType: "Cart",
+          entityId: null,
+          summary: `CheckoutPage: ${message.slice(0, 400)}`,
+          meta: {
+            message,
+            digest,
+            stack: stack.slice(0, 3000),
+          } as never,
+          ip: null,
+          userAgent: null,
         },
       });
     } catch {
-      // Don't let the audit-write hide the original error.
+      // Audit write failed — silently swallow so the original error
+      // can still propagate to the framework.
     }
     throw err;
   }
-}
-
-/** Next.js uses specific Error subclasses as control-flow signals.
- *  They carry a `digest` string that starts with NEXT_ — anything
- *  matching is internal and must propagate untouched. */
-function isNextControlFlowError(err: unknown): boolean {
-  if (!(err instanceof Error)) return false;
-  const digest = (err as Error & { digest?: string }).digest;
-  if (typeof digest === "string" && digest.startsWith("NEXT_")) return true;
-  // DynamicServerError doesn't always have a NEXT_ digest in older
-  // Next.js builds — fall back to message detection.
-  if (err.message.startsWith("Dynamic server usage")) return true;
-  return false;
 }
 
 async function CheckoutPageInner({ params }: Props) {
