@@ -215,19 +215,65 @@ function lineWhere(slugs: string[]): Prisma.ProductWhereInput {
 }
 
 /**
+ * Expand a parent-category slug into its full descendant slug list so a
+ * `?category=cleansers` filter matches products tagged on any of its
+ * subcategories (Oil Cleansers, Cleansing Balms, …) — products are
+ * usually tagged on the leaf, not the parent, so without this the
+ * parent landing page would show zero results.
+ *
+ * Returns at minimum [slug] (so leaf categories or unknown slugs still
+ * work). Single DB call per category — we recurse in TypeScript, not
+ * via Prisma's recursive CTE (the tree is shallow, two levels max).
+ *
+ * Memoisation is not needed: buildShopWhere is called once per request
+ * per filter combination, and the categories table is < 50 rows.
+ */
+async function expandCategorySlug(slug: string): Promise<string[]> {
+  // Fetch the row + its direct children. Two-level tree means "children
+  // of the root" is enough — but we still walk recursively to stay
+  // future-proof if the tree ever deepens.
+  const cat = await prisma.category.findUnique({
+    where: { slug },
+    select: {
+      slug: true,
+      children: { select: { slug: true, children: { select: { slug: true } } } },
+    },
+  });
+  if (!cat) return [slug];
+
+  const all = new Set<string>([cat.slug]);
+  for (const c of cat.children) {
+    all.add(c.slug);
+    for (const gc of c.children) all.add(gc.slug);
+  }
+  return Array.from(all);
+}
+
+/**
  * Build the Prisma where clause shared by getShopProducts + the facet
  * counters in getShopFilters. Kept as its own function so we can't drift
  * between "what the grid shows" and "what the sidebar counts".
+ *
+ * Async because category filters tree-walk via expandCategorySlug to
+ * include products on descendant subcategories. All other filters are
+ * still synchronous.
  */
-function buildShopWhere(filters: ShopFilterArgs): Prisma.ProductWhereInput {
+async function buildShopWhere(
+  filters: ShopFilterArgs,
+): Promise<Prisma.ProductWhereInput> {
   const AND: Prisma.ProductWhereInput[] = [
     { status: ProductStatus.PUBLISHED },
     { deletedAt: null },
   ];
 
   if (filters.categorySlug) {
+    // Walk the tree: a parent slug expands to itself + every descendant
+    // so the filter catches products tagged on any sub. Leaf slugs and
+    // unknown slugs return [slug] from expand, so the IN list still
+    // works as strict-match.
+    const slugList = await expandCategorySlug(filters.categorySlug);
     AND.push({
-      categories: { some: { category: { slug: filters.categorySlug } } },
+      categories: { some: { category: { slug: { in: slugList } } } },
     });
   }
   if (filters.skinTypeSlugs?.length) {
@@ -287,7 +333,7 @@ export async function getShopProducts({
 } & ShopFilterArgs): Promise<{ items: ProductCardData[]; total: number }> {
   const loc = toPrismaLocale(locale);
 
-  const where = buildShopWhere(filters);
+  const where = await buildShopWhere(filters);
 
   const orderBy =
     sort === "price_asc"
@@ -1157,7 +1203,7 @@ export async function searchProducts({
   // layer on `hideFromSearch: false` (search-specific) plus the term
   // conditions. Casting AND to the array shape we know buildShopWhere returns.
   const facetAnd =
-    (buildShopWhere(filters).AND as Prisma.ProductWhereInput[]) ?? [];
+    ((await buildShopWhere(filters)).AND as Prisma.ProductWhereInput[]) ?? [];
 
   const where: Prisma.ProductWhereInput = {
     AND: [...facetAnd, { hideFromSearch: false }, ...termConditions],
