@@ -26,6 +26,7 @@ import {
   type ActionState,
 } from "@/app/admin/products/actions";
 import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
+import { AiPolishTranslationButton } from "@/components/admin/products/ai-polish-translation";
 import { setNativeInputValue } from "@/lib/admin/native-input";
 
 export type TranslationData = {
@@ -193,19 +194,41 @@ function LocalePanel({
       {/* locale is a hidden field so the server knows which row to upsert */}
       <input type="hidden" name="locale" value={initial.locale} />
 
-      {/* ── Auto-translate (non-EN only) ─────────────────────────── */}
-      {showTranslateButton && enValues && (
-        <TranslateFromEnglishButton
-          targetLocale={initial.locale}
-          fields={TRANSLATABLE_FIELDS.map((f) => ({
-            name: f.name,
-            isHtml: f.isHtml,
-            currentValue: getCurrentValues()[f.name] ?? "",
-          }))}
-          getSource={getEnSource}
-          onTranslated={applyTranslations}
+      {/* ── AI helpers row ────────────────────────────────────────
+          Two complementary tools, side-by-side:
+          1. Auto-translate (DeepL): non-EN only. Fills empty fields
+             with literal translations of the EN copy. Already wired.
+          2. Polish with AI (Groq): every locale. Improves grammar,
+             matches YU.R voice, fixes awkward translation phrasing.
+             Diff modal so Sofia approves field-by-field.
+          Polish doesn't touch slug, warnings, or SEO fields. */}
+      <div className="flex flex-wrap items-start gap-3">
+        {showTranslateButton && enValues && (
+          <TranslateFromEnglishButton
+            targetLocale={initial.locale}
+            fields={TRANSLATABLE_FIELDS.map((f) => ({
+              name: f.name,
+              isHtml: f.isHtml,
+              currentValue: getCurrentValues()[f.name] ?? "",
+            }))}
+            getSource={getEnSource}
+            onTranslated={applyTranslations}
+          />
+        )}
+        <AiPolishTranslationButton
+          productId={productId}
+          locale={initial.locale}
+          onApply={(picked) => {
+            // Inject only the fields Sofia ticked. Sofia clicks Save
+            // translation below to commit.
+            const asMap: Record<string, string> = {};
+            for (const [key, value] of Object.entries(picked)) {
+              if (typeof value === "string") asMap[key] = value;
+            }
+            applyTranslations(asMap);
+          }}
         />
-      )}
+      </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
         <Field

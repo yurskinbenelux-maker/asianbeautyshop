@@ -42,6 +42,11 @@ import {
   suggestTagsForProduct,
   type SuggestTagsOutput,
 } from "@/lib/ai/suggest-tags";
+import {
+  polishProductText,
+  type PolishableField,
+  type PolishOutput,
+} from "@/lib/ai/polish-text";
 
 // ──────── helpers ────────────────────────────────────────────────────────
 
@@ -2080,5 +2085,105 @@ export async function applySuggestedTags(
   } catch (err) {
     console.error("[applySuggestedTags] failed:", err);
     return { ok: false, message: "Failed to save AI tags. Try again." };
+  }
+}
+
+// ──────── AI: polish translation text ────────────────────────────────────
+//
+// Reads the product's name + INCI for context, plus the current values
+// of the four polishable fields (name / shortDescription / description
+// / howToUse) in the target locale. On non-EN locales also reads the EN
+// source so the model can choose: improve existing translation, or
+// translate from EN if the locale's value is empty.
+//
+// Does NOT touch:
+//   · slug         — SEO-stable, never let AI rewrite URLs
+//   · warnings     — regulatory copy from supplier; rewording risks
+//                    compliance issues (cosmetic claims, allergens)
+//   · seoTitle     — these are already deterministic-ish (name-based)
+//   · seoDescription
+//
+// Returns the polished values to the client. The client renders a
+// per-field diff modal; Sofia clicks Apply to inject the values into
+// the form, then Save translation to commit. No DB writes here.
+export type PolishTranslationResult =
+  | {
+      ok: true;
+      polished: PolishOutput["polished"];
+      // Echo the inputs back so the diff modal can render the
+      // "current" side without an extra round-trip.
+      currentValues: Record<PolishableField, string>;
+    }
+  | { ok: false; message: string };
+
+export async function polishProductTranslation(
+  productId: string,
+  locale: Locale,
+): Promise<PolishTranslationResult> {
+  await requireAdmin();
+
+  const product = await prisma.product.findFirst({
+    where: { id: productId, deletedAt: null },
+    select: {
+      id: true,
+      inciList: true,
+      translations: {
+        where: { locale: { in: [Locale.EN, locale] } },
+        select: {
+          locale: true,
+          name: true,
+          shortDescription: true,
+          description: true,
+          howToUse: true,
+        },
+      },
+    },
+  });
+  if (!product) {
+    return { ok: false, message: "Product not found." };
+  }
+
+  const en = product.translations.find((t) => t.locale === Locale.EN);
+  const cur =
+    locale === Locale.EN
+      ? en
+      : product.translations.find((t) => t.locale === locale);
+
+  if (!en || !en.name?.trim()) {
+    return {
+      ok: false,
+      message:
+        "Add an English name + description first — the AI uses EN as the source of truth.",
+    };
+  }
+
+  const enValues: Record<PolishableField, string> = {
+    name: en.name ?? "",
+    shortDescription: en.shortDescription ?? "",
+    description: en.description ?? "",
+    howToUse: en.howToUse ?? "",
+  };
+  const currentValues: Record<PolishableField, string> = cur
+    ? {
+        name: cur.name ?? "",
+        shortDescription: cur.shortDescription ?? "",
+        description: cur.description ?? "",
+        howToUse: cur.howToUse ?? "",
+      }
+    : { name: "", shortDescription: "", description: "", howToUse: "" };
+
+  try {
+    const result = await polishProductText({
+      locale,
+      productNameEn: en.name ?? "",
+      inciList: product.inciList ?? "",
+      enValues,
+      currentValues,
+    });
+    return { ok: true, polished: result.polished, currentValues };
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "AI polish failed.";
+    return { ok: false, message };
   }
 }
