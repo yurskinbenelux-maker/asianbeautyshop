@@ -23,6 +23,8 @@ import {
   Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { YurClubMenuItem } from "./yur-club-menu-item";
+import type { DrawerData } from "@/lib/loyalty/drawer-data";
 
 type Section = {
   href: string;
@@ -38,13 +40,19 @@ type Section = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
-const SECTIONS: Section[] = [
-  { href: "/account",           key: "overview",  icon: LayoutDashboard },
-  { href: "/account/orders",    key: "orders",    icon: Package },
-  { href: "/account/returns",   key: "returns",   icon: RotateCcw },
-  { href: "/account/addresses", key: "addresses", icon: MapPin },
-  { href: "/account/wishlist",  key: "wishlist",  icon: Heart },
+// Two-part list: the rows BEFORE the YU.R Club entry, then the rows AFTER.
+// This is the simplest way to slot the drawer trigger between Gift cards
+// and Profile without forking the renderer for one special case.
+const SECTIONS_BEFORE_CLUB: Section[] = [
+  { href: "/account",           key: "overview",   icon: LayoutDashboard },
+  { href: "/account/orders",    key: "orders",     icon: Package },
+  { href: "/account/returns",   key: "returns",    icon: RotateCcw },
+  { href: "/account/addresses", key: "addresses",  icon: MapPin },
+  { href: "/account/wishlist",  key: "wishlist",   icon: Heart },
   { href: "/account/gift-cards", key: "gift_cards", icon: Gift },
+];
+
+const SECTIONS_AFTER_CLUB: Section[] = [
   { href: "/account/profile",   key: "profile",   icon: User },
   { href: "/account/privacy",   key: "privacy",   icon: Shield },
 ];
@@ -53,10 +61,15 @@ export function AccountSidebar({
   locale,
   userName,
   userEmail,
+  yurClubData,
 }: {
   locale: string;
   userName: string;
   userEmail: string;
+  /** Prefetched in the layout so the trigger + drawer can render
+   *  immediately without a client round-trip. Null when the loyalty
+   *  program is disabled or the customer isn't eligible. */
+  yurClubData: DrawerData | null;
 }) {
   const t = useTranslations("account");
   const pathname = usePathname();
@@ -86,26 +99,18 @@ export function AccountSidebar({
       {/* nav sections */}
       <nav className="px-3 py-4 md:py-6">
         <ul className="flex gap-1 overflow-x-auto md:block md:space-y-1 md:overflow-visible">
-          {SECTIONS.map((s) => {
-            const Icon = s.icon;
-            const active = isActive(s.href);
-            return (
-              <li key={s.href} className="shrink-0">
-                <Link
-                  href={s.href}
-                  className={cn(
-                    "flex items-center gap-3 whitespace-nowrap px-3 py-2 text-[13px] transition-colors",
-                    active
-                      ? "bg-ink/5 text-ink"
-                      : "text-ink-mid hover:bg-ink/5 hover:text-ink",
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{t(`nav_${s.key}`)}</span>
-                </Link>
-              </li>
-            );
-          })}
+          {SECTIONS_BEFORE_CLUB.map((s) => (
+            <SidebarRow key={s.href} section={s} t={t} active={isActive(s.href)} />
+          ))}
+          {/* YU.R Club drawer trigger — sits between Gift cards and Profile
+              per Sofia's brief. Rendered as a button (not a Link) since
+              clicking it opens a drawer rather than navigating. */}
+          <li className="shrink-0">
+            <YurClubMenuItem data={yurClubData} />
+          </li>
+          {SECTIONS_AFTER_CLUB.map((s) => (
+            <SidebarRow key={s.href} section={s} t={t} active={isActive(s.href)} />
+          ))}
         </ul>
       </nav>
 
@@ -125,5 +130,33 @@ export function AccountSidebar({
         </button>
       </form>
     </aside>
+  );
+}
+
+function SidebarRow({
+  section,
+  t,
+  active,
+}: {
+  section: Section;
+  t: ReturnType<typeof useTranslations<"account">>;
+  active: boolean;
+}) {
+  const Icon = section.icon;
+  return (
+    <li className="shrink-0">
+      <Link
+        href={section.href}
+        className={cn(
+          "flex items-center gap-3 whitespace-nowrap px-3 py-2 text-[13px] transition-colors",
+          active
+            ? "bg-ink/5 text-ink"
+            : "text-ink-mid hover:bg-ink/5 hover:text-ink",
+        )}
+      >
+        <Icon className="h-4 w-4" />
+        <span>{t(`nav_${section.key}`)}</span>
+      </Link>
+    </li>
   );
 }

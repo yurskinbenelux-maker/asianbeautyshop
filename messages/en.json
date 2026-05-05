@@ -602,6 +602,7 @@
     "nav_addresses": "Addresses",
     "nav_wishlist": "Wishlist",
     "nav_gift_cards": "Gift cards",
+    "nav_yur_club": "YU.R Club",
     "nav_profile": "Profile",
     "nav_privacy": "Privacy",
     "nav_sign_out": "Sign out",
@@ -1047,5 +1048,34 @@
       "status_expired": "Expired",
       "status_void": "Void"
     }
+  },
+  "yur_club": {
+    "eyebrow": "Loyalty rewards",
+    "title": "YU.R Club",
+    "close": "Close",
+    "tier_label": "Your tier",
+    "points": "points",
+    "points_to_next": "Earn {count, number} points to {next}",
+    "top_tier": "Top tier — thank you",
+    "member_since": "Member since {date}",
+    "tile_redeem": "Redeem points",
+    "tile_redeem_sub": "Trade points for products and discounts.",
+    "tile_coupons": "My coupons",
+    "tile_coupons_count": "{count, plural, one {# code} other {# codes}} ready to use",
+    "tile_coupons_empty": "Earn rewards to fill this drawer.",
+    "section_refer": "Refer your friends",
+    "refer_lede": "Share your code. They get a welcome discount, you get bonus points the moment their first order is paid.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "refer_terms": "Both rewards arrive automatically. Coupons cannot stack on a single order — perfect excuse for a second visit.",
+    "section_milestones": "Milestone rewards",
+    "milestones_lede": "Bonus points every Nth paid order — Sofia sets the cadence in admin.",
+    "section_redeem_ways": "Ways to redeem",
+    "redeem_ways_placeholder": "Coming soon — products, gift cards, and discount codes you can swap your points for.",
+    "section_earn_ways": "Ways to earn",
+    "earn_ways_placeholder": "Place an order, celebrate your birthday, refer a friend, share us on social — every gesture earns points.",
+    "section_history": "My history",
+    "history_empty": "Your first activity will appear here once you place an order or claim a reward.",
+    "footer": "YU.R · Skin Solution"
   }
 }

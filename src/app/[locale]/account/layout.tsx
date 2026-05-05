@@ -14,6 +14,7 @@ import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { requireCustomer } from "@/lib/auth";
 import { AccountSidebar } from "@/components/account/sidebar";
+import { getDrawerData } from "@/lib/loyalty/drawer-data";
 
 type Props = {
   children: ReactNode;
@@ -46,6 +47,21 @@ export default async function AccountLayout({ children, params }: Props) {
     .join(" ")
     .trim() || profile.email;
 
+  // YU.R Club drawer data — prefetched here so the sidebar entry +
+  // drawer render without a client round-trip and without N+1 queries
+  // across child pages. Wrapped in try/catch so a loyalty-system hiccup
+  // never blocks the customer from reaching their account.
+  let yurClubData: Awaited<ReturnType<typeof getDrawerData>> | null = null;
+  try {
+    yurClubData = await getDrawerData({
+      userId: profile.id,
+      firstName: profile.firstName,
+      userCreatedAt: profile.createdAt,
+    });
+  } catch (err) {
+    console.error("[account/layout] getDrawerData failed", err);
+  }
+
   return (
     <div className="container py-10 md:py-16">
       <div className="flex flex-col gap-10 md:flex-row md:gap-12">
@@ -53,6 +69,7 @@ export default async function AccountLayout({ children, params }: Props) {
           locale={locale}
           userName={userName}
           userEmail={profile.email}
+          yurClubData={yurClubData}
         />
         <div className="min-w-0 flex-1">{children}</div>
       </div>

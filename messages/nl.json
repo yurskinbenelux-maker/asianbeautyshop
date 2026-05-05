@@ -602,6 +602,7 @@
     "nav_addresses": "Adressen",
     "nav_wishlist": "Verlanglijst",
     "nav_gift_cards": "Cadeaubonnen",
+    "nav_yur_club": "YU.R Club",
     "nav_profile": "Profiel",
     "nav_privacy": "Privacy",
     "nav_sign_out": "Uitloggen",
@@ -1047,5 +1048,34 @@
       "status_expired": "Vervallen",
       "status_void": "Geannuleerd"
     }
+  },
+  "yur_club": {
+    "eyebrow": "Loyaliteit",
+    "title": "YU.R Club",
+    "close": "Sluiten",
+    "tier_label": "Jouw niveau",
+    "points": "punten",
+    "points_to_next": "Verdien {count, number} punten tot {next}",
+    "top_tier": "Hoogste niveau — dankjewel",
+    "member_since": "Lid sinds {date}",
+    "tile_redeem": "Punten inwisselen",
+    "tile_redeem_sub": "Ruil punten voor producten en kortingen.",
+    "tile_coupons": "Mijn coupons",
+    "tile_coupons_count": "{count, plural, one {# code} other {# codes}} klaar om te gebruiken",
+    "tile_coupons_empty": "Verdien beloningen om deze lade te vullen.",
+    "section_refer": "Verwijs je vrienden",
+    "refer_lede": "Deel je code. Zij krijgen een welkomstkorting, jij krijgt bonuspunten zodra hun eerste bestelling is betaald.",
+    "copy": "Kopiëren",
+    "copied": "Gekopieerd",
+    "refer_terms": "Beide beloningen worden automatisch geactiveerd. Coupons kunnen niet gestapeld worden op één bestelling — perfecte aanleiding voor een tweede bezoek.",
+    "section_milestones": "Mijlpaalbeloningen",
+    "milestones_lede": "Bonuspunten bij elke N-de betaalde bestelling — Sofia stelt het tempo in via admin.",
+    "section_redeem_ways": "Manieren om in te wisselen",
+    "redeem_ways_placeholder": "Binnenkort — producten, cadeaubonnen en kortingscodes die je met punten kunt inwisselen.",
+    "section_earn_ways": "Manieren om te verdienen",
+    "earn_ways_placeholder": "Plaats een bestelling, vier je verjaardag, verwijs een vriend, deel ons op social — elk gebaar levert punten op.",
+    "section_history": "Mijn geschiedenis",
+    "history_empty": "Je eerste activiteit verschijnt hier zodra je een bestelling plaatst of een beloning claimt.",
+    "footer": "YU.R · Skin Solution"
   }
 }

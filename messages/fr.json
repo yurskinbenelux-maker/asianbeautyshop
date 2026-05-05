@@ -602,6 +602,7 @@
     "nav_addresses": "Adresses",
     "nav_wishlist": "Liste d'envies",
     "nav_gift_cards": "Cartes cadeaux",
+    "nav_yur_club": "YU.R Club",
     "nav_profile": "Profil",
     "nav_privacy": "Confidentialité",
     "nav_sign_out": "Se déconnecter",
@@ -1047,5 +1048,34 @@
       "status_expired": "Expirée",
       "status_void": "Annulée"
     }
+  },
+  "yur_club": {
+    "eyebrow": "Fidélité",
+    "title": "YU.R Club",
+    "close": "Fermer",
+    "tier_label": "Votre niveau",
+    "points": "points",
+    "points_to_next": "Gagnez {count, number} points pour atteindre {next}",
+    "top_tier": "Niveau ultime — merci",
+    "member_since": "Membre depuis {date}",
+    "tile_redeem": "Échanger des points",
+    "tile_redeem_sub": "Convertissez vos points en produits et remises.",
+    "tile_coupons": "Mes coupons",
+    "tile_coupons_count": "{count, plural, one {# code} other {# codes}} prêt(s) à utiliser",
+    "tile_coupons_empty": "Gagnez des récompenses pour remplir ce tiroir.",
+    "section_refer": "Parrainez vos amis",
+    "refer_lede": "Partagez votre code. Ils reçoivent une remise de bienvenue, vous gagnez des points dès que leur première commande est payée.",
+    "copy": "Copier",
+    "copied": "Copié",
+    "refer_terms": "Les deux récompenses arrivent automatiquement. Les coupons ne peuvent pas se cumuler sur une seule commande — l'excuse parfaite pour une seconde visite.",
+    "section_milestones": "Paliers de récompenses",
+    "milestones_lede": "Points bonus toutes les N commandes payées — Sofia ajuste le rythme depuis l'admin.",
+    "section_redeem_ways": "Façons d'échanger",
+    "redeem_ways_placeholder": "Bientôt — produits, cartes cadeaux et codes promo échangeables contre vos points.",
+    "section_earn_ways": "Façons de gagner",
+    "earn_ways_placeholder": "Passez une commande, fêtez votre anniversaire, parrainez un·e ami·e, partagez-nous sur les réseaux — chaque geste rapporte.",
+    "section_history": "Mon historique",
+    "history_empty": "Votre première activité apparaîtra ici dès votre première commande ou récompense.",
+    "footer": "YU.R · Skin Solution"
   }
 }
