@@ -57,6 +57,7 @@ export default async function AccountLayout({ children, params }: Props) {
       userId: profile.id,
       firstName: profile.firstName,
       userCreatedAt: profile.createdAt,
+      locale,
     });
   } catch (err) {
     console.error("[account/layout] getDrawerData failed", err);

@@ -30,6 +30,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { DrawerData, DrawerHistoryEntry } from "@/lib/loyalty/drawer-data";
+import type { RedeemableReward } from "@/lib/loyalty/redeem";
 
 type Props = {
   data: DrawerData;
@@ -92,7 +93,10 @@ export function YurClubDrawer({ data, open, onClose }: Props) {
           <ActionTiles activeCouponCount={data.activeCouponCount} />
           <ReferralBlock referralCode={data.account.referralCode} />
           <MilestoneBlock />
-          <WaysToRedeemBlock />
+          <WaysToRedeemBlock
+            rewards={data.topRewards}
+            balance={data.account.pointsBalance}
+          />
           <WaysToEarnBlock />
           <HistoryBlock history={data.history} />
           <DrawerFooter />
@@ -379,15 +383,69 @@ function MilestoneBlock() {
   );
 }
 
-// ─── ways to redeem (placeholder) ─────────────────────────────────────────
+// ─── ways to redeem (live data) ───────────────────────────────────────────
 
-function WaysToRedeemBlock() {
+function WaysToRedeemBlock({
+  rewards,
+  balance,
+}: {
+  rewards: RedeemableReward[];
+  balance: number;
+}) {
   const t = useTranslations("yur_club");
+
+  if (rewards.length === 0) {
+    return (
+      <Section title={t("section_redeem_ways")}>
+        <p className="text-[13px] leading-relaxed text-ink-mid">
+          {t("redeem_ways_placeholder")}
+        </p>
+      </Section>
+    );
+  }
+
   return (
     <Section title={t("section_redeem_ways")}>
-      <p className="text-[13px] leading-relaxed text-ink-mid">
-        {t("redeem_ways_placeholder")}
-      </p>
+      <ul className="divide-y divide-ink/10 border border-ink/10 bg-white">
+        {rewards.map((r) => (
+          <li key={r.id}>
+            <a
+              href={
+                r.affordable
+                  ? `/account/club/redeem/${r.id}`
+                  : "/account/club/redeem"
+              }
+              className={
+                "flex items-center justify-between gap-4 px-4 py-3 transition-colors " +
+                (r.affordable
+                  ? "hover:bg-rice-dim/40"
+                  : "opacity-70")
+              }
+            >
+              <div className="min-w-0">
+                <p className="truncate text-[13px] text-ink">{r.title}</p>
+                <p className="mt-0.5 text-[11px] uppercase tracking-label text-ink-mid">
+                  {r.valueLabel}
+                </p>
+              </div>
+              <span className="shrink-0 font-display text-[14px] text-vermilion">
+                {r.pointsCost.toLocaleString()} pts
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <a
+        href="/account/club/redeem"
+        className="mt-3 inline-block text-[11px] uppercase tracking-label text-ink-mid transition-colors hover:text-vermilion"
+      >
+        See all rewards →
+      </a>
+      {balance > 0 ? (
+        <p className="mt-2 text-[11px] text-ink-mid">
+          You have {balance.toLocaleString()} pts to spend.
+        </p>
+      ) : null}
     </Section>
   );
 }

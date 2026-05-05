@@ -15,6 +15,8 @@ import {
 } from "./account";
 import { getLoyaltySettings } from "./settings";
 import { getLoyaltyTiers, resolveTier, type ResolvedTier } from "./tiers";
+import { listRedeemableRewards, type RedeemableReward } from "./redeem";
+import { Locale } from "@prisma/client";
 import type { LoyaltyEventKind, LoyaltyTier } from "@prisma/client";
 
 export type DrawerHistoryEntry = {
@@ -39,7 +41,23 @@ export type DrawerData = {
    *  badge on the "My coupons" tile so customers know there's something
    *  waiting without having to open the page. */
   activeCouponCount: number;
+  /** Top N rewards for the drawer's "Ways to redeem" section. The full
+   *  catalogue lives at /account/club/redeem; here we surface the
+   *  cheapest 4 sorted by points cost so the customer sees something
+   *  actionable without scrolling. */
+  topRewards: RedeemableReward[];
 };
+
+/** Map a next-intl locale code to the Prisma Locale enum. Centralised so
+ *  both the layout and the drawer-data builder agree. */
+function toPrismaLocale(s: string): Locale {
+  switch (s.toLowerCase()) {
+    case "nl": return Locale.NL;
+    case "fr": return Locale.FR;
+    case "ru": return Locale.RU;
+    default:   return Locale.EN;
+  }
+}
 
 /** Build everything the drawer needs in one batched fetch. Auto-creates
  *  the LoyaltyAccount on the first call (with the user's first name baked
@@ -49,6 +67,7 @@ export async function getDrawerData(opts: {
   userId: string;
   firstName: string | null;
   userCreatedAt: Date;
+  locale: string;
 }): Promise<DrawerData> {
   const [settings, account, tiers] = await Promise.all([
     getLoyaltySettings(),
@@ -59,7 +78,9 @@ export async function getDrawerData(opts: {
     getLoyaltyTiers(),
   ]);
 
-  const [history, activeCouponCount] = await Promise.all([
+  const prismaLocale = toPrismaLocale(opts.locale);
+
+  const [history, activeCouponCount, topRewards] = await Promise.all([
     readLoyaltyHistory({ userId: opts.userId, limit: 50 }),
     prisma.coupon.count({
       where: {
@@ -70,6 +91,11 @@ export async function getDrawerData(opts: {
           { endsAt: { gt: new Date() } },
         ],
       },
+    }),
+    listRedeemableRewards({
+      userId: opts.userId,
+      locale: prismaLocale,
+      limit: 4,
     }),
   ]);
 
@@ -93,5 +119,6 @@ export async function getDrawerData(opts: {
       createdAt: h.createdAt,
     })),
     activeCouponCount,
+    topRewards,
   };
 }
