@@ -30,6 +30,7 @@ import { CookieBanner } from "@/components/consent/cookie-banner";
 import { RegisterWelcomePopup } from "@/components/marketing/register-welcome-popup";
 import { SwRegister } from "@/components/pwa/sw-register";
 import { GoogleTagManager } from "@/components/analytics/google-tag-manager";
+import { ReferralCapture } from "@/components/marketing/referral-capture";
 import { getCurrentUser } from "@/lib/auth";
 import { readConsentCookie } from "@/lib/consent/consent";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -236,6 +237,11 @@ export default async function LocaleLayout({ children, params }: Props) {
                   dismissal. English-only on purpose — the popup needs
                   to convert before the user picks a language. */}
               <RegisterWelcomePopup isSignedIn={isSignedIn} />
+              {/* Silent: catches `?ref=CODE` on any page and persists it
+                  to localStorage so the sign-up form can pre-fill the
+                  referral field after a normal browse-around-then-sign-up
+                  journey. Functional/attribution token; no consent required. */}
+              <ReferralCapture />
               {/* PWA — registers /sw.js once on production paint so the
                   brand PNG icons + Next static chunks get cached. Skips
                   localhost so dev-mode hot-reload isn't poisoned. */}

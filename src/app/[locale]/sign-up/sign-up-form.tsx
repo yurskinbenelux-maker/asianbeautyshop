@@ -6,17 +6,37 @@
 
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { signUpAction, type SignUpState } from "./actions";
+import { readStoredReferralCode } from "@/components/marketing/referral-capture";
 
 const INITIAL: SignUpState = { ok: false, message: "" };
 
 export function SignUpForm({ locale }: { locale: string }) {
   const t = useTranslations("auth");
   const [state, formAction] = useActionState(signUpAction, INITIAL);
+
+  // Pre-fill the referral code from (in priority order) the URL `?ref=`,
+  // then localStorage. Both paths are functional/attribution and require
+  // no GDPR consent — see ReferralCapture for the rationale. We hold it
+  // in component state so the customer can edit / clear if they want to.
+  const [referralCode, setReferralCode] = useState("");
+  const filledOnce = useRef(false);
+  useEffect(() => {
+    if (filledOnce.current) return;
+    filledOnce.current = true;
+    const url = new URL(window.location.href);
+    const fromUrl = url.searchParams.get("ref")?.trim().toUpperCase();
+    if (fromUrl) {
+      setReferralCode(fromUrl);
+      return;
+    }
+    const fromStorage = readStoredReferralCode();
+    if (fromStorage) setReferralCode(fromStorage);
+  }, []);
 
   // Confirmation-email success — show the "check inbox" panel.
   if (state?.ok && state.awaitConfirm) {
@@ -97,6 +117,28 @@ export function SignUpForm({ locale }: { locale: string }) {
         />
         <span className="mt-1 block text-[11px] text-ink-mid">
           {t("error_password_short")}
+        </span>
+      </label>
+
+      {/* ── referral code (optional) ──────────────────────────── */}
+      <label className="block">
+        <span className="mb-2 block text-[11px] uppercase tracking-label text-ink-mid">
+          {t("field_referral_code")}
+        </span>
+        <input
+          type="text"
+          name="referralCode"
+          autoComplete="off"
+          maxLength={32}
+          value={referralCode}
+          onChange={(e) =>
+            setReferralCode(e.target.value.trim().toUpperCase())
+          }
+          placeholder="FRIEND-AB12"
+          className="w-full border border-ink/15 bg-white/50 px-4 py-3 font-mono text-[13px] tracking-[0.12em] text-ink placeholder:text-ink-mid placeholder:font-sans focus:border-ink focus:outline-none"
+        />
+        <span className="mt-1 block text-[11px] text-ink-mid">
+          {t("field_referral_help")}
         </span>
       </label>
 

@@ -573,7 +573,9 @@
     "field_terms_link": "terms & privacy policy",
     "field_terms_post": ".",
     "error_invalid": "Please check the fields and try again.",
-    "error_password_short": "Your password must be at least 8 characters."
+    "error_password_short": "Your password must be at least 8 characters.",
+    "field_referral_code": "Referral code (optional)",
+    "field_referral_help": "Got a code from a friend? Both of you get a reward."
   },
   "account": {
     "eyebrow": "Account",
@@ -1076,6 +1078,7 @@
     "earn_ways_placeholder": "Place an order, celebrate your birthday, refer a friend, share us on social — every gesture earns points.",
     "section_history": "My history",
     "history_empty": "Your first activity will appear here once you place an order or claim a reward.",
-    "footer": "YU.R · Skin Solution"
+    "footer": "YU.R · Skin Solution",
+    "share": "Share"
   }
 }

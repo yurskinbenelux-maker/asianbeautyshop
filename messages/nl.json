@@ -573,7 +573,9 @@
     "field_terms_link": "voorwaarden & het privacybeleid",
     "field_terms_post": ".",
     "error_invalid": "Controleer de velden en probeer het opnieuw.",
-    "error_password_short": "Je wachtwoord moet minstens 8 tekens bevatten."
+    "error_password_short": "Je wachtwoord moet minstens 8 tekens bevatten.",
+    "field_referral_code": "Verwijzingscode (optioneel)",
+    "field_referral_help": "Heb je een code van een vriend? Jullie krijgen allebei een beloning."
   },
   "account": {
     "eyebrow": "Account",
@@ -1076,6 +1078,7 @@
     "earn_ways_placeholder": "Plaats een bestelling, vier je verjaardag, verwijs een vriend, deel ons op social — elk gebaar levert punten op.",
     "section_history": "Mijn geschiedenis",
     "history_empty": "Je eerste activiteit verschijnt hier zodra je een bestelling plaatst of een beloning claimt.",
-    "footer": "YU.R · Skin Solution"
+    "footer": "YU.R · Skin Solution",
+    "share": "Delen"
   }
 }

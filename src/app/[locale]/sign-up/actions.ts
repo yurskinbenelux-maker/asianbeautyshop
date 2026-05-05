@@ -29,6 +29,15 @@ const InputSchema = z.object({
   marketingOptIn: z.boolean(),
   acceptsTerms: z.literal(true),
   locale: z.string().min(2).max(2),
+  // Optional referral code — passed through to Supabase user_metadata so
+  // /auth/confirm can pick it up after the customer verifies their email.
+  // We don't validate against the DB here; the confirm route re-resolves
+  // it (and silently ignores unknown / self-referral codes).
+  referralCode: z
+    .string()
+    .max(32)
+    .regex(/^[A-Z0-9-]*$/i, "Referral code: letters, numbers, dashes only.")
+    .optional(),
 });
 
 export async function signUpAction(
@@ -43,6 +52,9 @@ export async function signUpAction(
     marketingOptIn: formData.get("marketingOptIn") === "on",
     acceptsTerms: formData.get("acceptsTerms") === "on",
     locale: String(formData.get("locale") ?? "en"),
+    referralCode: String(formData.get("referralCode") ?? "")
+      .trim()
+      .toUpperCase() || undefined,
   });
 
   if (!parsed.success) {
@@ -89,6 +101,13 @@ export async function signUpAction(
         // (order confirmation, shipped, abandoned cart, etc.) picks
         // up the same value automatically.
         locale: parsed.data.locale,
+        // Referral code stored on user_metadata so /auth/confirm can
+        // resolve it AFTER the email is verified — at which point the
+        // referee's account exists in Prisma and we can create the
+        // Referral row + mint the FRIEND coupon.
+        ...(parsed.data.referralCode && {
+          referral_code: parsed.data.referralCode,
+        }),
       },
     },
   });
@@ -114,12 +133,30 @@ export async function signUpAction(
 
   // Email-confirmation OFF — we're in.  Mirror to Prisma and continue.
   if (data.session && data.user) {
-    await ensureUserProfile(data.user, {
+    const profile = await ensureUserProfile(data.user, {
       firstName: parsed.data.firstName,
       lastName: parsed.data.lastName,
       preferredLocale: toPrismaLocale(parsed.data.locale),
       marketingOptIn: parsed.data.marketingOptIn,
     });
+    // Referral linkage on the no-confirmation path. The flow used in
+    // production has email-confirmation ON so /auth/confirm handles this;
+    // this branch covers dev + the (unlikely) case where Sofia disables
+    // confirmation in Supabase later.
+    if (parsed.data.referralCode) {
+      try {
+        const { linkReferralAtSignup } = await import(
+          "@/lib/loyalty/referral"
+        );
+        await linkReferralAtSignup({
+          refereeUserId: profile.id,
+          refereeEmail: profile.email,
+          code: parsed.data.referralCode,
+        });
+      } catch (err) {
+        console.error("[sign-up] linkReferralAtSignup failed", err);
+      }
+    }
     redirect(next);
   }
 

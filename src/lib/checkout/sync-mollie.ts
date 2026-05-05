@@ -276,6 +276,56 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
       } catch (err) {
         console.error("[sync-mollie] loyalty accrual failed", order.id, err);
       }
+
+      // Referral reward — if the customer signed up via a friend's link,
+      // their first PAID order pays the referrer their bonus. The helper
+      // checks "is this the first paid order" internally; subsequent
+      // orders no-op. Email to the referrer fires from inside the helper
+      // chain; failures are non-blocking.
+      try {
+        const { awardReferrerOnFirstOrder } = await import(
+          "@/lib/loyalty/referral"
+        );
+        const result = await awardReferrerOnFirstOrder({
+          refereeUserId: order.userId,
+          orderId: order.id,
+        });
+        if (result.awarded) {
+          // Fire the "your referral worked" email outside the loyalty
+          // tx so a Resend hiccup doesn't roll back the points award.
+          const referral = await prisma.referral.findFirst({
+            where: { refereeOrderId: order.id },
+            include: {
+              referrer: {
+                select: {
+                  email: true,
+                  firstName: true,
+                  preferredLocale: true,
+                },
+              },
+            },
+          });
+          if (referral?.referrer) {
+            const settings = await (
+              await import("@/lib/loyalty/settings")
+            ).getLoyaltySettings();
+            const { sendReferralRewardedEmail } = await import(
+              "@/lib/email/referral-rewarded"
+            );
+            void sendReferralRewardedEmail({
+              email: referral.referrer.email,
+              firstName: referral.referrer.firstName,
+              locale: referral.referrer.preferredLocale,
+              pointsAwarded: settings.referrerBonus,
+              refereeEmail: referral.refereeEmail,
+            }).catch((err) =>
+              console.error("[sync-mollie] referral email failed", err),
+            );
+          }
+        }
+      } catch (err) {
+        console.error("[sync-mollie] referral reward failed", order.id, err);
+      }
     }
 
     // Issue the VAT invoice BEFORE we fan out the post-paid emails. The

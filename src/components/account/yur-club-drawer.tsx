@@ -330,19 +330,45 @@ function Tile({
 
 function ReferralBlock({ referralCode }: { referralCode: string }) {
   const t = useTranslations("yur_club");
-  const [copied, setCopied] = useState(false);
+  const [copiedKind, setCopiedKind] = useState<"code" | "link" | null>(null);
+  const [shareUrl, setShareUrl] = useState<string>("");
 
-  function copy() {
-    navigator.clipboard.writeText(referralCode).then(
+  // Build the share URL on the client so we use the customer's actual
+  // origin (yurskinsolution.eu in prod, localhost in dev).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const origin = window.location.origin;
+    setShareUrl(`${origin}/?ref=${encodeURIComponent(referralCode)}`);
+  }, [referralCode]);
+
+  function copy(kind: "code" | "link", value: string) {
+    navigator.clipboard.writeText(value).then(
       () => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        setCopiedKind(kind);
+        setTimeout(() => setCopiedKind(null), 2000);
       },
       () => {
-        // No-op — older Safari without clipboard API. The code is visible
-        // on screen so the customer can copy by hand.
+        /* older Safari fallback — value is visible on screen */
       },
     );
+  }
+
+  // Web Share API on mobile — falls back to clipboard copy if the API
+  // isn't available (desktop, older browsers).
+  function share() {
+    if (typeof navigator !== "undefined" && "share" in navigator && shareUrl) {
+      navigator
+        .share({
+          title: "YU.R Skin Solution",
+          text: "Join me on YU.R — get a welcome discount on your first order.",
+          url: shareUrl,
+        })
+        .catch(() => {
+          /* user cancelled or share failed silently */
+        });
+    } else {
+      copy("link", shareUrl);
+    }
   }
 
   return (
@@ -350,18 +376,35 @@ function ReferralBlock({ referralCode }: { referralCode: string }) {
       <p className="text-[13px] leading-relaxed text-ink-mid">
         {t("refer_lede")}
       </p>
+
+      {/* Referral code — short version, copy-only */}
       <div className="mt-4 flex items-center justify-between border border-ink/10 bg-white px-4 py-3">
         <code className="font-mono text-[14px] tracking-[0.16em] text-ink">
           {referralCode}
         </code>
         <button
           type="button"
-          onClick={copy}
+          onClick={() => copy("code", referralCode)}
           className="text-[11px] uppercase tracking-label text-vermilion transition-colors hover:text-ink"
         >
-          {copied ? t("copied") : t("copy")}
+          {copiedKind === "code" ? t("copied") : t("copy")}
         </button>
       </div>
+
+      {/* Share link — full URL, with native share-sheet on mobile */}
+      {shareUrl ? (
+        <div className="mt-2 flex items-center justify-between gap-3 border border-ink/10 bg-white px-4 py-3">
+          <span className="truncate text-[12px] text-ink-mid">{shareUrl}</span>
+          <button
+            type="button"
+            onClick={share}
+            className="shrink-0 text-[11px] uppercase tracking-label text-vermilion transition-colors hover:text-ink"
+          >
+            {copiedKind === "link" ? t("copied") : t("share")}
+          </button>
+        </div>
+      ) : null}
+
       <p className="mt-3 text-[12px] leading-relaxed text-ink-mid">
         {t("refer_terms")}
       </p>

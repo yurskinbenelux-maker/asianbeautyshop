@@ -117,6 +117,30 @@ export async function GET(request: NextRequest) {
       userId: data.user.id,
       email: data.user.email,
     });
+
+    // Referral linkage — if the customer signed up via a friend's code,
+    // Supabase has it in user_metadata. Resolve, validate (no self-
+    // referral, real account), create the Referral row, mint the
+    // separate FRIEND-X% coupon. Idempotent: a re-clicked confirm link
+    // hits the existing-row branch and no-ops.
+    const refCode = (data.user.user_metadata as { referral_code?: string } | undefined)
+      ?.referral_code;
+    if (refCode) {
+      void (async () => {
+        try {
+          const { linkReferralAtSignup } = await import(
+            "@/lib/loyalty/referral"
+          );
+          await linkReferralAtSignup({
+            refereeUserId: data.user!.id,
+            refereeEmail: data.user!.email!,
+            code: refCode,
+          });
+        } catch (err) {
+          console.error("[auth/confirm] linkReferralAtSignup failed", err);
+        }
+      })();
+    }
   }
 
   return NextResponse.redirect(`${site}${safeNext()}`);

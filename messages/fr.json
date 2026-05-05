@@ -573,7 +573,9 @@
     "field_terms_link": "conditions et la politique de confidentialité",
     "field_terms_post": ".",
     "error_invalid": "Vérifiez les champs et réessayez.",
-    "error_password_short": "Votre mot de passe doit contenir au moins 8 caractères."
+    "error_password_short": "Votre mot de passe doit contenir au moins 8 caractères.",
+    "field_referral_code": "Code de parrainage (optionnel)",
+    "field_referral_help": "Vous avez un code d'un·e ami·e ? Vous recevez tou·te·s les deux une récompense."
   },
   "account": {
     "eyebrow": "Compte",
@@ -1076,6 +1078,7 @@
     "earn_ways_placeholder": "Passez une commande, fêtez votre anniversaire, parrainez un·e ami·e, partagez-nous sur les réseaux — chaque geste rapporte.",
     "section_history": "Mon historique",
     "history_empty": "Votre première activité apparaîtra ici dès votre première commande ou récompense.",
-    "footer": "YU.R · Skin Solution"
+    "footer": "YU.R · Skin Solution",
+    "share": "Partager"
   }
 }
