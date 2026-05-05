@@ -24,6 +24,15 @@ import { logAudit } from "@/lib/audit/log";
 import { CheckoutClient } from "./checkout-client";
 import { CheckoutUnavailable } from "./checkout-unavailable";
 
+// /checkout reads the cart_token cookie, the customer session, and live
+// cart contents. None of those are amenable to static rendering. Without
+// this directive, Next.js tries to prerender /en/checkout, /nl/checkout
+// etc. at build time (because the [locale] segment exposes
+// generateStaticParams), and the cookies() call inside peekCartSummary
+// throws a DynamicServerError that — in some code paths — escapes as a
+// runtime 500. force-dynamic skips the static attempt entirely.
+export const dynamic = "force-dynamic";
+
 type Props = { params: Promise<{ locale: string }> };
 
 // Checkout is noindex — nothing on here should show up in Google.
@@ -49,9 +58,15 @@ export default async function CheckoutPage(props: Props) {
   // gets persisted to AuditLog with the actual message + stack before
   // re-raising. Reads back at /admin/audit. Temporary diagnostic —
   // remove once the prod /checkout 500 is identified.
+  //
+  // CRITICAL: Next.js uses thrown errors as control-flow signals
+  // (NEXT_REDIRECT, NEXT_NOT_FOUND, DynamicServerError, etc.). Those
+  // MUST reach the framework un-touched, so we detect them by their
+  // `digest` property and re-throw without logging.
   try {
     return await CheckoutPageInner(props);
   } catch (err) {
+    if (isNextControlFlowError(err)) throw err;
     const message = err instanceof Error ? err.message : String(err);
     const stack = err instanceof Error ? err.stack ?? "(no stack)" : "(no stack)";
     try {
@@ -70,6 +85,19 @@ export default async function CheckoutPage(props: Props) {
     }
     throw err;
   }
+}
+
+/** Next.js uses specific Error subclasses as control-flow signals.
+ *  They carry a `digest` string that starts with NEXT_ — anything
+ *  matching is internal and must propagate untouched. */
+function isNextControlFlowError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const digest = (err as Error & { digest?: string }).digest;
+  if (typeof digest === "string" && digest.startsWith("NEXT_")) return true;
+  // DynamicServerError doesn't always have a NEXT_ digest in older
+  // Next.js builds — fall back to message detection.
+  if (err.message.startsWith("Dynamic server usage")) return true;
+  return false;
 }
 
 async function CheckoutPageInner({ params }: Props) {
