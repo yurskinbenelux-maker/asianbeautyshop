@@ -780,7 +780,8 @@
       }
     },
     "field_birthday": "Geboortedatum",
-    "profile_birthday_hint": "Optioneel. We sturen je iets op je verjaardag."
+    "profile_birthday_hint": "Optioneel. We sturen je iets op je verjaardag.",
+    "glance_points": "YU.R Club-punten"
   },
   "privacy": {
     "meta_title": "Jouw gegevens & privacy — YU.R Skin Solution",

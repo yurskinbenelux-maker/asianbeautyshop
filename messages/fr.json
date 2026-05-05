@@ -780,7 +780,8 @@
       }
     },
     "field_birthday": "Date de naissance",
-    "profile_birthday_hint": "Facultatif. Nous vous enverrons un petit quelque chose pour votre anniversaire."
+    "profile_birthday_hint": "Facultatif. Nous vous enverrons un petit quelque chose pour votre anniversaire.",
+    "glance_points": "Points YU.R Club"
   },
   "privacy": {
     "meta_title": "Vos données & confidentialité — YU.R Skin Solution",

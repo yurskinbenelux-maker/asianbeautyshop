@@ -780,7 +780,8 @@
       }
     },
     "field_birthday": "Дата рождения",
-    "profile_birthday_hint": "Необязательно. Отправим небольшой подарок на ваш день рождения."
+    "profile_birthday_hint": "Необязательно. Отправим небольшой подарок на ваш день рождения.",
+    "glance_points": "Баллы YU.R Club"
   },
   "privacy": {
     "meta_title": "Ваши данные и приватность — YU.R Skin Solution",

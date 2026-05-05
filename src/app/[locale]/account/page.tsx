@@ -17,6 +17,7 @@ import { Link } from "@/i18n/routing";
 import { requireCustomer } from "@/lib/auth";
 import { listMyOrders, getMyAccountGlance } from "@/lib/queries/orders";
 import { listMyAddresses } from "@/lib/queries/addresses";
+import { readLoyaltyAccountSummary } from "@/lib/loyalty/account";
 import { formatEur, priceLocale } from "@/lib/utils";
 import {
   OrderStatusPill,
@@ -34,10 +35,11 @@ export default async function AccountOverviewPage({ params }: Props) {
   });
 
   const t = await getTranslations("account");
-  const [orders, addresses, glance] = await Promise.all([
+  const [orders, addresses, glance, loyaltySummary] = await Promise.all([
     listMyOrders(profile.id),
     listMyAddresses(profile.id),
     getMyAccountGlance(profile.id),
+    readLoyaltyAccountSummary(profile.id),
   ]);
   const recentOrders = orders.slice(0, 3);
   const defaultAddress =
@@ -72,14 +74,25 @@ export default async function AccountOverviewPage({ params }: Props) {
       )}
 
       {/* ── glance stats ────────────────────────────────────────── */}
+      {/* Middle cell swapped from "lifetime spend" to live YU.R Club
+          points — the actionable number for a customer who's already
+          decided to come back. Clickable link drops them straight into
+          the redeem catalogue so the stat doubles as a CTA. Falls back
+          to "0" when the loyalty account hasn't been auto-created yet
+          (first-ever account-page render before ensureLoyaltyAccount
+          completes). */}
       <dl className="mt-10 grid grid-cols-3 divide-x divide-ink/10 border-y border-ink/10">
         <GlanceStat
           label={t("glance_orders")}
           value={String(glance.orderCount)}
         />
         <GlanceStat
-          label={t("glance_spend")}
-          value={formatEur(glance.lifetimeSpendEur, curLocale)}
+          label={t("glance_points")}
+          value={(loyaltySummary?.pointsBalance ?? 0).toLocaleString(
+            curLocale,
+          )}
+          href="/account/club/redeem"
+          accent
         />
         <GlanceStat
           label={t("glance_wishlist")}
@@ -239,16 +252,53 @@ export default async function AccountOverviewPage({ params }: Props) {
   );
 }
 
-/** Single stat cell in the glance row. Purely presentational. */
-function GlanceStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col items-start gap-2 px-4 py-5 md:px-6 md:py-6">
+/** Single stat cell in the glance row.
+ *
+ *  Optional `href` makes the cell clickable — used by the points stat
+ *  so the customer can tap into the redeem catalogue without scrolling.
+ *  `accent` prints the value in vermilion to flag the actionable cell.
+ */
+function GlanceStat({
+  label,
+  value,
+  href,
+  accent,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+  accent?: boolean;
+}) {
+  const Inner = (
+    <>
       <dt className="text-[10px] uppercase tracking-label text-ink-mid">
         {label}
       </dt>
-      <dd className="font-display text-[24px] leading-none text-ink md:text-[28px]">
+      <dd
+        className={
+          "font-display text-[24px] leading-none md:text-[28px] " +
+          (accent ? "text-vermilion" : "text-ink")
+        }
+      >
         {value}
       </dd>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="group flex flex-col items-start gap-2 px-4 py-5 transition-colors hover:bg-rice-dim/40 md:px-6 md:py-6"
+      >
+        {Inner}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-start gap-2 px-4 py-5 md:px-6 md:py-6">
+      {Inner}
     </div>
   );
 }

@@ -780,7 +780,8 @@
       }
     },
     "field_birthday": "Date of birth",
-    "profile_birthday_hint": "Optional. We'll send you something on your birthday."
+    "profile_birthday_hint": "Optional. We'll send you something on your birthday.",
+    "glance_points": "YU.R Club points"
   },
   "privacy": {
     "meta_title": "Your data & privacy — YU.R Skin Solution",
