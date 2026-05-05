@@ -176,7 +176,7 @@
     "reviews_eyebrow": "Отзывы",
     "reviews_average": "Средняя оценка",
     "review_count_one": "1 отзыв",
-    "review_count_other": "{count} отзывов",
+    "review_count_other": "'{count}' отзывов",
     "out_of_five": "из 5",
     "verified": "Подтверждённая покупка",
     "reviews_none_title": "Отзывов пока нет.",

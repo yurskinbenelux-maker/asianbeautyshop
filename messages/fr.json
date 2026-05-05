@@ -176,7 +176,7 @@
     "reviews_eyebrow": "Avis",
     "reviews_average": "Note moyenne",
     "review_count_one": "1 avis",
-    "review_count_other": "{count} avis",
+    "review_count_other": "'{count}' avis",
     "out_of_five": "sur 5",
     "verified": "Vérifié",
     "reviews_none_title": "Aucun avis pour le moment.",

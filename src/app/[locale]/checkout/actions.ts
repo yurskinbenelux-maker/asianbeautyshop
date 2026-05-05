@@ -49,7 +49,13 @@ const AddressSchema = z.object({
  * Dashboard → Settings → Payment methods. We only surface methods that
  * make sense for our customer geography (BE / NL / FR / LU / DE).
  */
-export const SUPPORTED_PAYMENT_METHODS = [
+// NOT exported — Next.js requires "use server" files to export only
+// async functions. Re-introducing an `export` here breaks every action
+// in this module with "A 'use server' file can only export async
+// functions, found object." If a sibling module ever needs this list,
+// move it to a plain non-server file (e.g. lib/checkout/payment-methods.ts)
+// and re-import.
+const SUPPORTED_PAYMENT_METHODS = [
   "applepay",
   "googlepay",
   "bancontact",
@@ -57,8 +63,7 @@ export const SUPPORTED_PAYMENT_METHODS = [
   "creditcard",
   "paypal",
 ] as const;
-export type SupportedPaymentMethod =
-  (typeof SUPPORTED_PAYMENT_METHODS)[number];
+type SupportedPaymentMethod = (typeof SUPPORTED_PAYMENT_METHODS)[number];
 
 /**
  * For a fully-digital cart (e.g. only gift cards), the customer fills
