@@ -38,18 +38,11 @@ import {
 } from "@/app/admin/products/actions";
 import { cn } from "@/lib/utils";
 
-// Three line options surfaced as a single-select picker on the Organise
-// tab. We deliberately hard-code the labels here rather than importing
-// PRODUCT_LINES from @/lib/queries/products — that module imports
-// `prisma` at the top, which would drag the Prisma client into the
-// client bundle if a "use client" file pulled from it. The slug values
-// must match the canonical PRODUCT_LINES list on the server side.
-const LINE_OPTIONS = [
-  { slug: "yur" as const, label: "Yu•R" },
-  { slug: "yur-pro" as const, label: "Yu•R Pro" },
-  { slug: "yur-me" as const, label: "Yu•R Me" },
-];
-type ProductLineSlug = (typeof LINE_OPTIONS)[number]["slug"];
+// The dedicated Lines picker (Yu•R / Yu•R Pro / Yu•R Me) was retired
+// in favour of the Brand picker — they were two controls expressing the
+// same thing. Product.productLine is now derived server-side from the
+// chosen brand's slug, so the homepage / shop line-tab queries continue
+// to work unchanged. See updateOrganise in actions.ts for the mapping.
 
 // ──────── types ──────────────────────────────────────────────────────────
 
@@ -57,23 +50,27 @@ export type TaxonomyOption = {
   id: string;
   slug: string;
   label: string;
+  // Category-only metadata. The other taxonomies (skinType, concern,
+  // benefit, ingredient) are flat — these fields stay undefined for them.
+  // Tracked here rather than on a separate type so the existing
+  // Section/InlineCreate plumbing keeps working unchanged for everything
+  // except the dedicated CategoriesSection below.
+  parentId?: string | null;
+  isActive?: boolean;
+  sortOrder?: number;
 };
 
 type Props = {
   productId: string;
   initial: {
     /**
-     * Currently-selected line slugs (multi-select). For most products
-     * this is a single entry — but a gift card or any other product
-     * Sofia wants on every tab can hold ["yur", "yur-pro", "yur-me"].
-     *
-     * On save the first slug becomes Product.productLine (primary) and
-     * the rest are written to Product.extraLines.
-     *
-     * Empty array → defaults to ["yur"] (the default Yu•R line — null
-     * productLine in DB).
+     * Currently-selected brand ID (single-select, optional). null when
+     * the product has no brand attached — typical for legacy rows
+     * before the YU.R seed ran. Drives the Brand picker at the top of
+     * the form, which writes back to Product.brandId. Server derives
+     * Product.productLine from the chosen brand's slug on save.
      */
-    productLineSlugs: ProductLineSlug[];
+    brandId: string | null;
     categoryIds: string[];
     skinTypeIds: string[];
     concernIds: string[];
@@ -81,12 +78,25 @@ type Props = {
     ingredientIds: string[];
   };
   options: {
+    /**
+     * Brands available in the picker. Server filters to active brands
+     * plus the currently-attached brand (even if archived) so Sofia
+     * can untag.
+     */
+    brands: BrandOption[];
     categories: TaxonomyOption[];
     skinTypes: TaxonomyOption[];
     concerns: TaxonomyOption[];
     benefits: TaxonomyOption[];
     ingredients: TaxonomyOption[];
   };
+};
+
+export type BrandOption = {
+  id: string;
+  slug: string;
+  label: string;
+  isActive: boolean;
 };
 
 // ──────── form ───────────────────────────────────────────────────────────
@@ -117,35 +127,10 @@ export function OrganiseForm({ productId, initial, options }: Props) {
     () => new Set(initial.ingredientIds),
   );
 
-  // Multi-select line picker. Sofia can tick any combination of the
-  // three lines — for the most common case (single line) the UX is
-  // identical to a radio. For the gift-card case (one product on every
-  // tab), she ticks all three.
-  //
-  // Hidden inputs named "productLineSlugs" (note the s) feed the Set
-  // into the server action. The first slug — in PRODUCT_LINES order —
-  // becomes the primary productLine column; the rest go to extraLines.
-  // Empty Set falls back to ["yur"] on save.
-  const [lineSlugs, setLineSlugs] = useState<Set<ProductLineSlug>>(
-    () => new Set(initial.productLineSlugs.length > 0 ? initial.productLineSlugs : ["yur"]),
-  );
-
-  function toggleLine(slug: ProductLineSlug) {
-    setLineSlugs((cur) => {
-      const next = new Set(cur);
-      if (next.has(slug)) {
-        // Don't let the admin uncheck the last remaining line — every
-        // product has to belong to at least one tab. Falling through to
-        // an empty set would silently re-add "yur" on save anyway, but
-        // doing nothing here keeps the UI honest.
-        if (next.size === 1) return cur;
-        next.delete(slug);
-      } else {
-        next.add(slug);
-      }
-      return next;
-    });
-  }
+  // Single-select brand picker. "" means "no brand attached". The
+  // server action validates the id against the Brand table on save and
+  // derives Product.productLine from the brand's slug.
+  const [brandId, setBrandId] = useState<string>(initial.brandId ?? "");
 
   // Options mirror the server-provided lists but allow local growth when
   // the admin creates a new taxonomy item inline. We keep them sorted by
@@ -185,67 +170,27 @@ export function OrganiseForm({ productId, initial, options }: Props) {
 
   return (
     <form action={formAction} className="space-y-12">
-      {/* ── Lines ──────────────────────────────────────────────────── */}
-      {/* Multi-select. Each ticked slug fires a hidden input named
-          "productLineSlugs" so updateOrganise can read formData.getAll
-          and treat them as a list. The UI is the same pill row as the
-          front-end LineTabs — just with multiple pills allowed to be
-          active at once. */}
-      <section>
-        <header className="flex items-baseline justify-between gap-4">
-          <div>
-            <h3 className="font-display text-[18px] text-ink">Lines</h3>
-            <p className="mt-1 max-w-prose text-[13px] leading-relaxed text-ink-mid">
-              Which YU.R line(s) this product belongs to. Tick all that
-              apply — a gift card on every tab is just three ticks. The
-              first ticked line (in Yu•R · Pro · Me order) becomes the
-              primary line shown on the PDP.
-            </p>
-          </div>
-          <div className="text-[11px] uppercase tracking-label text-ink-mid">
-            {LINE_OPTIONS.filter((o) => lineSlugs.has(o.slug))
-              .map((o) => o.label)
-              .join(" · ") || "—"}
-          </div>
-        </header>
-        {/* One hidden input per ticked slug — server reads them via
-            formData.getAll("productLineSlugs"). */}
-        {LINE_OPTIONS.filter((o) => lineSlugs.has(o.slug)).map((o) => (
-          <input
-            key={o.slug}
-            type="hidden"
-            name="productLineSlugs"
-            value={o.slug}
-          />
-        ))}
-        <div className="mt-5 flex flex-wrap gap-2">
-          {LINE_OPTIONS.map((opt) => {
-            const isOn = lineSlugs.has(opt.slug);
-            return (
-              <button
-                type="button"
-                key={opt.slug}
-                onClick={() => toggleLine(opt.slug)}
-                aria-pressed={isOn}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-[12px] transition-colors",
-                  isOn
-                    ? "border-ink bg-ink text-rice"
-                    : "border-ink/15 bg-white/60 text-ink-mid hover:border-ink/40 hover:text-ink",
-                )}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
-      </section>
+      {/* ── Brand ──────────────────────────────────────────────────────
+          Single-select. Drives the right column of the customer-facing
+          mega-menu. Initially we seed YU.R / YU.R Pro / YU.R Me here so
+          Sofia just picks one; when K-beauty brands arrive she'll add
+          AHC / iUNIK / etc. via /admin/brands and they'll appear in
+          this dropdown automatically. Hidden input "brandId" feeds the
+          server action — empty string means "no brand", which writes
+          NULL to Product.brandId. */}
+      <BrandSection
+        options={options.brands}
+        value={brandId}
+        onChange={setBrandId}
+      />
 
       {/* ── Categories ─────────────────────────────────────────────── */}
-      <Section
-        title="Categories"
-        helper="Shelves on the shop. A product can live on multiple shelves."
-        kind="category"
+      {/* Two visually-distinct rows: top-level categories (the parent
+          "shelves" — Cleansers, Toners, …) and subcategories (specific
+          shelves under each parent — Hydrating Toners, Calming Toners,
+          …). Sofia picks the most specific shelf the product belongs to;
+          a product can sit on the parent OR on one or more subs, or both. */}
+      <CategoriesSection
         fieldName="categoryIds"
         options={categories}
         selected={categoryIds}
@@ -591,5 +536,388 @@ function slugifyForDisplay(input: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "");
+}
+
+// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 BrandSection \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+//
+// Single-select Brand picker. Renders as a row of pills (same visual as
+// the Lines + Categories sections) so the entire Organise tab reads as
+// one consistent control style. Why pills instead of a <select>? With
+// 3-10 brands it's easier to scan and one-click tag than a dropdown,
+// and it matches Sofia's mental model of "click the brand badge".
+//
+// "(no brand)" is intentionally NOT a chip \u2014 Sofia clears the brand by
+// clicking the currently-active chip a second time (toggle off). This
+// avoids accidentally showing "no brand" as a sticky selection on
+// fresh products. The picker is optional: products with NULL brandId
+// just don't show in any brand column on the mega-menu.
+type BrandSectionProps = {
+  options: BrandOption[];
+  value: string; // brandId or "" for none
+  onChange: (next: string) => void;
+};
+
+function BrandSection({ options, value, onChange }: BrandSectionProps) {
+  const active = options.filter((b) => b.isActive);
+  const inactive = options.filter((b) => !b.isActive);
+  const selected = options.find((b) => b.id === value);
+
+  return (
+    <section>
+      <header className="flex items-baseline justify-between gap-4">
+        <div>
+          <h3 className="font-display text-[18px] text-ink">Brand</h3>
+          <p className="mt-1 max-w-prose text-[13px] leading-relaxed text-ink-mid">
+            Who makes this product. One brand per product. New brands
+            appear here automatically once Sofia adds them in
+            /admin/brands.
+          </p>
+        </div>
+        <div className="text-[11px] uppercase tracking-label text-ink-mid">
+          {selected ? selected.label : "\u2014"}
+        </div>
+      </header>
+
+      {/* Hidden input \u2014 server reads formData.get("brandId"). Empty
+          string is a deliberate "no brand" signal handled by the
+          action. */}
+      <input type="hidden" name="brandId" value={value} />
+
+      <div className="mt-5 flex flex-wrap gap-2">
+        {active.length === 0 ? (
+          <span className="text-[13px] italic text-ink-mid">
+            No brands yet \u2014 seed via the YU.R brands script or add via
+            /admin/brands.
+          </span>
+        ) : (
+          active.map((b) => {
+            const isOn = value === b.id;
+            return (
+              <button
+                type="button"
+                key={b.id}
+                onClick={() => onChange(isOn ? "" : b.id)}
+                aria-pressed={isOn}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-[12px] transition-colors",
+                  isOn
+                    ? "border-ink bg-ink text-rice"
+                    : "border-ink/15 bg-white/60 text-ink-mid hover:border-ink/40 hover:text-ink",
+                )}
+              >
+                {b.label}
+              </button>
+            );
+          })
+        )}
+      </div>
+
+      {/* Archived brands \u2014 only rendered if the current product is
+          tagged with one. Lets Sofia see + clear stale assignments
+          without polluting the main row. */}
+      {inactive.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2 border-t border-dashed border-ink/15 pt-3">
+          <span className="text-[11px] uppercase tracking-label text-ink-mid/80">
+            Archived:
+          </span>
+          {inactive.map((b) => {
+            const isOn = value === b.id;
+            return (
+              <button
+                type="button"
+                key={b.id}
+                onClick={() => onChange(isOn ? "" : b.id)}
+                aria-pressed={isOn}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11.5px] transition-colors",
+                  isOn
+                    ? "border-vermilion/60 bg-vermilion/10 text-vermilion line-through"
+                    : "border-dashed border-ink/25 bg-transparent text-ink-mid/60 line-through hover:text-ink-mid",
+                )}
+                title={`${b.label} \u2014 archived. Click to untag this product.`}
+              >
+                {b.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 CategoriesSection \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+//
+// Categories are the only taxonomy with a 2-level tree (Categories \u2192
+// Subcategories). The flat <Section> renderer dumps everything in one
+// alphabetical chip soup, which made it impossible to see which subs
+// belonged to which parent. This dedicated component splits the picker
+// into:
+//
+//   1. CATEGORIES   \u2014 top-level "shelf" pills (Cleansers, Toners, \u2026).
+//                     Each one acts as a chip just like before.
+//
+//   2. SUBCATEGORIES \u2014 for each parent that HAS children, a labelled
+//                     row showing only that parent's children. Parents
+//                     with zero children are skipped here and just live
+//                     in the top row.
+//
+//   3. ARCHIVED      \u2014 only rendered if this product is currently tagged
+//                     with a category that has been archived
+//                     (isActive=false). Shown muted so Sofia can untag
+//                     them without crowding the main picker.
+//
+// Inline create stays at the bottom: it always adds top-level. For
+// nested parent-picking on create, /admin/categories is the better
+// surface \u2014 this picker is for tagging, not for restructuring the tree.
+type CategoriesSectionProps = {
+  fieldName: string;
+  options: TaxonomyOption[];
+  selected: Set<string>;
+  onToggle: (id: string) => void;
+  onCreated: (opt: TaxonomyOption) => void;
+};
+
+function CategoriesSection({
+  fieldName,
+  options,
+  selected,
+  onToggle,
+  onCreated,
+}: CategoriesSectionProps) {
+  // Index for fast parent lookups.
+  const byId = useMemo(
+    () => new Map(options.map((o) => [o.id, o])),
+    [options],
+  );
+
+  // Sort helper: respect sortOrder when present, fall back to label.
+  const sortFn = (a: TaxonomyOption, b: TaxonomyOption) => {
+    const ao = a.sortOrder ?? 9999;
+    const bo = b.sortOrder ?? 9999;
+    if (ao !== bo) return ao - bo;
+    return a.label.localeCompare(b.label);
+  };
+
+  // Active = visible in the picker. Inactive = product is currently
+  // tagged with this category but it's been archived; render in the
+  // muted "Archived" group.
+  const active = useMemo(
+    () => options.filter((o) => o.isActive !== false),
+    [options],
+  );
+  const archived = useMemo(
+    () => options.filter((o) => o.isActive === false),
+    [options],
+  );
+
+  // Top-level parents (no parentId).
+  const topLevel = useMemo(
+    () => active.filter((o) => !o.parentId).sort(sortFn),
+    [active],
+  );
+
+  // Children grouped by parent.
+  const childrenByParent = useMemo(() => {
+    const map = new Map<string, TaxonomyOption[]>();
+    for (const o of active) {
+      if (!o.parentId) continue;
+      // Skip orphans whose parent isn't in the visible set.
+      if (!byId.has(o.parentId)) continue;
+      const arr = map.get(o.parentId) ?? [];
+      arr.push(o);
+      map.set(o.parentId, arr);
+    }
+    for (const arr of map.values()) arr.sort(sortFn);
+    return map;
+  }, [active, byId]);
+
+  // Parents that actually have subs render in the SUBCATEGORIES section.
+  // Parents with no subs don't get a sub-block (their pill is in the
+  // CATEGORIES row above and that's enough).
+  const parentsWithChildren = useMemo(
+    () => topLevel.filter((p) => (childrenByParent.get(p.id) ?? []).length > 0),
+    [topLevel, childrenByParent],
+  );
+
+  // Orphan children whose parent was somehow filtered out \u2014 defensive,
+  // shouldn't happen in practice but if it does we surface them so they
+  // remain editable.
+  const orphans = useMemo(
+    () => active.filter((o) => o.parentId && !byId.has(o.parentId)),
+    [active, byId],
+  );
+
+  return (
+    <section>
+      <header className="flex items-baseline justify-between gap-4">
+        <div>
+          <h3 className="font-display text-[18px] text-ink">Categories</h3>
+          <p className="mt-1 max-w-prose text-[13px] leading-relaxed text-ink-mid">
+            Shelves on the shop. Pick a top-level category and any specific
+            subcategories the product belongs to \u2014 products can live on
+            multiple shelves.
+          </p>
+        </div>
+        <div className="text-[11px] uppercase tracking-label text-ink-mid">
+          {selected.size} / {active.length} selected
+        </div>
+      </header>
+
+      {/* \u2500\u2500 Top-level (parents) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      <div className="mt-6">
+        <div className="text-[11px] uppercase tracking-label text-ink-mid/80">
+          Category
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {topLevel.length === 0 ? (
+            <span className="text-[13px] italic text-ink-mid">
+              No categories yet \u2014 add one below.
+            </span>
+          ) : (
+            topLevel.map((opt) => (
+              <CategoryPill
+                key={opt.id}
+                opt={opt}
+                isOn={selected.has(opt.id)}
+                onToggle={onToggle}
+                emphasis="parent"
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* \u2500\u2500 Subcategories grouped by parent \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {parentsWithChildren.length > 0 && (
+        <div className="mt-8 space-y-5 border-t border-ink/10 pt-6">
+          <div className="text-[11px] uppercase tracking-label text-ink-mid/80">
+            Subcategory
+          </div>
+          {parentsWithChildren.map((parent) => {
+            const kids = childrenByParent.get(parent.id) ?? [];
+            return (
+              <div
+                key={parent.id}
+                className="grid gap-3 md:grid-cols-[140px_1fr] md:items-baseline md:gap-6"
+              >
+                <div className="font-display text-[14px] text-ink/80">
+                  {parent.label}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {kids.map((opt) => (
+                    <CategoryPill
+                      key={opt.id}
+                      opt={opt}
+                      isOn={selected.has(opt.id)}
+                      onToggle={onToggle}
+                      emphasis="child"
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* \u2500\u2500 Orphans (defensive, rare) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {orphans.length > 0 && (
+        <div className="mt-6 border-t border-dashed border-ink/15 pt-5">
+          <div className="text-[11px] uppercase tracking-label text-ink-mid/80">
+            Unattached subcategories
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {orphans.map((opt) => (
+              <CategoryPill
+                key={opt.id}
+                opt={opt}
+                isOn={selected.has(opt.id)}
+                onToggle={onToggle}
+                emphasis="child"
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* \u2500\u2500 Archived (muted, only if currently tagged) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {archived.length > 0 && (
+        <div className="mt-6 border-t border-dashed border-ink/15 pt-5">
+          <div className="text-[11px] uppercase tracking-label text-ink-mid/80">
+            Archived (hidden from shop) \u2014 untag to clean up
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {archived.map((opt) => (
+              <CategoryPill
+                key={opt.id}
+                opt={opt}
+                isOn={selected.has(opt.id)}
+                onToggle={onToggle}
+                emphasis="archived"
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Hidden inputs \u2014 one per selected id \u2014 for the server action.
+          Kept identical to the flat Section so updateOrganise reads
+          formData.getAll("categoryIds") exactly as before. */}
+      {Array.from(selected).map((id) => (
+        <input key={id} type="hidden" name={fieldName} value={id} />
+      ))}
+
+      {/* Inline add \u2014 top-level by default. /admin/categories is the
+          right surface for re-parenting / reordering. */}
+      <InlineCreate kind="category" onCreated={onCreated} />
+    </section>
+  );
+}
+
+type CategoryPillProps = {
+  opt: TaxonomyOption;
+  isOn: boolean;
+  onToggle: (id: string) => void;
+  emphasis: "parent" | "child" | "archived";
+};
+
+function CategoryPill({ opt, isOn, onToggle, emphasis }: CategoryPillProps) {
+  // Three subtly different visual treatments:
+  //   parent   \u2014 full-weight pill (the primary chip)
+  //   child    \u2014 slightly smaller pill, lighter idle border
+  //   archived \u2014 muted text, dashed border, strike to signal "leaving"
+  const base =
+    "inline-flex items-center gap-1.5 rounded-full border transition-colors";
+  const sizes =
+    emphasis === "child"
+      ? "px-3 py-1 text-[11.5px]"
+      : "px-3 py-1.5 text-[12px]";
+  const variant =
+    emphasis === "archived"
+      ? isOn
+        ? "border-vermilion/60 bg-vermilion/10 text-vermilion line-through"
+        : "border-dashed border-ink/25 bg-transparent text-ink-mid/60 line-through hover:text-ink-mid"
+      : isOn
+        ? "border-ink bg-ink text-rice"
+        : emphasis === "parent"
+          ? "border-ink/15 bg-white/60 text-ink-mid hover:border-ink/40 hover:text-ink"
+          : "border-ink/10 bg-white/40 text-ink-mid hover:border-ink/30 hover:text-ink";
+
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(opt.id)}
+      aria-pressed={isOn}
+      className={cn(base, sizes, variant)}
+      title={
+        emphasis === "archived"
+          ? `${opt.label} \u2014 archived. Click to untag this product.`
+          : opt.label
+      }
+    >
+      {opt.label}
+    </button>
+  );
 }
 

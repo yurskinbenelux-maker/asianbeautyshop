@@ -409,6 +409,141 @@ export async function getShopCategories(
 }
 
 /**
+ * getShopMegaMenuData — feeds the Nav's Shop mega-menu (desktop hover
+ * panel + mobile drawer accordion).
+ *
+ * Returns:
+ *   · `tree`: top-level categories (parentId=null) sorted by sortOrder,
+ *     each with the list of its children that have ≥1 published
+ *     product. Empty children are dropped. Parent rows include a count
+ *     that walks the tree (parent products + all descendants), so the
+ *     menu can show "Cleansers (24)" instead of just the products tagged
+ *     directly to the parent.
+ *
+ *   · `brands`: every active brand sorted by name, each with the count
+ *     of published products attached. Brands with zero products are
+ *     dropped — no point linking to a dead landing page.
+ *
+ * Performance: one categories query + one brands query, both with their
+ * count subqueries. Called once per request from the layout, so it's
+ * fine to fetch the full tree even though the menu only renders it on
+ * hover/tap.
+ */
+export type ShopMegaMenuData = {
+  tree: Array<{
+    slug: string;
+    name: string;
+    count: number;
+    children: Array<{ slug: string; name: string; count: number }>;
+  }>;
+  brands: Array<{ slug: string; name: string; count: number }>;
+};
+
+export async function getShopMegaMenuData(
+  locale: string,
+): Promise<ShopMegaMenuData> {
+  const loc = toPrismaLocale(locale);
+
+  // Pull every active category + its EN/locale translations + the
+  // direct-product count. We'll fold parents and children together
+  // client-side to keep the query simple.
+  const cats = await prisma.category.findMany({
+    where: { isActive: true },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    select: {
+      id: true,
+      slug: true,
+      parentId: true,
+      sortOrder: true,
+      translations: {
+        where: { locale: { in: [loc, Locale.EN] } },
+        select: { locale: true, name: true },
+      },
+      _count: {
+        select: {
+          products: {
+            where: {
+              product: {
+                status: ProductStatus.PUBLISHED,
+                deletedAt: null,
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const labelOf = (c: (typeof cats)[number]) =>
+    c.translations.find((t) => t.locale === loc)?.name ??
+    c.translations.find((t) => t.locale === Locale.EN)?.name ??
+    c.slug;
+
+  const parents = cats.filter((c) => c.parentId === null);
+  const childrenOf = (parentId: string) =>
+    cats.filter((c) => c.parentId === parentId);
+
+  const tree = parents.map((p) => {
+    const kids = childrenOf(p.id)
+      // Hide empty subcategories — the user spec said empty subs should
+      // never show in the nav. The parent itself stays visible even if
+      // direct-product count is zero, as long as ANY descendant has
+      // products.
+      .filter((c) => c._count.products > 0)
+      .map((c) => ({
+        slug: c.slug,
+        name: labelOf(c),
+        count: c._count.products,
+      }));
+
+    // Walk-the-tree count: parent's direct products + all surviving
+    // children's products. This is the headline number a customer
+    // reads beside the parent name.
+    const totalCount =
+      p._count.products + kids.reduce((sum, k) => sum + k.count, 0);
+
+    return {
+      slug: p.slug,
+      name: labelOf(p),
+      count: totalCount,
+      children: kids,
+    };
+  })
+    // Drop parents that ended up with zero everywhere — they have no
+    // products and no published children, so a link to them is dead.
+    .filter((p) => p.count > 0);
+
+  // Brands — flat list, ordered by name. Includes count so the menu can
+  // show "AHC (12)" beside each brand. Inactive brands and brands with
+  // no published products don't render.
+  const brands = await prisma.brand.findMany({
+    where: { isActive: true },
+    orderBy: { name: "asc" },
+    select: {
+      slug: true,
+      name: true,
+      _count: {
+        select: {
+          products: {
+            where: {
+              status: ProductStatus.PUBLISHED,
+              deletedAt: null,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return {
+    tree,
+    brands: brands
+      .map((b) => ({ slug: b.slug, name: b.name, count: b._count.products }))
+      .filter((b) => b.count > 0),
+  };
+}
+
+/**
  * Shape the /shop/category/[slug] landing page needs: category hero data
  * (name, description HTML, SEO fields, icon) resolved to the requested
  * locale with EN fallback. Returns null when the slug doesn't match an

@@ -27,7 +27,6 @@ import {
 } from "@/components/admin/products/organise-form";
 import { InventoryPanel } from "@/components/admin/products/inventory-panel";
 import { listProductMovements } from "@/lib/inventory/db";
-import { PRODUCT_LINES } from "@/lib/queries/products";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +66,10 @@ export default async function ProductEditPage({
   const product = await prisma.product.findUnique({
     where: { id },
     include: {
+      // brand: needed by the Organise tab's Brand picker. Cheap
+      // single-row include — even if Sofia never opens that tab the
+      // overhead is one indexed FK read.
+      brand: { select: { id: true } },
       translations: {
         orderBy: { locale: "asc" },
       },
@@ -114,18 +117,35 @@ export default async function ProductEditPage({
   // Fetch the full taxonomy option lists (for the Organise tab). Done on
   // every load of the edit page but only actually rendered when tab=organise.
   // Tiny tables, cheap query — simpler than conditionally fetching.
+  //
+  // For Categories specifically: we hide archived (isActive=false) entries
+  // from the picker so legacy flat shelves don't clutter the UI after the
+  // nested-tree migration. EXCEPT for any archived category this product
+  // is still tagged with — those stay visible (greyed out) so Sofia can
+  // untag them. parentId / isActive / sortOrder come along for the
+  // grouped-by-parent renderer in OrganiseForm.
+  const currentCategoryIds = product.categories.map((x) => x.categoryId);
   const [
     allCategories,
     allSkinTypes,
     allConcerns,
     allBenefits,
     allIngredients,
+    allBrands,
   ] = await Promise.all([
     prisma.category.findMany({
+      where: {
+        OR: [
+          { isActive: true },
+          ...(currentCategoryIds.length > 0
+            ? [{ id: { in: currentCategoryIds } }]
+            : []),
+        ],
+      },
       include: {
         translations: { where: { locale: Locale.EN }, select: { name: true } },
       },
-      orderBy: { slug: "asc" },
+      orderBy: [{ sortOrder: "asc" }, { slug: "asc" }],
     }),
     prisma.skinType.findMany({
       include: {
@@ -154,13 +174,31 @@ export default async function ProductEditPage({
       },
       orderBy: { inciName: "asc" },
     }),
+    // Brand picker — show ALL active brands plus any inactive brand the
+    // current product is still tagged with (so Sofia can untag it).
+    // Same pattern as the category filter above.
+    prisma.brand.findMany({
+      where: {
+        OR: [
+          { isActive: true },
+          ...(product.brandId ? [{ id: product.brandId }] : []),
+        ],
+      },
+      select: { id: true, slug: true, name: true, isActive: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   // Normalise to the TaxonomyOption shape the form expects.
+  // Categories carry parentId / isActive / sortOrder so the picker can
+  // group children under their parent and show archived ones muted.
   const categoryOptions: TaxonomyOption[] = allCategories.map((c) => ({
     id: c.id,
     slug: c.slug,
     label: c.translations[0]?.name ?? c.slug,
+    parentId: c.parentId,
+    isActive: c.isActive,
+    sortOrder: c.sortOrder,
   }));
   const skinTypeOptions: TaxonomyOption[] = allSkinTypes.map((s) => ({
     id: s.id,
@@ -393,30 +431,7 @@ export default async function ProductEditPage({
           <OrganiseForm
             productId={product.id}
             initial={{
-              // Resolve the stored productLine + extraLines back into a
-              // list of slugs so the multi-select picker can re-tick
-              // them on load. Order: primary first (matches the line
-              // defined by productLine), then any extraLines values.
-              // Unknown DB values are silently dropped — safer than
-              // crashing the editor on a stale value.
-              productLineSlugs: (() => {
-                const slugs: ("yur" | "yur-pro" | "yur-me")[] = [];
-                const primarySlug = (PRODUCT_LINES.find((l) =>
-                  (l.dbValues as readonly (string | null)[]).includes(
-                    product.productLine,
-                  ),
-                )?.slug ?? "yur") as "yur" | "yur-pro" | "yur-me";
-                slugs.push(primarySlug);
-                for (const v of product.extraLines) {
-                  const def = PRODUCT_LINES.find((l) =>
-                    (l.dbValues as readonly (string | null)[]).includes(v),
-                  );
-                  if (def && !slugs.includes(def.slug as typeof primarySlug)) {
-                    slugs.push(def.slug as typeof primarySlug);
-                  }
-                }
-                return slugs;
-              })(),
+              brandId: product.brandId,
               categoryIds: product.categories.map((x) => x.categoryId),
               skinTypeIds: product.skinTypes.map((x) => x.skinTypeId),
               concernIds: product.concerns.map((x) => x.concernId),
@@ -424,6 +439,12 @@ export default async function ProductEditPage({
               ingredientIds: product.ingredients.map((x) => x.ingredientId),
             }}
             options={{
+              brands: allBrands.map((b) => ({
+                id: b.id,
+                slug: b.slug,
+                label: b.name,
+                isActive: b.isActive,
+              })),
               categories: categoryOptions,
               skinTypes: skinTypeOptions,
               concerns: concernOptions,

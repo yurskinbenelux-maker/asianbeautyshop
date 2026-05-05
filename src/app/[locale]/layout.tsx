@@ -24,7 +24,7 @@ import { MotionProvider } from "@/components/motion/motion-provider";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { peekCartSummary } from "@/lib/cart/cart";
-import { getShopCategories } from "@/lib/queries/products";
+import { getShopMegaMenuData } from "@/lib/queries/products";
 import { readSetting } from "@/lib/settings";
 import { CookieBanner } from "@/components/consent/cookie-banner";
 import { RegisterWelcomePopup } from "@/components/marketing/register-welcome-popup";
@@ -166,13 +166,14 @@ export default async function LocaleLayout({ children, params }: Props) {
   const currentUser = await getCurrentUser();
   const isSignedIn = currentUser !== null;
 
-  // Fetch the canonical category list once at the layout level — the
-  // header's SHOP hover menu uses it on every page, and the layout is
-  // the cheapest level to fetch from (one DB read per request rather
-  // than one per page). Includes only categories with ≥1 published SKU.
-  const shopCategories = (await getShopCategories(locale)).filter(
-    (c) => c.count > 0,
-  );
+  // Fetch the mega-menu data once at the layout level — the SHOP
+  // hover panel + mobile drawer accordion both consume it. Layout is
+  // the cheapest level to fetch from (one set of DB reads per request
+  // rather than one per page). Returns the category TREE (parents +
+  // their non-empty children) plus the brand list. Empty categories
+  // and brands with zero published products are already filtered out
+  // inside getShopMegaMenuData.
+  const shopMenu = await getShopMegaMenuData(locale);
 
   // Free-shipping threshold — surfaced as a progress indicator inside
   // the cart drawer so customers see "€X to go for free shipping"
@@ -223,7 +224,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                 thresholdEur={freeShippingThresholdEur}
                 locale={locale}
               />
-              <Nav shopCategories={shopCategories} />
+              <Nav shopTree={shopMenu.tree} shopBrands={shopMenu.brands} />
               <main id="main" className="relative">{children}</main>
               <Footer />
               <ConciergeOrb />

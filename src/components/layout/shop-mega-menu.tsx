@@ -1,6 +1,17 @@
 // ─────────────────────────────────────────────────────────────────────────
-// ShopMegaMenu — hover/focus dropdown that lists every category under
-// the SHOP nav item. Sits inside the desktop primary nav.
+// ShopMegaMenu — hover/focus dropdown that lists every category tree
+// (parents + their subcategories) plus the brand list. Sits inside the
+// desktop primary nav.
+//
+// Layout:
+//
+//   ┌──────────────────────────────────────────────────────────────┐
+//   │ [Cleansers]    [Toners]    [Treatments]   │  By brand        │
+//   │  · Oil Cleansers   · Hydrating  · Essences │  · YU.R          │
+//   │  · Cleansing Balms · Calming    · Serums   │  · YU.R Pro      │
+//   │  · Micellar        · Mist       · Ampoules │  · YU.R Me       │
+//   │  …                  …            …          │                  │
+//   └──────────────────────────────────────────────────────────────┘
 //
 // Three opening modes:
 //   1. Pointer hover — opens after the cursor enters the trigger or
@@ -25,20 +36,30 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
-export type ShopMegaMenuCategory = {
+export type ShopMegaMenuParent = {
+  slug: string;
+  name: string;
+  count: number;
+  children: Array<{ slug: string; name: string; count: number }>;
+};
+
+export type ShopMegaMenuBrand = {
   slug: string;
   name: string;
   count: number;
 };
 
 type Props = {
-  categories: ShopMegaMenuCategory[];
+  /** Top-level categories with their (non-empty) children. */
+  tree: ShopMegaMenuParent[];
+  /** Active brands with at least one published product. */
+  brands: ShopMegaMenuBrand[];
 };
 
 /** ms before a hover-out closes the menu — covers the trigger ↔ panel gap. */
 const HOVER_GRACE_MS = 120;
 
-export function ShopMegaMenu({ categories }: Props) {
+export function ShopMegaMenu({ tree, brands }: Props) {
   const t = useTranslations("nav");
   const tShop = useTranslations("shop");
   const [open, setOpen] = useState(false);
@@ -97,11 +118,17 @@ export function ShopMegaMenu({ categories }: Props) {
     return () => cancelClose();
   }, []);
 
+  // No content at all (fresh install with no products) → render trigger
+  // only, skip the panel entirely. Customers shouldn't see an empty
+  // dropdown taunting them with "no categories yet".
+  const hasContent = tree.length > 0 || brands.length > 0;
+
   return (
     <div
       ref={wrapperRef}
       className="relative"
       onMouseEnter={() => {
+        if (!hasContent) return;
         cancelClose();
         setOpen(true);
       }}
@@ -111,18 +138,20 @@ export function ShopMegaMenu({ categories }: Props) {
           Click goes to /shop. Keyboard ArrowDown/Enter open the panel. */}
       <Link
         href="/shop"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onFocus={() => setOpen(true)}
+        aria-haspopup={hasContent ? "menu" : undefined}
+        aria-expanded={hasContent ? open : undefined}
+        onFocus={() => hasContent && setOpen(true)}
         onKeyDown={(e) => {
+          if (!hasContent) return;
           if (e.key === "ArrowDown") {
             e.preventDefault();
             setOpen(true);
             // Move focus to the first menu item once it renders.
             window.requestAnimationFrame(() => {
-              const first = wrapperRef.current?.querySelector<HTMLAnchorElement>(
-                '[role="menuitem"]',
-              );
+              const first =
+                wrapperRef.current?.querySelector<HTMLAnchorElement>(
+                  '[role="menuitem"]',
+                );
               first?.focus();
             });
           }
@@ -132,65 +161,123 @@ export function ShopMegaMenu({ categories }: Props) {
         {t("shop")}
       </Link>
 
-      {/* Panel — anchored under the trigger. We position absolutely so
-          it can overflow the header without relayout. */}
-      <div
-        role="menu"
-        aria-label={t("shop")}
-        className={cn(
-          // Sits flush below the trigger; the `pt-3` on the inner card
-          // creates the visual gap while still leaving the wrapper as
-          // a single hover target — the cursor never crosses dead air.
-          "absolute left-1/2 top-full z-40 -translate-x-1/2 pt-3 transition-all duration-150",
-          open
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none -translate-y-1 opacity-0",
-        )}
-      >
-        <div className="min-w-[260px] border border-ink/10 bg-rice/95 p-3 shadow-[0_12px_36px_-18px_rgba(0,0,0,0.25)] backdrop-blur-md">
-          {/* All-products entry — same destination as clicking SHOP itself,
-              but reads as a meaningful "browse the whole collection"
-              when alongside the category list. */}
-          <Link
-            role="menuitem"
-            href="/shop"
-            onClick={() => setOpen(false)}
-            className="flex items-center justify-between gap-3 px-3 py-2 text-[12px] uppercase tracking-label text-ink-mid transition-colors hover:bg-ink/5 hover:text-ink"
-          >
-            <span>{tShop("all")}</span>
-          </Link>
-
-          <div className="my-1 border-t border-ink/10" aria-hidden />
-
-          {categories.length === 0 ? (
-            <p className="px-3 py-3 text-[12px] italic text-ink-mid">
-              {/* Fallback when the catalogue is genuinely empty (fresh
-                  install). Customers shouldn't see this on prod. */}
-              {tShop("empty")}
-            </p>
-          ) : (
-            <ul className="flex flex-col">
-              {categories.map((c) => (
-                <li key={c.slug}>
-                  <Link
-                    role="menuitem"
-                    href={`/shop/category/${c.slug}`}
-                    onClick={() => setOpen(false)}
-                    className="flex items-center justify-between gap-3 px-3 py-2 text-[12px] uppercase tracking-label text-ink-mid transition-colors hover:bg-ink/5 hover:text-ink"
-                  >
-                    <span>{c.name}</span>
-                    {c.count > 0 && (
-                      <span className="text-[10px] tabular-nums text-ink-mid/70">
-                        {c.count}
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+      {/* Panel — anchored under the trigger and centered. Width grows
+          with content but is capped at the viewport's container width
+          minus a little so it doesn't kiss the edges on smaller
+          desktops. */}
+      {hasContent && (
+        <div
+          role="menu"
+          aria-label={t("shop")}
+          className={cn(
+            // pt-3 creates the visual gap to the nav while the wrapper
+            // stays a single hover target — cursor never crosses dead
+            // air en route from trigger to panel.
+            "fixed left-1/2 top-[calc(var(--header-h,80px))] z-40 -translate-x-1/2 pt-3 transition-all duration-150",
+            open
+              ? "pointer-events-auto translate-y-0 opacity-100"
+              : "pointer-events-none -translate-y-1 opacity-0",
           )}
+          // Inline style anchors the panel right under the nav (h-20 =
+          // 80px on md+; matches the header height in nav.tsx). No JS
+          // measurement — the value is constant.
+          style={{ top: "80px" }}
+        >
+          <div className="mx-auto flex w-[min(92vw,1100px)] gap-8 border border-ink/10 bg-rice/95 p-8 shadow-[0_18px_56px_-22px_rgba(0,0,0,0.28)] backdrop-blur-md">
+            {/* ── Categories: column-fluid grid ─────────────────────
+                Each parent gets its own visual column. We let the
+                grid auto-fill — 4 parents on most desktop widths,
+                3 on narrower viewports. Inside each parent, children
+                stack as a tight list. Parents with no children just
+                render the parent link by itself. */}
+            <div className="flex-1">
+              <div className="mb-3 text-[10px] uppercase tracking-label text-ink-mid/70">
+                {tShop("by_category")}
+              </div>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-6 lg:grid-cols-4">
+                {tree.map((parent) => (
+                  <div key={parent.slug} className="min-w-0">
+                    {/* Parent — bolder, slightly larger, the column
+                        header. Clicking takes you to the parent's
+                        landing page so customers can browse the whole
+                        category. */}
+                    <Link
+                      role="menuitem"
+                      href={`/shop/category/${parent.slug}`}
+                      onClick={() => setOpen(false)}
+                      className="font-display text-[14px] text-ink transition-colors hover:text-vermilion"
+                    >
+                      {parent.name}
+                    </Link>
+                    {parent.children.length > 0 && (
+                      <ul className="mt-3 flex flex-col gap-1.5">
+                        {parent.children.map((child) => (
+                          <li key={child.slug}>
+                            <Link
+                              role="menuitem"
+                              href={`/shop/category/${child.slug}`}
+                              onClick={() => setOpen(false)}
+                              className="block text-[12px] text-ink-mid transition-colors hover:text-vermilion"
+                            >
+                              {child.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* All-products entry — same destination as clicking SHOP
+                  itself, but reads as a meaningful "browse the whole
+                  collection" when alongside the category list. Set
+                  apart with a hairline so it doesn't fight the column
+                  grid. */}
+              <div className="mt-8 border-t border-ink/10 pt-4">
+                <Link
+                  role="menuitem"
+                  href="/shop"
+                  onClick={() => setOpen(false)}
+                  className="text-[11px] uppercase tracking-label text-ink-mid transition-colors hover:text-vermilion"
+                >
+                  {tShop("all")} →
+                </Link>
+              </div>
+            </div>
+
+            {/* ── Brands column ─────────────────────────────────────
+                Right rail. Always rendered (even with one brand) so
+                the visual balance of the panel stays consistent. The
+                vertical hairline separates it from the category grid;
+                w-px keeps the rule crisp on retina. */}
+            {brands.length > 0 && (
+              <>
+                <div className="w-px shrink-0 self-stretch bg-ink/10" />
+                <div className="w-[200px] shrink-0">
+                  <div className="mb-3 text-[10px] uppercase tracking-label text-ink-mid/70">
+                    {tShop("by_brand")}
+                  </div>
+                  <ul className="flex flex-col gap-2">
+                    {brands.map((b) => (
+                      <li key={b.slug}>
+                        <Link
+                          role="menuitem"
+                          href={`/shop/brand/${b.slug}`}
+                          onClick={() => setOpen(false)}
+                          className="block text-[12px] text-ink transition-colors hover:text-vermilion"
+                        >
+                          {b.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -17,16 +17,21 @@ import { SearchOverlay } from "./search-overlay";
 import { Logo } from "@/components/brand/logo";
 import {
   ShopMegaMenu,
-  type ShopMegaMenuCategory,
+  type ShopMegaMenuParent,
+  type ShopMegaMenuBrand,
 } from "@/components/layout/shop-mega-menu";
 
 export function Nav({
-  shopCategories = [],
+  shopTree = [],
+  shopBrands = [],
 }: {
-  /** Categories rendered inside the SHOP hover-menu. Fetched once at the
-   *  layout level so every page reuses the same query. Default `[]` keeps
-   *  storybook / preview mounts working without prop noise. */
-  shopCategories?: ShopMegaMenuCategory[];
+  /** Top-level categories with their (non-empty) children. Fetched once
+   *  at the layout level so every page reuses the same query. Default
+   *  `[]` keeps storybook / preview mounts working without prop noise. */
+  shopTree?: ShopMegaMenuParent[];
+  /** Active brands rendered in the right column of the mega-menu and
+   *  in the mobile drawer's "By brand" sub-section. */
+  shopBrands?: ShopMegaMenuBrand[];
 }) {
   const t = useTranslations();
   const pathname = usePathname();
@@ -37,6 +42,15 @@ export function Nav({
   // visitors who only want a different section don't see a wall of
   // categories first.
   const [mobileShopOpen, setMobileShopOpen] = useState(false);
+  // Per-parent expansion inside the mobile Shop accordion — a Set so
+  // multiple parents can be open simultaneously (Sofia's customers may
+  // want to compare sub-shelves across two parents at once).
+  const [mobileExpandedParents, setMobileExpandedParents] = useState<
+    Set<string>
+  >(new Set());
+  // Brand sub-accordion inside the mobile drawer — separate from the
+  // category tree so opening one doesn't collapse the other.
+  const [mobileBrandsOpen, setMobileBrandsOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -94,9 +108,26 @@ export function Nav({
 
   // Collapse the Shop accordion whenever the drawer fully closes so the
   // next open starts from a clean primary list rather than mid-expansion.
+  // We also clear the per-parent expansion set + brand sub-accordion so
+  // a re-open of the drawer doesn't surface a half-explored mid-state.
   useEffect(() => {
-    if (!mobileOpen) setMobileShopOpen(false);
+    if (!mobileOpen) {
+      setMobileShopOpen(false);
+      setMobileExpandedParents(new Set());
+      setMobileBrandsOpen(false);
+    }
   }, [mobileOpen]);
+
+  // Toggle a single parent open/closed inside the mobile Shop
+  // accordion. Sets are immutable in React state so we copy on write.
+  const toggleMobileParent = (slug: string) => {
+    setMobileExpandedParents((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
+  };
 
   return (
     <header
@@ -162,7 +193,7 @@ export function Nav({
             category in a small panel below. The other primary links
             stay simple text anchors. */}
         <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
-          <ShopMegaMenu categories={shopCategories} />
+          <ShopMegaMenu tree={shopTree} brands={shopBrands} />
           {/* Skin quiz replaces the old "Rituals" header link — the quiz
               is the higher-intent funnel into product recommendations.
               The /rituals editorial page still exists and is reachable
@@ -284,47 +315,159 @@ export function Nav({
                     )}
                   />
                 </button>
-                {/* Categories — inline accordion, not a flyout. Tap any
-                    category to land on /shop/category/[slug]. The "View
-                    all" row at the bottom takes the visitor to /shop
-                    if no specific category fits. Shown only when at
-                    least one category has live products. */}
+                {/* Categories tree + brand list — inline accordion,
+                    not a flyout. Two sections inside one accordion so
+                    one tap on Shop reveals everything available, then
+                    the visitor drills into a parent or jumps to a
+                    brand. Shown only when at least one section has
+                    content. The outer max-h is generous because long
+                    catalogues with many subs need room to breathe;
+                    overflow-y-auto kicks in if it ever exceeds. */}
                 <div
                   id="mobile-shop-categories"
                   className={cn(
                     "overflow-hidden border-l-2 border-vermilion/20 pl-3 transition-[max-height,opacity] duration-300",
                     mobileShopOpen
-                      ? "max-h-[600px] opacity-100"
+                      ? "max-h-[80vh] overflow-y-auto opacity-100"
                       : "max-h-0 opacity-0",
                   )}
                 >
-                  <ul className="flex flex-col py-2">
-                    {shopCategories.map((c) => (
-                      <li key={c.slug}>
-                        <Link
-                          href={`/shop/category/${c.slug}`}
-                          onClick={() => setMobileOpen(false)}
-                          className="flex h-11 items-center justify-between text-[13px] text-ink transition-colors hover:text-vermilion"
-                        >
-                          <span>{c.name}</span>
-                          <span className="text-[11px] text-ink-mid">
-                            {c.count}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                    {/* Always offer the broad "View all" — useful when
-                        the visitor doesn't know which category fits. */}
-                    <li>
-                      <Link
-                        href="/shop"
-                        onClick={() => setMobileOpen(false)}
-                        className="flex h-11 items-center text-[11px] uppercase tracking-label text-ink-mid transition-colors hover:text-vermilion"
+                  {/* ── By category ────────────────────────────── */}
+                  {shopTree.length > 0 && (
+                    <div className="py-2">
+                      <div className="px-1 pb-1 text-[10px] uppercase tracking-label text-ink-mid/70">
+                        {t("shop.by_category")}
+                      </div>
+                      <ul className="flex flex-col">
+                        {shopTree.map((parent) => {
+                          const expanded = mobileExpandedParents.has(
+                            parent.slug,
+                          );
+                          const hasKids = parent.children.length > 0;
+                          return (
+                            <li key={parent.slug}>
+                              {/* Parent row: split into a Link (taps
+                                  navigate to the parent landing) and an
+                                  expand toggle on the right (taps reveal
+                                  children inline). Two affordances
+                                  because some parents are leaves and
+                                  some are branches. */}
+                              <div className="flex items-center justify-between">
+                                <Link
+                                  href={`/shop/category/${parent.slug}`}
+                                  onClick={() => setMobileOpen(false)}
+                                  className="flex h-11 flex-1 items-center text-[13px] text-ink transition-colors hover:text-vermilion"
+                                >
+                                  {parent.name}
+                                </Link>
+                                {hasKids ? (
+                                  <button
+                                    type="button"
+                                    aria-expanded={expanded}
+                                    aria-controls={`mobile-shop-parent-${parent.slug}`}
+                                    onClick={() =>
+                                      toggleMobileParent(parent.slug)
+                                    }
+                                    className="flex h-11 w-10 items-center justify-center text-ink-mid transition-colors hover:text-vermilion"
+                                  >
+                                    <ChevronDown
+                                      className={cn(
+                                        "h-4 w-4 transition-transform duration-200",
+                                        expanded ? "rotate-180" : "rotate-0",
+                                      )}
+                                    />
+                                  </button>
+                                ) : (
+                                  <span className="px-3 text-[11px] text-ink-mid">
+                                    {parent.count}
+                                  </span>
+                                )}
+                              </div>
+                              {hasKids && (
+                                <ul
+                                  id={`mobile-shop-parent-${parent.slug}`}
+                                  className={cn(
+                                    "overflow-hidden border-l border-ink/10 pl-3 transition-[max-height,opacity] duration-200",
+                                    expanded
+                                      ? "max-h-[400px] opacity-100"
+                                      : "max-h-0 opacity-0",
+                                  )}
+                                >
+                                  {parent.children.map((child) => (
+                                    <li key={child.slug}>
+                                      <Link
+                                        href={`/shop/category/${child.slug}`}
+                                        onClick={() => setMobileOpen(false)}
+                                        className="flex h-10 items-center text-[12px] text-ink-mid transition-colors hover:text-vermilion"
+                                      >
+                                        {child.name}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* ── By brand ──────────────────────────────────
+                      Separate sub-accordion so opening it doesn't
+                      collapse the category tree. */}
+                  {shopBrands.length > 0 && (
+                    <div className="border-t border-ink/10 py-2">
+                      <button
+                        type="button"
+                        aria-expanded={mobileBrandsOpen}
+                        aria-controls="mobile-shop-brands"
+                        onClick={() => setMobileBrandsOpen((v) => !v)}
+                        className="flex h-11 w-full items-center justify-between text-[10px] uppercase tracking-label text-ink-mid/70 transition-colors hover:text-vermilion"
                       >
-                        {t("nav.shop_all")}
-                      </Link>
-                    </li>
-                  </ul>
+                        <span>{t("shop.by_brand")}</span>
+                        <ChevronDown
+                          className={cn(
+                            "h-4 w-4 transition-transform duration-200",
+                            mobileBrandsOpen ? "rotate-180" : "rotate-0",
+                          )}
+                        />
+                      </button>
+                      <ul
+                        id="mobile-shop-brands"
+                        className={cn(
+                          "overflow-hidden border-l border-ink/10 pl-3 transition-[max-height,opacity] duration-200",
+                          mobileBrandsOpen
+                            ? "max-h-[400px] opacity-100"
+                            : "max-h-0 opacity-0",
+                        )}
+                      >
+                        {shopBrands.map((b) => (
+                          <li key={b.slug}>
+                            <Link
+                              href={`/shop/brand/${b.slug}`}
+                              onClick={() => setMobileOpen(false)}
+                              className="flex h-10 items-center text-[12px] text-ink transition-colors hover:text-vermilion"
+                            >
+                              {b.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Always offer the broad "View all" — useful when
+                      the visitor doesn't know which shelf fits. */}
+                  <div className="border-t border-ink/10 py-2">
+                    <Link
+                      href="/shop"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex h-11 items-center text-[11px] uppercase tracking-label text-ink-mid transition-colors hover:text-vermilion"
+                    >
+                      {t("nav.shop_all")}
+                    </Link>
+                  </div>
                 </div>
               </li>
 
