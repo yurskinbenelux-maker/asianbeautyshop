@@ -113,6 +113,23 @@ export function YurClubDrawer({ data, open, onClose }: Props) {
           from { transform: translateX(-100%); }
           to   { transform: translateX(0); }
         }
+        /* Two slightly different petal drifts so the pair doesn't move
+           in lockstep. Keep travel small (~6px) — the goal is "this card
+           is alive" not "look at me". */
+        @keyframes yur-club-petal-a {
+          0%   { transform: translate(0, 0) rotate(35deg); }
+          50%  { transform: translate(-6px, 4px) rotate(50deg); }
+          100% { transform: translate(0, 0) rotate(35deg); }
+        }
+        @keyframes yur-club-petal-b {
+          0%   { transform: translate(0, 0) rotate(-20deg); }
+          50%  { transform: translate(4px, -5px) rotate(-8deg); }
+          100% { transform: translate(0, 0) rotate(-20deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          /* Honour OS-level motion settings — petals freeze in place. */
+          [class*="yur-club-petal"] { animation: none !important; }
+        }
       `}</style>
     </div>
   );
@@ -159,43 +176,116 @@ function TierHeroCard({ data }: { data: DrawerData }) {
     month: "long",
   });
 
+  // Variant 4 — hand-drawn florals.
+  // Soft radial glow at the top-right of the card, hand-drawn peony
+  // branches in the top-left + bottom-right corners (rhymes with the
+  // welcome popup), two drifting petals as quiet movement, balance
+  // promoted ABOVE the progress rule so the most actionable number
+  // lands first.
   return (
     <section className="px-6 pt-6">
-      <div className="relative overflow-hidden border border-ink/10 bg-white">
-        {/* hand-drawn peony seal in the corner — vermilion at low opacity */}
+      <div
+        className="relative overflow-hidden border border-ink/10"
+        style={{
+          background:
+            "radial-gradient(ellipse at top right, rgba(200,54,44,0.05), transparent 60%), #FBF8F2",
+        }}
+      >
+        {/* top-left hand-drawn peony branch — vermilion at low opacity */}
         <svg
           aria-hidden
-          viewBox="0 0 140 140"
-          className="pointer-events-none absolute -right-4 -top-4 h-[140px] w-[140px] opacity-40"
+          viewBox="0 0 130 130"
+          className="pointer-events-none absolute -left-2.5 -top-2.5 h-[130px] w-[130px] opacity-50"
           fill="none"
           stroke="#C8362C"
-          strokeWidth="0.9"
+          strokeWidth="0.8"
           strokeLinecap="round"
         >
-          <circle cx="80" cy="60" r="32" opacity="0.4" />
-          <ellipse cx="80" cy="60" rx="14" ry="22" opacity="0.55" />
-          <ellipse cx="80" cy="60" rx="22" ry="14" opacity="0.55" transform="rotate(60 80 60)" />
-          <ellipse cx="80" cy="60" rx="22" ry="14" opacity="0.55" transform="rotate(120 80 60)" />
-          <circle cx="80" cy="60" r="6" fill="#C8362C" opacity="0.6" />
+          <path d="M5 5 Q40 30 60 70 Q70 95 75 120" />
+          <path d="M22 18 q3 6 10 8" />
+          <path d="M40 40 q3 6 10 8" />
+          <path d="M55 65 q3 6 10 8" />
+          <ellipse cx="14" cy="12" rx="3.5" ry="2" fill="#C8362C" opacity="0.55" />
+          <ellipse cx="32" cy="28" rx="3" ry="1.7" fill="#C8362C" opacity="0.45" />
         </svg>
 
-        <div className="relative px-6 py-7">
-          {/* tier name */}
-          <p className="text-[10px] uppercase tracking-label text-ink-mid">
+        {/* bottom-right echo branch */}
+        <svg
+          aria-hidden
+          viewBox="0 0 160 160"
+          className="pointer-events-none absolute -bottom-2.5 -right-2.5 h-[160px] w-[160px] opacity-50"
+          fill="none"
+          stroke="#C8362C"
+          strokeWidth="0.8"
+          strokeLinecap="round"
+        >
+          <path d="M155 155 Q120 120 90 80 Q70 50 50 20" />
+          <path d="M130 130 q-3 -6 -10 -8" />
+          <path d="M105 105 q-3 -6 -10 -8" />
+          <path d="M80 75 q-3 -6 -10 -8" />
+          <ellipse cx="146" cy="146" rx="4" ry="2.4" fill="#C8362C" opacity="0.55" />
+          <ellipse cx="120" cy="120" rx="3" ry="1.8" fill="#C8362C" opacity="0.45" />
+        </svg>
+
+        {/* drifting petals — pure decoration, animated via the keyframe at
+             the bottom of this file so they breathe slightly without
+             being distracting. */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute right-[24%] top-[38px] h-2 w-2 rounded-full bg-vermilion/20"
+          style={{
+            borderRadius: "60% 40% 60% 40%",
+            transform: "rotate(35deg)",
+            animation: "yur-club-petal-a 7s ease-in-out infinite",
+          }}
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute right-[14%] top-[92px] h-2 w-2 rounded-full bg-vermilion/15"
+          style={{
+            borderRadius: "60% 40% 60% 40%",
+            transform: "rotate(-20deg)",
+            animation: "yur-club-petal-b 9s ease-in-out infinite 1s",
+          }}
+        />
+
+        <div className="relative px-7 py-8">
+          {/* eyebrow + tier name */}
+          <p className="text-[10px] uppercase tracking-label text-vermilion">
             {t("tier_label")}
           </p>
           <p
-            className="mt-1 font-display italic text-ink"
-            style={{ fontSize: "40px", lineHeight: 1, letterSpacing: "-0.01em" }}
+            className="mt-1.5 font-display italic text-ink"
+            style={{
+              fontSize: "60px",
+              lineHeight: 1,
+              fontWeight: 400,
+              letterSpacing: "-0.01em",
+            }}
           >
             {resolved.current.name}
           </p>
 
-          {/* progress bar */}
+          {/* big points number — promoted above the progress so it's the
+              first hard number the eye lands on */}
+          <div className="mt-6 flex items-baseline gap-2.5">
+            <span
+              className="font-display text-ink"
+              style={{ fontSize: "72px", lineHeight: 0.9, fontWeight: 300 }}
+            >
+              {account.pointsBalance.toLocaleString()}
+            </span>
+            <span className="text-[11px] uppercase tracking-label text-ink-mid">
+              {t("points")}
+            </span>
+          </div>
+
+          {/* progress to next tier */}
           {resolved.next ? (
             <>
               <div
-                className="mt-5 h-[3px] w-full bg-ink/10"
+                className="mt-5 h-[2px] w-full"
+                style={{ background: "rgba(200,54,44,0.15)" }}
                 role="progressbar"
                 aria-valuenow={Math.round(resolved.progress * 100)}
                 aria-valuemin={0}
@@ -206,7 +296,7 @@ function TierHeroCard({ data }: { data: DrawerData }) {
                   style={{ width: `${resolved.progress * 100}%` }}
                 />
               </div>
-              <p className="mt-2 text-[12px] text-ink-mid">
+              <p className="mt-2 text-[11px] text-ink-mid">
                 {t("points_to_next", {
                   count: resolved.pointsToNext,
                   next: resolved.next.name,
@@ -214,23 +304,10 @@ function TierHeroCard({ data }: { data: DrawerData }) {
               </p>
             </>
           ) : (
-            <p className="mt-3 text-[12px] uppercase tracking-label text-vermilion">
+            <p className="mt-4 text-[11px] uppercase tracking-label text-vermilion">
               {t("top_tier")}
             </p>
           )}
-
-          {/* big points number */}
-          <div className="mt-7 flex items-baseline gap-2">
-            <span
-              className="font-display text-ink"
-              style={{ fontSize: "56px", lineHeight: 1, fontWeight: 400 }}
-            >
-              {account.pointsBalance.toLocaleString()}
-            </span>
-            <span className="text-[13px] uppercase tracking-label text-ink-mid">
-              {t("points")}
-            </span>
-          </div>
 
           {/* member-since */}
           <p className="mt-5 text-[10px] uppercase tracking-label text-ink-mid">
