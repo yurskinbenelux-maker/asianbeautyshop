@@ -115,32 +115,55 @@ export type CheckoutErrorCode =
 export async function submitCheckout(
   formData: FormData,
 ): Promise<SubmitCheckoutResult> {
-  // ── DIAGNOSTIC INSTRUMENTATION ──────────────────────────────────────
-  // Wrap the entire action body so we capture ANY thrown error and
-  // persist it to AuditLog before re-raising. Sofia (or me) can read
-  // the actual message at /admin/audit. Remove this wrapper once the
-  // current /checkout 500 is diagnosed and fixed.
+  // ── DIAGNOSTIC INSTRUMENTATION (round 2) ───────────────────────────
+  // The previous wrapper relied on logAudit + AuditLog, but no entry
+  // surfaced — meaning either logAudit silently swallowed (it has its
+  // own catch) OR Prisma write failed in this context.
+  //
+  // This version returns the error AS DATA so the client renders it
+  // inline. Sofia / Max sees the actual message on the checkout page
+  // instead of a 500. Remove once the bug is identified.
   try {
     return await submitCheckoutInner(formData);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    const stack = err instanceof Error ? err.stack ?? "(no stack)" : "(no stack)";
+    // Best-effort direct prisma write — bypasses logAudit's swallow.
     try {
-      await logAudit({
-        action: "checkout.500_diagnostic",
-        entityType: "Cart",
-        entityId: null,
-        summary: `submitCheckout threw: ${message.slice(0, 180)}`,
-        meta: {
-          message,
-          stack: stack.slice(0, 4000),
+      await prisma.auditLog.create({
+        data: {
+          actorId: null,
+          actorEmail: null,
+          action: "checkout.500_diagnostic",
+          entityType: "Cart",
+          entityId: null,
+          summary: `submitCheckout: ${message.slice(0, 400)}`,
+          meta: {
+            message,
+            stack:
+              (err instanceof Error ? err.stack ?? "" : "").slice(0, 3000),
+          } as never,
+          ip: null,
+          userAgent: null,
         },
       });
-    } catch {
-      // If even the audit-log write fails, we still want the original
-      // error to propagate — swallow this inner failure silently.
+    } catch (auditErr) {
+      // eslint-disable-next-line no-console
+      console.error("[submitCheckout] audit write failed", auditErr);
     }
-    throw err;
+    // CRITICAL: return as data instead of re-throwing. The client
+    // renders this in the UI's error pill — Max can read the actual
+    // message right on the checkout page. We tunnel the message
+    // through error.UNKNOWN with the full text in a separate field
+    // so legacy translations still resolve.
+    // eslint-disable-next-line no-console
+    console.error("[submitCheckout] threw (returning as data):", err);
+    return {
+      ok: false,
+      error: "UNKNOWN",
+      // Cast through unknown so the existing union type doesn't reject
+      // the diagnostic field. Removed when this wrapper is reverted.
+      ...({ debugMessage: message.slice(0, 500) } as Record<string, string>),
+    } as SubmitCheckoutResult;
   }
 }
 

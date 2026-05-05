@@ -105,6 +105,10 @@ export function CheckoutClient({
   const [topLevelError, setTopLevelError] = useState<CheckoutErrorCode | null>(
     null,
   );
+  // TEMP DIAGNOSTIC — surfaces the raw error message from
+  // submitCheckout's catch when it threw. Remove with the rest of the
+  // diagnostic instrumentation once the prod 500 is fixed.
+  const [debugMessage, setDebugMessage] = useState<string | null>(null);
   const [isSubmitting, startTransition] = useTransition();
 
   // Client-side totals preview — intentionally without the coupon (coupons
@@ -139,6 +143,7 @@ export function CheckoutClient({
     e.preventDefault();
     setFieldErrors({});
     setTopLevelError(null);
+    setDebugMessage(null);
 
     const formData = new FormData(e.currentTarget);
 
@@ -154,6 +159,10 @@ export function CheckoutClient({
         setFieldErrors(result.fieldErrors ?? {});
       } else {
         setTopLevelError(result.error);
+        // TEMP DIAGNOSTIC — pull the debug message off the result if
+        // present (set by submitCheckout's diagnostic catch).
+        const dm = (result as { debugMessage?: string }).debugMessage;
+        if (typeof dm === "string" && dm.length > 0) setDebugMessage(dm);
       }
     });
   }
@@ -424,6 +433,14 @@ export function CheckoutClient({
               {topLevelError && (
                 <div className="mt-5 border border-vermilion/30 bg-vermilion/5 px-3 py-2 text-[12px] text-vermilion">
                   {t(`error.${topLevelError}`)}
+                  {/* TEMP DIAGNOSTIC — surfaces the real error string
+                      from submitCheckout's catch. Remove when the
+                      checkout 500 is fixed. */}
+                  {debugMessage && (
+                    <div className="mt-2 font-mono text-[11px] leading-relaxed break-all">
+                      {debugMessage}
+                    </div>
+                  )}
                 </div>
               )}
 
