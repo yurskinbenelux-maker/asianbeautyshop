@@ -93,7 +93,7 @@ export function YurClubDrawer({ data, open, onClose }: Props) {
           <TierHeroCard data={data} />
           <ActionTiles activeCouponCount={data.activeCouponCount} />
           <ReferralBlock referralCode={data.account.referralCode} />
-          <MilestoneBlock />
+          <MilestoneBlock milestone={data.milestone} />
           <WaysToRedeemBlock
             rewards={data.topRewards}
             balance={data.account.pointsBalance}
@@ -414,15 +414,68 @@ function ReferralBlock({ referralCode }: { referralCode: string }) {
 
 // ─── milestone block ──────────────────────────────────────────────────────
 
-function MilestoneBlock() {
+function MilestoneBlock({
+  milestone,
+}: {
+  milestone: DrawerData["milestone"];
+}) {
   const t = useTranslations("yur_club");
-  // Phase B placeholder — real progress dots come in Phase G once we
-  // surface paidOrderCount + milestoneOrders to the drawer payload.
+
+  // Sofia disabled milestones, or settings haven't seeded yet — fall
+  // back to the lede so the drawer doesn't have a blank block.
+  if (!milestone) {
+    return (
+      <Section title={t("section_milestones")}>
+        <p className="text-[13px] leading-relaxed text-ink-mid">
+          {t("milestones_lede")}
+        </p>
+      </Section>
+    );
+  }
+
+  const dots = Array.from({ length: milestone.every }, (_, i) => i);
+
   return (
     <Section title={t("section_milestones")}>
       <p className="text-[13px] leading-relaxed text-ink-mid">
         {t("milestones_lede")}
       </p>
+
+      {/* Dot row — filled vermilion for completed orders in this cycle,
+          hollow for the rest. The last dot in the cycle is the bonus
+          target. Mobile-friendly because dots wrap if `every` is huge. */}
+      <div className="mt-5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {dots.map((i) => {
+            const filled = i < milestone.progress;
+            const isTarget = i === milestone.every - 1;
+            return (
+              <span
+                key={i}
+                aria-hidden
+                className={
+                  "inline-block h-3 w-3 rounded-full border " +
+                  (filled
+                    ? "border-vermilion bg-vermilion"
+                    : isTarget
+                      ? "border-vermilion bg-rice"
+                      : "border-ink/20 bg-rice")
+                }
+              />
+            );
+          })}
+        </div>
+        <p className="mt-3 text-[12px] text-ink-mid">
+          <span className="text-ink">
+            {milestone.progress.toLocaleString()} / {milestone.every}
+          </span>{" "}
+          orders ·{" "}
+          <span className="text-vermilion">
+            +{milestone.bonusPoints.toLocaleString()} pts
+          </span>{" "}
+          on order #{milestone.paidOrderCount + milestone.ordersToNext}
+        </p>
+      </div>
     </Section>
   );
 }

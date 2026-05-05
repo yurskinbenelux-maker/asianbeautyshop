@@ -51,6 +51,20 @@ export type DrawerData = {
    *  (decorative) and MANUAL_REVIEW rows (claimable). Drawer surfaces
    *  the top 4 with a "See all" link to /account/club/earn. */
   topTasks: TaskWithStatus[];
+  /** Milestone progress visualisation for the drawer's Milestone block.
+   *  Null when Sofia disabled the feature in /admin/loyalty/settings. */
+  milestone: {
+    /** How many paid orders the customer has placed in total (lifetime). */
+    paidOrderCount: number;
+    /** Sofia's setting — every Nth order awards milestonePoints. */
+    every: number;
+    /** Bonus points each milestone awards. */
+    bonusPoints: number;
+    /** Orders into the CURRENT cycle. 0..every-1. */
+    progress: number;
+    /** Orders still needed to hit the next milestone (1..every). */
+    ordersToNext: number;
+  } | null;
 };
 
 /** Map a next-intl locale code to the Prisma Locale enum. Centralised so
@@ -85,25 +99,29 @@ export async function getDrawerData(opts: {
 
   const prismaLocale = toPrismaLocale(opts.locale);
 
-  const [history, activeCouponCount, topRewards, allTasks] = await Promise.all([
-    readLoyaltyHistory({ userId: opts.userId, limit: 50 }),
-    prisma.coupon.count({
-      where: {
+  const [history, activeCouponCount, topRewards, allTasks, paidOrderCount] =
+    await Promise.all([
+      readLoyaltyHistory({ userId: opts.userId, limit: 50 }),
+      prisma.coupon.count({
+        where: {
+          userId: opts.userId,
+          isActive: true,
+          OR: [
+            { endsAt: null },
+            { endsAt: { gt: new Date() } },
+          ],
+        },
+      }),
+      listRedeemableRewards({
         userId: opts.userId,
-        isActive: true,
-        OR: [
-          { endsAt: null },
-          { endsAt: { gt: new Date() } },
-        ],
-      },
-    }),
-    listRedeemableRewards({
-      userId: opts.userId,
-      locale: prismaLocale,
-      limit: 4,
-    }),
-    listTasksForUser({ userId: opts.userId }),
-  ]);
+        locale: prismaLocale,
+        limit: 4,
+      }),
+      listTasksForUser({ userId: opts.userId }),
+      prisma.order.count({
+        where: { userId: opts.userId, paymentStatus: "PAID" },
+      }),
+    ]);
   // Surface the 4 most relevant tasks: AUTO rows + claimable MANUAL_REVIEW
   // rows take priority over already-approved/pending ones so the drawer
   // shows actionable copy first.
@@ -116,6 +134,22 @@ export async function getDrawerData(opts: {
     .slice(0, 4);
 
   const resolved = resolveTier(account.pointsLifetime, tiers);
+
+  // Build milestone progress only when Sofia has the feature on. The
+  // current cycle position = paidOrderCount mod every, the dots-to-fill
+  // visualization in the drawer divides by `every` to render N dots.
+  const milestone =
+    settings.milestoneEnabled && settings.milestoneOrders > 0
+      ? {
+          paidOrderCount,
+          every: settings.milestoneOrders,
+          bonusPoints: settings.milestonePoints,
+          progress: paidOrderCount % settings.milestoneOrders,
+          ordersToNext:
+            settings.milestoneOrders -
+            (paidOrderCount % settings.milestoneOrders),
+        }
+      : null;
 
   return {
     programActive: settings.isProgramActive,
@@ -137,5 +171,6 @@ export async function getDrawerData(opts: {
     activeCouponCount,
     topRewards,
     topTasks,
+    milestone,
   };
 }
