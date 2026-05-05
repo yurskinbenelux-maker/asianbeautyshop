@@ -104,12 +104,11 @@ export function ShopInfiniteGrid({
 
   return (
     <>
-      {/* 2-up on phones (was 1-up) so a customer sees two products
-          above the fold on a 360 px screen — same density as Sephora,
-          peonybeauty, Glossier mobile. The card-internal type sizes
-          adapt below sm:. Tighter gap on mobile so 2 cols actually
-          fit comfortably. */}
-      <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-8 lg:grid-cols-3">
+      {/* 2-up on phones, 3-up at md, 4-up at lg+. The bump from 3→4 was
+          unlocked by retiring the inline filter sidebar — those 16rem
+          buy a 4th column above the fold. Tighter gap on mobile so 2
+          cols actually fit comfortably on a 360 px screen. */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-8 md:grid-cols-3 lg:grid-cols-4">
         {items.map((p, i) => (
           <BestsellerCard
             key={p.id}

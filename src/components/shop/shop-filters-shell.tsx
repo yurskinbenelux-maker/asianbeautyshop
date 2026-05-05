@@ -42,11 +42,13 @@ export function ShopFiltersShell({ filters }: { filters: ShopFilterData }) {
 
   return (
     <>
-      {/* mobile trigger — matches the editorial aesthetic of the sort select */}
+      {/* Trigger — visible at every viewport now that filters are
+          drawer-only. Sits next to the Sort control in the toolbar
+          row above the grid. */}
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 text-[12px] uppercase tracking-label text-ink-mid transition-colors hover:text-ink md:hidden"
+        className="inline-flex items-center gap-2 text-[12px] uppercase tracking-label text-ink-mid transition-colors hover:text-ink"
         aria-label={t("open_filters")}
         aria-expanded={open}
       >

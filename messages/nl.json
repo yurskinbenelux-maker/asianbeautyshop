@@ -223,7 +223,11 @@
     "quick_view": "Snel bekijken",
     "load_more": "Meer laden",
     "lines_label": "Lijnen",
+    "brands_label": "Merken",
     "categories_label": "Categorieën",
+    "subcategories_label": "Subcategorieën",
+    "filters_button": "Filters",
+    "filters_active_count": "{count, plural, one {# actief} other {# actief}}",
     "more": "Meer",
     "recently_viewed_title": "Recent bekeken"
   },

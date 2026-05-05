@@ -17,12 +17,12 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import {
   getShopProducts,
-  getShopCategories,
+  getShopCategoryTree,
   getShopFilters,
   type ShopSort,
 } from "@/lib/queries/products";
-import { CategoryFilter } from "@/components/shop/category-filter";
-import { LineTabs } from "@/components/shop/line-tabs";
+import { CategoryStrip } from "@/components/shop/category-strip";
+import { BrandTabs } from "@/components/shop/brand-tabs";
 import { SortSelect } from "@/components/shop/sort-select";
 import { ShopFiltersShell } from "@/components/shop/shop-filters-shell";
 import { ShopInfiniteGrid } from "@/components/shop/shop-infinite-grid";
@@ -107,7 +107,13 @@ export default async function ShopPage({ params, searchParams }: Props) {
   const sort = parseSort(sp.sort);
   const skinTypeSlugs = parseMulti(sp.skinType);
   const concernSlugs = parseMulti(sp.concern);
-  const brandSlugs = parseMulti(sp.brand);
+  // Brand is the canonical strip param going forward. Legacy ?line=
+  // bookmarks still resolve because the slugs match (yur, yur-pro,
+  // yur-me are both Brand slugs and PRODUCT_LINES slugs). When both
+  // are present, ?brand= wins.
+  const brandSlugs = parseMulti(sp.brand) ?? parseMulti(sp.line);
+  // We also keep lineSlugs separately so any legacy callers still
+  // see something. New code shouldn't touch this — use brandSlugs.
   const lineSlugs = parseMulti(sp.line);
   const ingredientSlugs = parseMulti(sp.ingredient);
   const minPriceEur = parsePrice(sp.minPrice);
@@ -131,17 +137,18 @@ export default async function ShopPage({ params, searchParams }: Props) {
 
   // All three data calls are independent — run in parallel so the whole
   // page renders in one round-trip.
-  const [{ items, total }, categories, filters] = await Promise.all([
+  const [{ items, total }, categoryTree, filters] = await Promise.all([
     getShopProducts({
       locale,
       sort,
       take: PAGE_SIZE,
       ...filterArgs,
     }),
-    // Categories are now line-aware: when the user picks a line, the
-    // strip below collapses to only the categories Sofia has stocked
-    // for that line. Without a line filter we still show every shelf.
-    getShopCategories(locale, { lineSlugs }),
+    // Category tree (parents + non-empty children) with counts scoped
+    // to the active brand so picking YU•R Pro narrows the strip
+    // correctly. Empty subs and parents with no products are filtered
+    // out by the query.
+    getShopCategoryTree(locale, { brandSlugs }),
     getShopFilters(locale),
   ]);
 
@@ -164,23 +171,23 @@ export default async function ShopPage({ params, searchParams }: Props) {
         </p>
       </div>
 
-      {/* ── line tabs (Yu.R · Yu.R Pro · Yu.R Me) ──────────────── */}
-      {/* Top-row primary navigation. Lives in its own band — separated
-          from the category strip below by generous whitespace so the
-          two read as different layers of refinement. */}
+      {/* Build the URL params we preserve when one of the strip
+          components changes its own slug. Each component then strips
+          its own param from this set before adding the new one.
+          Computed once and reused below. */}
+      {(() => null)()}
+
+      {/* ── Row 1: brand tabs ─────────────────────────────────────── */}
       <div className="mt-16 border-t border-ink/10 pt-8">
-        <LineTabs
-          lines={filters.lines}
-          activeSlug={lineSlugs?.[0]}
+        <BrandTabs
+          brands={filters.brands}
+          activeSlug={brandSlugs?.[0]}
           preservedParams={(() => {
-            // Build an URLSearchParams of every refinement we want to
-            // preserve when the user toggles a line tab. Drop `line`
-            // itself — the LineTabs component decides what to set.
             const sp = new URLSearchParams();
             if (sort && sort !== "newest") sp.set("sort", sort);
+            if (categorySlug) sp.set("category", categorySlug);
             if (skinTypeSlugs?.length) sp.set("skinType", skinTypeSlugs.join(","));
             if (concernSlugs?.length) sp.set("concern", concernSlugs.join(","));
-            if (brandSlugs?.length) sp.set("brand", brandSlugs.join(","));
             if (ingredientSlugs?.length) sp.set("ingredient", ingredientSlugs.join(","));
             if (minPriceEur !== undefined) sp.set("minPrice", String(minPriceEur));
             if (maxPriceEur !== undefined) sp.set("maxPrice", String(maxPriceEur));
@@ -189,50 +196,54 @@ export default async function ShopPage({ params, searchParams }: Props) {
         />
       </div>
 
-      {/* ── category pills + sort ──────────────────────────────── */}
-      <div className="mt-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <CategoryFilter
-          categories={categories}
+      {/* ── Rows 2 + 3: category strip (parent row + sub row) ─────── */}
+      <div className="mt-8">
+        <CategoryStrip
+          tree={categoryTree}
           activeSlug={categorySlug}
-          sort={sort}
+          preservedParams={(() => {
+            const sp = new URLSearchParams();
+            if (sort && sort !== "newest") sp.set("sort", sort);
+            if (brandSlugs?.length) sp.set("brand", brandSlugs.join(","));
+            if (skinTypeSlugs?.length) sp.set("skinType", skinTypeSlugs.join(","));
+            if (concernSlugs?.length) sp.set("concern", concernSlugs.join(","));
+            if (ingredientSlugs?.length) sp.set("ingredient", ingredientSlugs.join(","));
+            if (minPriceEur !== undefined) sp.set("minPrice", String(minPriceEur));
+            if (maxPriceEur !== undefined) sp.set("maxPrice", String(maxPriceEur));
+            return sp;
+          })()}
         />
+      </div>
+
+      {/* ── Toolbar: filters trigger + sort ───────────────────────── */}
+      <div className="mt-10 flex items-center justify-between gap-4 border-t border-ink/10 pt-6">
+        <ShopFiltersShell filters={filters} />
         <SortSelect current={sort} />
       </div>
 
-      {/* ── body: sidebar + grid ──────────────────────────────── */}
-      {/*
-       * ShopFiltersShell is rendered ONCE inside the sidebar column.
-       * · Desktop: column is a 16rem inline sidebar next to the grid.
-       * · Mobile:  grid collapses → the shell stacks above the grid, and
-       *   the "Filters" trigger button inside it opens a slide-out drawer
-       *   (the ShopFilters component handles both layouts internally).
-       */}
-      <div className="mt-10 grid grid-cols-1 gap-12 md:grid-cols-[16rem_1fr] md:gap-16">
-        <ShopFiltersShell filters={filters} />
-
-        <div>
-          {items.length === 0 ? (
-            <p className="mt-10 text-ink-mid">{t("empty")}</p>
-          ) : (
-            <>
-              <p className="text-[12px] uppercase tracking-label text-ink-mid">
-                {total} {resultsLabel}
-              </p>
-              <div className="mt-4">
-                <ShopInfiniteGrid
-                  key={resetKey}
-                  initialItems={items}
-                  total={total}
-                  pageSize={PAGE_SIZE}
-                  locale={locale}
-                  sort={sort}
-                  filterArgs={filterArgs}
-                  labels={{ loadMore: t("load_more") }}
-                />
-              </div>
-            </>
-          )}
-        </div>
+      {/* ── Grid (full-width — sidebar retired) ───────────────────── */}
+      <div className="mt-6">
+        {items.length === 0 ? (
+          <p className="mt-10 text-ink-mid">{t("empty")}</p>
+        ) : (
+          <>
+            <p className="text-[12px] uppercase tracking-label text-ink-mid">
+              {total} {resultsLabel}
+            </p>
+            <div className="mt-4">
+              <ShopInfiniteGrid
+                key={resetKey}
+                initialItems={items}
+                total={total}
+                pageSize={PAGE_SIZE}
+                locale={locale}
+                sort={sort}
+                filterArgs={filterArgs}
+                labels={{ loadMore: t("load_more") }}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── recently viewed (client-only; hidden when empty) ───── */}

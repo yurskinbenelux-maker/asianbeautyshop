@@ -223,7 +223,11 @@
     "quick_view": "Quick view",
     "load_more": "Load more",
     "lines_label": "Lines",
+    "brands_label": "Brands",
     "categories_label": "Categories",
+    "subcategories_label": "Subcategories",
+    "filters_button": "Filters",
+    "filters_active_count": "{count, plural, one {# active} other {# active}}",
     "more": "More",
     "recently_viewed_title": "Recently viewed"
   },

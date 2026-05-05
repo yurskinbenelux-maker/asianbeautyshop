@@ -223,7 +223,11 @@
     "quick_view": "Aperçu rapide",
     "load_more": "Charger plus",
     "lines_label": "Lignes",
+    "brands_label": "Marques",
     "categories_label": "Catégories",
+    "subcategories_label": "Sous-catégories",
+    "filters_button": "Filtres",
+    "filters_active_count": "{count, plural, one {# actif} other {# actifs}}",
     "more": "Plus",
     "recently_viewed_title": "Vus récemment"
   },

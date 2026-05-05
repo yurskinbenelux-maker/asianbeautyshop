@@ -117,26 +117,29 @@ export function ShopFilters({ filters, open, onClose }: Props) {
 
   return (
     <>
-      {/* ── mobile backdrop ─────────────────────────────────────────── */}
+      {/* ── backdrop (all viewports — filters are drawer-only now) ── */}
       <div
         aria-hidden
         onClick={onClose}
         className={cn(
-          "fixed inset-0 z-40 bg-ink/30 backdrop-blur-sm transition-opacity md:hidden",
+          "fixed inset-0 z-40 bg-ink/30 backdrop-blur-sm transition-opacity",
           open ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       />
 
       <aside
         aria-label={t("filters_label")}
+        // Drawer slides in from the right at every viewport. The old
+        // desktop-static-sidebar mode was dropped when /shop went to
+        // the 4-column grid — losing 16rem of left rail bought us a
+        // 4th product column above the fold.
         className={cn(
-          // Mobile: slide-out drawer from the right.
-          "fixed right-0 top-0 z-50 flex h-dvh w-[min(22rem,90vw)] flex-col border-l border-ink/10 bg-rice transition-transform md:static md:z-auto md:h-auto md:w-auto md:translate-x-0 md:border-0 md:bg-transparent",
-          open ? "translate-x-0" : "translate-x-full md:translate-x-0",
+          "fixed right-0 top-0 z-50 flex h-dvh w-[min(24rem,92vw)] flex-col border-l border-ink/10 bg-rice transition-transform",
+          open ? "translate-x-0" : "translate-x-full pointer-events-none",
         )}
       >
-        {/* mobile header */}
-        <div className="flex items-center justify-between border-b border-ink/10 px-6 py-5 md:hidden">
+        {/* drawer header */}
+        <div className="flex items-center justify-between border-b border-ink/10 px-6 py-5">
           <div className="eyebrow">{t("filters_label")}</div>
           <button
             type="button"
@@ -150,16 +153,16 @@ export function ShopFilters({ filters, open, onClose }: Props) {
 
         <div
           className={cn(
-            "flex-1 overflow-y-auto px-6 py-6 md:px-0 md:py-0",
+            "flex-1 overflow-y-auto px-6 py-6",
             // Subtle dim while a refinement is streaming in — reassures
             // the user the click registered without blocking the UI.
             isPending && "opacity-70 transition-opacity",
           )}
         >
-          {/* desktop header */}
-          <div className="hidden items-baseline justify-between md:flex">
-            <div className="eyebrow">{t("filters_label")}</div>
-            {activeCount > 0 && (
+          {/* clear-all link — top of the body, only when there's
+              something to clear. */}
+          {activeCount > 0 && (
+            <div className="mb-4 flex justify-end">
               <button
                 type="button"
                 onClick={clearAll}
@@ -167,8 +170,8 @@ export function ShopFilters({ filters, open, onClose }: Props) {
               >
                 {t("clear_all")}
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* ── sections ──────────────────────────────────────────── */}
           <FilterGroup title={t("filter_skin_type")} hidden={filters.skinTypes.length === 0}>
@@ -226,8 +229,9 @@ export function ShopFilters({ filters, open, onClose }: Props) {
             </div>
           </FilterGroup>
 
-          {/* mobile-only clear-all + apply */}
-          <div className="mt-10 flex gap-3 md:hidden">
+          {/* footer apply — closes the drawer; URL filters are
+              already live, so this is really "I'm done picking". */}
+          <div className="mt-10 flex gap-3">
             {activeCount > 0 && (
               <button
                 type="button"

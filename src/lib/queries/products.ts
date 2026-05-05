@@ -455,6 +455,95 @@ export async function getShopCategories(
 }
 
 /**
+ * getShopCategoryTree — feeds the new hierarchical category strip on
+ * /shop. Returns the parent → children tree with counts SCOPED to the
+ * currently-active brand filter (so picking YU•R Pro narrows the row
+ * to "Cleansers (3) / Toners (2) / …" instead of catalogue totals).
+ *
+ * Differs from getShopMegaMenuData (which is unfiltered, used by the
+ * site nav) in two ways:
+ *   1. Counts respect brandSlugs.
+ *   2. We DON'T hide parents whose direct count is zero — the
+ *      parent's full descendant count is what matters for whether
+ *      the row is interactive. A parent with empty subs is still
+ *      hidden because clicking it leads to nothing.
+ */
+export type ShopCategoryTreeNode = {
+  slug: string;
+  name: string;
+  count: number;
+  children: Array<{ slug: string; name: string; count: number }>;
+};
+
+export async function getShopCategoryTree(
+  locale: string,
+  { brandSlugs }: { brandSlugs?: string[] } = {},
+): Promise<ShopCategoryTreeNode[]> {
+  const loc = toPrismaLocale(locale);
+
+  // Product where used inside _count subqueries — applies the brand
+  // filter when set so each category's count reflects "products in
+  // this category AND in the selected brand".
+  const productScope: Prisma.ProductWhereInput = {
+    status: ProductStatus.PUBLISHED,
+    deletedAt: null,
+    ...(brandSlugs && brandSlugs.length > 0
+      ? { brand: { slug: { in: brandSlugs } } }
+      : {}),
+  };
+
+  const cats = await prisma.category.findMany({
+    where: { isActive: true },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    select: {
+      id: true,
+      slug: true,
+      parentId: true,
+      translations: {
+        where: { locale: { in: [loc, Locale.EN] } },
+        select: { locale: true, name: true },
+      },
+      _count: {
+        select: {
+          products: { where: { product: productScope } },
+        },
+      },
+    },
+  });
+
+  const labelOf = (c: (typeof cats)[number]) =>
+    c.translations.find((t) => t.locale === loc)?.name ??
+    c.translations.find((t) => t.locale === Locale.EN)?.name ??
+    c.slug;
+
+  const parents = cats.filter((c) => c.parentId === null);
+  const childrenOf = (parentId: string) =>
+    cats.filter((c) => c.parentId === parentId);
+
+  const tree = parents
+    .map((p) => {
+      const kids = childrenOf(p.id)
+        .filter((c) => c._count.products > 0)
+        .map((c) => ({
+          slug: c.slug,
+          name: labelOf(c),
+          count: c._count.products,
+        }));
+      const totalCount =
+        p._count.products + kids.reduce((sum, k) => sum + k.count, 0);
+      return {
+        slug: p.slug,
+        name: labelOf(p),
+        count: totalCount,
+        children: kids,
+      };
+    })
+    .filter((p) => p.count > 0);
+
+  return tree;
+}
+
+/**
  * getShopMegaMenuData — feeds the Nav's Shop mega-menu (desktop hover
  * panel + mobile drawer accordion).
  *
