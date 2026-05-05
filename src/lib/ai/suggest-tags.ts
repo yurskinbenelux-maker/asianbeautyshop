@@ -36,8 +36,11 @@ export type SuggestTagsInput = {
   /** Volume / weight context — helps disambiguate cleanser size vs sample. */
   volumeMl: number | null;
   /** Available pill slugs the model is allowed to pick from. */
+  // Brand is intentionally NOT in the suggestion — Sofia picks the line
+  // (YU.R / YU.R Pro / YU.R Me) by hand because the choice depends on
+  // marketing intent, not formulation. The AI is good at "is this an
+  // exfoliating toner?" and bad at "is this Pro or Me line?".
   available: {
-    brands: Array<{ slug: string; name: string }>;
     categories: Array<{
       slug: string;
       name: string;
@@ -54,7 +57,6 @@ export type SuggestTagsInput = {
 // taxonomy values. If it tries, the AI SDK throws and we return an
 // error to the admin instead of silently writing garbage.
 function buildSchema(input: SuggestTagsInput) {
-  const brandSlugs = input.available.brands.map((b) => b.slug);
   const categorySlugs = input.available.categories.map((c) => c.slug);
   const skinTypeSlugs = input.available.skinTypes.map((s) => s.slug);
   const concernSlugs = input.available.concerns.map((c) => c.slug);
@@ -63,9 +65,6 @@ function buildSchema(input: SuggestTagsInput) {
   // z.enum requires a non-empty tuple, so guard each axis. If the
   // taxonomy is empty for some axis, fall back to z.string() — the
   // model will return [] which is a valid empty array.
-  const brandEnum = brandSlugs.length > 0
-    ? z.enum(brandSlugs as [string, ...string[]]).nullable()
-    : z.null();
   const parentCategoryEnum = categorySlugs.length > 0
     ? z.enum(categorySlugs as [string, ...string[]]).nullable()
     : z.null();
@@ -83,7 +82,6 @@ function buildSchema(input: SuggestTagsInput) {
     : z.array(z.never()).max(0);
 
   return z.object({
-    brandSlug: brandEnum,
     parentCategorySlug: parentCategoryEnum,
     subcategorySlug: subcategoryEnum,
     skinTypeSlugs: skinTypeArr,
@@ -95,7 +93,6 @@ function buildSchema(input: SuggestTagsInput) {
 }
 
 export type SuggestTagsOutput = {
-  brandSlug: string | null;
   parentCategorySlug: string | null;
   subcategorySlug: string | null;
   skinTypeSlugs: string[];
@@ -125,12 +122,12 @@ export async function suggestTagsForProduct(
   // hallucinate or over-tag.
   const system = [
     "You are a skincare product categorisation assistant for YU.R, a Korean skincare retailer.",
-    "Given a product, you choose the best brand, parent category, subcategory, plus relevant skin types, concerns, and benefits.",
+    "Given a product, you choose the best parent category, subcategory, plus relevant skin types, concerns, and benefits.",
     "",
     "RULES:",
     "1. Pick from the slug lists provided. NEVER invent new slugs. If no good match exists for an axis, return null (single) or [] (multi).",
     "2. parentCategorySlug must be a TOP-LEVEL category (parentSlug=null in the list). subcategorySlug must be a CHILD of the chosen parent (its parentSlug equals parentCategorySlug). If only the parent is appropriate (no subcategory fits), return null for subcategorySlug.",
-    "3. Be conservative on multi-select axes. Only include skinTypeSlugs / concernSlugs / benefitSlugs that the formulation CLEARLY supports based on its INCI ingredients. Do not tag every product as suitable for every skin type.",
+    "3. Be conservative on multi-select axes, but DON'T be stingy. Include every skinTypeSlug / concernSlug / benefitSlug the formulation reasonably supports. A hydrating SPF day cream usually suits dry, normal, combination, and sensitive skin (not just one). Err on the side of inclusion when a product is gentle and broadly applicable.",
     "4. NEVER make medical claims (no 'cures', 'treats', 'anti-aging' as a medical claim). Skin type / concern / benefit tags are descriptive, not promises.",
     "5. confidence = 'high' when name + INCI both clearly point to the same answer. 'medium' when there's mild ambiguity. 'low' when you had to guess from incomplete data.",
     "6. reasoning: ONE sentence, max 280 chars, in English. Explain WHY you picked the parent category + subcategory.",
@@ -142,9 +139,6 @@ export async function suggestTagsForProduct(
   // only "hydrating-toners".
   const taxonomyBlock = [
     "AVAILABLE TAXONOMY:",
-    "",
-    "Brands (slug → name):",
-    ...input.available.brands.map((b) => `  ${b.slug} → ${b.name}`),
     "",
     "Categories (slug → name, parent slug):",
     ...input.available.categories.map(

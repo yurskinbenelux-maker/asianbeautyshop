@@ -1800,9 +1800,10 @@ export type SuggestTagsResult =
       suggestion: SuggestTagsOutput;
       // The current tags so the client can diff without an extra
       // round-trip. Slugs only — labels are looked up from the
-      // existing pill options that the form already has.
+      // existing pill options that the form already has. Brand is
+      // intentionally NOT in the AI suggestion (Sofia picks YU.R / Pro
+      // / Me by hand) so it's not in current either.
       current: {
-        brandSlug: string | null;
         categorySlugs: string[];
         skinTypeSlugs: string[];
         concernSlugs: string[];
@@ -1817,14 +1818,14 @@ export async function suggestProductTags(
   await requireAdmin();
 
   // Fetch the product with everything the suggester needs to read +
-  // everything the diff needs to display the "current" side.
+  // everything the diff needs to display the "current" side. Brand is
+  // not fetched — it's outside the AI's scope.
   const product = await prisma.product.findFirst({
     where: { id: productId, deletedAt: null },
     select: {
       id: true,
       inciList: true,
       volumeMl: true,
-      brand: { select: { slug: true } },
       translations: {
         where: { locale: Locale.EN },
         select: { name: true, shortDescription: true, description: true },
@@ -1852,13 +1853,9 @@ export async function suggestProductTags(
   // Fetch the live taxonomy in one shot. We mirror the EN translations
   // because the AI does better with natural-language labels than with
   // bare slugs (e.g. "Oil Cleansers" reads more clearly than
-  // "oil-cleansers" when paired with an INCI list).
-  const [brands, categories, skinTypes, concerns, benefits] = await Promise.all([
-    prisma.brand.findMany({
-      where: { isActive: true },
-      select: { slug: true, name: true },
-      orderBy: { name: "asc" },
-    }),
+  // "oil-cleansers" when paired with an INCI list). Brand is omitted
+  // — Sofia picks the line by hand.
+  const [categories, skinTypes, concerns, benefits] = await Promise.all([
     prisma.category.findMany({
       where: { isActive: true },
       select: {
@@ -1923,7 +1920,6 @@ export async function suggestProductTags(
       inciList: product.inciList ?? "",
       volumeMl: product.volumeMl,
       available: {
-        brands,
         categories: categories.map((c) => ({
           slug: c.slug,
           name: c.translations[0]?.name ?? c.slug,
@@ -1956,7 +1952,6 @@ export async function suggestProductTags(
     ok: true,
     suggestion,
     current: {
-      brandSlug: product.brand?.slug ?? null,
       categorySlugs: product.categories.map((x) => x.category.slug),
       skinTypeSlugs: product.skinTypes.map((x) => x.skinType.slug),
       concernSlugs: product.concerns.map((x) => x.concern.slug),
@@ -1969,8 +1964,13 @@ export async function suggestProductTags(
 //
 // Commits a suggestion that Sofia accepted. Validates each slug
 // against the live taxonomy (so a stale suggestion can't slip an
-// invalid id past), then writes Brand FK + ProductCategory rows +
-// the three single-axis taxonomies in one transaction per relation.
+// invalid id past), then writes ProductCategory + the three
+// single-axis taxonomies in one transaction per relation.
+//
+// Brand is intentionally NOT touched — Sofia picks the YU.R line
+// (Yu•R / Yu•R Pro / Yu•R Me) by hand because the choice depends on
+// marketing intent, not formulation. Apply preserves whatever brand
+// is currently set on the product.
 //
 // Strategy: REPLACE on each axis (delete-all + insert-chosen). Same
 // pattern as updateOrganise — keeps the action's behaviour predictable.
@@ -1997,18 +1997,11 @@ export async function applySuggestedTags(
   // a snapshot of the taxonomy and Sofia might have deleted a chip in
   // the meantime; we'd rather skip the stale tag than fail loudly.
   const [
-    brand,
     categoryRows,
     skinTypeRows,
     concernRows,
     benefitRows,
   ] = await Promise.all([
-    suggestion.brandSlug
-      ? prisma.brand.findUnique({
-          where: { slug: suggestion.brandSlug },
-          select: { id: true, slug: true },
-        })
-      : Promise.resolve(null),
     prisma.category.findMany({
       where: {
         slug: {
@@ -2034,29 +2027,7 @@ export async function applySuggestedTags(
     }),
   ]);
 
-  // Derive productLine from the brand — same logic as updateOrganise so
-  // the homepage line tabs keep working. If the AI picked a non-YU.R
-  // brand, productLine becomes null and the product just doesn't appear
-  // on any of the three YU.R-branded line tabs (correct).
-  const lineDef = brand
-    ? PRODUCT_LINES.find((l) => l.slug === brand.slug)
-    : undefined;
-  const productLineDbValue: string | null = lineDef
-    ? ((lineDef.dbValues as readonly (string | null)[]).find(
-        (v) => v !== null,
-      ) ?? null)
-    : null;
-
   try {
-    await prisma.product.update({
-      where: { id: productId },
-      data: {
-        brandId: brand?.id ?? null,
-        productLine: productLineDbValue,
-        extraLines: [],
-      },
-    });
-
     await prisma.$transaction([
       prisma.productCategory.deleteMany({ where: { productId } }),
       prisma.productCategory.createMany({
@@ -2092,7 +2063,6 @@ export async function applySuggestedTags(
       entityId: productId,
       summary: `AI tags applied (${suggestion.confidence})`,
       meta: {
-        brandSlug: suggestion.brandSlug,
         parentCategorySlug: suggestion.parentCategorySlug,
         subcategorySlug: suggestion.subcategorySlug,
         skinTypeSlugs: suggestion.skinTypeSlugs,

@@ -35,9 +35,10 @@ import type { SuggestTagsOutput } from "@/lib/ai/suggest-tags";
 
 type Props = {
   productId: string;
-  /** Reusable lookup tables so the diff can show LABELS, not slugs. */
+  /** Reusable lookup tables so the diff can show LABELS, not slugs.
+   *  Brand isn't in the AI suggestion (Sofia picks it manually) so
+   *  it's not in this lookup either. */
   labels: {
-    brands: Record<string, string>;
     categories: Record<string, string>;
     skinTypes: Record<string, string>;
     concerns: Record<string, string>;
@@ -108,7 +109,6 @@ type DiffModalProps = {
   productId: string;
   suggestion: SuggestTagsOutput;
   current: {
-    brandSlug: string | null;
     categorySlugs: string[];
     skinTypeSlugs: string[];
     concernSlugs: string[];
@@ -199,7 +199,6 @@ function DiffModal({
             <DiffColumn
               title="Current"
               tone="muted"
-              brandLabel={labelOrDash(current.brandSlug, labels.brands)}
               categories={current.categorySlugs.map(
                 (s) => labels.categories[s] ?? s,
               )}
@@ -216,7 +215,6 @@ function DiffModal({
             <DiffColumn
               title="Suggested"
               tone="active"
-              brandLabel={labelOrDash(suggestion.brandSlug, labels.brands)}
               categories={suggestedCategorySlugs.map(
                 (s) => labels.categories[s] ?? s,
               )}
@@ -275,7 +273,6 @@ function DiffModal({
 function DiffColumn({
   title,
   tone,
-  brandLabel,
   categories,
   skinTypes,
   concerns,
@@ -283,7 +280,6 @@ function DiffColumn({
 }: {
   title: string;
   tone: "muted" | "active";
-  brandLabel: string;
   categories: string[];
   skinTypes: string[];
   concerns: string[];
@@ -305,9 +301,6 @@ function DiffColumn({
         {title}
       </div>
 
-      <DiffRow label="Brand">
-        <span className="text-[13px] text-ink">{brandLabel}</span>
-      </DiffRow>
       <DiffRow label="Categories">
         <ChipList items={categories} chipClass={chipTone} />
       </DiffRow>
@@ -392,12 +385,3 @@ function ConfidencePill({
   );
 }
 
-// ──────── helpers ────────────────────────────────────────────────────────
-
-function labelOrDash(
-  slug: string | null,
-  table: Record<string, string>,
-): string {
-  if (!slug) return "—";
-  return table[slug] ?? slug;
-}

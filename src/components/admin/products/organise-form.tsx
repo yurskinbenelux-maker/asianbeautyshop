@@ -171,12 +171,10 @@ export function OrganiseForm({ productId, initial, options }: Props) {
 
   // Lookup tables — slug → label — for the AI diff modal. Built once
   // at render time from the taxonomy options the form already has, so
-  // the diff renders human-readable chip text instead of slugs.
+  // the diff renders human-readable chip text instead of slugs. Brand
+  // is excluded — the AI doesn't pick brand, Sofia does.
   const aiLabels = useMemo(
     () => ({
-      brands: Object.fromEntries(
-        options.brands.map((b) => [b.slug, b.label]),
-      ),
       categories: Object.fromEntries(
         options.categories.map((c) => [c.slug, c.label]),
       ),
@@ -191,7 +189,6 @@ export function OrganiseForm({ productId, initial, options }: Props) {
       ),
     }),
     [
-      options.brands,
       options.categories,
       options.skinTypes,
       options.concerns,
