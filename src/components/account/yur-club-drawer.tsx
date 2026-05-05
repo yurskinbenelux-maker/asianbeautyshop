@@ -499,12 +499,12 @@ function MilestoneBlock({
   const t = useTranslations("yur_club");
 
   // Sofia disabled milestones, or settings haven't seeded yet — fall
-  // back to the lede so the drawer doesn't have a blank block.
+  // back to a generic line so the drawer doesn't render a blank block.
   if (!milestone) {
     return (
       <Section title={t("section_milestones")}>
         <p className="text-[13px] leading-relaxed text-ink-mid">
-          {t("milestones_lede")}
+          {t("milestones_disabled")}
         </p>
       </Section>
     );
@@ -512,10 +512,15 @@ function MilestoneBlock({
 
   const dots = Array.from({ length: milestone.every }, (_, i) => i);
 
+  // Lede now uses live numbers from settings so the customer sees a
+  // concrete sentence, not a templating placeholder.
   return (
     <Section title={t("section_milestones")}>
       <p className="text-[13px] leading-relaxed text-ink-mid">
-        {t("milestones_lede")}
+        {t("milestones_lede", {
+          count: milestone.every,
+          points: milestone.bonusPoints,
+        })}
       </p>
 
       {/* Dot row — filled vermilion for completed orders in this cycle,
@@ -543,14 +548,12 @@ function MilestoneBlock({
           })}
         </div>
         <p className="mt-3 text-[12px] text-ink-mid">
-          <span className="text-ink">
-            {milestone.progress.toLocaleString()} / {milestone.every}
-          </span>{" "}
-          orders ·{" "}
-          <span className="text-vermilion">
-            +{milestone.bonusPoints.toLocaleString()} pts
-          </span>{" "}
-          on order #{milestone.paidOrderCount + milestone.ordersToNext}
+          {t("milestones_caption", {
+            done: milestone.progress,
+            total: milestone.every,
+            points: milestone.bonusPoints,
+            target: milestone.paidOrderCount + milestone.ordersToNext,
+          })}
         </p>
       </div>
     </Section>

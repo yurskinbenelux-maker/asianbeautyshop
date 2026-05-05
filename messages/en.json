@@ -1072,7 +1072,7 @@
     "copied": "Copied",
     "refer_terms": "Both rewards arrive automatically. Coupons cannot stack on a single order — perfect excuse for a second visit.",
     "section_milestones": "Milestone rewards",
-    "milestones_lede": "Bonus points every Nth paid order — Sofia sets the cadence in admin.",
+    "milestones_lede": "Earn {points, number} bonus points every {count, number} paid orders.",
     "section_redeem_ways": "Ways to redeem",
     "redeem_ways_placeholder": "Coming soon — products, gift cards, and discount codes you can swap your points for.",
     "section_earn_ways": "Ways to earn",
@@ -1080,6 +1080,8 @@
     "section_history": "My history",
     "history_empty": "Your first activity will appear here once you place an order or claim a reward.",
     "footer": "YU.R · Skin Solution",
-    "share": "Share"
+    "share": "Share",
+    "milestones_disabled": "Milestone bonuses are paused right now — keep an eye out, they're coming back.",
+    "milestones_caption": "{done, number} / {total, number} orders · +{points, number} pts on order #{target, number}"
   }
 }

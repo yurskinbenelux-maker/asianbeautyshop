@@ -72,9 +72,10 @@ export function LoyaltySettingsForm({ initial }: { initial: LoyaltySettings }) {
         />
         <NumberField
           name="milestoneOrders"
-          label="Award every Nth order"
+          label="Award after this many paid orders"
           defaultValue={initial.milestoneOrders}
           min={1}
+          help="E.g. 5 = customer earns the bonus on every 5th paid order."
         />
         <NumberField
           name="milestonePoints"

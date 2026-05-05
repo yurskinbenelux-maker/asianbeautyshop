@@ -1072,7 +1072,7 @@
     "copied": "Copié",
     "refer_terms": "Les deux récompenses arrivent automatiquement. Les coupons ne peuvent pas se cumuler sur une seule commande — l'excuse parfaite pour une seconde visite.",
     "section_milestones": "Paliers de récompenses",
-    "milestones_lede": "Points bonus toutes les N commandes payées — Sofia ajuste le rythme depuis l'admin.",
+    "milestones_lede": "Gagnez {points, number} points bonus toutes les {count, number} commandes payées.",
     "section_redeem_ways": "Façons d'échanger",
     "redeem_ways_placeholder": "Bientôt — produits, cartes cadeaux et codes promo échangeables contre vos points.",
     "section_earn_ways": "Façons de gagner",
@@ -1080,6 +1080,8 @@
     "section_history": "Mon historique",
     "history_empty": "Votre première activité apparaîtra ici dès votre première commande ou récompense.",
     "footer": "YU.R · Skin Solution",
-    "share": "Partager"
+    "share": "Partager",
+    "milestones_disabled": "Les paliers de récompenses sont en pause — gardez un œil ouvert, ils reviendront.",
+    "milestones_caption": "{done, number} / {total, number} commandes · +{points, number} pts à la commande #{target, number}"
   }
 }

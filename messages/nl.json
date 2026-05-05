@@ -1072,7 +1072,7 @@
     "copied": "Gekopieerd",
     "refer_terms": "Beide beloningen worden automatisch geactiveerd. Coupons kunnen niet gestapeld worden op één bestelling — perfecte aanleiding voor een tweede bezoek.",
     "section_milestones": "Mijlpaalbeloningen",
-    "milestones_lede": "Bonuspunten bij elke N-de betaalde bestelling — Sofia stelt het tempo in via admin.",
+    "milestones_lede": "Verdien {points, number} bonuspunten bij elke {count, number} betaalde bestellingen.",
     "section_redeem_ways": "Manieren om in te wisselen",
     "redeem_ways_placeholder": "Binnenkort — producten, cadeaubonnen en kortingscodes die je met punten kunt inwisselen.",
     "section_earn_ways": "Manieren om te verdienen",
@@ -1080,6 +1080,8 @@
     "section_history": "Mijn geschiedenis",
     "history_empty": "Je eerste activiteit verschijnt hier zodra je een bestelling plaatst of een beloning claimt.",
     "footer": "YU.R · Skin Solution",
-    "share": "Delen"
+    "share": "Delen",
+    "milestones_disabled": "Mijlpaalbeloningen zijn op dit moment gepauzeerd — houd het in de gaten, ze komen terug.",
+    "milestones_caption": "{done, number} / {total, number} bestellingen · +{points, number} pts bij bestelling #{target, number}"
   }
 }
