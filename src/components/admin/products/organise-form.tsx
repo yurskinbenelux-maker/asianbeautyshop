@@ -37,6 +37,7 @@ import {
   type TaxonomyKind,
 } from "@/app/admin/products/actions";
 import { cn } from "@/lib/utils";
+import { AiSuggestTagsButton } from "@/components/admin/products/ai-suggest-tags";
 
 // The dedicated Lines picker (Yu•R / Yu•R Pro / Yu•R Me) was retired
 // in favour of the Brand picker — they were two controls expressing the
@@ -168,8 +169,58 @@ export function OrganiseForm({ productId, initial, options }: Props) {
     }
   }
 
+  // Lookup tables — slug → label — for the AI diff modal. Built once
+  // at render time from the taxonomy options the form already has, so
+  // the diff renders human-readable chip text instead of slugs.
+  const aiLabels = useMemo(
+    () => ({
+      brands: Object.fromEntries(
+        options.brands.map((b) => [b.slug, b.label]),
+      ),
+      categories: Object.fromEntries(
+        options.categories.map((c) => [c.slug, c.label]),
+      ),
+      skinTypes: Object.fromEntries(
+        options.skinTypes.map((s) => [s.slug, s.label]),
+      ),
+      concerns: Object.fromEntries(
+        options.concerns.map((c) => [c.slug, c.label]),
+      ),
+      benefits: Object.fromEntries(
+        options.benefits.map((b) => [b.slug, b.label]),
+      ),
+    }),
+    [
+      options.brands,
+      options.categories,
+      options.skinTypes,
+      options.concerns,
+      options.benefits,
+    ],
+  );
+
   return (
     <form action={formAction} className="space-y-12">
+      {/* ── AI helper banner ───────────────────────────────────────────
+          One-click categorisation — fills Brand + Category + Subcategory
+          + Skin Types + Concerns + Benefits in one Groq call. Renders a
+          diff modal so Sofia approves before anything is written. */}
+      <section className="border border-vermilion/20 bg-vermilion/5 p-5">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="font-display text-[16px] text-ink">
+              AI quick-tag
+            </h3>
+            <p className="mt-1 max-w-prose text-[12.5px] leading-relaxed text-ink-mid">
+              Click to have the AI suggest brand + category + skin types +
+              concerns + benefits based on the product&apos;s name and INCI.
+              You&apos;ll see a diff before anything is saved.
+            </p>
+          </div>
+          <AiSuggestTagsButton productId={productId} labels={aiLabels} />
+        </div>
+      </section>
+
       {/* ── Brand ──────────────────────────────────────────────────────
           Single-select. Drives the right column of the customer-facing
           mega-menu. Initially we seed YU.R / YU.R Pro / YU.R Me here so

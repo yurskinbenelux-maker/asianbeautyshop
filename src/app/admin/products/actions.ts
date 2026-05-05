@@ -38,6 +38,10 @@ import {
   ensureIngredients,
   parseInciTextarea,
 } from "@/lib/admin/ingredient-upsert";
+import {
+  suggestTagsForProduct,
+  type SuggestTagsOutput,
+} from "@/lib/ai/suggest-tags";
 
 // ──────── helpers ────────────────────────────────────────────────────────
 
@@ -1773,4 +1777,338 @@ export async function deleteVariantAction(
   revalidatePath(`/admin/products/${productId}`);
   revalidatePath("/", "layout");
   return { ok: true, message: `Variant "${existing.label}" deleted.` };
+}
+
+// ──────── AI: suggest tags ───────────────────────────────────────────────
+//
+// Reads the product's name + INCI + EN description, plus the live
+// taxonomy slug lists, and asks Groq for a structured suggestion.
+// Does NOT write anything to the DB — the client receives the
+// suggestion, renders it as a diff, and Sofia decides.
+//
+// Returning a discriminated union so the UI can branch cleanly:
+//   { ok: true, suggestion: ... }     → render the diff
+//   { ok: false, message: ... }       → render an error pill
+//
+// This action runs synchronously — Llama 4 Scout on Groq classifies
+// in ~1-2 seconds, so a brief loading state on the button is fine
+// (no streaming UI needed).
+
+export type SuggestTagsResult =
+  | {
+      ok: true;
+      suggestion: SuggestTagsOutput;
+      // The current tags so the client can diff without an extra
+      // round-trip. Slugs only — labels are looked up from the
+      // existing pill options that the form already has.
+      current: {
+        brandSlug: string | null;
+        categorySlugs: string[];
+        skinTypeSlugs: string[];
+        concernSlugs: string[];
+        benefitSlugs: string[];
+      };
+    }
+  | { ok: false; message: string };
+
+export async function suggestProductTags(
+  productId: string,
+): Promise<SuggestTagsResult> {
+  await requireAdmin();
+
+  // Fetch the product with everything the suggester needs to read +
+  // everything the diff needs to display the "current" side.
+  const product = await prisma.product.findFirst({
+    where: { id: productId, deletedAt: null },
+    select: {
+      id: true,
+      inciList: true,
+      volumeMl: true,
+      brand: { select: { slug: true } },
+      translations: {
+        where: { locale: Locale.EN },
+        select: { name: true, shortDescription: true, description: true },
+      },
+      categories: { select: { category: { select: { slug: true } } } },
+      skinTypes: { select: { skinType: { select: { slug: true } } } },
+      concerns: { select: { concern: { select: { slug: true } } } },
+      benefits: { select: { benefit: { select: { slug: true } } } },
+    },
+  });
+  if (!product) {
+    return { ok: false, message: "Product not found." };
+  }
+
+  const en = product.translations[0];
+  const productName = en?.name?.trim() ?? "";
+  if (!productName) {
+    return {
+      ok: false,
+      message:
+        "Add an English product name first — the AI needs that to classify.",
+    };
+  }
+
+  // Fetch the live taxonomy in one shot. We mirror the EN translations
+  // because the AI does better with natural-language labels than with
+  // bare slugs (e.g. "Oil Cleansers" reads more clearly than
+  // "oil-cleansers" when paired with an INCI list).
+  const [brands, categories, skinTypes, concerns, benefits] = await Promise.all([
+    prisma.brand.findMany({
+      where: { isActive: true },
+      select: { slug: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.category.findMany({
+      where: { isActive: true },
+      select: {
+        slug: true,
+        parentId: true,
+        translations: {
+          where: { locale: Locale.EN },
+          select: { name: true },
+        },
+        // We resolve parentSlug via a second pass below — Prisma
+        // doesn't let us select parent.slug in one nested call without
+        // a relation include that would balloon the query.
+        parent: { select: { slug: true } },
+      },
+      orderBy: [{ sortOrder: "asc" }, { slug: "asc" }],
+    }),
+    prisma.skinType.findMany({
+      select: {
+        slug: true,
+        translations: {
+          where: { locale: Locale.EN },
+          select: { label: true },
+        },
+      },
+      orderBy: { slug: "asc" },
+    }),
+    prisma.concern.findMany({
+      select: {
+        slug: true,
+        translations: {
+          where: { locale: Locale.EN },
+          select: { label: true },
+        },
+      },
+      orderBy: { slug: "asc" },
+    }),
+    prisma.benefit.findMany({
+      select: {
+        slug: true,
+        translations: {
+          where: { locale: Locale.EN },
+          select: { label: true },
+        },
+      },
+      orderBy: { slug: "asc" },
+    }),
+  ]);
+
+  // Glue the EN short + long description together so the AI sees one
+  // body of copy. shortDescription is usually the more accurate
+  // signal; description tends to be marketing fluff.
+  const description = [en?.shortDescription ?? "", en?.description ?? ""]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join("\n\n");
+
+  let suggestion: SuggestTagsOutput;
+  try {
+    suggestion = await suggestTagsForProduct({
+      productName,
+      description,
+      inciList: product.inciList ?? "",
+      volumeMl: product.volumeMl,
+      available: {
+        brands,
+        categories: categories.map((c) => ({
+          slug: c.slug,
+          name: c.translations[0]?.name ?? c.slug,
+          parentSlug: c.parent?.slug ?? null,
+        })),
+        skinTypes: skinTypes.map((s) => ({
+          slug: s.slug,
+          label: s.translations[0]?.label ?? s.slug,
+        })),
+        concerns: concerns.map((c) => ({
+          slug: c.slug,
+          label: c.translations[0]?.label ?? c.slug,
+        })),
+        benefits: benefits.map((b) => ({
+          slug: b.slug,
+          label: b.translations[0]?.label ?? b.slug,
+        })),
+      },
+    });
+  } catch (err) {
+    // Most likely cause: GROQ_API_KEY missing on prod, or the AI
+    // returned malformed output that didn't validate against the
+    // Zod schema. Either way Sofia just gets a polite error pill.
+    const message =
+      err instanceof Error ? err.message : "AI suggestion failed.";
+    return { ok: false, message };
+  }
+
+  return {
+    ok: true,
+    suggestion,
+    current: {
+      brandSlug: product.brand?.slug ?? null,
+      categorySlugs: product.categories.map((x) => x.category.slug),
+      skinTypeSlugs: product.skinTypes.map((x) => x.skinType.slug),
+      concernSlugs: product.concerns.map((x) => x.concern.slug),
+      benefitSlugs: product.benefits.map((x) => x.benefit.slug),
+    },
+  };
+}
+
+// ──────── AI: apply suggested tags ───────────────────────────────────────
+//
+// Commits a suggestion that Sofia accepted. Validates each slug
+// against the live taxonomy (so a stale suggestion can't slip an
+// invalid id past), then writes Brand FK + ProductCategory rows +
+// the three single-axis taxonomies in one transaction per relation.
+//
+// Strategy: REPLACE on each axis (delete-all + insert-chosen). Same
+// pattern as updateOrganise — keeps the action's behaviour predictable.
+// If Sofia wants to merge instead of replace, she can untick the
+// suggestions she doesn't like in the diff modal before clicking
+// Apply, then click again to re-suggest from the new state.
+
+export async function applySuggestedTags(
+  productId: string,
+  suggestion: SuggestTagsOutput,
+): Promise<ActionState> {
+  await requireAdmin();
+
+  const exists = await prisma.product.findFirst({
+    where: { id: productId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!exists) {
+    return { ok: false, message: "Product not found." };
+  }
+
+  // Resolve every suggested slug to its DB id. Anything that doesn't
+  // resolve is silently dropped — the suggestion was generated against
+  // a snapshot of the taxonomy and Sofia might have deleted a chip in
+  // the meantime; we'd rather skip the stale tag than fail loudly.
+  const [
+    brand,
+    categoryRows,
+    skinTypeRows,
+    concernRows,
+    benefitRows,
+  ] = await Promise.all([
+    suggestion.brandSlug
+      ? prisma.brand.findUnique({
+          where: { slug: suggestion.brandSlug },
+          select: { id: true, slug: true },
+        })
+      : Promise.resolve(null),
+    prisma.category.findMany({
+      where: {
+        slug: {
+          in: [
+            suggestion.parentCategorySlug,
+            suggestion.subcategorySlug,
+          ].filter((s): s is string => Boolean(s)),
+        },
+      },
+      select: { id: true, slug: true },
+    }),
+    prisma.skinType.findMany({
+      where: { slug: { in: suggestion.skinTypeSlugs } },
+      select: { id: true },
+    }),
+    prisma.concern.findMany({
+      where: { slug: { in: suggestion.concernSlugs } },
+      select: { id: true },
+    }),
+    prisma.benefit.findMany({
+      where: { slug: { in: suggestion.benefitSlugs } },
+      select: { id: true },
+    }),
+  ]);
+
+  // Derive productLine from the brand — same logic as updateOrganise so
+  // the homepage line tabs keep working. If the AI picked a non-YU.R
+  // brand, productLine becomes null and the product just doesn't appear
+  // on any of the three YU.R-branded line tabs (correct).
+  const lineDef = brand
+    ? PRODUCT_LINES.find((l) => l.slug === brand.slug)
+    : undefined;
+  const productLineDbValue: string | null = lineDef
+    ? ((lineDef.dbValues as readonly (string | null)[]).find(
+        (v) => v !== null,
+      ) ?? null)
+    : null;
+
+  try {
+    await prisma.product.update({
+      where: { id: productId },
+      data: {
+        brandId: brand?.id ?? null,
+        productLine: productLineDbValue,
+        extraLines: [],
+      },
+    });
+
+    await prisma.$transaction([
+      prisma.productCategory.deleteMany({ where: { productId } }),
+      prisma.productCategory.createMany({
+        data: categoryRows.map((c) => ({ productId, categoryId: c.id })),
+        skipDuplicates: true,
+      }),
+    ]);
+    await prisma.$transaction([
+      prisma.productSkinType.deleteMany({ where: { productId } }),
+      prisma.productSkinType.createMany({
+        data: skinTypeRows.map((s) => ({ productId, skinTypeId: s.id })),
+        skipDuplicates: true,
+      }),
+    ]);
+    await prisma.$transaction([
+      prisma.productConcern.deleteMany({ where: { productId } }),
+      prisma.productConcern.createMany({
+        data: concernRows.map((c) => ({ productId, concernId: c.id })),
+        skipDuplicates: true,
+      }),
+    ]);
+    await prisma.$transaction([
+      prisma.productBenefit.deleteMany({ where: { productId } }),
+      prisma.productBenefit.createMany({
+        data: benefitRows.map((b) => ({ productId, benefitId: b.id })),
+        skipDuplicates: true,
+      }),
+    ]);
+
+    await logAudit({
+      action: "product.ai_categorize",
+      entityType: "Product",
+      entityId: productId,
+      summary: `AI tags applied (${suggestion.confidence})`,
+      meta: {
+        brandSlug: suggestion.brandSlug,
+        parentCategorySlug: suggestion.parentCategorySlug,
+        subcategorySlug: suggestion.subcategorySlug,
+        skinTypeSlugs: suggestion.skinTypeSlugs,
+        concernSlugs: suggestion.concernSlugs,
+        benefitSlugs: suggestion.benefitSlugs,
+      },
+    });
+
+    revalidatePath(`/admin/products/${productId}`);
+    revalidatePath("/", "layout");
+    return {
+      ok: true,
+      message: `AI tags applied (${suggestion.confidence} confidence).`,
+    };
+  } catch (err) {
+    console.error("[applySuggestedTags] failed:", err);
+    return { ok: false, message: "Failed to save AI tags. Try again." };
+  }
 }
