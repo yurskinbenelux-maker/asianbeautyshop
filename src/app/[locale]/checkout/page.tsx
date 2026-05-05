@@ -19,6 +19,7 @@ import { getCurrentCustomer } from "@/lib/auth";
 import { hasMollieKey } from "@/lib/mollie/client";
 import { listMyAddresses } from "@/lib/queries/addresses";
 import { computeOrderTotals } from "@/lib/checkout/pricing";
+import { logAudit } from "@/lib/audit/log";
 
 import { CheckoutClient } from "./checkout-client";
 import { CheckoutUnavailable } from "./checkout-unavailable";
@@ -43,7 +44,35 @@ export async function generateMetadata({
   };
 }
 
-export default async function CheckoutPage({ params }: Props) {
+export default async function CheckoutPage(props: Props) {
+  // Outer try/catch wraps the entire page render so any thrown error
+  // gets persisted to AuditLog with the actual message + stack before
+  // re-raising. Reads back at /admin/audit. Temporary diagnostic —
+  // remove once the prod /checkout 500 is identified.
+  try {
+    return await CheckoutPageInner(props);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack ?? "(no stack)" : "(no stack)";
+    try {
+      await logAudit({
+        action: "checkout.page_500_diagnostic",
+        entityType: "Cart",
+        entityId: null,
+        summary: `CheckoutPage threw: ${message.slice(0, 180)}`,
+        meta: {
+          message,
+          stack: stack.slice(0, 4000),
+        },
+      });
+    } catch {
+      // Don't let the audit-write hide the original error.
+    }
+    throw err;
+  }
+}
+
+async function CheckoutPageInner({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
 
