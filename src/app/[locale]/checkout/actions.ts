@@ -18,6 +18,7 @@ import { z } from "zod";
 import { placeOrder } from "@/lib/checkout/place-order";
 import { getCurrentCustomer } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAudit } from "@/lib/audit/log";
 
 // ────────── schema ──────────────────────────────────────────────────────
 
@@ -112,6 +113,38 @@ export type CheckoutErrorCode =
 // ────────── action ──────────────────────────────────────────────────────
 
 export async function submitCheckout(
+  formData: FormData,
+): Promise<SubmitCheckoutResult> {
+  // ── DIAGNOSTIC INSTRUMENTATION ──────────────────────────────────────
+  // Wrap the entire action body so we capture ANY thrown error and
+  // persist it to AuditLog before re-raising. Sofia (or me) can read
+  // the actual message at /admin/audit. Remove this wrapper once the
+  // current /checkout 500 is diagnosed and fixed.
+  try {
+    return await submitCheckoutInner(formData);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack ?? "(no stack)" : "(no stack)";
+    try {
+      await logAudit({
+        action: "checkout.500_diagnostic",
+        entityType: "Cart",
+        entityId: null,
+        summary: `submitCheckout threw: ${message.slice(0, 180)}`,
+        meta: {
+          message,
+          stack: stack.slice(0, 4000),
+        },
+      });
+    } catch {
+      // If even the audit-log write fails, we still want the original
+      // error to propagate — swallow this inner failure silently.
+    }
+    throw err;
+  }
+}
+
+async function submitCheckoutInner(
   formData: FormData,
 ): Promise<SubmitCheckoutResult> {
   // 1. Parse form data into a structured object — all nested fields are
