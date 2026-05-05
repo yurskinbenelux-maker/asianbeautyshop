@@ -54,7 +54,10 @@ export type AdminCapability =
   | "giftcards.manage"
   | "emails.send"
   | "redirects.edit"
-  | "audit.view";
+  | "audit.view"
+  // YU.R Club loyalty config — money-coded (Sofia tweaks pts/€, redemption
+  // costs, milestone bonuses), so OWNER-only by default.
+  | "loyalty.edit";
 
 // ─── capability matrix ───────────────────────────────────────────────────
 //
@@ -74,6 +77,7 @@ export const CAPS: Record<AdminRole, Set<AdminCapability>> = {
     "settings.view", "settings.edit",
     "coupons.edit", "giftcards.view", "giftcards.manage",
     "emails.send", "redirects.edit", "audit.view",
+    "loyalty.edit",
   ]),
   EDITOR: new Set<AdminCapability>([
     "products.view", "products.edit",
