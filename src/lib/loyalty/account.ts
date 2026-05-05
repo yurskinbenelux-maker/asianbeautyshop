@@ -65,7 +65,12 @@ export async function generateReferralCode(opts: {
 /** Idempotent: if the user already has an account, returns it; otherwise
  *  creates one with a fresh referral code. Safe to call from the signup
  *  handler, the auth confirm callback, OR the loyalty drawer's first
- *  render — whichever fires first wins. */
+ *  render — whichever fires first wins.
+ *
+ *  Side effect on FIRST creation only: fires a "Welcome to the YU.R
+ *  Club" email so the customer learns about points + their referral
+ *  code. Best-effort — failure is logged but doesn't roll back the
+ *  account creation. The healing path (existing account) skips email. */
 export async function ensureLoyaltyAccount(opts: {
   userId: string;
   firstName?: string | null;
@@ -79,19 +84,51 @@ export async function ensureLoyaltyAccount(opts: {
     firstName: opts.firstName,
   });
 
+  let created: LoyaltyAccount;
   try {
-    return await prisma.loyaltyAccount.create({
+    created = await prisma.loyaltyAccount.create({
       data: { userId: opts.userId, referralCode },
     });
   } catch (err) {
     // Race: another request created the account between our findUnique
-    // and create. Re-read and return that one.
+    // and create. Re-read and return that one (no welcome email — the
+    // winning request will have sent it).
     const second = await prisma.loyaltyAccount.findUnique({
       where: { userId: opts.userId },
     });
     if (second) return second;
     throw err;
   }
+
+  // Fire the welcome email out-of-band. We dynamically import the email
+  // module so this file (which is shared by drawer reads + accrual hooks)
+  // doesn't pull in the email machinery on every server render.
+  void (async () => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: opts.userId },
+        select: {
+          email: true,
+          firstName: true,
+          preferredLocale: true,
+        },
+      });
+      if (!user) return;
+      const { sendLoyaltyClubWelcomeEmail } = await import(
+        "@/lib/email/loyalty-club-welcome"
+      );
+      await sendLoyaltyClubWelcomeEmail({
+        email: user.email,
+        firstName: user.firstName,
+        locale: user.preferredLocale,
+        referralCode: created.referralCode,
+      });
+    } catch (err) {
+      console.error("[loyalty/account] welcome email failed", err);
+    }
+  })();
+
+  return created;
 }
 
 // ────────── event application (writes event + bumps cached balance) ──────
@@ -132,6 +169,10 @@ export async function applyLoyaltyEvent(opts: {
   const balanceDelta = opts.delta;
   const lifetimeDelta = opts.delta > 0 ? opts.delta : 0;
 
+  // Snapshot lifetime BEFORE the increment so we can detect tier-up
+  // crossings post-write. Cheap because we already have the cached row.
+  const lifetimeBefore = account.pointsLifetime;
+
   const [updated] = await prisma.$transaction([
     prisma.loyaltyAccount.update({
       where: { id: account.id },
@@ -154,6 +195,44 @@ export async function applyLoyaltyEvent(opts: {
       },
     }),
   ]);
+
+  // Tier-up email — only when the event INCREASED lifetime AND the new
+  // lifetime crosses a threshold the customer hadn't hit before.
+  // Out-of-band so a Resend hiccup doesn't block the event write.
+  if (lifetimeDelta > 0 && updated.pointsLifetime > lifetimeBefore) {
+    void (async () => {
+      try {
+        const { getLoyaltyTiers, resolveTier } = await import("./tiers");
+        const tiers = await getLoyaltyTiers();
+        const before = resolveTier(lifetimeBefore, tiers);
+        const after = resolveTier(updated.pointsLifetime, tiers);
+        if (after.current.id === before.current.id) return; // no crossing
+        const user = await prisma.user.findUnique({
+          where: { id: opts.userId },
+          select: {
+            email: true,
+            firstName: true,
+            preferredLocale: true,
+          },
+        });
+        if (!user) return;
+        const { sendLoyaltyTierUpEmail } = await import(
+          "@/lib/email/loyalty-tier-up"
+        );
+        await sendLoyaltyTierUpEmail({
+          email: user.email,
+          firstName: user.firstName,
+          locale: user.preferredLocale,
+          newTier: after.current.name,
+          previousTier: before.current.id === after.current.id
+            ? null
+            : before.current.name,
+        });
+      } catch (err) {
+        console.error("[loyalty/account] tier-up email failed", err);
+      }
+    })();
+  }
 
   return updated;
 }
