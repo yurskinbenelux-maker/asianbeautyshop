@@ -602,6 +602,8 @@
     "field_first_name": "Prénom",
     "field_last_name": "Nom",
     "field_marketing": "Envoyez-moi occasionnellement des lettres sur les nouveautés, routines de soin et notes d'ingrédients. Désabonnement à tout moment.",
+    "field_email_language": "Langue des e-mails",
+    "field_email_language_help": "Nous enverrons vos confirmations de commande, rappels de réassort et e-mails YU.R Club dans cette langue. Modifiable plus tard dans votre compte.",
     "field_terms_pre": "J'accepte les ",
     "field_terms_link": "conditions et la politique de confidentialité",
     "field_terms_post": ".",

@@ -602,6 +602,8 @@
     "field_first_name": "Voornaam",
     "field_last_name": "Achternaam",
     "field_marketing": "Stuur me af en toe brieven met nieuwe producten, huidverzorgingsroutines en ingrediëntennotities. Altijd afmelden mogelijk.",
+    "field_email_language": "E-mailtaal",
+    "field_email_language_help": "Bestelbevestigingen, aanvulherinneringen en YU.R Club e-mails sturen we in deze taal. Je kunt dit later wijzigen in je account.",
     "field_terms_pre": "Ik ga akkoord met de ",
     "field_terms_link": "voorwaarden & het privacybeleid",
     "field_terms_post": ".",

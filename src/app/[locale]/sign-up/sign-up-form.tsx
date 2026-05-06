@@ -15,6 +15,15 @@ import { readStoredReferralCode } from "@/components/marketing/referral-capture"
 
 const INITIAL: SignUpState = { ok: false, message: "" };
 
+// Order matches the locale switcher in the nav (EN · NL · FR · RU) so
+// customers see the same lineup throughout the site.
+const LOCALE_OPTIONS = [
+  { code: "en", label: "EN" },
+  { code: "nl", label: "NL" },
+  { code: "fr", label: "FR" },
+  { code: "ru", label: "RU" },
+] as const;
+
 export function SignUpForm({ locale }: { locale: string }) {
   const t = useTranslations("auth");
   const [state, formAction] = useActionState(signUpAction, INITIAL);
@@ -38,6 +47,14 @@ export function SignUpForm({ locale }: { locale: string }) {
     if (fromStorage) setReferralCode(fromStorage);
   }, []);
 
+  // Preferred email language — defaults to the URL locale the customer
+  // is registering from, but overridable via the pills below. Saved to
+  // User.preferredLocale on signup so every Resend-sent email
+  // (order confirmation, shipped, abandoned cart, birthday, etc.)
+  // automatically uses this value. Guests continue to fall back to
+  // EN per the schema default.
+  const [emailLocale, setEmailLocale] = useState(locale);
+
   // Confirmation-email success — show the "check inbox" panel.
   if (state?.ok && state.awaitConfirm) {
     return (
@@ -57,7 +74,46 @@ export function SignUpForm({ locale }: { locale: string }) {
 
   return (
     <form action={formAction} className="space-y-5">
-      <input type="hidden" name="locale" value={locale} />
+      {/* Preferred email language — controlled state mirrored into
+          this hidden input so the existing server action picks it up
+          unchanged. Defaults to the URL locale; the customer overrides
+          via the pills below. */}
+      <input type="hidden" name="locale" value={emailLocale} />
+
+      {/* ── preferred email language pills ─────────────────────── */}
+      <div>
+        <span className="mb-2 block text-[11px] uppercase tracking-label text-ink-mid">
+          {t("field_email_language")}
+        </span>
+        <div
+          className="flex flex-wrap gap-1.5"
+          role="radiogroup"
+          aria-label={t("field_email_language")}
+        >
+          {LOCALE_OPTIONS.map((opt) => {
+            const isActive = emailLocale === opt.code;
+            return (
+              <button
+                key={opt.code}
+                type="button"
+                role="radio"
+                aria-checked={isActive}
+                onClick={() => setEmailLocale(opt.code)}
+                className={
+                  isActive
+                    ? "inline-flex h-9 min-w-[52px] items-center justify-center border border-ink bg-ink px-3 text-[12px] uppercase tracking-label text-rice"
+                    : "inline-flex h-9 min-w-[52px] items-center justify-center border border-ink/15 bg-white/50 px-3 text-[12px] uppercase tracking-label text-ink-mid transition-colors hover:border-ink hover:text-ink"
+                }
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+        <span className="mt-1 block text-[11px] leading-relaxed text-ink-mid">
+          {t("field_email_language_help")}
+        </span>
+      </div>
 
       {/* ── name ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4">

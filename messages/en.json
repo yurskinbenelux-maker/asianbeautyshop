@@ -602,6 +602,8 @@
     "field_first_name": "First name",
     "field_last_name": "Last name",
     "field_marketing": "Send me occasional letters with new arrivals, skincare routines, and ingredient notes. Unsubscribe any time.",
+    "field_email_language": "Email language",
+    "field_email_language_help": "We'll send order updates, replenishment reminders and your YU.R Club emails in this language. You can change it later in your account.",
     "field_terms_pre": "I agree to the ",
     "field_terms_link": "terms & privacy policy",
     "field_terms_post": ".",
