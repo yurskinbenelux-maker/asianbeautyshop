@@ -64,8 +64,17 @@ export function instagramEmbedUrl(postUrl: string): string | null {
 export async function getInstagramTilesForHome(
   limit = 6,
 ): Promise<InstagramPostCard[]> {
+  // Filter at the DB to skip rows missing the required image — those
+  // can't render in the polaroid-wall layout (live IG embeds are not
+  // supported on the homepage anymore — see instagram-section.tsx).
+  // Take more than `limit` then slice client-side so a few empty
+  // rows don't push real tiles below the fold.
   const rows = await prisma.instagramPost.findMany({
-    where: { isActive: true },
+    where: {
+      isActive: true,
+      imageUrl: { not: null },
+      NOT: { imageUrl: "" },
+    },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
     take: limit,
     select: {

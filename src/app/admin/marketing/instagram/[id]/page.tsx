@@ -1,15 +1,17 @@
 // ─────────────────────────────────────────────────────────────────────────
 // /admin/marketing/instagram/[id] — edit a single Instagram tile.
-// Same fields as the create form, pre-filled. Delete lives on the
-// list page so this stays a single-purpose editor.
+// Reuses the shared <InstagramPostForm> client component so the
+// create + edit experiences are identical (MediaPicker on top,
+// fields below). Delete lives on the list page.
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { requireCapability } from "@/lib/auth-roles";
 import { prisma } from "@/lib/prisma";
+import { listMediaForPicker } from "@/lib/queries/admin-banners";
+import { InstagramPostForm } from "@/components/admin/marketing/instagram-post-form";
 import { updateInstagramPost } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +21,10 @@ type Props = { params: Promise<{ id: string }> };
 export default async function EditInstagramPostPage({ params }: Props) {
   await requireCapability("homepage.edit", "/admin");
   const { id } = await params;
-  const post = await prisma.instagramPost.findUnique({ where: { id } });
+  const [post, mediaLibrary] = await Promise.all([
+    prisma.instagramPost.findUnique({ where: { id } }),
+    listMediaForPicker(),
+  ]);
   if (!post) notFound();
 
   return (
@@ -37,131 +42,26 @@ export default async function EditInstagramPostPage({ params }: Props) {
         <h1 className="mt-2 font-display text-[30px] leading-tight text-ink">
           Edit tile
         </h1>
+        <p className="mt-2 text-[12px] text-ink-mid">
+          Created {post.createdAt.toLocaleDateString()} · Updated{" "}
+          {post.updatedAt.toLocaleDateString()}
+        </p>
       </header>
 
-      {/* ── Preview ──────────────────────────────────────────────
-          When the post has an image override, show it as a small
-          thumb. Otherwise just show metadata — the live embed
-          renders on the public homepage. */}
-      <div className="mb-10 flex items-start gap-5">
-        {post.imageUrl ? (
-          <div className="relative h-32 w-32 flex-shrink-0 overflow-hidden border border-ink/10 bg-ink/5">
-            <Image
-              src={post.imageUrl}
-              alt={post.imageAlt ?? ""}
-              fill
-              sizes="128px"
-              className="object-cover"
-            />
-          </div>
-        ) : (
-          <div className="flex h-32 w-32 flex-shrink-0 items-center justify-center border border-dashed border-ink/15 bg-rice-dim/40 text-[10px] uppercase tracking-label text-ink-mid">
-            Live embed
-          </div>
-        )}
-        <div className="space-y-1 text-[12px] text-ink-mid">
-          <p>Created {post.createdAt.toLocaleDateString()}</p>
-          <p>Updated {post.updatedAt.toLocaleDateString()}</p>
-        </div>
-      </div>
-
-      <form action={updateInstagramPost} className="space-y-4">
-        <input type="hidden" name="id" value={post.id} />
-        <Field
-          label="Instagram post URL"
-          name="postUrl"
-          defaultValue={post.postUrl}
-          required
-          hint="The post the tile embeds + opens on click."
-        />
-        <Field
-          label="Image URL — override (optional)"
-          name="imageUrl"
-          defaultValue={post.imageUrl ?? ""}
-          hint="Blank = use the live Instagram embed. Set to override with a branded thumbnail."
-        />
-        <Field
-          label="Alt text (only used when image override is set)"
-          name="imageAlt"
-          defaultValue={post.imageAlt ?? ""}
-          hint="Helps screen readers + SEO."
-        />
-        <Field
-          label="Caption overlay"
-          name="caption"
-          defaultValue={post.caption ?? ""}
-          hint="Optional. Shown on hover."
-          maxLength={300}
-        />
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field
-            label="Sort order"
-            name="sortOrder"
-            type="number"
-            defaultValue={String(post.sortOrder)}
-            required
-          />
-          <label className="flex items-center gap-2 self-end pb-2 text-[13px] text-ink">
-            <input
-              type="checkbox"
-              name="isActive"
-              defaultChecked={post.isActive}
-              className="h-4 w-4 border-ink/20 text-ink focus:ring-ink"
-            />
-            <span>Show on the homepage</span>
-          </label>
-        </div>
-        <div className="border-t border-ink/10 pt-6">
-          <button
-            type="submit"
-            className="inline-flex items-center gap-2 border border-ink bg-ink px-6 py-2.5 text-[12px] uppercase tracking-label text-rice hover:bg-ink/90"
-          >
-            Save tile
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  name,
-  defaultValue,
-  placeholder,
-  hint,
-  required,
-  type = "text",
-  maxLength,
-}: {
-  label: string;
-  name: string;
-  defaultValue?: string;
-  placeholder?: string;
-  hint?: string;
-  required?: boolean;
-  type?: string;
-  maxLength?: number;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-[11px] uppercase tracking-label text-ink-mid">
-        {label}
-      </span>
-      <input
-        type={type}
-        name={name}
-        defaultValue={defaultValue ?? ""}
-        placeholder={placeholder}
-        required={required}
-        maxLength={maxLength}
-        className="w-full border border-ink/15 bg-white px-3 py-2 text-[13px] text-ink placeholder:text-ink-mid/60 focus:border-ink focus:outline-none"
+      <InstagramPostForm
+        mode="edit"
+        action={updateInstagramPost}
+        mediaLibrary={mediaLibrary}
+        defaultValues={{
+          id: post.id,
+          postUrl: post.postUrl,
+          imageUrl: post.imageUrl ?? "",
+          imageAlt: post.imageAlt ?? "",
+          caption: post.caption ?? "",
+          sortOrder: post.sortOrder,
+          isActive: post.isActive,
+        }}
       />
-      {hint && (
-        <span className="mt-1 block text-[11px] leading-relaxed text-ink-mid">
-          {hint}
-        </span>
-      )}
-    </label>
+    </div>
   );
 }

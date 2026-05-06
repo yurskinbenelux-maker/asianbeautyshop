@@ -14,18 +14,17 @@ import { requireCapability } from "@/lib/auth-roles";
 import { prisma } from "@/lib/prisma";
 
 const Schema = z.object({
-  // Optional: when blank, the homepage tile renders an iframe embed of
-  // the Instagram post URL (default behaviour). Set to a custom URL to
-  // override the embed with a branded thumbnail image instead.
+  // Required as of 2026-05-06: the homepage section now renders an
+  // image-only polaroid wall. Tiles without an image are filtered
+  // out of the public query so they wouldn't render anyway.
   imageUrl: z
     .string()
     .trim()
+    .min(1, "Pick or paste an image — tiles without an image are hidden")
     .max(2000)
-    .optional()
-    .default("")
     .refine(
-      (v) => v === "" || /^https?:\/\//i.test(v),
-      { message: "Image URL must be a valid http(s) URL (or leave blank)" },
+      (v) => /^https?:\/\//i.test(v),
+      { message: "Image URL must be a valid http(s) URL" },
     ),
   imageAlt: z.string().trim().max(300).optional().default(""),
   // Loose URL match — IG occasionally serves /reel/, /p/, /tv/ etc. We
