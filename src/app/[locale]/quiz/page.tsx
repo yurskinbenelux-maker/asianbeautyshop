@@ -15,10 +15,12 @@
 
 import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Sparkles, BadgeCheck } from "lucide-react";
 
 import { QuizClient } from "./quiz-client";
 import { readPromoSettings } from "@/lib/queries/promotions";
+import { getCurrentUser } from "@/lib/auth";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -52,6 +54,11 @@ export default async function QuizPage({ params }: Props) {
   // will receive.)
   const promo = await readPromoSettings();
 
+  // Auth state — controls whether we show the "must be registered" notice.
+  // Already-signed-in customers don't need that nudge.
+  const user = await getCurrentUser();
+  const isLoggedIn = !!user;
+
   return (
     <section className="relative overflow-hidden">
       {/* Soft decorative wash — echoes the hero treatment without the video */}
@@ -76,6 +83,41 @@ export default async function QuizPage({ params }: Props) {
             {t("lede")}
           </p>
         </header>
+
+        {/* Discount-eligibility notice — shown only to logged-out
+            visitors. The recommended-routine discount is minted as a
+            user-keyed coupon (YUR-QUIZ-{userId}), so guests literally
+            can't receive it without an account. Telling them upfront
+            avoids the abandonment that happens when they hit the
+            "claim" button and discover they need to register first.
+            "Register" is the only word linked, so the eye lands on
+            it as the call-to-action. */}
+        {!isLoggedIn && (
+          <div className="mx-auto mt-8 flex max-w-xl items-start gap-3 border border-vermilion/20 bg-vermilion/5 px-4 py-3 text-left">
+            <BadgeCheck
+              className="mt-0.5 h-4 w-4 flex-shrink-0 text-vermilion"
+              aria-hidden
+            />
+            <p className="text-[13px] leading-relaxed text-ink">
+              {t.rich("registered_notice", {
+                percent: promo.quizRewardPct,
+                strong: (chunks) => (
+                  <span className="font-medium text-vermilion">{chunks}</span>
+                ),
+                register: (chunks) => (
+                  <Link
+                    href={`/${locale}/sign-up?next=${encodeURIComponent(
+                      `/${locale}/quiz`,
+                    )}`}
+                    className="font-medium text-vermilion underline decoration-vermilion underline-offset-2 hover:text-vermilion/80"
+                  >
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </p>
+          </div>
+        )}
 
         {/* The interactive card sits on a solid white-ish surface so the
             step buttons read well against the wash. */}

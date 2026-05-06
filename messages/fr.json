@@ -502,6 +502,7 @@
     "eyebrow": "Test de peau",
     "title": "Quelques questions calmes sur votre peau.",
     "lede": "Dites-nous comment elle se comporte et ce que vous aimeriez changer. Nous vous proposons une routine — chaque produit choisi par sa liste d'ingrédients.",
+    "registered_notice": "Pour bénéficier de votre <strong>{percent}% de remise</strong> sur la routine recommandée, vous devez d'abord <register>vous inscrire</register>. La récompense est liée à votre compte — les invités ne peuvent pas la réclamer.",
     "back": "Retour",
     "privacy_note": "Vos réponses restent sur cet appareil. Nous les utilisons uniquement pour choisir des produits qui vous correspondent.",
     "loading_hint": "Nous lisons les listes INCI et associons les ingrédients à vos réponses.",

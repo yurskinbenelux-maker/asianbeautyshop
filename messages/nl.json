@@ -502,6 +502,7 @@
     "eyebrow": "Huidquiz",
     "title": "Een paar rustige vragen over je huid.",
     "lede": "Vertel ons hoe ze zich gedraagt en wat je wilt veranderen. Wij matchen je aan een routine — elk product gekozen op basis van de ingrediëntenlijst.",
+    "registered_notice": "Om je <strong>{percent}% korting</strong> op de aanbevolen huidroutine te krijgen, moet je je eerst <register>registreren</register>. De beloning is gekoppeld aan je account, gasten kunnen ze niet claimen.",
     "back": "Terug",
     "privacy_note": "Je antwoorden blijven op dit toestel. Wij gebruiken ze alleen om producten te kiezen die bij jou passen.",
     "loading_hint": "We lezen INCI-lijsten en koppelen ingrediënten aan je antwoorden.",

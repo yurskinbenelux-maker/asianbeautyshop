@@ -502,6 +502,7 @@
     "eyebrow": "Skin quiz",
     "title": "A few quiet questions about your skin.",
     "lede": "Tell us how it behaves and what you'd like to change. We'll match you to a routine — every product picked by the ingredients on its label.",
+    "registered_notice": "To unlock your <strong>{percent}% discount</strong> on the recommended skincare routine, please <register>register</register> first. The reward is reserved per account, so guests can't claim it.",
     "back": "Back",
     "privacy_note": "Your answers stay on this device. We only use them to pick products you'll love.",
     "loading_hint": "Reading INCI lists. Matching ingredients to your answers.",
