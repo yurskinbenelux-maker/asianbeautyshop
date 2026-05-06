@@ -17,6 +17,44 @@ export function toPrismaLocale(locale: string): Locale {
 }
 
 /**
+ * Apply Product.isOnSale + salePercent to compute the four card price
+ * fields in one place. Used by every ProductCardData builder so a
+ * change to the sale formula (e.g. cap at 80% instead of 90%) only
+ * needs to land here.
+ *
+ * Mirrors `priceForDisplay()` in src/lib/pricing/sale.ts but maps the
+ * result to ProductCardData's exact field names.
+ */
+function applyCardSale(p: {
+  price: Prisma.Decimal | number | string;
+  isOnSale: boolean;
+  salePercent: number | null;
+}): {
+  priceEur: number;
+  isOnSale: boolean;
+  originalPriceEur: number | null;
+  discountPercent: number | null;
+} {
+  const base = Math.round(Number(p.price) * 100) / 100;
+  if (!p.isOnSale || !p.salePercent || p.salePercent <= 0) {
+    return {
+      priceEur: base,
+      isOnSale: false,
+      originalPriceEur: null,
+      discountPercent: null,
+    };
+  }
+  const pct = Math.min(90, Math.max(0, p.salePercent));
+  const discounted = Math.round(base * (1 - pct / 100) * 100) / 100;
+  return {
+    priceEur: discounted,
+    isOnSale: true,
+    originalPriceEur: base,
+    discountPercent: pct,
+  };
+}
+
+/**
  * The shape every product card on the site consumes.
  * Prisma's Decimal is serialised to a number at the query boundary
  * so it's safe to pass from server → client components.
@@ -24,8 +62,17 @@ export function toPrismaLocale(locale: string): Locale {
 export type ProductCardData = {
   id: string;
   sku: string;
-  priceEur: number;            // base price, already a plain number
+  /** The price the customer actually pays. For non-sale products this
+   *  is the regular Product.price. For on-sale products this is the
+   *  discounted price (price × (1 - salePercent/100)). */
+  priceEur: number;
   comparePriceEur: number | null;
+  /** Sale display fields. When `isOnSale` is true, `originalPriceEur`
+   *  carries the regular price (for strikethrough) and `discountPercent`
+   *  carries the % off (for the "−X%" chip). Both null otherwise. */
+  isOnSale: boolean;
+  originalPriceEur: number | null;
+  discountPercent: number | null;
   isFeatured: boolean;
   isBestseller: boolean;
   name: string;                // locale-resolved
@@ -113,7 +160,7 @@ export async function getBestsellers(
     return {
       id: p.id,
       sku: p.sku,
-      priceEur: Number(p.price),
+      ...applyCardSale(p),
       comparePriceEur: p.comparePrice ? Number(p.comparePrice) : null,
       isFeatured: p.isFeatured,
       isBestseller: p.isBestseller,
@@ -373,7 +420,7 @@ export async function getShopProducts({
     return {
       id: p.id,
       sku: p.sku,
-      priceEur: Number(p.price),
+      ...applyCardSale(p),
       comparePriceEur: p.comparePrice ? Number(p.comparePrice) : null,
       isFeatured: p.isFeatured,
       isBestseller: p.isBestseller,
@@ -1028,8 +1075,13 @@ export type ProductDetail = {
    * configurable digital good — denomination picker + recipient form.
    */
   kind: "STANDARD" | "GIFT_CARD";
+  /** Effective per-unit price (already includes Product.salePercent). */
   priceEur: number;
   comparePriceEur: number | null;
+  /** Sale display fields — see ProductCardData for the same shape. */
+  isOnSale: boolean;
+  originalPriceEur: number | null;
+  discountPercent: number | null;
   volumeMl: number | null;
   isFeatured: boolean;
   isBestseller: boolean;
@@ -1159,7 +1211,7 @@ export async function getProductBySlug({
     id: p.id,
     sku: p.sku,
     kind: p.kind === "GIFT_CARD" ? "GIFT_CARD" : "STANDARD",
-    priceEur: Number(p.price),
+    ...applyCardSale(p),
     comparePriceEur: p.comparePrice ? Number(p.comparePrice) : null,
     volumeMl: p.volumeMl,
     isFeatured: p.isFeatured,
@@ -1264,7 +1316,7 @@ export async function getRelatedProducts({
     return {
       id: p.id,
       sku: p.sku,
-      priceEur: Number(p.price),
+      ...applyCardSale(p),
       comparePriceEur: p.comparePrice ? Number(p.comparePrice) : null,
       isFeatured: p.isFeatured,
       isBestseller: p.isBestseller,
@@ -1404,7 +1456,7 @@ export async function searchProducts({
     return {
       id: p.id,
       sku: p.sku,
-      priceEur: Number(p.price),
+      ...applyCardSale(p),
       comparePriceEur: p.comparePrice ? Number(p.comparePrice) : null,
       isFeatured: p.isFeatured,
       isBestseller: p.isBestseller,

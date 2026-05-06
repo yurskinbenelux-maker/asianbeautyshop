@@ -383,6 +383,13 @@ export default async function ProductEditPage({
               isBestseller: product.isBestseller,
               isAvailableForAi: product.isAvailableForAi,
               hideFromSearch: product.hideFromSearch,
+              // Sale flags — see src/lib/pricing/sale.ts for how they
+              // flow into cart pricing + storefront strikethrough.
+              isOnSale: product.isOnSale,
+              salePercent:
+                product.salePercent === null
+                  ? ""
+                  : String(product.salePercent),
               price: Number(product.price).toFixed(2),
               comparePrice:
                 product.comparePrice === null

@@ -252,13 +252,16 @@ export async function addItem(args: {
 
   // Get product + variant price in one shot so we can snapshot unitPrice
   // at add-to-cart time (what the customer saw). Also pull `kind` so we
-  // know whether to expect a gift-card config payload.
+  // know whether to expect a gift-card config payload, and the sale flags
+  // so we can apply the discount on the line.
   const product = await prisma.product.findFirst({
     where: { id: args.productId, deletedAt: null, status: "PUBLISHED" },
     select: {
       id: true,
       kind: true,
       price: true,
+      isOnSale: true,
+      salePercent: true,
       variants: args.variantId
         ? {
             where: { id: args.variantId },
@@ -289,7 +292,24 @@ export async function addItem(args: {
     args.variantId && product.variants?.[0]?.price
       ? product.variants[0].price
       : null;
-  const unitPrice: Prisma.Decimal = variantPrice ?? product.price;
+  const regularUnitPrice: Prisma.Decimal = variantPrice ?? product.price;
+
+  // Apply Product.isOnSale + salePercent on top of the (variant or
+  // product) base price. The variant inherits the product's sale state —
+  // there's no per-variant override today; if Sofia ever wants one, we
+  // add isOnSale/salePercent to ProductVariant and read here.
+  let unitPrice: Prisma.Decimal = regularUnitPrice;
+  let lineDiscountReason: string | null = null;
+  let lineDiscountPercent: number | null = null;
+  if (product.isOnSale && product.salePercent && product.salePercent > 0) {
+    const pct = Math.min(90, Math.max(0, product.salePercent));
+    // Snap to cents — Prisma Decimal preserves precision but we want a
+    // clean €X.XX on the cart line.
+    const discounted = Number(regularUnitPrice) * (1 - pct / 100);
+    unitPrice = new Prisma.Decimal(Math.round(discounted * 100) / 100);
+    lineDiscountReason = "sale";
+    lineDiscountPercent = pct;
+  }
 
   const cart = await getOrCreateCart({ locale });
 
@@ -326,6 +346,12 @@ export async function addItem(args: {
           variantId: args.variantId ?? null,
           quantity,
           unitPrice,
+          // Sale flags — set when the product was on sale at add time.
+          // The pricing engine uses `discountReason` to refuse coupons
+          // on this line (mirrors quiz-reward behaviour) and the cart
+          // UI can render a "−X%" chip from `discountPercent`.
+          discountReason: lineDiscountReason,
+          discountPercent: lineDiscountPercent,
         },
       });
     }
@@ -333,6 +359,9 @@ export async function addItem(args: {
     // Gift card — always a fresh line, quantity forced to 1 so each card
     // gets its own recipient/message. If the customer wants two €50 cards
     // for two different people, that's two lines.
+    // (Gift cards aren't currently put on sale via the standard sale
+    // flags, but if Sofia ever toggles isOnSale on a GIFT_CARD product
+    // the discount flows through here too.)
     await prisma.cartItem.create({
       data: {
         cartId: cart.id,
@@ -340,6 +369,8 @@ export async function addItem(args: {
         variantId: args.variantId ?? null,
         quantity: 1,
         unitPrice,
+        discountReason: lineDiscountReason,
+        discountPercent: lineDiscountPercent,
         giftCardConfig:
           configToPersist as unknown as Prisma.InputJsonValue,
       },

@@ -182,15 +182,38 @@ export function BestsellerCard({
             )}
           </div>
           <div className="flex flex-row items-baseline gap-2 whitespace-nowrap sm:flex-col sm:items-end sm:gap-0">
-            {product.comparePriceEur &&
-              product.comparePriceEur > product.priceEur && (
-                <span className="text-[10px] text-ink-mid line-through sm:text-[12px]">
-                  {formatEur(product.comparePriceEur, priceLocale(locale))}
-                </span>
+            {/* Original-price strikethrough — prefer the live sale's
+                originalPriceEur (set when the product is on sale via
+                Product.isOnSale + salePercent); fall back to the legacy
+                comparePriceEur when the product isn't currently on
+                sale but Sofia keyed a "was" price into the comparePrice
+                column manually. */}
+            {(product.originalPriceEur ??
+              (product.comparePriceEur &&
+              product.comparePriceEur > product.priceEur
+                ? product.comparePriceEur
+                : null)) && (
+              <span className="text-[10px] text-ink-mid line-through sm:text-[12px]">
+                {formatEur(
+                  product.originalPriceEur ?? product.comparePriceEur ?? 0,
+                  priceLocale(locale),
+                )}
+              </span>
+            )}
+            <span
+              className={cn(
+                "text-[13px] sm:text-[15px]",
+                product.isOnSale ? "text-vermilion" : "text-ink",
               )}
-            <span className="text-[13px] text-ink sm:text-[15px]">
+            >
               {formatEur(product.priceEur, priceLocale(locale))}
             </span>
+            {/* "−X%" chip — only when Product.isOnSale is true. */}
+            {product.discountPercent && product.discountPercent > 0 && (
+              <span className="inline-flex items-center bg-vermilion px-1.5 py-px text-[9px] font-medium uppercase tracking-label text-rice sm:text-[10px]">
+                −{product.discountPercent}%
+              </span>
+            )}
           </div>
         </div>
 

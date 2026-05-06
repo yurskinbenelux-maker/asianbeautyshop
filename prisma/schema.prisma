@@ -227,9 +227,20 @@ model Product {
   isBestseller    Boolean         @default(false)
   isAvailableForAi Boolean        @default(true)    // admin toggle: can the AI concierge recommend this?
   hideFromSearch  Boolean         @default(false)
-  price           Decimal         @db.Decimal(10, 2) // base price in EUR
-  comparePrice    Decimal?        @db.Decimal(10, 2) // "was" price for sale display
+  price           Decimal         @db.Decimal(10, 2) // base/regular price in EUR
+  comparePrice    Decimal?        @db.Decimal(10, 2) // legacy "was" column — kept for back-compat; the live sale price is now derived from isOnSale + salePercent below
   cost            Decimal?        @db.Decimal(10, 2) // cost of goods (for margin reports)
+  // ── Sale flags ──────────────────────────────────────────────────────
+  // When `isOnSale` is true and `salePercent` is set (1-90), the customer
+  // pays `price × (1 - salePercent/100)`. `price` itself stays as the
+  // regular pre-discount price so the storefront can render it
+  // strikethrough above the discounted figure. Cart lines added while a
+  // product is on sale stamp `discountReason='sale'` +
+  // `discountPercent=salePercent` so the existing pricing engine blocks
+  // coupon stacking on already-discounted items (mirrors the
+  // quiz-reward gate in `src/lib/cart/quiz-ritual.ts`).
+  isOnSale        Boolean         @default(false)
+  salePercent     Int?                               // 1-90; ignored when isOnSale=false
   weightGrams     Int?                               // for Sendcloud shipping quote
   volumeMl        Int?                               // for the PDP "50 ml" badge
   launchedAt      DateTime?

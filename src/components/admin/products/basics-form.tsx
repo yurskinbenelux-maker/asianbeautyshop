@@ -25,6 +25,12 @@ type Initial = {
   isBestseller: boolean;
   isAvailableForAi: boolean;
   hideFromSearch: boolean;
+  // ─── Sale flags (per-product discount) ──────────────────────────────
+  // Set isOnSale true and salePercent to a 1-90 number to put this
+  // product on sale. The storefront renders the regular price
+  // strikethrough above the discounted price + a "−X%" chip.
+  isOnSale: boolean;
+  salePercent: string;
   price: string;
   comparePrice: string;
   volumeMl: string;
@@ -232,6 +238,52 @@ export function BasicsForm({
           placeholder="Water, Glycerin, Sodium Hyaluronate, …"
           className="w-full border border-ink/15 bg-white px-3 py-2 font-mono text-[12px] leading-relaxed text-ink placeholder:text-ink-mid/60 focus:border-ink focus:outline-none"
         />
+      </Section>
+
+      {/* ── Sale ──────────────────────────────────────────────────────
+          Per-product discount. Toggle "On sale" + enter a percent and
+          the storefront automatically:
+            · shows the regular price strikethrough
+            · shows the discounted price in vermilion
+            · adds a "−X%" chip
+            · stamps cart lines with discountReason='sale' so coupons
+              don't stack on top of the markdown
+            · respects the same price downstream (Mollie, Order, points). */}
+      <Section
+        title="Sale"
+        hint="Per-product markdown. The discount applies wherever the product is shown — shop grid, PDP, cart, checkout — and customers can't stack a coupon on top."
+      >
+        <div className="space-y-4">
+          <Toggle
+            name="isOnSale"
+            label="On sale"
+            sub="When ticked, the discount below applies."
+            defaultChecked={initial.isOnSale}
+          />
+          <label className="block max-w-xs">
+            <span className="mb-1 block text-[11px] uppercase tracking-label text-ink-mid">
+              Sale discount %
+            </span>
+            <div className="flex items-stretch border border-ink/15 bg-white focus-within:border-ink">
+              <input
+                type="number"
+                name="salePercent"
+                defaultValue={initial.salePercent}
+                min={1}
+                max={90}
+                step={1}
+                placeholder="e.g. 30"
+                className="w-full border-0 bg-transparent px-3 py-2 text-[13px] text-ink placeholder:text-ink-mid/60 focus:outline-none"
+              />
+              <span className="flex items-center border-l border-ink/15 bg-rice-dim/40 px-3 text-[11px] uppercase tracking-label text-ink-mid">
+                %
+              </span>
+            </div>
+            <span className="mt-1 block text-[11px] leading-relaxed text-ink-mid">
+              1-90. Only applied when &ldquo;On sale&rdquo; is ticked.
+            </span>
+          </label>
+        </div>
       </Section>
 
       {/* ── Visibility toggles ────────────────────────────────────── */}

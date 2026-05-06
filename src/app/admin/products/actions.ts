@@ -140,6 +140,18 @@ const BasicsSchema = z.object({
   isBestseller: z.coerce.boolean(),
   isAvailableForAi: z.coerce.boolean(),
   hideFromSearch: z.coerce.boolean(),
+  // Sale flags — toggle + percent. Percent is optional but clamped 1-90
+  // when set. The cart and storefront read isOnSale && salePercent>0
+  // to decide whether to apply the markdown.
+  isOnSale: z.coerce.boolean(),
+  salePercent: z
+    .string()
+    .trim()
+    .transform((v) => (v === "" ? null : Number(v)))
+    .refine(
+      (v) => v === null || (Number.isFinite(v) && v >= 1 && v <= 90),
+      { message: "Sale % must be 1-90" },
+    ),
   volumeMl: PositiveIntOrEmpty,
   weightGrams: PositiveIntOrEmpty,
 
@@ -198,6 +210,8 @@ export async function updateBasics(
     isBestseller: formData.get("isBestseller") === "on",
     isAvailableForAi: formData.get("isAvailableForAi") === "on",
     hideFromSearch: formData.get("hideFromSearch") === "on",
+    isOnSale: formData.get("isOnSale") === "on",
+    salePercent: formData.get("salePercent") ?? "",
     volumeMl: formData.get("volumeMl") ?? "",
     weightGrams: formData.get("weightGrams") ?? "",
     productLine: formData.get("productLine") ?? "",
