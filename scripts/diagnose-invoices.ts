@@ -65,7 +65,7 @@ async function main() {
   });
   console.log("\n─── Numbering bootstrap ───");
   if (setting) {
-    console.log(`Setting "${settingKey}":`, setting.value);
+    console.log(`Setting "${settingKey}":`, setting.valueJson);
   } else {
     console.log(
       `Setting "${settingKey}": MISSING — first issue call will create it (jsonb {"n": 1}).`,
