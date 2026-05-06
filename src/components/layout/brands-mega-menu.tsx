@@ -14,6 +14,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { ChevronDown } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 import type { ShopMegaMenuBrand } from "./shop-mega-menu";
@@ -106,11 +107,22 @@ export function BrandsMegaMenu({
           }
         }}
         className={cn(
-          "relative text-[13px] uppercase tracking-label transition-colors",
+          "relative inline-flex items-center gap-1.5 text-[13px] uppercase tracking-label transition-colors",
           open ? "text-vermilion" : "text-ink hover:text-vermilion",
         )}
       >
-        {t("brands")}
+        <span>{t("brands")}</span>
+        {/* Same disclosure chevron as the Product types trigger —
+            consistent affordance across the two desktop mega-menus. */}
+        {hasContent && (
+          <ChevronDown
+            className={cn(
+              "h-3 w-3 transition-transform duration-200",
+              open ? "rotate-180" : "rotate-0",
+            )}
+            aria-hidden
+          />
+        )}
       </Link>
 
       {hasContent && (

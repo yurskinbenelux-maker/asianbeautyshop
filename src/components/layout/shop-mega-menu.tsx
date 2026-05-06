@@ -30,6 +30,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { ChevronDown } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
@@ -152,13 +153,25 @@ export function ShopMegaMenu({ tree }: Props) {
           }
         }}
         className={cn(
-          "relative text-[13px] uppercase tracking-label transition-colors",
+          "relative inline-flex items-center gap-1.5 text-[13px] uppercase tracking-label transition-colors",
           // Active vermilion when the panel is open, regardless of
           // hover state — gives a visible "you're in this menu" cue.
           open ? "text-vermilion" : "text-ink hover:text-vermilion",
         )}
       >
-        {t("product_types")}
+        <span>{t("product_types")}</span>
+        {/* Small chevron — same affordance as the mobile drawer.
+            Rotates 180° when the panel is open so the trigger reads
+            as a stateful disclosure rather than a plain link. */}
+        {hasContent && (
+          <ChevronDown
+            className={cn(
+              "h-3 w-3 transition-transform duration-200",
+              open ? "rotate-180" : "rotate-0",
+            )}
+            aria-hidden
+          />
+        )}
       </Link>
 
       {/* Panel — anchored under the trigger and centered. Width grows
