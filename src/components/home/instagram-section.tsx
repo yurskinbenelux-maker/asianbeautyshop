@@ -1,28 +1,26 @@
 // ─────────────────────────────────────────────────────────────────────────
 // InstagramSection — curated 6-tile grid below the journal teaser on
-// the homepage. Each tile is either:
+// the homepage. Each tile is one of:
 //
-//   1. An <iframe> embed of the live Instagram post (default — when
-//      Sofia leaves imageUrl blank). Shows the real post content,
-//      supports video playback inline, includes the "View on
-//      Instagram" affordance to deep-link to the full post with
-//      comments. No Meta dev account needed — the /embed/ URL is
-//      public.
+//   1. A custom image (when Sofia pastes an `imageUrl` override) —
+//      server-rendered <Image>. Click goes to the IG post.
 //
-//   2. A custom image (when Sofia pastes an imageUrl). For times
-//      she wants a branded thumbnail instead of the IG-native chrome.
-//      Click still goes to the IG post.
+//   2. A live Instagram embed (default — when imageUrl is blank).
+//      Rendered via Meta's official embed.js script which converts
+//      <blockquote class="instagram-media"> nodes into authorised
+//      iframes (works around X-Frame-Options on the bare /embed/
+//      iframe URL — that approach gets blocked in production).
+//      See `instagram-embed-tile.tsx` for the client component.
 //
-// Self-hides when zero active tiles exist. iframes use loading="lazy"
-// so only the visible row downloads — keeps the homepage LCP fast.
+// We load embed.js once at the section root via next/script so all
+// six tiles share the same loader. Self-hides when zero active tiles.
 // ─────────────────────────────────────────────────────────────────────────
 
 import Image from "next/image";
+import Script from "next/script";
 import { Instagram } from "lucide-react";
-import {
-  instagramEmbedUrl,
-  type InstagramPostCard,
-} from "@/lib/queries/instagram";
+import { InstagramEmbedTile } from "@/components/home/instagram-embed-tile";
+import { type InstagramPostCard } from "@/lib/queries/instagram";
 
 export function InstagramSection({
   tiles,
@@ -37,8 +35,28 @@ export function InstagramSection({
 }) {
   if (tiles.length === 0) return null;
 
+  // Only inject embed.js when at least one tile actually needs it (i.e.
+  // some tile lacks an imageUrl override). Avoids loading 30kb of
+  // Instagram script for grids that are 100% custom images.
+  const needsScript = tiles.some((t) => !t.imageUrl?.trim());
+
   return (
     <section className="container py-16 md:py-24">
+      {needsScript && (
+        <Script
+          src="https://www.instagram.com/embed.js"
+          strategy="afterInteractive"
+          // After the script loads, kick the processor once. Each
+          // <InstagramEmbedTile> also calls process() on mount, but
+          // this is the first-paint trigger for tiles already mounted.
+          onLoad={() => {
+            if (typeof window !== "undefined") {
+              window.instgrm?.Embeds?.process?.();
+            }
+          }}
+        />
+      )}
+
       <header className="mb-8 flex flex-col items-center text-center">
         <div className="text-[11px] uppercase tracking-label text-vermilion">
           Follow along
@@ -79,18 +97,15 @@ export function InstagramSection({
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Single tile. Three layout branches by priority:
-//   1. Sofia uploaded a custom imageUrl  → render <Image> + overlay link
-//   2. The postUrl parses cleanly        → render <iframe> embed
-//   3. Neither works                     → render a "View on Instagram"
-//      fallback so we never display a broken tile
+// Per-tile dispatcher. Image override = server <Image>; otherwise hand
+// off to the client embed component (which loads the IG script + swaps
+// in a real iframe).
 // ─────────────────────────────────────────────────────────────────────────
 
 function InstagramTile({ tile }: { tile: InstagramPostCard }) {
-  const embedUrl = instagramEmbedUrl(tile.postUrl);
   const useImage = !!tile.imageUrl?.trim();
 
-  // Branch 1: custom image override
+  // Branch 1: custom image override (server-rendered, fast)
   if (useImage) {
     return (
       <a
@@ -131,47 +146,6 @@ function InstagramTile({ tile }: { tile: InstagramPostCard }) {
     );
   }
 
-  // Branch 2: live Instagram embed
-  if (embedUrl) {
-    return (
-      <div className="relative aspect-square overflow-hidden bg-rice-dim">
-        {/*
-          The iframe handles its own click-to-play (videos) and
-          click-to-view-on-Instagram (the chrome it ships with). Visitors
-          who want comments tap "View on Instagram" inside the iframe.
-          We constrain to aspect-square so the grid stays tidy — IG
-          embeds scale gracefully; the caption strip below the post is
-          cropped at the bottom.
-
-          loading="lazy" defers the iframe download until the row
-          enters the viewport. With 6 iframes that would otherwise
-          torpedo LCP.
-        */}
-        <iframe
-          src={embedUrl}
-          loading="lazy"
-          // Allow the embed to register clicks against instagram.com.
-          // sandbox would block them; we keep it permissive.
-          referrerPolicy="no-referrer-when-downgrade"
-          title={tile.caption ?? "Instagram post"}
-          className="absolute inset-0 h-full w-full border-0"
-          allow="encrypted-media"
-        />
-      </div>
-    );
-  }
-
-  // Branch 3: malformed URL — render a fallback link tile so the
-  // section doesn't show an empty box. Sofia can fix the URL in
-  // /admin/marketing/instagram and the tile auto-recovers.
-  return (
-    <a
-      href={tile.postUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group flex aspect-square items-center justify-center bg-rice-dim text-ink-mid transition-colors hover:bg-rice hover:text-vermilion"
-    >
-      <Instagram className="h-8 w-8" aria-hidden />
-    </a>
-  );
+  // Branch 2: live Instagram embed via official script
+  return <InstagramEmbedTile postUrl={tile.postUrl} caption={tile.caption} />;
 }
