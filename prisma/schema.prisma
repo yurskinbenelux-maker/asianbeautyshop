@@ -1596,23 +1596,53 @@ model TestimonialTranslation {
 // auto-pull from Meta — keeps the surface luxury-curated and avoids
 // every category of "Meta API token expired" outage.
 
-model InstagramPost {
-  id          String   @id @default(uuid()) @db.Uuid
-  // Default mode: leave imageUrl blank → the homepage tile renders an
-  // <iframe> embed of the live Instagram post (image or video poster
-  // + click-through to the real post). Optional override: paste an
-  // imageUrl to show a custom branded thumbnail instead. Both modes
-  // link out to postUrl on click.
-  imageUrl    String?                           // optional — custom thumbnail override
-  imageAlt    String?                           // for screen readers + SEO
-  postUrl     String                            // https://instagram.com/p/... or /reel/...
-  caption     String?                           // optional short overlay (e.g. "@yur_skin_cosmetics")
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// ────────────────────────────────────────────────────────────────────────────
+//  INSTAGRAM — cache table populated by the Graph API sync (cron-driven).
+//  Manual CRUD has been retired — Sofia configures the access token in
+//  /admin/marketing/instagram and a cron job pulls posts from her account
+//  every few hours. See src/lib/instagram/sync.ts for the sync logic.
+// ────────────────────────────────────────────────────────────────────────────
 
-  @@index([isActive, sortOrder])
+model InstagramPost {
+  id            String   @id @default(uuid()) @db.Uuid
+
+  /// Unique media ID returned by the Graph API. Acts as our upsert key
+  /// — the sync function does an `upsert(where: { mediaId })` for every
+  /// post returned by /me/media so re-runs are idempotent.
+  mediaId       String   @unique
+
+  /// IMAGE | VIDEO | CAROUSEL_ALBUM — what Meta returns.
+  mediaType     String
+
+  /// The CDN URL Meta gives us for the image (or video) file. Meta
+  /// rotates these URLs periodically so we resync on a cron rather
+  /// than relying on it staying live indefinitely.
+  mediaUrl      String   @db.Text
+
+  /// Poster frame for VIDEO + REELS posts. NULL for IMAGE.
+  thumbnailUrl  String?  @db.Text
+
+  /// instagram.com/p/.../ URL — where clicking the tile lands.
+  permalink     String   @db.Text
+
+  /// Full caption text from IG (can be NULL — some posts have no caption).
+  caption       String?  @db.Text
+
+  /// When the post was published on Instagram.
+  postedAt      DateTime
+
+  /// Operational fields (Sofia tweakable in admin).
+  isVisible     Boolean  @default(true)
+  sortOrder     Int      @default(0)
+
+  /// When we last refreshed this row from the Graph API.
+  lastSyncedAt  DateTime @default(now())
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isVisible, postedAt])
+  @@index([postedAt])
 }
 
 // ────────────────────────────────────────────────────────────────────────────

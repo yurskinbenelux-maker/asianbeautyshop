@@ -39,7 +39,7 @@ export default async function AdminMarketingIndex() {
     readPromoSettings(),
     getAllInstagramPosts(),
   ]);
-  const activeInstagramCount = instagramPosts.filter((p) => p.isActive).length;
+  const activeInstagramCount = instagramPosts.filter((p) => p.isVisible).length;
 
   return (
     <div className="mx-auto max-w-5xl px-8 py-10">
