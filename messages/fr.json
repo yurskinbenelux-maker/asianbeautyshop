@@ -198,6 +198,22 @@
       "alt_default": "Photo cliente"
     }
   },
+  "sale_page": {
+    "eyebrow": "Soldes",
+    "title": "En promotion",
+    "lede": "Une sélection de favoris à prix doux. Filtrez par marque, catégorie ou besoin au sein des promotions — les remises s'appliquent automatiquement au paiement.",
+    "empty": "Aucun produit n'est en promotion pour le moment. Revenez bientôt — ou parcourez la collection complète.",
+    "seo_title": "Soldes — YU.R Skin Solution",
+    "seo_description": "Découvrez les produits YU.R en promotion dans toutes les catégories. Filtrez par type de peau, besoin ou marque parmi les soldes."
+  },
+  "new_page": {
+    "eyebrow": "Nouveautés",
+    "title": "Tout juste arrivé",
+    "lede": "Les pièces les plus récentes de la collection — choisies par Sofia, jamais ajoutées automatiquement. Filtrez par marque, catégorie ou besoin pour trouver votre prochain coup de cœur.",
+    "empty": "Aucune nouveauté n'est mise en avant pour l'instant. Parcourez la collection complète en attendant.",
+    "seo_title": "Nouveautés — YU.R Skin Solution",
+    "seo_description": "Les nouveaux produits YU.R sélectionnés par Sofia. Filtrez par marque, catégorie ou besoin pour trouver votre prochain rituel."
+  },
   "shop": {
     "title": "La collection",
     "eyebrow": "Boutique",

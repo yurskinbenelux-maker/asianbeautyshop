@@ -199,6 +199,16 @@ export type ShopFilterArgs = {
   lineSlugs?: string[];
   minPriceEur?: number;
   maxPriceEur?: number;
+  /**
+   * Locked filters used by the dedicated /sale and /new pages.
+   * `onSaleOnly: true` restricts to products with isOnSale=true.
+   * `isNewOnly:  true` restricts to products with isNew=true.
+   * Always merged into the where clause regardless of URL params, so
+   * the customer can still narrow by category/brand/etc within the
+   * already-filtered set.
+   */
+  onSaleOnly?: boolean;
+  isNewOnly?: boolean;
 };
 
 /**
@@ -355,6 +365,13 @@ async function buildShopWhere(
   }
   if (filters.maxPriceEur !== undefined) {
     AND.push({ price: { lte: filters.maxPriceEur } });
+  }
+  // Locked filters used by /sale and /new dedicated pages.
+  if (filters.onSaleOnly) {
+    AND.push({ isOnSale: true });
+  }
+  if (filters.isNewOnly) {
+    AND.push({ isNew: true });
   }
 
   return { AND };

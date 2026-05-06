@@ -241,6 +241,11 @@ model Product {
   // quiz-reward gate in `src/lib/cart/quiz-ritual.ts`).
   isOnSale        Boolean         @default(false)
   salePercent     Int?                               // 1-90; ignored when isOnSale=false
+  // Manual "New arrival" flag, drives /new page membership. Deliberately
+  // NOT createdAt-based — Sofia decides which products feel like newness
+  // worth highlighting (could be a long-existing item that just got a
+  // glossy hero shoot). Toggled in admin Basics form alongside isOnSale.
+  isNew           Boolean         @default(false)
   weightGrams     Int?                               // for Sendcloud shipping quote
   volumeMl        Int?                               // for the PDP "50 ml" badge
   launchedAt      DateTime?

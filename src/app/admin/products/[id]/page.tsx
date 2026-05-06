@@ -390,6 +390,7 @@ export default async function ProductEditPage({
                 product.salePercent === null
                   ? ""
                   : String(product.salePercent),
+              isNew: product.isNew,
               price: Number(product.price).toFixed(2),
               comparePrice:
                 product.comparePrice === null

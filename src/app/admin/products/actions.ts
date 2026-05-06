@@ -152,6 +152,10 @@ const BasicsSchema = z.object({
       (v) => v === null || (Number.isFinite(v) && v >= 1 && v <= 90),
       { message: "Sale % must be 1-90" },
     ),
+  // Manual "New arrival" flag — drives /new page membership.
+  // NOT createdAt-based; Sofia toggles this when she wants a product
+  // featured under New regardless of when it was uploaded.
+  isNew: z.coerce.boolean(),
   volumeMl: PositiveIntOrEmpty,
   weightGrams: PositiveIntOrEmpty,
 
@@ -212,6 +216,7 @@ export async function updateBasics(
     hideFromSearch: formData.get("hideFromSearch") === "on",
     isOnSale: formData.get("isOnSale") === "on",
     salePercent: formData.get("salePercent") ?? "",
+    isNew: formData.get("isNew") === "on",
     volumeMl: formData.get("volumeMl") ?? "",
     weightGrams: formData.get("weightGrams") ?? "",
     productLine: formData.get("productLine") ?? "",

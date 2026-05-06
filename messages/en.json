@@ -198,6 +198,22 @@
       "alt_default": "Customer photo"
     }
   },
+  "sale_page": {
+    "eyebrow": "Sale",
+    "title": "On sale now",
+    "lede": "Selected favourites at a softer price. Filter by brand, category, or concern within the markdown — discounts apply automatically at checkout.",
+    "empty": "No products are on sale right now. Check back soon — or browse the full collection.",
+    "seo_title": "Sale — YU.R Skin Solution",
+    "seo_description": "Discover YU.R products on sale across every category. Filter by skin type, concern, or brand within the discounted set."
+  },
+  "new_page": {
+    "eyebrow": "New arrivals",
+    "title": "New in",
+    "lede": "The freshest pieces in the collection — chosen by Sofia, never auto-listed. Filter by brand, category, or concern to find your next favourite.",
+    "empty": "No new arrivals are highlighted yet. Browse the full collection in the meantime.",
+    "seo_title": "New arrivals — YU.R Skin Solution",
+    "seo_description": "The newest YU.R products curated by Sofia. Filter by brand, category, or concern to find your next ritual essential."
+  },
   "shop": {
     "title": "The collection",
     "eyebrow": "Shop",

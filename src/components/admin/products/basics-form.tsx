@@ -31,6 +31,9 @@ type Initial = {
   // strikethrough above the discounted price + a "−X%" chip.
   isOnSale: boolean;
   salePercent: string;
+  // ─── New-arrival flag ────────────────────────────────────────────────
+  // Drives /new page membership. Manual toggle — NOT createdAt-based.
+  isNew: boolean;
   price: string;
   comparePrice: string;
   volumeMl: string;
@@ -315,6 +318,12 @@ export function BasicsForm({
             label="Hide from search"
             sub="Product still exists but won't show in search results."
             defaultChecked={initial.hideFromSearch}
+          />
+          <Toggle
+            name="isNew"
+            label="New arrival"
+            sub="Adds this product to the /new page. Manual flag — toggle off when it's no longer 'new'."
+            defaultChecked={initial.isNew}
           />
         </div>
       </Section>

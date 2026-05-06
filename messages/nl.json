@@ -198,6 +198,22 @@
       "alt_default": "Klantfoto"
     }
   },
+  "sale_page": {
+    "eyebrow": "Sale",
+    "title": "Nu in de aanbieding",
+    "lede": "Geselecteerde favorieten met een zachtere prijs. Filter binnen de korting op merk, categorie of huidkwaal — kortingen worden automatisch toegepast bij het afrekenen.",
+    "empty": "Er zijn op dit moment geen producten in de aanbieding. Kom snel terug — of bekijk de volledige collectie.",
+    "seo_title": "Sale — YU.R Skin Solution",
+    "seo_description": "Ontdek YU.R producten in de aanbieding in elke categorie. Filter op huidtype, zorg of merk binnen de afgeprijsde selectie."
+  },
+  "new_page": {
+    "eyebrow": "Nieuw",
+    "title": "Net binnen",
+    "lede": "De nieuwste stukken in de collectie — gekozen door Sofia, nooit automatisch gelijst. Filter op merk, categorie of zorg om je volgende favoriet te vinden.",
+    "empty": "Er zijn nog geen nieuwe items uitgelicht. Bekijk in de tussentijd de volledige collectie.",
+    "seo_title": "Nieuw binnen — YU.R Skin Solution",
+    "seo_description": "De nieuwste YU.R producten zorgvuldig gekozen door Sofia. Filter op merk, categorie of zorg om je volgende ritueel te vinden."
+  },
   "shop": {
     "title": "De collectie",
     "eyebrow": "Shop",
