@@ -66,6 +66,9 @@ export default async function IngredientsPage({ params }: Props) {
       {rows.length === 0 ? (
         <EmptyState />
       ) : (
+        // Pass plain serializable data only — the client component
+        // pulls its own translations via `useTranslations`. Functions
+        // can't cross the RSC boundary in Next.js 15.
         <IngredientsAlphabetView
           keyActives={keyActives.map((r) => ({
             slug: r.slug,
@@ -83,15 +86,6 @@ export default async function IngredientsPage({ params }: Props) {
             isKeyAsset: r.isKeyAsset,
             productCount: r.productCount,
           }))}
-          labels={{
-            allFilter: t("filter_all"),
-            filterAriaLabel: t("filter_aria"),
-            keyHeading: t("key_heading"),
-            allHeading: t("all_heading"),
-            productCount: (count) => t("product_count", { count }),
-            productCountShort: (count) => t("product_count_short", { count }),
-            emptyForLetter: t("filter_empty"),
-          }}
         />
       )}
     </article>

@@ -16,13 +16,15 @@
 // full view. Letters with zero ingredients are dimmed + disabled so
 // shoppers can see what's available at a glance.
 //
-// Filter state is purely client-side (useState) for snappiness; the
-// alphabet bar renders sticky on mobile so it stays reachable while
-// scrolling through results.
+// Translations are pulled via `useTranslations` directly inside this
+// client component — we cannot pass `t()` functions across the RSC
+// boundary (Next.js 15 throws on function serialization, which surfaces
+// as a 500 at render time).
 // ─────────────────────────────────────────────────────────────────────────
 
 import { useMemo, useState } from "react";
 import { Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
@@ -43,25 +45,14 @@ type IngredientLite = {
   productCount: number;
 };
 
-type Labels = {
-  allFilter: string;
-  filterAriaLabel: string;
-  keyHeading: string;
-  allHeading: string;
-  productCount: (count: number) => string;
-  productCountShort: (count: number) => string;
-  emptyForLetter: string;
-};
-
 export function IngredientsAlphabetView({
   keyActives,
   others,
-  labels,
 }: {
   keyActives: IngredientLite[];
   others: IngredientLite[];
-  labels: Labels;
 }) {
+  const t = useTranslations("ingredients");
   const [activeLetter, setActiveLetter] = useState<string>("ALL");
 
   // Pre-compute which letters actually have ingredients (across BOTH
@@ -109,12 +100,12 @@ export function IngredientsAlphabetView({
       <div
         className="sticky top-16 z-30 -mx-4 mb-10 border-y border-ink/10 bg-rice/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:rounded-none md:border-0 md:border-b md:px-0 md:py-4"
         role="toolbar"
-        aria-label={labels.filterAriaLabel}
+        aria-label={t("filter_aria")}
       >
         {/* Latin row */}
         <div className="flex flex-wrap items-center gap-1.5">
           <FilterPill
-            label={labels.allFilter}
+            label={t("filter_all")}
             isActive={activeLetter === "ALL"}
             onClick={() => setActiveLetter("ALL")}
             emphasized
@@ -157,7 +148,7 @@ export function IngredientsAlphabetView({
         visibleKeyActives.length === 0 &&
         visibleOthers.length === 0 && (
           <p className="text-center text-[14px] text-ink-mid">
-            {labels.emptyForLetter}
+            {t("filter_empty")}
           </p>
         )}
 
@@ -170,7 +161,7 @@ export function IngredientsAlphabetView({
               id="key-actives-heading"
               className="text-[11px] uppercase tracking-label text-ink-mid"
             >
-              {labels.keyHeading}
+              {t("key_heading")}
             </h2>
           </div>
           <ul className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -178,7 +169,7 @@ export function IngredientsAlphabetView({
               <li key={ing.slug}>
                 <KeyActiveCard
                   ing={ing}
-                  productsLabel={labels.productCount(ing.productCount)}
+                  productsLabel={t("product_count", { count: ing.productCount })}
                 />
               </li>
             ))}
@@ -194,7 +185,7 @@ export function IngredientsAlphabetView({
               id="az-heading"
               className="text-[11px] uppercase tracking-label text-ink-mid"
             >
-              {labels.allHeading}
+              {t("all_heading")}
             </h2>
           </div>
           <div className="space-y-12">
@@ -219,7 +210,7 @@ export function IngredientsAlphabetView({
                           {ing.displayName}
                         </span>
                         <span className="shrink-0 text-[11px] uppercase tracking-label text-ink-mid">
-                          {labels.productCountShort(ing.productCount)}
+                          {t("product_count_short", { count: ing.productCount })}
                         </span>
                       </Link>
                     </li>
