@@ -90,13 +90,35 @@ function buildParcelPayload(order: {
   const street = houseMatch ? houseMatch[1].trim() : a.line1;
   const houseNumber = houseMatch ? houseMatch[2].trim() : "";
 
-  // Total weight in grams → kilograms (Sendcloud expects kg as a string,
-  // 3 decimal places). Default to 100g per item if Product.weightGrams
-  // is null — better than sending zero, which some carriers reject.
-  const totalGrams = order.items.reduce((sum, item) => {
+  // ── Package weight ──────────────────────────────────────────────────
+  //
+  // Total weight = Σ(product weight × quantity) + packaging tare.
+  //
+  // Carriers (PostNL/DPD/bpost) price by weight bracket and re-weigh at
+  // intake; under-declaring means Sofia gets a surcharge bill weeks
+  // later. We must include the empty box + packing tape + filler.
+  //
+  // Sofia has 3 box sizes registered in her Sendcloud "Boxes" panel:
+  //   yurskinsolution 16 (16×16×10)   — small,  1 item
+  //   yurskinsolution 19 (19×14×10)   — medium, 2-3 items
+  //   yurskinsolution 30 (23.5×23.5×10) — large, 4+ items
+  //
+  // The empty-weight numbers below are sensible defaults for single-wall
+  // corrugated boxes of those dimensions plus tape and a small amount of
+  // void fill. If carriers start surcharging, weigh an actual empty box
+  // and update these constants.
+  const itemCount = order.items.reduce((n, i) => n + i.quantity, 0);
+  const PACKAGING_TARE_GRAMS =
+    itemCount >= 4 ? 180 : itemCount >= 2 ? 120 : 100;
+
+  // Per-product weight: fall back to 100g/unit if weightGrams isn't set
+  // in admin. Sofia should fill these in for accurate billing — TODO
+  // surface a "missing weights" admin warning.
+  const itemsGrams = order.items.reduce((sum, item) => {
     const each = item.product.weightGrams ?? 100;
     return sum + each * item.quantity;
   }, 0);
+  const totalGrams = itemsGrams + PACKAGING_TARE_GRAMS;
   const weightKg = (totalGrams / 1000).toFixed(3);
 
   // Sendcloud v3 Shipments shape (POST /api/v3/shipments).
