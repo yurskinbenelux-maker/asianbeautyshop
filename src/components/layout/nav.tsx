@@ -12,6 +12,7 @@ import { Link } from "@/i18n/routing";
 import { ChevronDown, Instagram, Menu, Search, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LocaleSwitcher } from "./locale-switcher";
+import { LocaleDropdown } from "./locale-dropdown";
 import { CartButton } from "@/components/cart/cart-button";
 import { SearchOverlay } from "./search-overlay";
 import { Logo } from "@/components/brand/logo";
@@ -237,9 +238,16 @@ export function Nav({
 
         {/* ── Utility ──────────────────────────────────────────────── */}
         <div className="flex items-center gap-2 md:gap-3">
-          {/* LocaleSwitcher hidden on the smallest screens to make room for
-              the icon row + hamburger. It's always available inside the
-              mobile drawer below. */}
+          {/* Mobile-only locale dropdown — sits before the icon row so
+              the order on a phone reads: Instagram → EN ⌄ → Search →
+              Account → Cart. Tapping the trigger opens a small menu
+              with EN / NL / FR / RU. The desktop inline pills below
+              take over from sm: breakpoint up. */}
+          <div className="sm:hidden">
+            <LocaleDropdown />
+          </div>
+          {/* Desktop / tablet inline pills — EN · NL · FR · RU. Hidden
+              on mobile where LocaleDropdown above does the job. */}
           <div className="hidden sm:block">
             <LocaleSwitcher />
           </div>
