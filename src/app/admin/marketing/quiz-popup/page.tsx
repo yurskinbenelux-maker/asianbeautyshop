@@ -1,62 +1,54 @@
 // ─────────────────────────────────────────────────────────────────────────
-// /admin/marketing/welcome-popup — edit every field of the on-load
-// homepage popup that offers 10% off in exchange for account creation.
-//
-// Layout: a single form with grouped sections (Master switch, Image,
-// Copy, Bonus blocks, CTA). Saves through the server action, redirects
-// with ?saved=1, busts the public layout cache.
-//
-// Image URL is pasted (paste from /admin/media after upload). Same
-// pattern Sofia uses for /admin/homepage/hero — keeps muscle memory
-// consistent across editors.
+// /admin/marketing/quiz-popup — edit the second on-load popup that
+// nudges visitors toward the skin quiz. Mirror of the welcome popup
+// admin, with one extra field for the after-welcome delay.
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
 import { requireCapability } from "@/lib/auth-roles";
-import { readWelcomePopupSettings } from "@/lib/queries/welcome-popup";
-import { saveWelcomePopupAction } from "./actions";
+import { readQuizPopupSettings } from "@/lib/queries/quiz-popup";
+import { saveQuizPopupAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<{ saved?: string }>;
 
-export default async function AdminWelcomePopupPage({
+export default async function AdminQuizPopupPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
   await requireCapability("homepage.edit", "/admin");
   const sp = await searchParams;
-  const cfg = await readWelcomePopupSettings();
+  const cfg = await readQuizPopupSettings();
 
   return (
     <div className="mx-auto max-w-3xl px-8 py-10">
       <Link
-        href="/admin"
+        href="/admin/marketing"
         className="inline-flex items-center gap-2 text-[11px] uppercase tracking-label text-ink-mid hover:text-ink"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
-        Back to admin
+        Back to marketing
       </Link>
 
       <header className="mt-4 mb-10">
         <div className="eyebrow">Marketing</div>
         <h1 className="mt-2 font-display text-[30px] leading-tight text-ink">
-          Welcome popup
+          Quiz popup
         </h1>
         <p className="mt-3 text-[13px] leading-relaxed text-ink-mid">
-          The on-load popup that fires three seconds after a visitor lands
-          on the homepage, offering 10% off in exchange for account
-          creation. It auto-suppresses for 14 days after dismissal,
-          and never fires for signed-in users or on auth/checkout/admin
-          routes.
+          The second on-load popup. Fires after the welcome popup is
+          finished — closed, dismissed, or skipped because the visitor
+          is signed in. The configured delay (default 30 seconds) starts
+          the moment the welcome popup is out of the way, so the two
+          surfaces never overlap.
         </p>
         <p className="mt-2 text-[13px] leading-relaxed text-ink-mid">
-          The popup only closes when the visitor clicks the X (or presses
-          Escape) — clicking the dim backdrop no longer dismisses it, so
-          a stray click won't cost you the offer.
+          Same close behaviour as the welcome popup — only the X (or
+          Escape key) dismisses, never the dim backdrop.
         </p>
       </header>
 
@@ -67,14 +59,15 @@ export default async function AdminWelcomePopupPage({
         </div>
       )}
 
-      <form action={saveWelcomePopupAction} className="space-y-10">
-        {/* ── Master switch ──────────────────────────────────────── */}
+      <form action={saveQuizPopupAction} className="space-y-10">
+        {/* ── Master switch + delay ───────────────────────────────── */}
         <section>
-          <h2 className="font-display text-[18px] text-ink">Master switch</h2>
+          <h2 className="font-display text-[18px] text-ink">
+            Master switch
+          </h2>
           <p className="mt-1 text-[12px] text-ink-mid">
-            Untick to disable the popup entirely (without losing your
-            edits). Useful during a campaign when you don't want a
-            second offer competing.
+            Untick to disable the popup entirely without losing your
+            edits.
           </p>
           <label className="mt-3 inline-flex items-center gap-2 text-[13px] text-ink">
             <input
@@ -83,21 +76,21 @@ export default async function AdminWelcomePopupPage({
               defaultChecked={cfg.enabled}
               className="h-4 w-4 border-ink/20 text-ink focus:ring-ink"
             />
-            <span>Popup is active on the public site</span>
+            <span>Quiz popup is active on the public site</span>
           </label>
 
           <div className="mt-5 max-w-xs">
             <label className="block">
               <span className="mb-1 block text-[11px] uppercase tracking-label text-ink-mid">
-                Delay before showing
+                Delay after welcome popup closes
               </span>
               <div className="flex items-stretch border border-ink/15 bg-white focus-within:border-ink">
                 <input
                   type="number"
-                  name="delaySeconds"
-                  defaultValue={cfg.delaySeconds}
+                  name="delaySecondsAfterWelcome"
+                  defaultValue={cfg.delaySecondsAfterWelcome}
                   min={0}
-                  max={60}
+                  max={300}
                   step={1}
                   required
                   className="w-full border-0 bg-transparent px-3 py-2 text-[13px] text-ink focus:outline-none"
@@ -107,31 +100,31 @@ export default async function AdminWelcomePopupPage({
                 </span>
               </div>
               <span className="mt-1 block text-[11px] leading-relaxed text-ink-mid">
-                How long after first paint before the popup appears.
-                3 seconds is the recommended default.
+                Counted from the moment the welcome popup is closed,
+                dismissed, or skipped. 30 seconds is the recommended
+                default — enough breathing room without losing the
+                visitor.
               </span>
             </label>
           </div>
         </section>
 
-        {/* ── Image (left side of card) ──────────────────────────── */}
+        {/* ── Image (left side) ──────────────────────────────────── */}
         <section className="border-t border-ink/10 pt-8">
           <h2 className="font-display text-[18px] text-ink">
             Image (left side)
           </h2>
           <p className="mt-1 text-[12px] leading-relaxed text-ink-mid">
-            Square recommended (around 800×800 px). Upload via{" "}
+            Square recommended (~800×800 px). Upload via{" "}
             <Link
               href="/admin/media"
               className="text-ink underline decoration-vermilion underline-offset-2"
             >
               /admin/media
             </Link>
-            , then paste the URL below. Leave blank to render the popup
-            single-column without an image.
+            , then paste the URL. Leave blank for single-column layout.
           </p>
 
-          {/* Live preview thumbnail when an image is set */}
           {cfg.imageUrl && (
             <div className="mt-4 flex items-start gap-4">
               <div className="relative h-32 w-32 flex-shrink-0 overflow-hidden border border-ink/10 bg-ink/5">
@@ -160,14 +153,14 @@ export default async function AdminWelcomePopupPage({
               label="Image URL"
               name="imageUrl"
               defaultValue={cfg.imageUrl}
-              placeholder="https://…/popup.jpg"
+              placeholder="https://…/quiz-popup.jpg"
             />
             <Field
-              label="Alt text (for screen readers + SEO)"
+              label="Alt text"
               name="imageAlt"
               defaultValue={cfg.imageAlt}
-              placeholder="A model holding a YU.R Solution toner"
-              hint="Describe what's in the image. Required if the image is set."
+              placeholder="A model with glowing skin after her routine"
+              hint="Describe what's in the image."
             />
           </div>
         </section>
@@ -177,54 +170,50 @@ export default async function AdminWelcomePopupPage({
           <h2 className="font-display text-[18px] text-ink">Headline copy</h2>
           <div className="mt-4 space-y-4">
             <Field
-              label="Eyebrow (small uppercase label above the big number)"
+              label="Eyebrow"
               name="eyebrow"
               defaultValue={cfg.eyebrow}
-              placeholder="Welcome gift"
+              placeholder="Skin assessment"
               maxLength={60}
             />
             <Field
-              label="Big offer (the large italic number)"
+              label="Big offer (italic)"
               name="bigOffer"
               defaultValue={cfg.bigOffer}
-              placeholder="−10%"
-              hint='Exact text shown — change to "FREE" or "GIFT" if you want a different feel.'
+              placeholder="+15%"
+              hint='Could be "+15%", "Quiz", "2 min", whatever feels right.'
               maxLength={20}
             />
             <Field
               label="Big offer subtitle"
               name="bigOfferSubtitle"
               defaultValue={cfg.bigOfferSubtitle}
-              placeholder="on your first order"
+              placeholder="your reward for taking the skin quiz"
               maxLength={80}
             />
             <Field
               label="Headline"
               name="headline"
               defaultValue={cfg.headline}
-              placeholder="Create your <em>YU.R</em> account."
-              hint="Wrap any words in <em>…</em> to italicise them in vermilion (the brand accent)."
+              placeholder="Discover your <em>routine</em>."
+              hint="Wrap any words in <em>…</em> for vermilion italic."
               maxLength={200}
             />
             <TextareaField
               label="Body paragraph"
               name="body"
               defaultValue={cfg.body}
-              placeholder="Register in under a minute…"
+              placeholder="Two minutes, seven questions…"
               maxLength={600}
             />
           </div>
         </section>
 
-        {/* ── Bonus block 1 — vermilion (+15% quiz reward) ────────── */}
+        {/* ── Bonus block 1 — vermilion ───────────────────────────── */}
         <section className="border-t border-ink/10 pt-8">
           <h2 className="font-display text-[18px] text-ink">
             Bonus block 1 — vermilion stripe
           </h2>
-          <p className="mt-1 text-[12px] leading-relaxed text-ink-mid">
-            Shown directly under the body paragraph. Designed for the
-            +15% quiz reward; you can repurpose for any second offer.
-          </p>
           <label className="mt-3 inline-flex items-center gap-2 text-[13px] text-ink">
             <input
               type="checkbox"
@@ -236,32 +225,28 @@ export default async function AdminWelcomePopupPage({
           </label>
           <div className="mt-4 space-y-4">
             <Field
-              label="Bonus pill (italic accent)"
+              label="Bonus pill"
               name="bonus1Pct"
               defaultValue={cfg.bonus1Pct}
-              placeholder="+15%"
+              placeholder="2 min"
               maxLength={20}
             />
             <TextareaField
               label="Bonus text"
               name="bonus1Text"
               defaultValue={cfg.bonus1Text}
-              placeholder="extra after you register, when you take the **skin quiz**…"
-              hint="Wrap key phrases in **double asterisks** to bold them."
+              placeholder="Built around Korean dermatology…"
+              hint="Wrap **like this** for bold."
               maxLength={300}
             />
           </div>
         </section>
 
-        {/* ── Bonus block 2 — sage (YurClub) ─────────────────────── */}
+        {/* ── Bonus block 2 — sage ────────────────────────────────── */}
         <section className="border-t border-ink/10 pt-8">
           <h2 className="font-display text-[18px] text-ink">
             Bonus block 2 — sage stripe
           </h2>
-          <p className="mt-1 text-[12px] leading-relaxed text-ink-mid">
-            Shown below bonus 1. Designed for YurClub points but can be
-            repurposed.
-          </p>
           <label className="mt-3 inline-flex items-center gap-2 text-[13px] text-ink">
             <input
               type="checkbox"
@@ -276,8 +261,8 @@ export default async function AdminWelcomePopupPage({
               label="Bonus text"
               name="bonus2Text"
               defaultValue={cfg.bonus2Text}
-              placeholder="Earn points on every purchase with **YurClub**…"
-              hint="Wrap key phrases in **double asterisks** to bold them."
+              placeholder="Optional second benefit"
+              hint="Wrap **like this** for bold."
               maxLength={300}
             />
           </div>
@@ -291,15 +276,14 @@ export default async function AdminWelcomePopupPage({
               label="Button label"
               name="ctaLabel"
               defaultValue={cfg.ctaLabel}
-              placeholder="Create my account"
+              placeholder="Take the skin quiz"
               maxLength={80}
             />
             <Field
               label="Button target URL"
               name="ctaHref"
               defaultValue={cfg.ctaHref}
-              placeholder="/en/sign-up"
-              hint="Use a relative path like /en/sign-up so language detection still works."
+              placeholder="/en/quiz"
               maxLength={2000}
             />
           </div>
@@ -314,29 +298,18 @@ export default async function AdminWelcomePopupPage({
           </label>
         </section>
 
-        {/* ── Save ───────────────────────────────────────────────── */}
         <div className="border-t border-ink/10 pt-8">
           <button
             type="submit"
             className="inline-flex items-center gap-2 border border-ink bg-ink px-6 py-2.5 text-[12px] uppercase tracking-label text-rice hover:bg-ink/90"
           >
-            Save popup
+            Save quiz popup
           </button>
-          <p className="mt-3 text-[11px] text-ink-mid">
-            Saving busts the homepage cache. To preview your change open
-            the homepage in a private window — your normal browser may
-            have the 14-day suppression cookie set.
-          </p>
         </div>
       </form>
     </div>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────
-// Sub-components — same field shapes used elsewhere in /admin/homepage,
-// kept inline since they're small and the styling is consistent.
-// ─────────────────────────────────────────────────────────────────────────
 
 function Field({
   label,

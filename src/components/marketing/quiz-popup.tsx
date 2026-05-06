@@ -1,27 +1,21 @@
 // ─────────────────────────────────────────────────────────────────────────
-// RegisterWelcomePopup — homepage on-load modal that offers a discount on
-// the first order in exchange for creating an account.
+// QuizPopup — second on-load popup, fires after the welcome popup is
+// finished (closed, dismissed, or skipped). Promotes the skin quiz.
 //
-// Two-column layout: image on the LEFT, copy + CTA on the RIGHT (mobile
-// stacks image on top, content below). Every word and the image itself
-// is editable from /admin/marketing/welcome-popup — the layout reads
-// the Setting row server-side and passes the resolved config down here.
+// Coordination:
+//   • Awaits markWelcomeFinished() via the popup-coordinator helper, so
+//     the quiz popup never overlaps the welcome popup.
+//   • Once welcome is finished, starts its own configurable delay
+//     (default 30s), then fires.
+//   • Self-suppresses for 14 days after dismissal — independent cookie
+//     from the welcome popup's, so the two have separate frequency caps.
 //
-// Behaviour:
-//   · Mounts on every page but only triggers on /, /en, /nl, /fr, /ru —
-//     never on /sign-up, /sign-in, /admin, /cart, /checkout, /account.
-//   · 3-second delay after first paint so the hero gets a moment to
-//     breathe before the modal lands.
-//   · 14-day suppression cookie on dismissal, on submit-click, or on
-//     close. Stored in localStorage — Sofia's analytics intentionally
-//     not involved, no server hit.
-//   · Hidden entirely if the user is already signed in (passed in by
-//     the layout) — no point pestering an existing customer.
-//   · Dismissal via the X button or the Escape key only. Clicking the
-//     dim backdrop does NOT close the popup — Sofia's call: a stray
-//     click on the page outside the modal shouldn't cost us the offer.
-//   · Honors the master kill-switch from Sofia's admin (config.enabled).
+// Layout + behaviour mirror the welcome popup: image-left,
+// content-right, backdrop click is inert (only X + Escape dismiss),
+// scroll lock while open.
 //
+// Mounted alongside RegisterWelcomePopup in the public layout. Both
+// receive their settings from the layout's server fetches.
 // ─────────────────────────────────────────────────────────────────────────
 
 "use client";
@@ -30,50 +24,34 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import type { WelcomePopupSettings } from "@/lib/queries/welcome-popup";
-import { markWelcomeFinished } from "@/lib/marketing/popup-coordinator";
+import type { QuizPopupSettings } from "@/lib/queries/quiz-popup";
+import { awaitWelcomeFinished } from "@/lib/marketing/popup-coordinator";
 
-const STORAGE_KEY = "yur:welcome-popup-dismissed";
+const STORAGE_KEY = "yur:quiz-popup-dismissed";
 const SUPPRESS_DAYS = 14;
 
-/** Routes where the popup should NEVER fire — auth flows, admin, and
- *  any conversion-funnel page where it would be intrusive. */
+/** Same suppression list as the welcome popup — auth flows, admin,
+ *  cart/checkout. The quiz popup is just as intrusive there. */
 const SUPPRESSED_PATH_PATTERNS = [
   /^\/(?:en|nl|fr|ru)?\/?(?:sign-up|sign-in|account)(?:\/|$)/i,
   /^\/(?:en|nl|fr|ru)?\/?(?:cart|checkout)(?:\/|$)/i,
   /^\/admin(?:\/|$)/i,
   /^\/auth(?:\/|$)/i,
   /^\/newsletter(?:\/|$)/i,
+  // Don't fire on the quiz page itself — they're already there.
+  /^\/(?:en|nl|fr|ru)?\/?quiz(?:\/|$)/i,
 ];
 
-export function RegisterWelcomePopup({
-  isSignedIn,
-  config,
-}: {
-  isSignedIn: boolean;
-  config: WelcomePopupSettings;
-}) {
+export function QuizPopup({ config }: { config: QuizPopupSettings }) {
   const pathname = usePathname() ?? "/";
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    // Bail conditions — order matters, cheapest checks first. Each
-    // bail path also calls markWelcomeFinished() so the quiz popup's
-    // coordinator awaiter resolves and its own delay timer can start.
-    if (!config.enabled) {
-      markWelcomeFinished();
-      return;
-    }
-    if (isSignedIn) {
-      markWelcomeFinished();
-      return;
-    }
-    if (SUPPRESSED_PATH_PATTERNS.some((re) => re.test(pathname))) {
-      markWelcomeFinished();
-      return;
-    }
+    if (!config.enabled) return;
+    if (SUPPRESSED_PATH_PATTERNS.some((re) => re.test(pathname))) return;
 
-    // Honor 14-day dismissal window.
+    // Honor 14-day dismissal window — independent from the welcome
+    // popup's cookie so the two surfaces have separate caps.
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
@@ -81,34 +59,44 @@ export function RegisterWelcomePopup({
         const elapsedDays =
           (Date.now() - dismissedAt) / (1000 * 60 * 60 * 24);
         if (Number.isFinite(elapsedDays) && elapsedDays < SUPPRESS_DAYS) {
-          markWelcomeFinished();
           return;
         }
       }
     } catch {
-      // localStorage unavailable (private mode in older Safaris) —
-      // proceed to show the popup. Worst case: shown every visit.
+      // localStorage unavailable — proceed.
     }
 
-    const timer = window.setTimeout(
-      () => setOpen(true),
-      config.delaySeconds * 1000,
-    );
-    return () => window.clearTimeout(timer);
-  }, [isSignedIn, pathname, config.enabled, config.delaySeconds]);
+    let timer: number | undefined;
+    let cancelled = false;
+
+    // Wait for the welcome popup to be finished, THEN start the
+    // quiz-specific delay timer. If welcome was already finished by
+    // mount time (suppressed user, blocklisted route), this resolves
+    // synchronously and the timer fires after the configured delay.
+    awaitWelcomeFinished().then(() => {
+      if (cancelled) return;
+      timer = window.setTimeout(
+        () => setOpen(true),
+        config.delaySecondsAfterWelcome * 1000,
+      );
+    });
+
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [pathname, config.enabled, config.delaySecondsAfterWelcome]);
 
   function dismiss() {
     setOpen(false);
     try {
       localStorage.setItem(STORAGE_KEY, String(Date.now()));
     } catch {
-      /* see above */
+      /* swallow — see above */
     }
-    // Tell the quiz popup it's safe to start its own delay timer.
-    markWelcomeFinished();
   }
 
-  // Lock body scroll while the modal is open.
+  // Lock body scroll while open.
   useEffect(() => {
     if (!open) return;
     const previous = document.body.style.overflow;
@@ -118,7 +106,7 @@ export function RegisterWelcomePopup({
     };
   }, [open]);
 
-  // Close on Escape — accessibility default.
+  // Close on Escape.
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -130,8 +118,6 @@ export function RegisterWelcomePopup({
 
   if (!open) return null;
 
-  // Decide layout — if no image, fall back to single-column. Sofia can
-  // always blank the image URL in admin to revert the layout.
   const hasImage = config.imageUrl.trim().length > 0;
 
   return (
@@ -141,14 +127,12 @@ export function RegisterWelcomePopup({
         background: "rgba(20,17,15,0.55)",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
-        animation: "yur-popup-fade 600ms ease both",
+        animation: "yur-quiz-popup-fade 600ms ease both",
       }}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="yur-welcome-popup-title"
-      // NB: deliberately no onClick handler — the dim backdrop must not
-      // dismiss the popup. Only the X button and Escape do (Sofia's call,
-      // to stop a stray click costing us the offer).
+      aria-labelledby="yur-quiz-popup-title"
+      // No backdrop-click handler — only X + Escape dismiss.
     >
       <div
         className={
@@ -160,10 +144,9 @@ export function RegisterWelcomePopup({
           boxShadow:
             "0 20px 60px -20px rgba(20,17,15,0.25), 0 8px 24px -8px rgba(20,17,15,0.18)",
           animation:
-            "yur-popup-rise 700ms cubic-bezier(0.2,0.8,0.2,1) 200ms both",
+            "yur-quiz-popup-rise 700ms cubic-bezier(0.2,0.8,0.2,1) 200ms both",
         }}
       >
-        {/* ── LEFT column: image (only when imageUrl is set) ──────── */}
         {hasImage && (
           <div className="relative aspect-square w-full md:aspect-auto md:min-h-[480px]">
             <Image
@@ -177,11 +160,7 @@ export function RegisterWelcomePopup({
           </div>
         )}
 
-        {/* ── RIGHT column: content ───────────────────────────────── */}
         <div className={hasImage ? "px-9 py-10" : "px-11 pb-9 pt-12"}>
-          {/* close X — placed inside content column so it's reachable
-              on both layouts. Top-left for symmetry with the existing
-              design language. */}
           <button
             type="button"
             onClick={dismiss}
@@ -199,9 +178,6 @@ export function RegisterWelcomePopup({
             </svg>
           </button>
 
-          {/* hand-drawn peony branch — kept on the single-column
-              variant where there's no left image. With image present
-              it would compete visually, so we hide it. */}
           {!hasImage && (
             <svg
               className="pointer-events-none absolute right-0 top-0 h-[110px] w-[110px] opacity-55"
@@ -216,11 +192,9 @@ export function RegisterWelcomePopup({
               <path d="M88 18 q-3 5 -10 8" opacity="0.7" />
               <path d="M76 30 q-3 5 -10 8" opacity="0.7" />
               <path d="M62 48 q-3 5 -10 8" opacity="0.7" />
-              <path d="M50 65 q-3 5 -10 8" opacity="0.7" />
               <ellipse cx="92" cy="14" rx="3.5" ry="2" fill="#C8362C" opacity="0.6" />
               <ellipse cx="80" cy="26" rx="3" ry="1.7" fill="#C8362C" opacity="0.5" />
               <ellipse cx="68" cy="42" rx="2.6" ry="1.5" fill="#C8362C" opacity="0.45" />
-              <ellipse cx="55" cy="60" rx="2.2" ry="1.3" fill="#C8362C" opacity="0.4" />
             </svg>
           )}
 
@@ -245,15 +219,12 @@ export function RegisterWelcomePopup({
           </p>
 
           <h2
-            id="yur-welcome-popup-title"
+            id="yur-quiz-popup-title"
             className={
               hasImage
                 ? "m-0 mb-3 font-display text-[24px] font-light leading-[1.15] tracking-tight text-ink"
                 : "m-0 mb-3.5 font-display text-[32px] font-light leading-[1.1] tracking-tight text-ink"
             }
-            // Allow Sofia's <em>YU.R</em> markup through. Allowlisted at
-            // save time (Zod schema), so this is a small controlled
-            // surface — admin-edited content only, never user-supplied.
             dangerouslySetInnerHTML={{
               __html: renderHeadline(config.headline),
             }}
@@ -321,34 +292,11 @@ export function RegisterWelcomePopup({
             </svg>
           </Link>
 
-          <p className="mt-4 text-center text-[12px] text-ink-mid">
-            Already a member?{" "}
-            <Link
-              href="/en/sign-in"
-              onClick={dismiss}
-              className="text-ink underline underline-offset-[3px]"
-            >
-              Sign in
-            </Link>
-          </p>
-
-          <p className="mt-4 text-center text-[11px] leading-relaxed text-ink-mid">
-            By registering you agree to our{" "}
-            <Link href="/en/legal/terms" className="text-ink underline underline-offset-[3px]">
-              terms
-            </Link>{" "}
-            and{" "}
-            <Link href="/en/legal/privacy" className="text-ink underline underline-offset-[3px]">
-              privacy policy
-            </Link>
-            .
-          </p>
-
           {config.showNoThanks && (
             <button
               type="button"
               onClick={dismiss}
-              className="mt-3 w-full bg-transparent p-2 text-center text-[11px] uppercase tracking-label text-ink-mid transition-colors hover:text-ink"
+              className="mt-4 w-full bg-transparent p-2 text-center text-[11px] uppercase tracking-label text-ink-mid transition-colors hover:text-ink"
             >
               No thanks
             </button>
@@ -357,11 +305,11 @@ export function RegisterWelcomePopup({
       </div>
 
       <style>{`
-        @keyframes yur-popup-fade {
+        @keyframes yur-quiz-popup-fade {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        @keyframes yur-popup-rise {
+        @keyframes yur-quiz-popup-rise {
           from { opacity: 0; transform: translateY(24px); }
           to { opacity: 1; transform: translateY(0); }
         }
@@ -369,20 +317,6 @@ export function RegisterWelcomePopup({
     </div>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────
-// Tiny, controlled HTML renderers for admin-edited fields.
-//
-// • renderHeadline — passes <em>…</em> through verbatim, escapes everything
-//   else. Used by the H2 only.
-// • renderInlineMarkdown — converts **bold** to <strong>, escapes the rest.
-//   Used in the bonus blocks.
-//
-// Both are admin-content surfaces (only Sofia and other admin editors
-// can write the text). The Zod schema caps lengths and trims whitespace
-// at save time. We escape the input first then re-insert the allowed
-// tags so a stray "<" in body copy can't break out of the box.
-// ─────────────────────────────────────────────────────────────────────────
 
 function escapeHtml(s: string): string {
   return s
@@ -394,11 +328,8 @@ function escapeHtml(s: string): string {
 }
 
 function renderHeadline(raw: string): string {
-  // Allowlist: <em>...</em> with optional whitespace. Anything else is
-  // escaped. Use a placeholder swap so we don't accidentally match
-  // escaped &lt;em&gt; sequences.
-  const PLACEHOLDER_OPEN = " EMOPEN ";
-  const PLACEHOLDER_CLOSE = " EMCLOSE ";
+  const PLACEHOLDER_OPEN = " EMOPEN ";
+  const PLACEHOLDER_CLOSE = " EMCLOSE ";
   const swapped = raw
     .replace(/<em>/gi, PLACEHOLDER_OPEN)
     .replace(/<\/em>/gi, PLACEHOLDER_CLOSE);
@@ -411,8 +342,6 @@ function renderHeadline(raw: string): string {
 }
 
 function renderInlineMarkdown(raw: string, accent?: "sage"): string {
-  // First escape, then turn **xxx** into <strong>xxx</strong> with the
-  // appropriate accent color.
   const escaped = escapeHtml(raw);
   const cls =
     accent === "sage"

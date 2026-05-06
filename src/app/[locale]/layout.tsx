@@ -28,7 +28,9 @@ import { getShopMegaMenuData } from "@/lib/queries/products";
 import { readSetting } from "@/lib/settings";
 import { CookieBanner } from "@/components/consent/cookie-banner";
 import { RegisterWelcomePopup } from "@/components/marketing/register-welcome-popup";
+import { QuizPopup } from "@/components/marketing/quiz-popup";
 import { readWelcomePopupSettings } from "@/lib/queries/welcome-popup";
+import { readQuizPopupSettings } from "@/lib/queries/quiz-popup";
 import { SwRegister } from "@/components/pwa/sw-register";
 import { GoogleTagManager } from "@/components/analytics/google-tag-manager";
 import { ReferralCapture } from "@/components/marketing/referral-capture";
@@ -176,10 +178,12 @@ export default async function LocaleLayout({ children, params }: Props) {
   // inside getShopMegaMenuData.
   const shopMenu = await getShopMegaMenuData(locale);
 
-  // Welcome popup config — Sofia edits at /admin/marketing/welcome-popup.
-  // Read once per layout render so the popup's text/image stay in sync
-  // with the admin without a hard refresh.
-  const welcomePopup = await readWelcomePopupSettings();
+  // Marketing popup configs — Sofia edits at /admin/marketing.
+  // Both are read in parallel so the layout doesn't pay two round-trips.
+  const [welcomePopup, quizPopup] = await Promise.all([
+    readWelcomePopupSettings(),
+    readQuizPopupSettings(),
+  ]);
 
   // Free-shipping threshold — surfaced as a progress indicator inside
   // the cart drawer so customers see "€X to go for free shipping"
@@ -247,6 +251,12 @@ export default async function LocaleLayout({ children, params }: Props) {
                 isSignedIn={isSignedIn}
                 config={welcomePopup}
               />
+              {/* Quiz popup — fires after the welcome popup is finished
+                  (closed, dismissed, or skipped). Internal coordinator
+                  resolves a shared promise on welcome's exit so the two
+                  surfaces never overlap. Independent 14-day suppression
+                  cookie + own delay setting (default 30s). */}
+              <QuizPopup config={quizPopup} />
               {/* Silent: catches `?ref=CODE` on any page and persists it
                   to localStorage so the sign-up form can pre-fill the
                   referral field after a normal browse-around-then-sign-up

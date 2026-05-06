@@ -1,12 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Save the welcome-popup config from /admin/marketing/welcome-popup.
-//
-// All fields go through Zod for length caps; unknown fields are dropped.
-// On success we redirect with ?saved=1 so the page renders a success
-// toast and Sofia can immediately verify her change on the homepage.
-//
-// Bust the public layout cache so the popup picks up the new copy/image
-// without Sofia having to hard-refresh.
+// Save the quiz-popup config from /admin/marketing/quiz-popup. Mirror
+// of the welcome-popup save action with one extra field (the
+// after-welcome delay).
 // ─────────────────────────────────────────────────────────────────────────
 
 "use server";
@@ -17,24 +12,18 @@ import { z } from "zod";
 
 import { requireCapability } from "@/lib/auth-roles";
 import {
-  writeWelcomePopupSettings,
-  type WelcomePopupSettings,
-} from "@/lib/queries/welcome-popup";
+  writeQuizPopupSettings,
+  type QuizPopupSettings,
+} from "@/lib/queries/quiz-popup";
 
-// Checkboxes only POST when checked, so we treat any non-undefined as
-// truthy. Field schemas trim whitespace so leading/trailing spaces don't
-// drift in over edits.
 const Schema = z.object({
   enabled: z.union([z.string(), z.undefined()]).transform((v) => v !== undefined),
-  delaySeconds: z.coerce.number().int().min(0).max(60),
+  delaySecondsAfterWelcome: z.coerce.number().int().min(0).max(300),
   imageUrl: z.string().trim().max(2000).optional().default(""),
   imageAlt: z.string().trim().max(300).optional().default(""),
   eyebrow: z.string().trim().max(60).optional().default(""),
   bigOffer: z.string().trim().max(20).optional().default(""),
   bigOfferSubtitle: z.string().trim().max(80).optional().default(""),
-  // Headline allows a tiny HTML allowlist (just <em>) — we don't strip
-  // it on save; the read-side passes through to the JSX with a single
-  // dangerouslySetInnerHTML, scoped to this admin-only edit surface.
   headline: z.string().trim().max(200).optional().default(""),
   body: z.string().trim().max(600).optional().default(""),
   bonus1Enabled: z
@@ -53,16 +42,16 @@ const Schema = z.object({
     .transform((v) => v !== undefined),
 });
 
-export async function saveWelcomePopupAction(
+export async function saveQuizPopupAction(
   formData: FormData,
 ): Promise<void> {
   await requireCapability("homepage.edit", "/admin");
 
   const parsed = Schema.parse(Object.fromEntries(formData));
 
-  const next: WelcomePopupSettings = {
+  const next: QuizPopupSettings = {
     enabled: parsed.enabled,
-    delaySeconds: parsed.delaySeconds,
+    delaySecondsAfterWelcome: parsed.delaySecondsAfterWelcome,
     imageUrl: parsed.imageUrl,
     imageAlt: parsed.imageAlt,
     eyebrow: parsed.eyebrow,
@@ -80,9 +69,8 @@ export async function saveWelcomePopupAction(
     showNoThanks: parsed.showNoThanks,
   };
 
-  await writeWelcomePopupSettings(next);
+  await writeQuizPopupSettings(next);
 
-  // The popup is mounted in the public layout, so blow that cache.
   revalidatePath("/", "layout");
-  redirect("/admin/marketing/welcome-popup?saved=1");
+  redirect("/admin/marketing/quiz-popup?saved=1");
 }

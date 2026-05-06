@@ -31,6 +31,10 @@ export type WelcomePopupSettings = {
    *  cookie state, route, etc). Lets Sofia pause it during a campaign. */
   enabled: boolean;
 
+  /** How many seconds after first paint before the popup appears.
+   *  Default 3. Sofia can edit from the admin form. Bounds: 0-60. */
+  delaySeconds: number;
+
   /** Public URL of the image shown on the LEFT side of the card.
    *  Empty string → image column is hidden and the card collapses to
    *  single-column (current single-column layout). */
@@ -77,6 +81,7 @@ export type WelcomePopupSettings = {
 
 export const WELCOME_POPUP_DEFAULTS: WelcomePopupSettings = {
   enabled: true,
+  delaySeconds: 3,
   imageUrl: "",
   imageAlt: "",
   eyebrow: "Welcome gift",
@@ -104,6 +109,13 @@ function asBool(v: unknown, fallback: boolean): boolean {
   return typeof v === "boolean" ? v : fallback;
 }
 
+/** Seconds, clamped to a sane range. Same shape as promotions.ts. */
+function asDelay(v: unknown, fallback: number, max: number): number {
+  const n = typeof v === "number" ? v : Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(0, Math.min(max, Math.round(n)));
+}
+
 export async function readWelcomePopupSettings(): Promise<WelcomePopupSettings> {
   try {
     const row = await prisma.setting.findUnique({
@@ -117,6 +129,11 @@ export async function readWelcomePopupSettings(): Promise<WelcomePopupSettings> 
 
     return {
       enabled: asBool(v.enabled, WELCOME_POPUP_DEFAULTS.enabled),
+      delaySeconds: asDelay(
+        v.delaySeconds,
+        WELCOME_POPUP_DEFAULTS.delaySeconds,
+        60,
+      ),
       imageUrl: asString(v.imageUrl, WELCOME_POPUP_DEFAULTS.imageUrl),
       imageAlt: asString(v.imageAlt, WELCOME_POPUP_DEFAULTS.imageAlt),
       eyebrow: asString(v.eyebrow, WELCOME_POPUP_DEFAULTS.eyebrow),
