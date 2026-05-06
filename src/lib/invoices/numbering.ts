@@ -33,25 +33,30 @@ export async function reserveNextInvoiceNumber(year: number): Promise<{
   year: number;
   sequence: number;
 }> {
-  // We use a Setting row keyed by `invoice.next.${year}` whose value JSON is
-  // simply { "n": <number> }. The atomic step is `UPDATE ... SET value = ...
-  // RETURNING value` which Postgres serialises per row. Two concurrent
-  // webhooks both increment correctly — the second sees the post-write
-  // value of the first.
+  // We use a Setting row keyed by `invoice.next.${year}` whose valueJson
+  // payload is simply { "n": <number> }. The atomic step is
+  // `UPDATE ... SET valueJson = ... RETURNING valueJson` which Postgres
+  // serialises per row. Two concurrent webhooks both increment correctly —
+  // the second sees the post-write value of the first.
+  //
+  // NB: the column is named `valueJson` in PostgreSQL (matches the Prisma
+  // model field exactly — Prisma 5 does NOT snake-case Json fields by
+  // default). An earlier version of this query referenced `"value"`,
+  // which doesn't exist; that silently broke every invoice issuance.
   const key = `invoice.next.${year}`;
 
   // Using $queryRaw for the UPSERT-then-increment because Prisma's
   // declarative API can't atomically read+write the JSONB cell. The SQL
   // is a single statement; Postgres takes a row-level lock for us.
   const rows = await prisma.$queryRaw<{ n: number }[]>`
-    INSERT INTO "Setting" ("key", "value", "updatedAt")
+    INSERT INTO "Setting" ("key", "valueJson", "updatedAt")
     VALUES (${key}, '{"n":1}'::jsonb, NOW())
     ON CONFLICT ("key") DO UPDATE
-      SET "value" = jsonb_build_object(
-        'n', COALESCE(("Setting"."value"->>'n')::int, 0) + 1
+      SET "valueJson" = jsonb_build_object(
+        'n', COALESCE(("Setting"."valueJson"->>'n')::int, 0) + 1
       ),
       "updatedAt" = NOW()
-    RETURNING ("value"->>'n')::int AS n;
+    RETURNING ("valueJson"->>'n')::int AS n;
   `;
 
   const sequence = rows[0]?.n;

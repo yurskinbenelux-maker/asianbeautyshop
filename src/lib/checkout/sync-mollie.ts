@@ -345,11 +345,32 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
       // payment is real money in the merchant's account. We log + move
       // on; admin can re-issue from /admin/invoices manually if the row
       // is missing.
+      //
+      // We also write an OrderEvent so the failure surfaces in the
+      // admin order detail page's audit log — without this, a silent
+      // throw (like the old `Setting."value"` SQL bug) costs us every
+      // invoice with zero in-product visibility.
+      const message =
+        err instanceof Error ? err.message : String(err);
       console.error(
         "[sync-mollie] invoice issue failed",
         order.id,
         err,
       );
+      await prisma.orderEvent
+        .create({
+          data: {
+            orderId: order.id,
+            kind: "invoice.issue.failed",
+            message,
+            metadata: {
+              error: message,
+              stack:
+                err instanceof Error && err.stack ? err.stack.slice(0, 2000) : null,
+            },
+          },
+        })
+        .catch(() => undefined);
     }
 
     await Promise.allSettled([
