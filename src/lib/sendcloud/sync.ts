@@ -99,70 +99,92 @@ function buildParcelPayload(order: {
   }, 0);
   const weightKg = (totalGrams / 1000).toFixed(3);
 
-  // Sendcloud v3 shape — fields at the top level (no `parcel:` wrapper),
-  // `country` renamed to `country_code`, `weight` is `{ value, unit }`,
-  // and per-item value uses `{ value, currency }`.
+  // Sendcloud v3 Shipments shape — recipient lives under `to_address`,
+  // weight & values are objects with `{value, unit/currency}`, and
+  // `apply_shipping_rules: true` lets Sofia's panel rules pick the
+  // carrier so we don't need to send a shipping_option_code.
+  //
+  // Endpoint we POST this to:
+  //   /api/v3/shipments/create-a-shipment-with-rules-and-or-default-and-announce-it-synchronously
+  //
+  // The "announce synchronously" half of that name is what generates
+  // the label in the same call — no second request needed.
   return {
-    // Recipient
-    name: `${a.firstName} ${a.lastName}`.trim(),
-    company_name: a.company ?? "",
-    address: street,
-    house_number: houseNumber,
-    address_2: a.line2 ?? "",
-    city: a.city,
-    postal_code: a.postcode,
-    country_code: a.country,
-    email: order.email,
-    telephone: a.phone ?? "",
+    // Recipient — v3 nests these in `to_address` (vs v2's flat fields).
+    to_address: {
+      name: `${a.firstName} ${a.lastName}`.trim(),
+      company_name: a.company ?? "",
+      address_line_1: street,
+      address_line_2: a.line2 ?? "",
+      house_number: houseNumber,
+      city: a.city,
+      postal_code: a.postcode,
+      country_code: a.country,
+      email: order.email,
+      phone_number: a.phone ?? "",
+    },
 
-    // Identifiers — both visible in the Sendcloud panel for support.
+    // Identifiers — `order_number` shows in Sofia's panel, `external_reference`
+    // is the idempotency key Sendcloud dedupes on.
     order_number: order.publicNumber,
     external_reference: order.id,
 
-    // Sender side: Sofia configures Sendcloud's default sender + shipping
-    // rules in their panel. apply_shipping_rules=true defers the carrier
-    // choice to those rules; request_label=true generates the PDF
-    // immediately so the parcel is dispatch-ready without a second call.
+    // Defer carrier selection to Sofia's shipping rules in the panel.
     apply_shipping_rules: true,
-    request_label: true,
 
-    // Cost + customs metadata — required for outside-EU shipments. v3
-    // wraps both weight and total_order_value as objects.
+    // Total declared value — required for customs on non-EU destinations,
+    // harmless intra-EU.
     total_order_value: {
       value: Number(order.grandTotal).toFixed(2),
       currency: order.currency,
     },
-    weight: {
-      value: weightKg,
-      unit: "kilogram",
-    },
 
-    parcel_items: order.items.map((item) => ({
-      description: item.nameSnapshot,
-      quantity: item.quantity,
-      weight: {
-        value: ((item.product.weightGrams ?? 100) / 1000).toFixed(3),
-        unit: "kilogram",
+    // Single-parcel shipments — wrap our parcel data in a `parcels` array
+    // (v3 is multicollo-aware; we always send 1 element).
+    parcels: [
+      {
+        weight: {
+          value: weightKg,
+          unit: "kilogram",
+        },
+        parcel_items: order.items.map((item) => ({
+          description: item.nameSnapshot,
+          quantity: item.quantity,
+          weight: {
+            value: ((item.product.weightGrams ?? 100) / 1000).toFixed(3),
+            unit: "kilogram",
+          },
+          value: {
+            value: Number(item.unitPrice).toFixed(2),
+            currency: order.currency,
+          },
+          hs_code: item.product.hsCode ?? "",
+          origin_country: item.product.originCountry ?? "",
+          sku: item.skuSnapshot,
+        })),
       },
-      value: {
-        value: Number(item.unitPrice).toFixed(2),
-        currency: order.currency,
-      },
-      hs_code: item.product.hsCode ?? "",
-      origin_country: item.product.originCountry ?? "",
-      sku: item.skuSnapshot,
-    })),
+    ],
   };
 }
 
-// v3 wraps the result in `data` instead of `parcel`. Field names are
-// otherwise unchanged from v2 for the bits we care about.
-type SendcloudParcelResponse = {
+// v3 response — the synchronous "create + announce" endpoint returns
+// the created shipment with its parcels. Tracking number is on the
+// (single) parcel element. Field names are best-effort based on v3
+// docs and may need a one-line tweak after the first real call —
+// we log the raw body in the OrderEvent on failure so we can adjust.
+type SendcloudShipmentResponse = {
   data: {
-    id: number;
-    tracking_number: string | null;
-    tracking_url: string | null;
-    status?: { id: number; message: string };
+    id: number | string;
+    parcels?: Array<{
+      id: number | string;
+      tracking_number?: string | null;
+      tracking_url?: string | null;
+      status?: { id?: number; message?: string };
+    }>;
+    // Some v3 endpoints surface tracking on the shipment root too —
+    // we read whichever is populated.
+    tracking_number?: string | null;
+    tracking_url?: string | null;
   };
 };
 
@@ -271,19 +293,37 @@ export async function syncOrderToSendcloud(
   });
 
   try {
-    const res = await sendcloudFetch<SendcloudParcelResponse>("/parcels", {
-      method: "POST",
-      body: payload,
-    });
+    // v3 endpoint James from Sendcloud support pointed us at:
+    //   "Create a shipment with rules and/or defaults and announce it
+    //    synchronously" — single call that creates the shipment, applies
+    //    Sofia's panel shipping rules, and generates the label.
+    const res = await sendcloudFetch<SendcloudShipmentResponse>(
+      "/shipments/create-a-shipment-with-rules-and-or-default-and-announce-it-synchronously",
+      {
+        method: "POST",
+        body: payload,
+      },
+    );
 
-    const parcelId = String(res.data.id);
+    // Tracking lives on the (single) parcel inside the shipment, but
+    // some v3 endpoints surface it on the root too — read whichever is
+    // populated first. The shipment id is what we record as our
+    // sendcloudParcelId (stable across the parcel lifecycle).
+    const shipment = res.data;
+    const firstParcel = shipment.parcels?.[0];
+    const parcelId = String(shipment.id);
+    const trackingNumber =
+      firstParcel?.tracking_number ?? shipment.tracking_number ?? null;
+    const trackingUrl =
+      firstParcel?.tracking_url ?? shipment.tracking_url ?? null;
+
     await prisma.$transaction([
       prisma.order.update({
         where: { id: order.id },
         data: {
           sendcloudParcelId: parcelId,
-          trackingNumber: res.data.tracking_number,
-          trackingUrl: res.data.tracking_url,
+          trackingNumber,
+          trackingUrl,
         },
       }),
       prisma.orderEvent.create({
@@ -292,9 +332,10 @@ export async function syncOrderToSendcloud(
           kind: "sendcloud.parcel.created",
           metadata: {
             parcelId,
-            trackingNumber: res.data.tracking_number,
-            trackingUrl: res.data.tracking_url,
-            status: res.data.status?.id ?? null,
+            trackingNumber,
+            trackingUrl,
+            innerParcelId: firstParcel?.id ? String(firstParcel.id) : null,
+            status: firstParcel?.status?.id ?? null,
           },
         },
       }),
@@ -303,13 +344,18 @@ export async function syncOrderToSendcloud(
     return {
       ok: true,
       parcelId,
-      trackingNumber: res.data.tracking_number,
+      trackingNumber,
     };
   } catch (err) {
     const message =
       err instanceof SendcloudError ? err.message : (err as Error).message;
     const status =
       err instanceof SendcloudError ? err.status : undefined;
+    // Capture the raw response body too — v3 returns per-field validation
+    // errors that we need to see to tune the payload (we built it from
+    // docs descriptions, not a sanctioned curl example).
+    const body =
+      err instanceof SendcloudError ? err.body : undefined;
     console.error(
       `[sendcloud] sync failed for ${order.publicNumber}: ${message}`,
     );
@@ -320,7 +366,15 @@ export async function syncOrderToSendcloud(
         data: {
           orderId: order.id,
           kind: "sendcloud.parcel.failed",
-          metadata: { message, status: status ?? null },
+          metadata: {
+            message,
+            status: status ?? null,
+            // Only stash the body when Sendcloud actually sent one —
+            // network/timeout errors don't have a parsed payload.
+            ...(body !== undefined
+              ? { body: body as Prisma.InputJsonValue }
+              : {}),
+          },
         },
       })
       .catch(() => undefined);
