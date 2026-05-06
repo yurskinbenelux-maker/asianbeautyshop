@@ -1598,9 +1598,14 @@ model TestimonialTranslation {
 
 model InstagramPost {
   id          String   @id @default(uuid()) @db.Uuid
-  imageUrl    String                            // public URL of the image
+  // Default mode: leave imageUrl blank → the homepage tile renders an
+  // <iframe> embed of the live Instagram post (image or video poster
+  // + click-through to the real post). Optional override: paste an
+  // imageUrl to show a custom branded thumbnail instead. Both modes
+  // link out to postUrl on click.
+  imageUrl    String?                           // optional — custom thumbnail override
   imageAlt    String?                           // for screen readers + SEO
-  postUrl     String                            // https://instagram.com/p/...
+  postUrl     String                            // https://instagram.com/p/... or /reel/...
   caption     String?                           // optional short overlay (e.g. "@yur_skin_cosmetics")
   sortOrder   Int      @default(0)
   isActive    Boolean  @default(true)

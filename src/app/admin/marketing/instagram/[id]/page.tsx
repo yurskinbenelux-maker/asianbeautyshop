@@ -39,17 +39,26 @@ export default async function EditInstagramPostPage({ params }: Props) {
         </h1>
       </header>
 
-      {/* ── Preview ──────────────────────────────────────────── */}
+      {/* ── Preview ──────────────────────────────────────────────
+          When the post has an image override, show it as a small
+          thumb. Otherwise just show metadata — the live embed
+          renders on the public homepage. */}
       <div className="mb-10 flex items-start gap-5">
-        <div className="relative h-32 w-32 flex-shrink-0 overflow-hidden border border-ink/10 bg-ink/5">
-          <Image
-            src={post.imageUrl}
-            alt={post.imageAlt ?? ""}
-            fill
-            sizes="128px"
-            className="object-cover"
-          />
-        </div>
+        {post.imageUrl ? (
+          <div className="relative h-32 w-32 flex-shrink-0 overflow-hidden border border-ink/10 bg-ink/5">
+            <Image
+              src={post.imageUrl}
+              alt={post.imageAlt ?? ""}
+              fill
+              sizes="128px"
+              className="object-cover"
+            />
+          </div>
+        ) : (
+          <div className="flex h-32 w-32 flex-shrink-0 items-center justify-center border border-dashed border-ink/15 bg-rice-dim/40 text-[10px] uppercase tracking-label text-ink-mid">
+            Live embed
+          </div>
+        )}
         <div className="space-y-1 text-[12px] text-ink-mid">
           <p>Created {post.createdAt.toLocaleDateString()}</p>
           <p>Updated {post.updatedAt.toLocaleDateString()}</p>
@@ -59,22 +68,23 @@ export default async function EditInstagramPostPage({ params }: Props) {
       <form action={updateInstagramPost} className="space-y-4">
         <input type="hidden" name="id" value={post.id} />
         <Field
-          label="Image URL"
-          name="imageUrl"
-          defaultValue={post.imageUrl}
-          required
-        />
-        <Field
-          label="Alt text"
-          name="imageAlt"
-          defaultValue={post.imageAlt ?? ""}
-          hint="Describe the image — helps screen readers + SEO."
-        />
-        <Field
           label="Instagram post URL"
           name="postUrl"
           defaultValue={post.postUrl}
           required
+          hint="The post the tile embeds + opens on click."
+        />
+        <Field
+          label="Image URL — override (optional)"
+          name="imageUrl"
+          defaultValue={post.imageUrl ?? ""}
+          hint="Blank = use the live Instagram embed. Set to override with a branded thumbnail."
+        />
+        <Field
+          label="Alt text (only used when image override is set)"
+          name="imageAlt"
+          defaultValue={post.imageAlt ?? ""}
+          hint="Helps screen readers + SEO."
         />
         <Field
           label="Caption overlay"

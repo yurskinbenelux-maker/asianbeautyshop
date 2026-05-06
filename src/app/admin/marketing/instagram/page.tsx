@@ -86,13 +86,19 @@ export default async function AdminInstagramPage({
                 className="flex items-center gap-4 border border-ink/10 bg-white/60 p-3"
               >
                 <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden bg-ink/5">
-                  <Image
-                    src={p.imageUrl}
-                    alt={p.imageAlt ?? ""}
-                    fill
-                    sizes="80px"
-                    className="object-cover"
-                  />
+                  {p.imageUrl ? (
+                    <Image
+                      src={p.imageUrl}
+                      alt={p.imageAlt ?? ""}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[9px] uppercase tracking-label text-ink-mid">
+                      Embed
+                    </div>
+                  )}
                 </div>
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex items-center gap-2 text-[12px] text-ink">
@@ -151,29 +157,29 @@ export default async function AdminInstagramPage({
       {/* ── Add new post ──────────────────────────────────────── */}
       <section className="border-t border-ink/10 pt-10">
         <h2 className="font-display text-[18px] text-ink">Add a post</h2>
-        <p className="mt-1 text-[12px] text-ink-mid">
-          Square images (~1080×1080) read best — same as Instagram&rsquo;s
-          native feed.
+        <p className="mt-1 text-[12px] leading-relaxed text-ink-mid">
+          Just paste the Instagram post URL — the homepage will embed
+          the live post (image or video) automatically.
         </p>
         <form action={createInstagramPost} className="mt-5 space-y-4">
           <Field
-            label="Image URL"
-            name="imageUrl"
-            placeholder="https://…/post.jpg"
+            label="Instagram post URL"
+            name="postUrl"
+            placeholder="https://www.instagram.com/p/XXXXXXXX/  (or /reel/, /tv/)"
             required
+            hint="The post the tile embeds + opens on click."
           />
           <Field
-            label="Alt text (recommended)"
+            label="Image URL — override (optional)"
+            name="imageUrl"
+            placeholder="https://…/custom-thumbnail.jpg"
+            hint="Leave blank to use the live Instagram embed (recommended). Only set this if you want a branded thumbnail instead."
+          />
+          <Field
+            label="Alt text (only used when image override is set)"
             name="imageAlt"
             placeholder="A close-up of the YU.R essence on a marble shelf"
             hint="Helps screen readers + SEO."
-          />
-          <Field
-            label="Instagram post URL"
-            name="postUrl"
-            placeholder="https://www.instagram.com/p/XXXXXXXX/"
-            required
-            hint="The link that opens when a visitor taps the tile."
           />
           <Field
             label="Caption overlay (optional)"

@@ -14,7 +14,19 @@ import { requireCapability } from "@/lib/auth-roles";
 import { prisma } from "@/lib/prisma";
 
 const Schema = z.object({
-  imageUrl: z.string().trim().url("Image URL must be a valid http(s) URL").max(2000),
+  // Optional: when blank, the homepage tile renders an iframe embed of
+  // the Instagram post URL (default behaviour). Set to a custom URL to
+  // override the embed with a branded thumbnail image instead.
+  imageUrl: z
+    .string()
+    .trim()
+    .max(2000)
+    .optional()
+    .default("")
+    .refine(
+      (v) => v === "" || /^https?:\/\//i.test(v),
+      { message: "Image URL must be a valid http(s) URL (or leave blank)" },
+    ),
   imageAlt: z.string().trim().max(300).optional().default(""),
   // Loose URL match — IG occasionally serves /reel/, /p/, /tv/ etc. We
   // accept anything on instagram.com or instagr.am.
