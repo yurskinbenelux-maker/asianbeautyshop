@@ -203,6 +203,36 @@ export default async function LocaleLayout({ children, params }: Props) {
       lang={locale}
       className={`${fraunces.variable} ${notoKR.variable} ${inter.variable}`}
     >
+      <head>
+        {/*
+          Preload the popup images during initial page load so they're
+          already in the browser cache by the time the welcome / quiz
+          popup mounts (3s and 30s+ after page load respectively).
+          Without this, the <Image> tag inside the popup only starts
+          fetching when the component renders → mobile users see a 2-3s
+          blank-image moment before the popup is presentable.
+
+          We only emit the link when the popup is enabled AND has an
+          image set. Plain <link> tags inside JSX are hoisted to <head>
+          by Next.js, so this works from a server component.
+        */}
+        {welcomePopup.enabled && welcomePopup.imageUrl && (
+          <link
+            rel="preload"
+            as="image"
+            href={welcomePopup.imageUrl}
+            fetchPriority="high"
+          />
+        )}
+        {quizPopup.enabled && quizPopup.imageUrl && (
+          <link
+            rel="preload"
+            as="image"
+            href={quizPopup.imageUrl}
+            fetchPriority="low"
+          />
+        )}
+      </head>
       <body className="min-h-screen">
         {/* Google Tag Manager + Consent Mode v2 — loads as early as
             possible so the privacy-safe defaults are in place before

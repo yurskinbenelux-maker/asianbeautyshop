@@ -148,7 +148,7 @@ export function QuizPopup({ config }: { config: QuizPopupSettings }) {
         }}
       >
         {hasImage && (
-          <div className="relative aspect-square w-full md:aspect-auto md:min-h-[480px]">
+          <div className="relative h-44 w-full md:h-auto md:min-h-[480px]">
             <Image
               src={config.imageUrl}
               alt={config.imageAlt}
@@ -160,7 +160,13 @@ export function QuizPopup({ config }: { config: QuizPopupSettings }) {
           </div>
         )}
 
-        <div className={hasImage ? "px-9 py-10" : "px-11 pb-9 pt-12"}>
+        <div
+          className={
+            hasImage
+              ? "px-6 py-7 md:px-9 md:py-10"
+              : "px-7 pb-8 pt-10 md:px-11 md:pb-9 md:pt-12"
+          }
+        >
           <button
             type="button"
             onClick={dismiss}

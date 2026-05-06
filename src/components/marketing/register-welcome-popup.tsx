@@ -163,9 +163,12 @@ export function RegisterWelcomePopup({
             "yur-popup-rise 700ms cubic-bezier(0.2,0.8,0.2,1) 200ms both",
         }}
       >
-        {/* ── LEFT column: image (only when imageUrl is set) ──────── */}
+        {/* ── LEFT column: image (only when imageUrl is set) ────────
+            Mobile: short banner (h-44 = 176px) so the popup is read
+            as a card, not a half-screen ad. Desktop: square left
+            column at the typical mega-menu height. */}
         {hasImage && (
-          <div className="relative aspect-square w-full md:aspect-auto md:min-h-[480px]">
+          <div className="relative h-44 w-full md:h-auto md:min-h-[480px]">
             <Image
               src={config.imageUrl}
               alt={config.imageAlt}
@@ -177,8 +180,17 @@ export function RegisterWelcomePopup({
           </div>
         )}
 
-        {/* ── RIGHT column: content ───────────────────────────────── */}
-        <div className={hasImage ? "px-9 py-10" : "px-11 pb-9 pt-12"}>
+        {/* ── RIGHT column: content ─────────────────────────────────
+            Mobile padding is tighter so the headline + bonus blocks +
+            CTA all fit above the fold on a phone. Desktop keeps the
+            generous editorial padding. */}
+        <div
+          className={
+            hasImage
+              ? "px-6 py-7 md:px-9 md:py-10"
+              : "px-7 pb-8 pt-10 md:px-11 md:pb-9 md:pt-12"
+          }
+        >
           {/* close X — placed inside content column so it's reachable
               on both layouts. Top-left for symmetry with the existing
               design language. */}
