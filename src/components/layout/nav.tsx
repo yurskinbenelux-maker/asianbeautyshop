@@ -211,7 +211,7 @@ export function Nav({
         >
           <ShopMegaMenu tree={shopTree} />
           <BrandsMegaMenu brands={shopBrands} />
-          <NavLink href="/sale">{t("nav.sale")}</NavLink>
+          <NavLink href="/sale" highlight>{t("nav.sale")}</NavLink>
           <NavLink href="/new">{t("nav.new_products")}</NavLink>
           {/* Skin quiz replaces the old "Rituals" header link — the quiz
               is the higher-intent funnel into product recommendations.
@@ -512,7 +512,9 @@ export function Nav({
                 <Link
                   href="/sale"
                   onClick={() => setMobileOpen(false)}
-                  className="flex h-14 items-center text-[15px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
+                  // Vermilion in the drawer too so SALE stands out the
+                  // same way it does in the desktop nav.
+                  className="flex h-14 items-center text-[15px] uppercase tracking-label text-vermilion transition-colors hover:text-vermilion/80"
                 >
                   {t("nav.sale")}
                 </Link>
@@ -583,11 +585,27 @@ export function Nav({
 
 // ── Sub-components ───────────────────────────────────────────────────
 
-function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+function NavLink({
+  href,
+  children,
+  highlight = false,
+}: {
+  href: string;
+  children: React.ReactNode;
+  /** When true, render the link in vermilion so it stands out from the
+   *  surrounding ink-coloured nav items. Used for "Sale" — the
+   *  reasoning is that markdown stories convert better when the entry
+   *  point has a hint of urgency/colour. */
+  highlight?: boolean;
+}) {
   return (
     <Link
       href={href}
-      className="relative text-[13px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
+      className={
+        highlight
+          ? "relative text-[13px] uppercase tracking-label text-vermilion transition-colors hover:text-vermilion/80"
+          : "relative text-[13px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
+      }
     >
       {children}
     </Link>
