@@ -28,6 +28,7 @@ import { getShopMegaMenuData } from "@/lib/queries/products";
 import { readSetting } from "@/lib/settings";
 import { CookieBanner } from "@/components/consent/cookie-banner";
 import { RegisterWelcomePopup } from "@/components/marketing/register-welcome-popup";
+import { readWelcomePopupSettings } from "@/lib/queries/welcome-popup";
 import { SwRegister } from "@/components/pwa/sw-register";
 import { GoogleTagManager } from "@/components/analytics/google-tag-manager";
 import { ReferralCapture } from "@/components/marketing/referral-capture";
@@ -175,6 +176,11 @@ export default async function LocaleLayout({ children, params }: Props) {
   // inside getShopMegaMenuData.
   const shopMenu = await getShopMegaMenuData(locale);
 
+  // Welcome popup config — Sofia edits at /admin/marketing/welcome-popup.
+  // Read once per layout render so the popup's text/image stay in sync
+  // with the admin without a hard refresh.
+  const welcomePopup = await readWelcomePopupSettings();
+
   // Free-shipping threshold — surfaced as a progress indicator inside
   // the cart drawer so customers see "€X to go for free shipping"
   // every time they add an item, and as the headline value in the
@@ -237,7 +243,10 @@ export default async function LocaleLayout({ children, params }: Props) {
                   admin / cart / checkout routes, and for 14 days after
                   dismissal. English-only on purpose — the popup needs
                   to convert before the user picks a language. */}
-              <RegisterWelcomePopup isSignedIn={isSignedIn} />
+              <RegisterWelcomePopup
+                isSignedIn={isSignedIn}
+                config={welcomePopup}
+              />
               {/* Silent: catches `?ref=CODE` on any page and persists it
                   to localStorage so the sign-up form can pre-fill the
                   referral field after a normal browse-around-then-sign-up

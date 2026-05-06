@@ -35,6 +35,7 @@ import {
   Gift,
   FileSpreadsheet,
   Sparkles,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -73,6 +74,7 @@ const SECTIONS: Section[] = [
   { href: "/admin/testimonials", label: "Testimonials", icon: Quote,         cap: "testimonials.edit" },
   { href: "/admin/banners",      label: "Banners",      icon: LayoutPanelTop, cap: "banners.edit" },
   { href: "/admin/homepage",     label: "Website copy", icon: PenSquare,     cap: "homepage.edit" },
+  { href: "/admin/marketing/welcome-popup", label: "Welcome popup", icon: Megaphone, cap: "homepage.edit" },
   { href: "/admin/journal",    label: "Journal",    icon: BookOpen,         cap: "journal.edit" },
   { href: "/admin/pages",      label: "Pages",      icon: FileText,         cap: "pages.edit" },
   { href: "/admin/media",      label: "Media",      icon: ImageIcon,        cap: "media.edit" },
