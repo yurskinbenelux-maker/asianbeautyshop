@@ -25,6 +25,7 @@ import { BrandsMegaMenu } from "@/components/layout/brands-mega-menu";
 export function Nav({
   shopTree = [],
   shopBrands = [],
+  quizRewardPct = 15,
 }: {
   /** Top-level categories with their (non-empty) children. Fetched once
    *  at the layout level so every page reuses the same query. Default
@@ -33,6 +34,10 @@ export function Nav({
   /** Active brands rendered in the right column of the mega-menu and
    *  in the mobile drawer's "By brand" sub-section. */
   shopBrands?: ShopMegaMenuBrand[];
+  /** Live quiz reward % from /admin/marketing/promotions. Drives the
+   *  vermilion "−X%" chip under the Skin Quiz nav link (desktop +
+   *  mobile drawer). Default 15 keeps storybook mounts honest. */
+  quizRewardPct?: number;
 }) {
   const t = useTranslations();
   const pathname = usePathname();
@@ -218,8 +223,11 @@ export function Nav({
               (see /lib/quiz/reward.ts). Pure CSS, no runtime cost. */}
           <span className="relative inline-flex flex-col items-center">
             <NavLink href="/quiz">{t("nav.skin_quiz")}</NavLink>
+            {/* Vermilion "−X%" chip — live value from
+                /admin/marketing/promotions so editing the quiz reward
+                in admin updates this chip automatically. */}
             <span className="pointer-events-none absolute top-full mt-1 inline-flex items-center bg-vermilion px-1.5 py-px text-[9px] font-medium uppercase tracking-label text-rice">
-              −15%
+              −{quizRewardPct}%
             </span>
           </span>
           <NavLink href="/ingredients">{t("nav.ingredients")}</NavLink>
@@ -535,8 +543,9 @@ export function Nav({
                   className="flex h-14 items-center gap-2 text-[15px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
                 >
                   {t("nav.skin_quiz")}
+                  {/* Same dynamic chip as the desktop nav. */}
                   <span className="inline-flex items-center bg-vermilion px-1.5 py-px text-[10px] font-medium uppercase tracking-label text-rice">
-                    −15%
+                    −{quizRewardPct}%
                   </span>
                 </Link>
               </li>

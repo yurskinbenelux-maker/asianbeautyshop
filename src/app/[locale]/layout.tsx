@@ -31,6 +31,7 @@ import { RegisterWelcomePopup } from "@/components/marketing/register-welcome-po
 import { QuizPopup } from "@/components/marketing/quiz-popup";
 import { readWelcomePopupSettings } from "@/lib/queries/welcome-popup";
 import { readQuizPopupSettings } from "@/lib/queries/quiz-popup";
+import { readPromoSettings } from "@/lib/queries/promotions";
 import { SwRegister } from "@/components/pwa/sw-register";
 import { GoogleTagManager } from "@/components/analytics/google-tag-manager";
 import { ReferralCapture } from "@/components/marketing/referral-capture";
@@ -178,11 +179,14 @@ export default async function LocaleLayout({ children, params }: Props) {
   // inside getShopMegaMenuData.
   const shopMenu = await getShopMegaMenuData(locale);
 
-  // Marketing popup configs — Sofia edits at /admin/marketing.
-  // Both are read in parallel so the layout doesn't pay two round-trips.
-  const [welcomePopup, quizPopup] = await Promise.all([
+  // Marketing popup configs + promo percentages — Sofia edits at
+  // /admin/marketing. All three are read in parallel so the layout
+  // doesn't pay three round-trips. The quiz reward % from `promo`
+  // drives the "−X%" chip under the Skin Quiz nav item.
+  const [welcomePopup, quizPopup, promo] = await Promise.all([
     readWelcomePopupSettings(),
     readQuizPopupSettings(),
+    readPromoSettings(),
   ]);
 
   // Free-shipping threshold — surfaced as a progress indicator inside
@@ -234,7 +238,11 @@ export default async function LocaleLayout({ children, params }: Props) {
                 thresholdEur={freeShippingThresholdEur}
                 locale={locale}
               />
-              <Nav shopTree={shopMenu.tree} shopBrands={shopMenu.brands} />
+              <Nav
+                shopTree={shopMenu.tree}
+                shopBrands={shopMenu.brands}
+                quizRewardPct={promo.quizRewardPct}
+              />
               <main id="main" className="relative">{children}</main>
               <Footer />
               <ConciergeOrb />
