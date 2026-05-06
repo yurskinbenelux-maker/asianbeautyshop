@@ -1,9 +1,16 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Sendcloud REST client — thin wrapper over the v2 panel API.
+// Sendcloud REST client — thin wrapper over the v3 panel API.
 //
-// API base:   https://panel.sendcloud.sc/api/v2/
+// API base:   https://panel.sendcloud.sc/api/v3/
 // Auth:       HTTP Basic with `<public_key>:<secret_key>`
 // Docs:       https://api.sendcloud.dev/
+//
+// Note: v2 was deprecated for parcel creation on new accounts ("Creating
+// parcels via API v2 is not available for this account. Please use API
+// v3."). Migrating to v3 changes endpoint paths, the request body shape
+// (no `parcel:` wrapper, `country` → `country_code`, weight/value are
+// objects), and the response shape (`{ data: ... }` instead of
+// `{ parcel: ... }`). See sync.ts for the parcel-create call.
 //
 // Why a wrapper rather than calling fetch() inline:
 //   • We need consistent auth, error parsing, and timeout behaviour
@@ -19,7 +26,7 @@ import "server-only";
 
 const BASE_URL =
   process.env.SENDCLOUD_BASE_URL?.replace(/\/$/, "") ??
-  "https://panel.sendcloud.sc/api/v2";
+  "https://panel.sendcloud.sc/api/v3";
 
 /**
  * Whether the Sendcloud client is configured. Callers (sync, webhook)
