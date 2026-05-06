@@ -45,14 +45,13 @@ export function InstagramSection({
   return (
     <section className="container py-16 md:py-24">
       {hasEmbed && (
+        // No onLoad callback — server components in Next 15 can't
+        // pass function props to client components (Script is one).
+        // Each <InstagramEmbedTile> polls for window.instgrm itself,
+        // so the script just needs to load; the tiles take it from there.
         <Script
           src="https://www.instagram.com/embed.js"
           strategy="afterInteractive"
-          onLoad={() => {
-            if (typeof window !== "undefined") {
-              window.instgrm?.Embeds?.process?.();
-            }
-          }}
         />
       )}
 
