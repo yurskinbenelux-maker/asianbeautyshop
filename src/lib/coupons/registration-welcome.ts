@@ -29,10 +29,12 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendRegistrationWelcomeEmail } from "@/lib/email/registration-welcome";
+import { readPromoSettings } from "@/lib/queries/promotions";
 
-/** % off for the registration welcome coupon. Centralised so the email
- *  copy + DB row + popup design language stay in sync if Sofia wants to
- *  bump it later. */
+/** Defaults — used as a TS fallback if the settings read fails. The
+ *  authoritative values live in the Setting row `marketing.promotions`,
+ *  edited from /admin/marketing/promotions. The constants are still
+ *  exported in case any older code paths reference them. */
 export const REGISTRATION_COUPON_PERCENT = 10;
 export const REGISTRATION_COUPON_VALID_DAYS = 60;
 
@@ -58,15 +60,22 @@ export async function issueRegistrationWelcomeCoupon(args: {
   });
   if (existing) return;
 
+  // Read the live discount % + validity from the central promotions
+  // setting (admin-editable). On any failure the helper falls back to
+  // PROMO_DEFAULTS so this call path can never block on a missing row.
+  const promo = await readPromoSettings();
+  const percentOff = promo.registrationWelcomePct;
+  const validDays = promo.registrationWelcomeValidDays;
+
   const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + REGISTRATION_COUPON_VALID_DAYS);
+  expiresAt.setDate(expiresAt.getDate() + validDays);
 
   try {
     await prisma.coupon.create({
       data: {
         code,
         kind: "PERCENT",
-        value: new Prisma.Decimal(REGISTRATION_COUPON_PERCENT),
+        value: new Prisma.Decimal(percentOff),
         minSubtotal: null,
         maxRedemptions: 1,
         firstOrderOnly: true,
@@ -93,8 +102,8 @@ export async function issueRegistrationWelcomeCoupon(args: {
     await sendRegistrationWelcomeEmail({
       email: args.email,
       couponCode: code,
-      percentOff: REGISTRATION_COUPON_PERCENT,
-      validDays: REGISTRATION_COUPON_VALID_DAYS,
+      percentOff,
+      validDays,
     });
   } catch (err) {
     console.error("[registration-welcome] email failed", err);

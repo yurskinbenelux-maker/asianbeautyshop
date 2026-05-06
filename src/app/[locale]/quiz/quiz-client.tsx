@@ -31,7 +31,14 @@ type QuizResponse = {
   brief: QuizBrief;
 };
 
-export function QuizClient({ locale }: { locale: string }) {
+export function QuizClient({
+  locale,
+  quizPercent,
+}: {
+  locale: string;
+  /** Live quiz reward % from /admin/marketing/promotions, server-provided. */
+  quizPercent: number;
+}) {
   const t = useTranslations("quizPage");
   const tConcierge = useTranslations("concierge");
   const uiLocale = useLocale();
@@ -267,6 +274,7 @@ export function QuizClient({ locale }: { locale: string }) {
         brief={result?.brief}
         locale={locale}
         onRetake={retake}
+        quizPercent={quizPercent}
       />
     </div>
   );

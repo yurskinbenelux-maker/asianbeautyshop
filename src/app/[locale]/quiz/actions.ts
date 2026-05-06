@@ -28,7 +28,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import {
   recordQuizCompletion,
-  QUIZ_REWARD_PERCENT,
+  getQuizRewardConfig,
 } from "@/lib/quiz/reward";
 import { loadQuizRitualIntoCart } from "@/lib/cart/quiz-ritual";
 import { sendQuizRitualReadyEmail } from "@/lib/email/quiz-ritual-ready";
@@ -192,13 +192,14 @@ async function sendCompletionEmail(args: {
         priceEur: Number(p.price),
       }));
     const expiresOn = args.expiresAt.toISOString().slice(0, 10);
+    const { percentOff } = await getQuizRewardConfig();
 
     await sendQuizRitualReadyEmail({
       email: args.email,
       cartLinkToken: args.cartLinkToken,
       items,
       expiresOn,
-      percentOff: QUIZ_REWARD_PERCENT,
+      percentOff,
     });
   } catch (err) {
     console.error("[quiz/claim] email send failed", err);

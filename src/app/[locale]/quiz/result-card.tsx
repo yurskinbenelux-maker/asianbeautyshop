@@ -47,11 +47,15 @@ export function RitualResult({
   brief,
   locale,
   onRetake,
+  quizPercent,
 }: {
   ritual: RitualPick[];
   brief: QuizBrief | undefined;
   locale: string;
   onRetake: () => void;
+  /** Live quiz reward % from /admin/marketing/promotions. Drives the
+   *  strikethrough math + the "−X% · registered customers" microcopy. */
+  quizPercent: number;
 }) {
   const t = useTranslations("quizPage");
   const tConcierge = useTranslations("concierge");
@@ -78,7 +82,7 @@ export function RitualResult({
     (sum, r) => sum + (r.product?.priceEur ?? 0),
     0,
   );
-  const discountedEur = totalEur * 0.85;
+  const discountedEur = totalEur * (1 - quizPercent / 100);
 
   function claimRitual() {
     if (bundlePending) return;
@@ -290,7 +294,7 @@ export function RitualResult({
                 )}
               </button>
               <p className="text-center text-[10.5px] uppercase tracking-label text-vermilion sm:text-right">
-                −15% · registered customers · 60-day code
+                −{quizPercent}% · registered customers · 60-day code
               </p>
               {bundleError ? (
                 <p className="text-center text-[11px] text-vermilion sm:text-right">

@@ -16,7 +16,7 @@ import "server-only";
 import { Locale, ProductKind, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateCart } from "./cart";
-import { QUIZ_REWARD_PERCENT } from "@/lib/quiz/reward";
+import { getQuizRewardConfig } from "@/lib/quiz/reward";
 
 /** Marker we write to CartItem.discountReason when the line was added
  *  via the quiz reward flow. The pricing engine looks for any non-null
@@ -61,6 +61,12 @@ export async function loadQuizRitualIntoCart(args: {
 
   const cart = await getOrCreateCart({ locale: args.locale });
 
+  // Read live quiz discount % at the moment we materialise the cart
+  // lines — the value is frozen onto each CartItem.discountPercent, so
+  // a customer mid-checkout doesn't get a surprise rate change if Sofia
+  // edits /admin/marketing/promotions during their session.
+  const { percentOff: quizPercent } = await getQuizRewardConfig();
+
   await prisma.$transaction(async (tx) => {
     // Wipe whatever was in the cart — the email link is a "restore the
     // exact skincare routine" affordance, not "merge into your existing basket".
@@ -79,7 +85,7 @@ export async function loadQuizRitualIntoCart(args: {
           quantity: 1,
           unitPrice: price as Prisma.Decimal,
           discountReason: QUIZ_REWARD_DISCOUNT_REASON,
-          discountPercent: QUIZ_REWARD_PERCENT,
+          discountPercent: quizPercent,
         };
       })
       .filter(<T,>(x: T | null): x is T => x !== null);

@@ -75,6 +75,7 @@ const SECTIONS: Section[] = [
   { href: "/admin/banners",      label: "Banners",      icon: LayoutPanelTop, cap: "banners.edit" },
   { href: "/admin/homepage",     label: "Website copy", icon: PenSquare,     cap: "homepage.edit" },
   { href: "/admin/marketing/welcome-popup", label: "Welcome popup", icon: Megaphone, cap: "homepage.edit" },
+  { href: "/admin/marketing/promotions", label: "Promotions", icon: BadgePercent, cap: "homepage.edit" },
   { href: "/admin/journal",    label: "Journal",    icon: BookOpen,         cap: "journal.edit" },
   { href: "/admin/pages",      label: "Pages",      icon: FileText,         cap: "pages.edit" },
   { href: "/admin/media",      label: "Media",      icon: ImageIcon,        cap: "media.edit" },

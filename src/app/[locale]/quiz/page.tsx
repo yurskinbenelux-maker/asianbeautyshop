@@ -18,6 +18,7 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 import { Sparkles } from "lucide-react";
 
 import { QuizClient } from "./quiz-client";
+import { readPromoSettings } from "@/lib/queries/promotions";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -43,6 +44,13 @@ export default async function QuizPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("quizPage");
+
+  // Live quiz reward % from /admin/marketing/promotions. Passed down to
+  // the client so the strikethrough math + label show the same number
+  // as the coupon that'll get minted at claim time. (Already-issued
+  // coupons keep their original rate — we just display what NEW claims
+  // will receive.)
+  const promo = await readPromoSettings();
 
   return (
     <section className="relative overflow-hidden">
@@ -72,7 +80,7 @@ export default async function QuizPage({ params }: Props) {
         {/* The interactive card sits on a solid white-ish surface so the
             step buttons read well against the wash. */}
         <div className="mx-auto mt-12 max-w-3xl md:mt-16">
-          <QuizClient locale={locale} />
+          <QuizClient locale={locale} quizPercent={promo.quizRewardPct} />
         </div>
       </div>
     </section>

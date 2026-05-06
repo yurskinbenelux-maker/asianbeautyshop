@@ -15,9 +15,27 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { readPromoSettings } from "@/lib/queries/promotions";
 
+/** Defaults — used as a TS fallback. The authoritative values live in
+ *  the Setting row `marketing.promotions`, edited from
+ *  /admin/marketing/promotions. Constants are still exported so any
+ *  legacy callers compile; new code should call getQuizRewardConfig(). */
 export const QUIZ_REWARD_PERCENT = 15;
 export const QUIZ_REWARD_VALID_DAYS = 60;
+
+/** Async getter for callers that need the live values — single source
+ *  of truth via the central promotions setting. */
+export async function getQuizRewardConfig(): Promise<{
+  percentOff: number;
+  validDays: number;
+}> {
+  const promo = await readPromoSettings();
+  return {
+    percentOff: promo.quizRewardPct,
+    validDays: promo.quizRewardValidDays,
+  };
+}
 
 /** Deterministic per-user code. Reusing the same shape as the
  *  registration-welcome coupon so admin can pattern-match across both
@@ -44,8 +62,11 @@ export function hashCartLinkToken(raw: string): string {
 
 // ────────── coupon mint (idempotent) ────────────────────────────────────
 
-/** Mint the user's deterministic 15% coupon if it doesn't already exist.
- *  Returns the code regardless. Caller links it to the QuizCompletion. */
+/** Mint the user's deterministic quiz reward coupon if it doesn't
+ *  already exist. Reads the live discount % + validity from the central
+ *  promotions setting. Returns the code regardless of whether we
+ *  created it now or it already existed. Caller links it to the
+ *  QuizCompletion row. */
 export async function ensureQuizCoupon(userId: string): Promise<string> {
   const code = quizCouponCodeForUser(userId);
   const existing = await prisma.coupon.findUnique({
@@ -54,13 +75,15 @@ export async function ensureQuizCoupon(userId: string): Promise<string> {
   });
   if (existing) return code;
 
-  const expiresAt = quizExpiryFromNow();
+  const { percentOff, validDays } = await getQuizRewardConfig();
+  const expiresAt = expiryFromNow(validDays);
+
   try {
     await prisma.coupon.create({
       data: {
         code,
         kind: "PERCENT",
-        value: new Prisma.Decimal(QUIZ_REWARD_PERCENT),
+        value: new Prisma.Decimal(percentOff),
         minSubtotal: null,
         maxRedemptions: 1,
         firstOrderOnly: false, // quiz reward isn't first-order-only
@@ -81,9 +104,16 @@ export async function ensureQuizCoupon(userId: string): Promise<string> {
   return code;
 }
 
-export function quizExpiryFromNow(): Date {
+/** Compute an expiry date from now using the current quiz validity
+ *  setting. Async because it reads from the promotions setting. */
+export async function quizExpiryFromNow(): Promise<Date> {
+  const { validDays } = await getQuizRewardConfig();
+  return expiryFromNow(validDays);
+}
+
+function expiryFromNow(days: number): Date {
   const d = new Date();
-  d.setDate(d.getDate() + QUIZ_REWARD_VALID_DAYS);
+  d.setDate(d.getDate() + days);
   return d;
 }
 
@@ -116,7 +146,7 @@ export async function recordQuizCompletion(
   input: RecordCompletionInput,
 ): Promise<RecordCompletionResult> {
   const couponCode = await ensureQuizCoupon(input.userId);
-  const expiresAt = quizExpiryFromNow();
+  const expiresAt = await quizExpiryFromNow();
 
   const existing = await prisma.quizCompletion.findUnique({
     where: { userId: input.userId },
