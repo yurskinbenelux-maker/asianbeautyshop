@@ -18,6 +18,7 @@ import {
   BadgePercent,
   CheckCircle2,
   CircleSlash,
+  Instagram,
   Megaphone,
   Sparkles,
 } from "lucide-react";
@@ -25,17 +26,20 @@ import { requireCapability } from "@/lib/auth-roles";
 import { readWelcomePopupSettings } from "@/lib/queries/welcome-popup";
 import { readQuizPopupSettings } from "@/lib/queries/quiz-popup";
 import { readPromoSettings } from "@/lib/queries/promotions";
+import { getAllInstagramPosts } from "@/lib/queries/instagram";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminMarketingIndex() {
   await requireCapability("homepage.edit", "/admin");
 
-  const [welcome, quiz, promo] = await Promise.all([
+  const [welcome, quiz, promo, instagramPosts] = await Promise.all([
     readWelcomePopupSettings(),
     readQuizPopupSettings(),
     readPromoSettings(),
+    getAllInstagramPosts(),
   ]);
+  const activeInstagramCount = instagramPosts.filter((p) => p.isActive).length;
 
   return (
     <div className="mx-auto max-w-5xl px-8 py-10">
@@ -93,6 +97,25 @@ export default async function AdminMarketingIndex() {
               {promo.quizRewardPct}%). One source of truth that powers
               every coupon mint and every percent-off label across the
               site.
+            </>
+          }
+          alwaysActive
+        />
+
+        <Card
+          href="/admin/marketing/instagram"
+          icon={Instagram}
+          title="Instagram showcase"
+          description={
+            <>
+              Curated grid of Instagram posts shown below the journal
+              on the homepage. Currently{" "}
+              <strong>
+                {activeInstagramCount} active
+              </strong>{" "}
+              {activeInstagramCount === 1 ? "tile" : "tiles"}. Add a
+              post URL + image; clicking the tile opens the real
+              Instagram post in a new tab.
             </>
           }
           alwaysActive

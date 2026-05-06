@@ -20,9 +20,11 @@ import { Bestsellers } from "@/components/home/bestsellers";
 import { YourRitual } from "@/components/home/your-ritual";
 import { Testimonials } from "@/components/home/testimonials";
 import { JournalTeaser } from "@/components/home/journal-teaser";
+import { InstagramSection } from "@/components/home/instagram-section";
 import { Newsletter } from "@/components/home/newsletter";
 import { getSiteCopy, siteCopy, siteCopyOr } from "@/lib/queries/site-copy";
 import { listActiveTestimonials } from "@/lib/queries/testimonial";
+import { getInstagramTilesForHome } from "@/lib/queries/instagram";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -33,19 +35,21 @@ export default async function Home({ params }: Props) {
 
   // One SiteCopy query covers every homepage section. Any fields Sofia hasn't
   // overridden come back empty and will fall back to t() below.
-  const [copy, tHero, tSection, testimonials] = await Promise.all([
-    getSiteCopy(locale, [
-      "home.hero",
-      "home.bestsellers",
-      "home.ritual",
-      "home.testimonials",
-      "home.journal",
-      "home.newsletter",
-    ]),
-    getTranslations("hero"),
-    getTranslations("section"),
-    listActiveTestimonials(locale),
-  ]);
+  const [copy, tHero, tSection, testimonials, instagramTiles] =
+    await Promise.all([
+      getSiteCopy(locale, [
+        "home.hero",
+        "home.bestsellers",
+        "home.ritual",
+        "home.testimonials",
+        "home.journal",
+        "home.newsletter",
+      ]),
+      getTranslations("hero"),
+      getTranslations("section"),
+      listActiveTestimonials(locale),
+      getInstagramTilesForHome(),
+    ]);
 
   // Resolve each section's strings once on the server — siteCopy() takes
   // (dict, section, field, translator) and returns override ?? translator(field).
@@ -109,6 +113,10 @@ export default async function Home({ params }: Props) {
       <YourRitual copy={ritualCopy} />
       <Testimonials copy={testimonialsCopy} items={testimonials} />
       <JournalTeaser locale={locale} copy={journalCopy} />
+      {/* Curated Instagram grid — Sofia adds posts via
+          /admin/marketing/instagram. Self-hides when the list is empty
+          so a fresh install never shows a sad placeholder. */}
+      <InstagramSection tiles={instagramTiles} />
       <Newsletter locale={locale} copy={newsletterCopy} />
     </>
   );

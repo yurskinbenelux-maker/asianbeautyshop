@@ -1586,6 +1586,31 @@ model TestimonialTranslation {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
+//  INSTAGRAM SHOWCASE
+// ────────────────────────────────────────────────────────────────────────────
+//
+// Curated grid of Instagram posts surfaced on the homepage under the
+// journal section ("Join us on Instagram"). Sofia enters the post's
+// public URL + image URL from /admin/marketing/instagram. Clicking a
+// tile opens the actual IG post in a new tab. We deliberately don't
+// auto-pull from Meta — keeps the surface luxury-curated and avoids
+// every category of "Meta API token expired" outage.
+
+model InstagramPost {
+  id          String   @id @default(uuid()) @db.Uuid
+  imageUrl    String                            // public URL of the image
+  imageAlt    String?                           // for screen readers + SEO
+  postUrl     String                            // https://instagram.com/p/...
+  caption     String?                           // optional short overlay (e.g. "@yur_skin_cosmetics")
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 //  NEWSLETTER — subscribers, double opt-in, GDPR consent
 // ────────────────────────────────────────────────────────────────────────────
 
