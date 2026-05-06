@@ -1,32 +1,29 @@
 // ─────────────────────────────────────────────────────────────────────────
-// ShopMegaMenu — hover/focus dropdown that lists every category tree
-// (parents + their subcategories) plus the brand list. Sits inside the
-// desktop primary nav.
+// ShopMegaMenu — desktop nav dropdown for the Product types entry.
+// Lists every category tree (parents + their subcategories). Brands
+// have their own top-level menu now (BrandsMegaMenu) — they used to
+// live as a right-rail column here.
 //
 // Layout:
 //
 //   ┌──────────────────────────────────────────────────────────────┐
-//   │ [Cleansers]    [Toners]    [Treatments]   │  By brand        │
-//   │  · Oil Cleansers   · Hydrating  · Essences │  · YU.R          │
-//   │  · Cleansing Balms · Calming    · Serums   │  · YU.R Pro      │
-//   │  · Micellar        · Mist       · Ampoules │  · YU.R Me       │
-//   │  …                  …            …          │                  │
+//   │ [Cleansers]    [Toners]    [Treatments]    [Masks]            │
+//   │  · Oil Cleansers   · Hydrating  · Essences  · Sheet           │
+//   │  · Cleansing Balms · Calming    · Serums    · Sleep           │
+//   │  · Micellar        · Mist       · Ampoules  · Clay            │
+//   │  …                  …            …            …                │
 //   └──────────────────────────────────────────────────────────────┘
 //
-// Three opening modes:
-//   1. Pointer hover — opens after the cursor enters the trigger or
-//      panel; closes after a small grace delay when the cursor leaves
-//      both. The grace prevents flicker when the user diagonally swipes
-//      across the gap from trigger → panel.
-//   2. Keyboard focus — Tab onto the SHOP link, ArrowDown / Enter open
-//      the menu. Esc closes. Focus moves into the panel naturally.
-//   3. Click on SHOP — does NOT open the menu; goes straight to /shop
-//      (the next-intl Link's default). Customers who want the broad
-//      page get there without a popup blocking the view.
+// Trigger label is "Product types" (was "Shop"). When the panel is
+// open, the trigger flips to vermilion as an active-state cue. Parent
+// category headings inside the panel are rendered in vermilion too,
+// so the visual hierarchy reads top-to-bottom: brand-coloured parents
+// section their grey-ink children.
 //
-// The trigger is rendered as a Link so SSR + crawlers see a normal
-// "/shop" anchor. Hover state lives entirely in the parent wrapper —
-// no client-state on the link itself.
+// Three opening modes (unchanged):
+//   1. Pointer hover with a 120ms grace on close.
+//   2. Keyboard focus + ArrowDown.
+//   3. Click on the trigger goes straight to /shop.
 // ─────────────────────────────────────────────────────────────────────────
 
 "use client";
@@ -52,14 +49,12 @@ export type ShopMegaMenuBrand = {
 type Props = {
   /** Top-level categories with their (non-empty) children. */
   tree: ShopMegaMenuParent[];
-  /** Active brands with at least one published product. */
-  brands: ShopMegaMenuBrand[];
 };
 
 /** ms before a hover-out closes the menu — covers the trigger ↔ panel gap. */
 const HOVER_GRACE_MS = 120;
 
-export function ShopMegaMenu({ tree, brands }: Props) {
+export function ShopMegaMenu({ tree }: Props) {
   const t = useTranslations("nav");
   const tShop = useTranslations("shop");
   const [open, setOpen] = useState(false);
@@ -121,7 +116,7 @@ export function ShopMegaMenu({ tree, brands }: Props) {
   // No content at all (fresh install with no products) → render trigger
   // only, skip the panel entirely. Customers shouldn't see an empty
   // dropdown taunting them with "no categories yet".
-  const hasContent = tree.length > 0 || brands.length > 0;
+  const hasContent = tree.length > 0;
 
   return (
     <div
@@ -156,9 +151,14 @@ export function ShopMegaMenu({ tree, brands }: Props) {
             });
           }
         }}
-        className="relative text-[13px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
+        className={cn(
+          "relative text-[13px] uppercase tracking-label transition-colors",
+          // Active vermilion when the panel is open, regardless of
+          // hover state — gives a visible "you're in this menu" cue.
+          open ? "text-vermilion" : "text-ink hover:text-vermilion",
+        )}
       >
-        {t("shop")}
+        {t("product_types")}
       </Link>
 
       {/* Panel — anchored under the trigger and centered. Width grows
@@ -168,7 +168,7 @@ export function ShopMegaMenu({ tree, brands }: Props) {
       {hasContent && (
         <div
           role="menu"
-          aria-label={t("shop")}
+          aria-label={t("product_types")}
           className={cn(
             // pt-3 creates the visual gap to the nav while the wrapper
             // stays a single hover target — cursor never crosses dead
@@ -205,7 +205,12 @@ export function ShopMegaMenu({ tree, brands }: Props) {
                       role="menuitem"
                       href={`/shop/category/${parent.slug}`}
                       onClick={() => setOpen(false)}
-                      className="font-display text-[14px] text-ink transition-colors hover:text-vermilion"
+                      // Parents are vermilion always — they're the
+                      // section headers within an active panel; the
+                      // grey-ink children below contrast cleanly.
+                      // Hover deepens to ink on the parent, mirroring
+                      // the children's hover-to-vermilion direction.
+                      className="font-display text-[14px] text-vermilion transition-colors hover:text-ink"
                     >
                       {parent.name}
                     </Link>
@@ -246,35 +251,10 @@ export function ShopMegaMenu({ tree, brands }: Props) {
               </div>
             </div>
 
-            {/* ── Brands column ─────────────────────────────────────
-                Right rail. Always rendered (even with one brand) so
-                the visual balance of the panel stays consistent. The
-                vertical hairline separates it from the category grid;
-                w-px keeps the rule crisp on retina. */}
-            {brands.length > 0 && (
-              <>
-                <div className="w-px shrink-0 self-stretch bg-ink/10" />
-                <div className="w-[200px] shrink-0">
-                  <div className="mb-3 text-[10px] uppercase tracking-label text-ink-mid/70">
-                    {tShop("by_brand")}
-                  </div>
-                  <ul className="flex flex-col gap-2">
-                    {brands.map((b) => (
-                      <li key={b.slug}>
-                        <Link
-                          role="menuitem"
-                          href={`/shop/brand/${b.slug}`}
-                          onClick={() => setOpen(false)}
-                          className="block text-[12px] text-ink transition-colors hover:text-vermilion"
-                        >
-                          {b.name}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </>
-            )}
+            {/* Brands used to live as a right-rail column here.
+                They've moved to their own top-level menu
+                (BrandsMegaMenu) so the Product types panel can give
+                categories more breathing room. */}
           </div>
         </div>
       )}

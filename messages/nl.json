@@ -22,6 +22,11 @@
   },
   "nav": {
     "shop": "Shop",
+    "product_types": "Producttypes",
+    "brands": "Merken",
+    "brands_all": "Alle merken bekijken",
+    "sale": "Sale",
+    "new_products": "Nieuw",
     "shop_all": "Alle producten bekijken",
     "skin_quiz": "Huidquiz",
     "rituals": "Huidverzorgingsroutines",

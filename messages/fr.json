@@ -22,6 +22,11 @@
   },
   "nav": {
     "shop": "Boutique",
+    "product_types": "Types de produits",
+    "brands": "Marques",
+    "brands_all": "Voir toutes les marques",
+    "sale": "Solde",
+    "new_products": "Nouveau",
     "shop_all": "Voir tous les produits",
     "skin_quiz": "Test de peau",
     "rituals": "Routines de soin",

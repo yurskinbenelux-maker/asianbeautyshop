@@ -20,6 +20,7 @@ import {
   type ShopMegaMenuParent,
   type ShopMegaMenuBrand,
 } from "@/components/layout/shop-mega-menu";
+import { BrandsMegaMenu } from "@/components/layout/brands-mega-menu";
 
 export function Nav({
   shopTree = [],
@@ -176,24 +177,37 @@ export function Nav({
         {/* ── Instagram link — sits right next to the wordmark on every
             viewport so visitors see the social channel without scrolling.
             Plain anchor, no API, no auth — opens the IG profile in a new
-            tab. Update the href if the handle ever changes. */}
+            tab. Update the href if the handle ever changes.
+            Spacing: ml-2 gives the IG icon a small breathing gap from
+            the wordmark — enough to read as a separate element rather
+            than glued onto the logo, but still clearly grouped left. */}
         <a
           href="https://www.instagram.com/yur_skin_cosmetics/"
           target="_blank"
           rel="noopener noreferrer"
           aria-label={t("nav.instagram")}
-          className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center text-ink-mid transition-colors hover:text-vermilion"
+          className="ml-2 flex h-9 w-9 shrink-0 items-center justify-center text-ink-mid transition-colors hover:text-vermilion"
         >
           <Instagram className="h-4 w-4" aria-hidden />
         </a>
 
         {/* ── Primary navigation (desktop only) ────────────────────── */}
-        {/* SHOP is rendered as a hover/focus mega-menu — clicking the
-            word still navigates to /shop, but hovering reveals every
-            category in a small panel below. The other primary links
-            stay simple text anchors. */}
-        <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
-          <ShopMegaMenu tree={shopTree} brands={shopBrands} />
+        {/* Eight items now: Product types, Brands, Sale, New, Skin Quiz,
+            Ingredients, Journal, About. Both Product types and Brands
+            are mega-menus (hover opens panel; click trigger goes to a
+            full page). Sale, New, Ingredients, Journal, About are
+            plain text anchors.
+            Gap dropped from 8 → 5 (lg+ breakpoints get 6) so all eight
+            items fit on a 1280px laptop. The lighter gap reads tight
+            but not crowded — luxury convention. */}
+        <nav
+          className="hidden items-center gap-5 lg:gap-6 md:flex"
+          aria-label="Primary"
+        >
+          <ShopMegaMenu tree={shopTree} />
+          <BrandsMegaMenu brands={shopBrands} />
+          <NavLink href="/sale">{t("nav.sale")}</NavLink>
+          <NavLink href="/new">{t("nav.new_products")}</NavLink>
           {/* Skin quiz replaces the old "Rituals" header link — the quiz
               is the higher-intent funnel into product recommendations.
               The /rituals editorial page still exists and is reachable
@@ -298,7 +312,7 @@ export function Nav({
             aria-label="Mobile primary"
           >
             <ul className="flex flex-col">
-              {/* Shop accordion */}
+              {/* Product types accordion (was "Shop") */}
               <li>
                 <button
                   type="button"
@@ -307,7 +321,7 @@ export function Nav({
                   onClick={() => setMobileShopOpen((v) => !v)}
                   className="flex h-14 w-full items-center justify-between text-[15px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
                 >
-                  <span>{t("nav.shop")}</span>
+                  <span>{t("nav.product_types")}</span>
                   <ChevronDown
                     className={cn(
                       "h-4 w-4 transition-transform duration-200",
@@ -413,49 +427,10 @@ export function Nav({
                     </div>
                   )}
 
-                  {/* ── By brand ──────────────────────────────────
-                      Separate sub-accordion so opening it doesn't
-                      collapse the category tree. */}
-                  {shopBrands.length > 0 && (
-                    <div className="border-t border-ink/10 py-2">
-                      <button
-                        type="button"
-                        aria-expanded={mobileBrandsOpen}
-                        aria-controls="mobile-shop-brands"
-                        onClick={() => setMobileBrandsOpen((v) => !v)}
-                        className="flex h-11 w-full items-center justify-between text-[10px] uppercase tracking-label text-ink-mid/70 transition-colors hover:text-vermilion"
-                      >
-                        <span>{t("shop.by_brand")}</span>
-                        <ChevronDown
-                          className={cn(
-                            "h-4 w-4 transition-transform duration-200",
-                            mobileBrandsOpen ? "rotate-180" : "rotate-0",
-                          )}
-                        />
-                      </button>
-                      <ul
-                        id="mobile-shop-brands"
-                        className={cn(
-                          "overflow-hidden border-l border-ink/10 pl-3 transition-[max-height,opacity] duration-200",
-                          mobileBrandsOpen
-                            ? "max-h-[400px] opacity-100"
-                            : "max-h-0 opacity-0",
-                        )}
-                      >
-                        {shopBrands.map((b) => (
-                          <li key={b.slug}>
-                            <Link
-                              href={`/shop/brand/${b.slug}`}
-                              onClick={() => setMobileOpen(false)}
-                              className="flex h-10 items-center text-[12px] text-ink transition-colors hover:text-vermilion"
-                            >
-                              {b.name}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  {/* Brands moved out of this accordion into their own
+                      top-level Brands entry below. The "View all
+                      products" affordance below stays here for shoppers
+                      who want the full catalogue. */}
 
                   {/* Always offer the broad "View all" — useful when
                       the visitor doesn't know which shelf fits. */}
@@ -469,6 +444,83 @@ export function Nav({
                     </Link>
                   </div>
                 </div>
+              </li>
+
+              {/* Brands — its own top-level accordion. Tapping the row
+                  opens a sub-list of brand names; tapping a brand goes
+                  to its filtered shop view. The "View all brands"
+                  affordance at the bottom takes the visitor to the
+                  /brands index page. */}
+              {shopBrands.length > 0 && (
+                <li>
+                  <button
+                    type="button"
+                    aria-expanded={mobileBrandsOpen}
+                    aria-controls="mobile-brands-list"
+                    onClick={() => setMobileBrandsOpen((v) => !v)}
+                    className="flex h-14 w-full items-center justify-between text-[15px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
+                  >
+                    <span>{t("nav.brands")}</span>
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 transition-transform duration-200",
+                        mobileBrandsOpen ? "rotate-180" : "rotate-0",
+                      )}
+                    />
+                  </button>
+                  <ul
+                    id="mobile-brands-list"
+                    className={cn(
+                      "overflow-hidden border-l-2 border-vermilion/20 pl-3 transition-[max-height,opacity] duration-300",
+                      mobileBrandsOpen
+                        ? "max-h-[400px] opacity-100"
+                        : "max-h-0 opacity-0",
+                    )}
+                  >
+                    {shopBrands.map((b) => (
+                      <li key={b.slug}>
+                        <Link
+                          href={`/shop/brand/${b.slug}`}
+                          onClick={() => setMobileOpen(false)}
+                          className="flex h-11 items-center text-[13px] text-ink transition-colors hover:text-vermilion"
+                        >
+                          {b.name}
+                        </Link>
+                      </li>
+                    ))}
+                    <li className="border-t border-ink/10">
+                      <Link
+                        href="/brands"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex h-11 items-center text-[11px] uppercase tracking-label text-ink-mid transition-colors hover:text-vermilion"
+                      >
+                        {t("nav.brands_all")}
+                      </Link>
+                    </li>
+                  </ul>
+                </li>
+              )}
+
+              {/* Sale and New — flat top-level links between Brands and
+                  Skin Quiz. They route to /sale and /new which pre-filter
+                  the shop grid (Phase 4 work). */}
+              <li>
+                <Link
+                  href="/sale"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex h-14 items-center text-[15px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
+                >
+                  {t("nav.sale")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/new"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex h-14 items-center text-[15px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
+                >
+                  {t("nav.new_products")}
+                </Link>
               </li>
 
               {/* Remaining primary links — plain anchors.

@@ -22,6 +22,11 @@
   },
   "nav": {
     "shop": "Магазин",
+    "product_types": "Типы продуктов",
+    "brands": "Бренды",
+    "brands_all": "Все бренды",
+    "sale": "Распродажа",
+    "new_products": "Новинки",
     "shop_all": "Все товары",
     "skin_quiz": "Тест для кожи",
     "rituals": "Рутины",
