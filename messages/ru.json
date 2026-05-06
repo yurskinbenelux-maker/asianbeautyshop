@@ -42,7 +42,8 @@
     "instagram": "Instagram"
   },
   "announcement": {
-    "free_shipping": "Бесплатная доставка от {amount}"
+    "free_shipping": "Бесплатная доставка от {amount}",
+    "yurclub": "Получайте баллы за каждый заказ — вступите в YU.R Club бесплатно. Зарегистрируйтесь, чтобы начать"
   },
   "hero": {
     "eyebrow": "Новое — весенняя коллекция",

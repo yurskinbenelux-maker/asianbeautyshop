@@ -1,27 +1,27 @@
 // ─────────────────────────────────────────────────────────────────────────
-// AnnouncementBar — slim sitewide strip above the header.
+// AnnouncementBar — slim sitewide strip(s) above the header.
 //
-// Currently surfaces the free-shipping threshold only. Sits above the
-// nav (so the nav itself doesn't visually shift when the bar updates)
-// and renders fully server-side — the threshold and locale come from
-// the layout, no React state involved.
+// Currently renders TWO stacked rows:
+//   1. Vermilion: free-shipping threshold (reads admin setting)
+//   2. Ink (black): YurClub teaser — earn points on every order, links
+//      through to the sign-up page.
 //
-// Why a single-purpose component now:
-//   · Sofia asked for a "From €50, delivery is free" banner specifically
-//   · Keeping the component dedicated avoids prematurely abstracting a
-//     generic announcement system (slot for promos, holidays, etc.)
-//   · When the time comes for a multi-message rotator, this file can be
-//     swapped out without touching the layout.
+// Both rows are server-rendered. The free-shipping row hides itself if
+// the threshold is 0 (always-free campaigns); the YurClub row hides for
+// already-signed-in customers since they're already members.
 //
-// Accessibility notes:
-//   · Wrapped in an <aside role="status"> so screen readers can pick it
-//     up at page load but don't announce it as a navigation landmark.
-//   · `aria-label` describes its purpose so a JAWS user lands here and
-//     knows it's brand info, not interactive.
+// Accessibility:
+//   · Wrapper is <aside role="region"> with a single landmark name
+//     ("Site announcements") so screen readers see one bar, not two.
+//   · The YurClub row is a real <a> so it's keyboard-reachable + the
+//     whole strip is clickable, not just the button.
 // ─────────────────────────────────────────────────────────────────────────
 
+import Link from "next/link";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { formatEur, priceLocale } from "@/lib/utils";
+import { getCurrentUser } from "@/lib/auth";
 
 type Props = {
   /** Free-shipping threshold in EUR — passed in from the layout so the
@@ -34,29 +34,59 @@ type Props = {
 
 export async function AnnouncementBar({ thresholdEur, locale }: Props) {
   const t = await getTranslations("announcement");
+  const user = await getCurrentUser();
+  const isLoggedIn = !!user;
 
-  // Don't render if Sofia has zeroed the threshold (e.g. always-free
-  // shipping campaign) — the bar would say "Free delivery from €0"
-  // which reads as broken. Better to vanish.
-  if (!thresholdEur || thresholdEur <= 0) return null;
+  const showShippingRow = thresholdEur > 0;
 
-  const amount = formatEur(thresholdEur, priceLocale(locale));
+  // Don't render anything if both rows would be empty.
+  if (!showShippingRow && isLoggedIn) return null;
+
+  const amount = showShippingRow
+    ? formatEur(thresholdEur, priceLocale(locale))
+    : "";
 
   return (
     <aside
-      role="status"
-      aria-label="Site announcement"
-      // Vermilion bg with rice text so the bar reads as a quiet brand
-      // accent rather than a banner ad. Single line, centered, capped
-      // tracking. The `relative z-50` keeps it above the page wash but
-      // below modals (the cart drawer is z-[80], cookie banner z-[60]).
-      className="relative z-50 w-full bg-vermilion text-rice"
+      role="region"
+      aria-label="Site announcements"
+      // The wrapper sets z-index + width; each row applies its own bg.
+      className="relative z-50 w-full"
     >
-      <div className="container flex items-center justify-center py-2 text-center">
-        <span className="text-[10px] uppercase tracking-label sm:text-[11px]">
-          {t("free_shipping", { amount })}
-        </span>
-      </div>
+      {/* Row 1 — free shipping (vermilion / brand red) */}
+      {showShippingRow && (
+        <div className="bg-vermilion text-rice">
+          <div className="container flex items-center justify-center py-2 text-center">
+            <span className="text-[10px] uppercase tracking-label sm:text-[11px]">
+              {t("free_shipping", { amount })}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Row 2 — YurClub teaser (ink / black). Hidden for signed-in
+          users since they're already members. */}
+      {!isLoggedIn && (
+        <Link
+          href={`/${locale}/sign-up`}
+          // group-style link so the arrow nudges on hover. The whole
+          // strip is the click target — easier on mobile than tapping
+          // a small text link.
+          className="group block bg-ink text-rice transition-colors hover:bg-ink/90"
+          aria-label={t("yurclub")}
+        >
+          <div className="container flex items-center justify-center gap-2 py-2 text-center">
+            <Sparkles className="h-3 w-3 text-gold" aria-hidden />
+            <span className="text-[10px] uppercase tracking-label sm:text-[11px]">
+              {t("yurclub")}
+            </span>
+            <ArrowRight
+              className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5"
+              aria-hidden
+            />
+          </div>
+        </Link>
+      )}
     </aside>
   );
 }

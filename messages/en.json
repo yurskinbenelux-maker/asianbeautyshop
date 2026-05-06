@@ -42,7 +42,8 @@
     "instagram": "Instagram"
   },
   "announcement": {
-    "free_shipping": "Free delivery from {amount}"
+    "free_shipping": "Free delivery from {amount}",
+    "yurclub": "Earn points on every order — join YU.R Club free. Register to start"
   },
   "hero": {
     "eyebrow": "New arrival — spring collection",

@@ -42,7 +42,8 @@
     "instagram": "Instagram"
   },
   "announcement": {
-    "free_shipping": "Livraison offerte dès {amount}"
+    "free_shipping": "Livraison offerte dès {amount}",
+    "yurclub": "Cumulez des points à chaque commande — adhérez gratuitement à YU.R Club. Inscrivez-vous pour commencer"
   },
   "hero": {
     "eyebrow": "Nouveauté — collection printemps",
