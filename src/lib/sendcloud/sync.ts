@@ -164,10 +164,26 @@ function buildParcelPayload(order: {
     },
 
     // ── Carrier selection ────────────────────────────────────────────
-    // "shipping_rules" tells Sendcloud to apply the rules Sofia
-    // configured in her panel (PostNL for BE/NL, etc.) rather than
-    // requiring us to send a hardcoded shipping_option_code.
-    ship_with: { type: "shipping_rules" },
+    //
+    // v3 requires `ship_with` to be structurally valid even when we want
+    // panel rules to pick the real carrier. James from Sendcloud support
+    // confirmed the canonical pattern: pass `sendcloud:letter` as a
+    // placeholder shipping_option_code, then set `apply_shipping_rules:
+    // true` — the rules engine overrides the placeholder with whatever
+    // Sofia's panel rules dictate (PostNL for BE/NL, etc.).
+    //
+    // We never want a real letter shipped — the placeholder is just to
+    // satisfy schema validation; if rules don't match for some reason,
+    // Sendcloud will surface the issue rather than silently shipping a
+    // letter (`sendcloud:letter` is a special "unstamped letter" tier
+    // designed for exactly this purpose).
+    ship_with: {
+      type: "shipping_option_code",
+      properties: {
+        shipping_option_code: "sendcloud:letter",
+      },
+    },
+    apply_shipping_rules: true,
 
     // ── Identifiers ──────────────────────────────────────────────────
     // `order_number` is what Sofia sees in the panel; `external_reference`
