@@ -43,7 +43,8 @@
   },
   "announcement": {
     "free_shipping": "Gratis bezorging vanaf {amount}",
-    "yurclub": "Verdien punten bij elke bestelling — word gratis lid van YU.R Club. Registreer je om te beginnen"
+    "yurclub": "Verdien punten bij elke bestelling — word gratis lid van YU.R Club. Registreer je om te beginnen",
+    "yurclub_balance": "{points, plural, =0 {Nog geen YU.R Club punten — winkel verder om te sparen} =1 {1 YU.R Club punt op je account — bekijk saldo} other {# YU.R Club punten op je account — bekijk saldo}}"
   },
   "hero": {
     "eyebrow": "Nieuw — lentecollectie",

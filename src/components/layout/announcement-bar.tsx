@@ -1,20 +1,17 @@
 // ─────────────────────────────────────────────────────────────────────────
 // AnnouncementBar — slim sitewide strip(s) above the header.
 //
-// Currently renders TWO stacked rows:
+// Renders TWO stacked rows:
 //   1. Vermilion: free-shipping threshold (reads admin setting)
-//   2. Ink (black): YurClub teaser — earn points on every order, links
-//      through to the sign-up page.
+//   2. Ink (black): YurClub strip — copy switches by auth state:
+//        · Signed-out → "Earn points on every order — join free"
+//                       (links to sign-up)
+//        · Signed-in  → "{N} points in your YU.R Club balance"
+//                       (links to /account where the drawer opens)
 //
-// Both rows are server-rendered. The free-shipping row hides itself if
-// the threshold is 0 (always-free campaigns); the YurClub row hides for
-// already-signed-in customers since they're already members.
-//
-// Accessibility:
-//   · Wrapper is <aside role="region"> with a single landmark name
-//     ("Site announcements") so screen readers see one bar, not two.
-//   · The YurClub row is a real <a> so it's keyboard-reachable + the
-//     whole strip is clickable, not just the button.
+// The signed-in path runs ONE extra cheap query (LoyaltyAccount.pointsBalance
+// only) so we don't trigger the heavy drawer-data pipeline on every page
+// load. Customer with no LoyaltyAccount row yet falls back to "0 points".
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
@@ -22,6 +19,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { formatEur, priceLocale } from "@/lib/utils";
 import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 type Props = {
   /** Free-shipping threshold in EUR — passed in from the layout so the
@@ -39,8 +37,16 @@ export async function AnnouncementBar({ thresholdEur, locale }: Props) {
 
   const showShippingRow = thresholdEur > 0;
 
-  // Don't render anything if both rows would be empty.
-  if (!showShippingRow && isLoggedIn) return null;
+  // For signed-in customers, look up their cached points balance.
+  // Single-column read on a row keyed by userId — cheap.
+  let pointsBalance = 0;
+  if (isLoggedIn && user) {
+    const account = await prisma.loyaltyAccount.findUnique({
+      where: { userId: user.id },
+      select: { pointsBalance: true },
+    });
+    pointsBalance = account?.pointsBalance ?? 0;
+  }
 
   const amount = showShippingRow
     ? formatEur(thresholdEur, priceLocale(locale))
@@ -50,7 +56,6 @@ export async function AnnouncementBar({ thresholdEur, locale }: Props) {
     <aside
       role="region"
       aria-label="Site announcements"
-      // The wrapper sets z-index + width; each row applies its own bg.
       className="relative z-50 w-full"
     >
       {/* Row 1 — free shipping (vermilion / brand red) */}
@@ -64,29 +69,34 @@ export async function AnnouncementBar({ thresholdEur, locale }: Props) {
         </div>
       )}
 
-      {/* Row 2 — YurClub teaser (ink / black). Hidden for signed-in
-          users since they're already members. */}
-      {!isLoggedIn && (
-        <Link
-          href={`/${locale}/sign-up`}
-          // group-style link so the arrow nudges on hover. The whole
-          // strip is the click target — easier on mobile than tapping
-          // a small text link.
-          className="group block bg-ink text-rice transition-colors hover:bg-ink/90"
-          aria-label={t("yurclub")}
-        >
-          <div className="container flex items-center justify-center gap-2 py-2 text-center">
-            <Sparkles className="h-3 w-3 text-gold" aria-hidden />
-            <span className="text-[10px] uppercase tracking-label sm:text-[11px]">
-              {t("yurclub")}
-            </span>
-            <ArrowRight
-              className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5"
-              aria-hidden
-            />
-          </div>
-        </Link>
-      )}
+      {/* Row 2 — YurClub strip (ink / black).
+          Same visual frame for both auth states; only the inner copy +
+          link target change so the bar's height + style stay stable
+          across login transitions. */}
+      <Link
+        href={
+          isLoggedIn ? `/${locale}/account` : `/${locale}/sign-up`
+        }
+        className="group block bg-ink text-rice transition-colors hover:bg-ink/90"
+        aria-label={
+          isLoggedIn
+            ? t("yurclub_balance", { points: pointsBalance })
+            : t("yurclub")
+        }
+      >
+        <div className="container flex items-center justify-center gap-2 py-2 text-center">
+          <Sparkles className="h-3 w-3 text-gold" aria-hidden />
+          <span className="text-[10px] uppercase tracking-label sm:text-[11px]">
+            {isLoggedIn
+              ? t("yurclub_balance", { points: pointsBalance })
+              : t("yurclub")}
+          </span>
+          <ArrowRight
+            className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5"
+            aria-hidden
+          />
+        </div>
+      </Link>
     </aside>
   );
 }

@@ -43,7 +43,8 @@
   },
   "announcement": {
     "free_shipping": "Free delivery from {amount}",
-    "yurclub": "Earn points on every order — join YU.R Club free. Register to start"
+    "yurclub": "Earn points on every order — join YU.R Club free. Register to start",
+    "yurclub_balance": "{points, plural, =0 {No YU.R Club points yet — keep shopping to earn} =1 {1 YU.R Club point in your account — view balance} other {# YU.R Club points in your account — view balance}}"
   },
   "hero": {
     "eyebrow": "New arrival — spring collection",
