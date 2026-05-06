@@ -262,14 +262,23 @@ export function Nav({
       {/* ── Mobile drawer ────────────────────────────────────────── */}
       {/* A simple slide-in left panel. Always rendered (not conditionally
           mounted) so the slide animation runs in both directions; visibility
-          is gated on `mobileOpen` via translate-x + opacity. */}
+          is gated on `mobileOpen` via translate-x + opacity.
+
+          iOS Safari fix (2026-05-06): we lock height with `h-[100dvh]`
+          on both the wrapper AND the panel. Without it, the panel
+          collapses to roughly its content height when the drawer
+          opens after the page has been scrolled — the URL bar's
+          dynamic shrink plus the sticky parent's stacking context
+          prevents `absolute inset-y-0` from resolving to a real
+          viewport height. `100dvh` (dynamic viewport height) is the
+          modern unit that tracks the URL bar correctly. */}
       <div
         id="mobile-nav-drawer"
         role="dialog"
         aria-modal="true"
         aria-label={t("nav.menu")}
         className={cn(
-          "fixed inset-0 z-[80] md:hidden",
+          "fixed inset-0 h-[100dvh] z-[80] md:hidden",
           mobileOpen ? "pointer-events-auto" : "pointer-events-none",
         )}
       >
@@ -285,10 +294,13 @@ export function Nav({
           tabIndex={mobileOpen ? 0 : -1}
         />
         {/* Panel — slides in from the leading edge. Width is capped at
-            85vw so a sliver of backdrop remains tappable for dismiss. */}
+            85vw so a sliver of backdrop remains tappable for dismiss.
+            `h-[100dvh]` pins the panel to the actual viewport height
+            (works around iOS Safari sticky-header stacking context
+            quirk where `inset-y-0` collapses post-scroll). */}
         <aside
           className={cn(
-            "absolute inset-y-0 left-0 flex w-[85vw] max-w-[360px] flex-col bg-rice transition-transform duration-300 ease-out",
+            "absolute left-0 top-0 flex h-[100dvh] w-[85vw] max-w-[360px] flex-col bg-rice transition-transform duration-300 ease-out",
             mobileOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
