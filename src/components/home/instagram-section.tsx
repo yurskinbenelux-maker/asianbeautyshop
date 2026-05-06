@@ -1,24 +1,24 @@
 // ─────────────────────────────────────────────────────────────────────────
-// InstagramSection — curated 6-tile grid below the journal teaser on
-// the homepage. Each tile is one of:
+// InstagramSection — curated grid below the journal teaser. Two layout
+// modes pick themselves automatically based on what Sofia has added:
 //
-//   1. A custom image (when Sofia pastes an `imageUrl` override) —
-//      server-rendered <Image>. Click goes to the IG post.
+//   1. ALL tiles have a custom imageUrl → tight 6-up "polaroid wall"
+//      (aspect-[4/5] portraits in a 3×2 grid). This is the
+//      recommended look — fast, on-brand, no IG chrome.
 //
-//   2. A live Instagram embed (default — when imageUrl is blank).
-//      Rendered via Meta's official embed.js script which converts
-//      <blockquote class="instagram-media"> nodes into authorised
-//      iframes (works around X-Frame-Options on the bare /embed/
-//      iframe URL — that approach gets blocked in production).
-//      See `instagram-embed-tile.tsx` for the client component.
+//   2. ANY tile is a live embed → 3-up grid with bigger tiles. IG's
+//      widget needs ≥326px width to render properly; cramming it
+//      into a 6-column grid produces the squashed mess we had
+//      before. Each embed sits in a 380-450px-wide column with its
+//      natural height.
 //
-// We load embed.js once at the section root via next/script so all
-// six tiles share the same loader. Self-hides when zero active tiles.
+// Self-hides when there are zero active tiles. Loads embed.js only
+// when at least one embed tile exists (saves ~30kb otherwise).
 // ─────────────────────────────────────────────────────────────────────────
 
 import Image from "next/image";
 import Script from "next/script";
-import { Instagram } from "lucide-react";
+import { ArrowUpRight, Instagram } from "lucide-react";
 import { InstagramEmbedTile } from "@/components/home/instagram-embed-tile";
 import { type InstagramPostCard } from "@/lib/queries/instagram";
 
@@ -35,20 +35,19 @@ export function InstagramSection({
 }) {
   if (tiles.length === 0) return null;
 
-  // Only inject embed.js when at least one tile actually needs it (i.e.
-  // some tile lacks an imageUrl override). Avoids loading 30kb of
-  // Instagram script for grids that are 100% custom images.
-  const needsScript = tiles.some((t) => !t.imageUrl?.trim());
+  // Embed mode = at least one tile lacks an imageUrl override. We
+  // need the bigger 3-up layout for these to render properly.
+  const hasEmbed = tiles.some((t) => !t.imageUrl?.trim());
+  // Cap the visible count — six is plenty for a homepage section
+  // and keeps the page light.
+  const visibleTiles = tiles.slice(0, hasEmbed ? 3 : 6);
 
   return (
     <section className="container py-16 md:py-24">
-      {needsScript && (
+      {hasEmbed && (
         <Script
           src="https://www.instagram.com/embed.js"
           strategy="afterInteractive"
-          // After the script loads, kick the processor once. Each
-          // <InstagramEmbedTile> also calls process() on mount, but
-          // this is the first-paint trigger for tiles already mounted.
           onLoad={() => {
             if (typeof window !== "undefined") {
               window.instgrm?.Embeds?.process?.();
@@ -57,7 +56,7 @@ export function InstagramSection({
         />
       )}
 
-      <header className="mb-8 flex flex-col items-center text-center">
+      <header className="mb-10 flex flex-col items-center text-center md:mb-12">
         <div className="text-[11px] uppercase tracking-label text-vermilion">
           Follow along
         </div>
@@ -75,21 +74,33 @@ export function InstagramSection({
         </a>
       </header>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:gap-3 lg:grid-cols-6">
-        {tiles.map((tile) => (
+      {/*
+        Two grid presets. Embed mode = 1/2/3 cols, taller tiles, capped
+        section width so single-tile layouts don't sprawl. Image mode =
+        2/3 cols × portrait 4:5 tiles for the classic polaroid wall.
+      */}
+      <div
+        className={
+          hasEmbed
+            ? "mx-auto grid max-w-5xl grid-cols-1 justify-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            : "grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4"
+        }
+      >
+        {visibleTiles.map((tile) => (
           <InstagramTile key={tile.id} tile={tile} />
         ))}
       </div>
 
-      <div className="mt-8 flex justify-center">
+      <div className="mt-10 flex justify-center md:mt-12">
         <a
           href={profileUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 border border-ink/15 bg-white/60 px-5 py-3 text-[12px] uppercase tracking-label text-ink transition-colors hover:border-ink hover:text-vermilion"
+          className="inline-flex items-center gap-2 border border-ink/15 bg-white/60 px-6 py-3 text-[12px] uppercase tracking-label text-ink transition-colors hover:border-ink hover:text-vermilion"
         >
           <Instagram className="h-3.5 w-3.5" aria-hidden />
           <span>Follow {handle}</span>
+          <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
         </a>
       </div>
     </section>
@@ -97,22 +108,20 @@ export function InstagramSection({
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Per-tile dispatcher. Image override = server <Image>; otherwise hand
-// off to the client embed component (which loads the IG script + swaps
-// in a real iframe).
+// Per-tile dispatcher. Image override = server <Image> (clean,
+// branded, fast). Otherwise hand off to the client embed component.
 // ─────────────────────────────────────────────────────────────────────────
 
 function InstagramTile({ tile }: { tile: InstagramPostCard }) {
   const useImage = !!tile.imageUrl?.trim();
 
-  // Branch 1: custom image override (server-rendered, fast)
   if (useImage) {
     return (
       <a
         href={tile.postUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="group relative aspect-square overflow-hidden bg-rice-dim"
+        className="group relative aspect-[4/5] w-full overflow-hidden bg-rice-dim"
         aria-label={
           tile.caption
             ? `${tile.caption} — open on Instagram`
@@ -123,18 +132,24 @@ function InstagramTile({ tile }: { tile: InstagramPostCard }) {
           src={tile.imageUrl as string}
           alt={tile.imageAlt ?? "Instagram post"}
           fill
-          sizes="(min-width: 1024px) 16vw, (min-width: 640px) 33vw, 50vw"
+          sizes="(min-width: 768px) 33vw, 50vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
+        {/* Subtle dark wash on hover so the icon stays legible */}
         <div
-          className="pointer-events-none absolute inset-0 flex items-center justify-center bg-ink/0 transition-colors duration-300 group-hover:bg-ink/30"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          aria-hidden
+        />
+        {/* IG glyph in the corner — confirms this is an Instagram tile */}
+        <div
+          className="pointer-events-none absolute right-3 top-3 flex h-8 w-8 items-center justify-center bg-white/0 text-rice opacity-0 transition-all duration-300 group-hover:bg-white/15 group-hover:opacity-100"
           aria-hidden
         >
-          <Instagram className="h-6 w-6 text-rice opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <Instagram className="h-4 w-4" />
         </div>
         {tile.caption && (
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 to-transparent px-3 py-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/85 to-transparent px-4 pb-4 pt-8 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
             aria-hidden
           >
             <p className="line-clamp-2 text-[11px] leading-snug text-rice">
@@ -146,6 +161,10 @@ function InstagramTile({ tile }: { tile: InstagramPostCard }) {
     );
   }
 
-  // Branch 2: live Instagram embed via official script
-  return <InstagramEmbedTile postUrl={tile.postUrl} caption={tile.caption} />;
+  // Live embed — taller column, IG widget gets its native height
+  return (
+    <div className="w-full max-w-[400px]">
+      <InstagramEmbedTile postUrl={tile.postUrl} caption={tile.caption} />
+    </div>
+  );
 }
