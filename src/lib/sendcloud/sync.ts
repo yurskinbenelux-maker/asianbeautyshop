@@ -297,8 +297,14 @@ export async function syncOrderToSendcloud(
     //   "Create a shipment with rules and/or defaults and announce it
     //    synchronously" — single call that creates the shipment, applies
     //    Sofia's panel shipping rules, and generates the label.
+    // The actual v3 endpoint is just `POST /api/v3/shipments` — James
+    // from Sendcloud support confirmed. The long slug we saw earlier
+    // (".../create-a-shipment-with-rules-and-or-default-and-announce-it-
+    // synchronously") was the docs page URL, not the API path. The
+    // request body's `apply_shipping_rules: true` is what selects the
+    // "with rules + announce synchronously" operation server-side.
     const res = await sendcloudFetch<SendcloudShipmentResponse>(
-      "/shipments/create-a-shipment-with-rules-and-or-default-and-announce-it-synchronously",
+      "/shipments",
       {
         method: "POST",
         body: payload,
