@@ -99,18 +99,19 @@ function buildParcelPayload(order: {
   }, 0);
   const weightKg = (totalGrams / 1000).toFixed(3);
 
-  // Sendcloud v3 Shipments shape — recipient lives under `to_address`,
-  // weight & values are objects with `{value, unit/currency}`, and
-  // `apply_shipping_rules: true` lets Sofia's panel rules pick the
-  // carrier so we don't need to send a shipping_option_code.
+  // Sendcloud v3 Shipments shape (POST /api/v3/shipments).
   //
-  // Endpoint we POST this to:
-  //   /api/v3/shipments/create-a-shipment-with-rules-and-or-default-and-announce-it-synchronously
-  //
-  // The "announce synchronously" half of that name is what generates
-  // the label in the same call — no second request needed.
+  // Field map (after live 400-validation feedback from Sendcloud):
+  //   • Recipient nested under `to_address`
+  //   • Sender required as `from_address` — we use K'Elmus's legal entity
+  //     (matches the invoice issuer snapshot in src/lib/invoices/issue.ts)
+  //   • Weight units must be one of "kg" | "g" | "lbs" | "oz" — NOT
+  //     "kilogram" (Sendcloud rejects "kilogram" with a strict-enum error)
+  //   • Per-item declared value is `price`, not `value`
+  //   • `ship_with: { type: "shipping_rules" }` defers carrier choice to
+  //     Sofia's panel rules (replaces v2's `apply_shipping_rules: true`)
   return {
-    // Recipient — v3 nests these in `to_address` (vs v2's flat fields).
+    // ── Recipient ─────────────────────────────────────────────────────
     to_address: {
       name: `${a.firstName} ${a.lastName}`.trim(),
       company_name: a.company ?? "",
@@ -124,37 +125,56 @@ function buildParcelPayload(order: {
       phone_number: a.phone ?? "",
     },
 
-    // Identifiers — `order_number` shows in Sofia's panel, `external_reference`
-    // is the idempotency key Sendcloud dedupes on.
+    // ── Sender (K'Elmus Group BV — Sofia's legal entity) ─────────────
+    // Hard-coded here for now; if Sofia ever moves we update once.
+    // Long-term, this could be pulled from a Setting row keyed by
+    // "sendcloud.from_address" so it's editable without a deploy.
+    from_address: {
+      name: "K'Elmus Group BV",
+      company_name: "K'Elmus Group BV",
+      address_line_1: "Boomsesteenweg",
+      house_number: "41/4b",
+      city: "Aartselaar",
+      postal_code: "2630",
+      country_code: "BE",
+      email: "hello@yurskinsolution.eu",
+      phone_number: "",
+    },
+
+    // ── Carrier selection ────────────────────────────────────────────
+    // "shipping_rules" tells Sendcloud to apply the rules Sofia
+    // configured in her panel (PostNL for BE/NL, etc.) rather than
+    // requiring us to send a hardcoded shipping_option_code.
+    ship_with: { type: "shipping_rules" },
+
+    // ── Identifiers ──────────────────────────────────────────────────
+    // `order_number` is what Sofia sees in the panel; `external_reference`
+    // is what Sendcloud dedupes against on retry.
     order_number: order.publicNumber,
     external_reference: order.id,
 
-    // Defer carrier selection to Sofia's shipping rules in the panel.
-    apply_shipping_rules: true,
-
-    // Total declared value — required for customs on non-EU destinations,
-    // harmless intra-EU.
+    // ── Declared value (for customs on non-EU destinations) ──────────
     total_order_value: {
       value: Number(order.grandTotal).toFixed(2),
       currency: order.currency,
     },
 
-    // Single-parcel shipments — wrap our parcel data in a `parcels` array
-    // (v3 is multicollo-aware; we always send 1 element).
+    // ── Parcels (single-collo for now) ───────────────────────────────
     parcels: [
       {
         weight: {
           value: weightKg,
-          unit: "kilogram",
+          unit: "kg",
         },
         parcel_items: order.items.map((item) => ({
           description: item.nameSnapshot,
           quantity: item.quantity,
           weight: {
             value: ((item.product.weightGrams ?? 100) / 1000).toFixed(3),
-            unit: "kilogram",
+            unit: "kg",
           },
-          value: {
+          // v3 calls this `price` (not `value` like v2 did).
+          price: {
             value: Number(item.unitPrice).toFixed(2),
             currency: order.currency,
           },
