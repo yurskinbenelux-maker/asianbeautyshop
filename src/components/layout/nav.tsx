@@ -399,11 +399,7 @@ export function Nav({
                                       )}
                                     />
                                   </button>
-                                ) : (
-                                  <span className="px-3 text-[11px] text-ink-mid">
-                                    {parent.count}
-                                  </span>
-                                )}
+                                ) : null}
                               </div>
                               {hasKids && (
                                 <ul

@@ -89,10 +89,11 @@ export default async function BrandsIndexPage({ params }: Props) {
               </div>
 
               {/* ── Caption strip ──────────────────────────────────
-                  Brand name + tagline + product count. Anchored to
-                  the bottom of the card so cards with logos still
-                  surface the metadata cleanly. */}
-              <div className="flex items-end justify-between gap-3 border-t border-ink/10 bg-rice px-5 py-4">
+                  Brand name + tagline. Anchored to the bottom of the
+                  card so cards with logos still surface the metadata
+                  cleanly. (Product count was removed per Sofia — felt
+                  too "inventory" for a luxury feel.) */}
+              <div className="flex items-end gap-3 border-t border-ink/10 bg-rice px-5 py-4">
                 <div className="min-w-0">
                   <div className="font-display text-[18px] leading-[1.1] text-ink">
                     {b.name}
@@ -103,10 +104,6 @@ export default async function BrandsIndexPage({ params }: Props) {
                     </div>
                   )}
                 </div>
-                <span className="shrink-0 text-[10px] uppercase tracking-label text-ink-mid">
-                  {b.productCount}{" "}
-                  {b.productCount === 1 ? "product" : "products"}
-                </span>
               </div>
             </Link>
           ))}

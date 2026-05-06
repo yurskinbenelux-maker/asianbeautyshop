@@ -136,13 +136,10 @@ export function BrandsMegaMenu({
                   role="menuitem"
                   href={`/shop/brand/${b.slug}`}
                   onClick={() => setOpen(false)}
-                  className="group flex flex-col gap-1 border border-ink/10 bg-white/60 px-4 py-4 transition-colors hover:border-ink/30 hover:bg-white/90"
+                  className="group flex items-center border border-ink/10 bg-white/60 px-4 py-4 transition-colors hover:border-ink/30 hover:bg-white/90"
                 >
                   <span className="font-display text-[16px] leading-[1.1] text-vermilion transition-colors group-hover:text-ink">
                     {b.name}
-                  </span>
-                  <span className="text-[10px] uppercase tracking-label text-ink-mid">
-                    {b.count} {b.count === 1 ? "product" : "products"}
                   </span>
                 </Link>
               ))}
