@@ -678,6 +678,67 @@ export async function getShopMegaMenuData(
   };
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// /brands index page query — fatter than the mega-menu brand list because
+// each card on the index renders the brand's logo + a tagline (when set).
+// Mega-menu skips both for performance.
+// ─────────────────────────────────────────────────────────────────────────
+
+export type BrandIndexCard = {
+  slug: string;
+  name: string;
+  logoUrl: string | null;
+  tagline: string | null;
+  productCount: number;
+};
+
+export async function getBrandsForIndexPage(
+  locale: string,
+): Promise<BrandIndexCard[]> {
+  const loc = toPrismaLocale(locale);
+
+  const rows = await prisma.brand.findMany({
+    where: { isActive: true },
+    orderBy: { name: "asc" },
+    select: {
+      slug: true,
+      name: true,
+      logoUrl: true,
+      translations: {
+        where: { locale: { in: [loc, Locale.EN] } },
+        select: { locale: true, tagline: true },
+      },
+      _count: {
+        select: {
+          products: {
+            where: {
+              status: ProductStatus.PUBLISHED,
+              deletedAt: null,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return rows
+    .map((b) => {
+      // Locale-first, EN fallback for the tagline.
+      const localeTr = b.translations.find((t) => t.locale === loc);
+      const enTr = b.translations.find((t) => t.locale === Locale.EN);
+      const tagline = localeTr?.tagline ?? enTr?.tagline ?? null;
+      return {
+        slug: b.slug,
+        name: b.name,
+        logoUrl: b.logoUrl,
+        tagline,
+        productCount: b._count.products,
+      };
+    })
+    // Drop dead brands — same rule as the mega-menu list.
+    .filter((b) => b.productCount > 0);
+}
+
 /**
  * Shape the /shop/category/[slug] landing page needs: category hero data
  * (name, description HTML, SEO fields, icon) resolved to the requested

@@ -1,19 +1,20 @@
 // ─────────────────────────────────────────────────────────────────────────
-// /[locale]/brands — index of every active brand. Phase 1 ships a
-// minimal version: a card grid of brand names with product counts,
-// linking to the existing /shop/brand/[slug] filtered listing.
+// /[locale]/brands — index of every active brand. Each card renders the
+// brand's logo (uploaded from /admin/categories/brands/[id]) when set,
+// the brand name in display type, the localised tagline, and the
+// product count. Click → /shop/brand/[slug] (the existing filtered
+// listing).
 //
-// Phase 2 enriches this with Brand.imageUrl uploaded via the admin
-// /admin/brands page (each card gets a real image). For now the cards
-// render the brand name in display type against a soft cream surface
-// — clean and brand-faithful even without imagery.
+// Cards without a logo fall back to a typographic-only treatment that
+// still looks intentional — clean cream surface with the brand name in
+// vermilion display type.
 // ─────────────────────────────────────────────────────────────────────────
 
 import type { Metadata } from "next";
+import Image from "next/image";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
-import { getShopMegaMenuData } from "@/lib/queries/products";
-import { Locale } from "@prisma/client";
+import { getBrandsForIndexPage } from "@/lib/queries/products";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -39,9 +40,7 @@ export default async function BrandsIndexPage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations("nav");
 
-  // Reuse the same query the nav uses — single source of truth for
-  // "which brands are live and what's their product count".
-  const { brands } = await getShopMegaMenuData(locale as Locale);
+  const brands = await getBrandsForIndexPage(locale);
 
   return (
     <section className="container py-16 md:py-24">
@@ -53,8 +52,8 @@ export default async function BrandsIndexPage({ params }: Props) {
           Every YU.R line, in one place.
         </h1>
         <p className="mt-4 max-w-md text-[15px] leading-relaxed text-ink-mid">
-          Tap a brand to browse only its products. Phase 2 of this page
-          will add a hero image to each card.
+          Tap a brand to browse only its products. Sofia uploads each
+          brand&rsquo;s logo and tagline from the admin panel.
         </p>
       </header>
 
@@ -66,14 +65,49 @@ export default async function BrandsIndexPage({ params }: Props) {
             <Link
               key={b.slug}
               href={`/shop/brand/${b.slug}`}
-              className="group flex aspect-[4/3] flex-col items-center justify-center gap-2 border border-ink/10 bg-rice px-6 py-8 text-center transition-colors hover:border-ink/30 hover:bg-white"
+              className="group flex aspect-[4/3] flex-col overflow-hidden border border-ink/10 bg-rice transition-colors hover:border-ink/30"
             >
-              <span className="font-display text-[40px] leading-[1.05] text-vermilion transition-colors group-hover:text-ink">
-                {b.name}
-              </span>
-              <span className="text-[11px] uppercase tracking-label text-ink-mid">
-                {b.count} {b.count === 1 ? "product" : "products"}
-              </span>
+              {/* ── Logo region ────────────────────────────────────
+                  Top 60% of the card. When a logoUrl is set we render
+                  it object-contain on a soft cream surface so the
+                  artwork breathes; without one we fall back to a
+                  large typographic treatment. */}
+              <div className="relative flex flex-1 items-center justify-center bg-rice-dim/40 px-6 py-6 transition-colors group-hover:bg-white">
+                {b.logoUrl ? (
+                  <Image
+                    src={b.logoUrl}
+                    alt={`${b.name} logo`}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-contain p-8"
+                  />
+                ) : (
+                  <span className="font-display text-[44px] leading-[1.05] text-vermilion transition-colors group-hover:text-ink">
+                    {b.name}
+                  </span>
+                )}
+              </div>
+
+              {/* ── Caption strip ──────────────────────────────────
+                  Brand name + tagline + product count. Anchored to
+                  the bottom of the card so cards with logos still
+                  surface the metadata cleanly. */}
+              <div className="flex items-end justify-between gap-3 border-t border-ink/10 bg-rice px-5 py-4">
+                <div className="min-w-0">
+                  <div className="font-display text-[18px] leading-[1.1] text-ink">
+                    {b.name}
+                  </div>
+                  {b.tagline && (
+                    <div className="mt-0.5 truncate text-[12px] text-ink-mid">
+                      {b.tagline}
+                    </div>
+                  )}
+                </div>
+                <span className="shrink-0 text-[10px] uppercase tracking-label text-ink-mid">
+                  {b.productCount}{" "}
+                  {b.productCount === 1 ? "product" : "products"}
+                </span>
+              </div>
             </Link>
           ))}
         </div>
