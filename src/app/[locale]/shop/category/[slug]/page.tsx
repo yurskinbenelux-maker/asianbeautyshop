@@ -169,38 +169,39 @@ export default async function CategoryLandingPage({
         )}
       </div>
 
-      {/* ── sort row (no category pills — we're already inside a category) ── */}
-      <div className="mt-16 flex flex-col gap-6 border-t border-ink/10 pt-8 md:flex-row md:items-center md:justify-end">
+      {/* ── Toolbar: filters drawer trigger + sort ───────────────────
+          Matches the /shop layout. The filter sidebar was retired
+          here too — drawer-style trigger feels less heavy on a
+          category landing page and lets the grid run full-width
+          (4-up on desktop) the same way the main shop does. */}
+      <div className="mt-16 flex items-center justify-between gap-4 border-t border-ink/10 pt-8">
+        <ShopFiltersShell filters={filters} />
         <SortSelect current={sort} />
       </div>
 
-      {/* ── body: sidebar + grid ──────────────────────────────────── */}
-      <div className="mt-10 grid grid-cols-1 gap-12 md:grid-cols-[16rem_1fr] md:gap-16">
-        <ShopFiltersShell filters={filters} />
-
-        <div>
-          {items.length === 0 ? (
-            <p className="mt-10 text-ink-mid">{t("empty")}</p>
-          ) : (
-            <>
-              <p className="text-[12px] uppercase tracking-label text-ink-mid">
-                {total} {resultsLabel}
-              </p>
-              <div className="mt-4">
-                <ShopInfiniteGrid
-                  key={resetKey}
-                  initialItems={items}
-                  total={total}
-                  pageSize={PAGE_SIZE}
-                  locale={locale}
-                  sort={sort}
-                  filterArgs={filterArgs}
-                  labels={{ loadMore: t("load_more") }}
-                />
-              </div>
-            </>
-          )}
-        </div>
+      {/* ── Grid (full-width, no sidebar) ─────────────────────────── */}
+      <div className="mt-6">
+        {items.length === 0 ? (
+          <p className="mt-10 text-ink-mid">{t("empty")}</p>
+        ) : (
+          <>
+            <p className="text-[12px] uppercase tracking-label text-ink-mid">
+              {total} {resultsLabel}
+            </p>
+            <div className="mt-4">
+              <ShopInfiniteGrid
+                key={resetKey}
+                initialItems={items}
+                total={total}
+                pageSize={PAGE_SIZE}
+                locale={locale}
+                sort={sort}
+                filterArgs={filterArgs}
+                labels={{ loadMore: t("load_more") }}
+              />
+            </div>
+          </>
+        )}
       </div>
     </section>
   );
