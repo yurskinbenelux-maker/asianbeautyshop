@@ -53,7 +53,7 @@ export default async function NoAccessPage() {
             ) : (
               <>, but this address isn't on any admin allow-list.</>
             )}
-            {" "}If this is a mistake, contact the YU.R team.
+            {" "}If this is a mistake, contact the Asian Beauty Shop team.
           </p>
         ) : (
           <p className="mt-4 text-[14px] leading-relaxed text-ink-mid">

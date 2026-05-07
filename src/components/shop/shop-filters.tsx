@@ -32,7 +32,7 @@ import type { ShopFilters as ShopFilterData } from "@/lib/queries/products";
 
 /**
  * Keys of multi-select params — kept in one place so we parse/write
- * consistently. We dropped `brand` from this list when YU.R was
+ * consistently. We dropped `brand` from this list when Asian Beauty Shop was
  * confirmed as the sole supplier — the LineTabs in the page header
  * (Yu.R / Yu.R Pro / Yu.R Me) are the meaningful refinement now.
  */
@@ -190,7 +190,7 @@ export function ShopFilters({ filters, open, onClose }: Props) {
             />
           </FilterGroup>
 
-          {/* Brand filter retired — there's exactly one brand (YU.R), so
+          {/* Brand filter retired — there's exactly one brand (Asian Beauty Shop), so
               a single-checkbox filter group is dead UI. The LineTabs in
               the page header now carry the Yu.R / Pro / Me refinement. */}
 

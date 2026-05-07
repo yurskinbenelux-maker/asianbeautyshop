@@ -2,7 +2,7 @@
 // YurClubDrawer — the loyalty drawer that opens from the account sidebar.
 //
 // Design intent (NOT the pink-confection competitor aesthetic):
-//   · Ivory paper background — calls to the YU.R Gift Card visual
+//   · Ivory paper background — calls to the Asian Beauty Shop Gift Card visual
 //   · Vermilion peony seal as decorative accent in the hero card
 //   · Fraunces italic display for tier name + the big points number
 //   · Inter for body copy + UI chrome
@@ -411,7 +411,7 @@ function ReferralBlock({ referralCode }: { referralCode: string }) {
   const [shareUrl, setShareUrl] = useState<string>("");
 
   // Build the share URL on the client so we use the customer's actual
-  // origin (yurskinsolution.eu in prod, localhost in dev).
+  // origin (asianbeautyshop.eu in prod, localhost in dev).
   useEffect(() => {
     if (typeof window === "undefined") return;
     const origin = window.location.origin;
@@ -436,8 +436,8 @@ function ReferralBlock({ referralCode }: { referralCode: string }) {
     if (typeof navigator !== "undefined" && "share" in navigator && shareUrl) {
       navigator
         .share({
-          title: "YU.R Skin Solution",
-          text: "Join me on YU.R — get a welcome discount on your first order.",
+          title: "Asian Beauty Shop",
+          text: "Join me on Asian Beauty Shop — get a welcome discount on your first order.",
           url: shareUrl,
         })
         .catch(() => {

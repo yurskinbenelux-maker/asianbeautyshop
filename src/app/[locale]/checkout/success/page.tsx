@@ -143,7 +143,7 @@ export default async function CheckoutSuccessPage({
           price: Number(item.unitPrice),
           quantity: item.quantity,
           item_category: item.product?.categories[0]?.category.slug,
-          item_brand: item.product?.productLine ?? "YU.R",
+          item_brand: item.product?.productLine ?? "Asian Beauty Shop",
           item_variant: item.variant?.label,
         })),
       }

@@ -11,7 +11,7 @@ import { Link } from "@/i18n/routing";
 import { Check } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "You're in — YU.R Skin Solution",
+  title: "You're in — Asian Beauty Shop",
   robots: { index: false, follow: false },
 };
 
@@ -53,7 +53,7 @@ export default async function NewsletterConfirmedPage({
         <div className="mx-auto mb-8 flex h-14 w-14 items-center justify-center border border-sage/40 bg-sage/5 text-sage">
           <Check className="h-6 w-6" />
         </div>
-        <div className="eyebrow">YU.R · Newsletter</div>
+        <div className="eyebrow">Asian Beauty Shop · Newsletter</div>
         <h1 className="mt-4 font-display text-[36px] leading-tight text-ink md:text-[44px]">
           {copy.title}
         </h1>

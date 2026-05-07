@@ -51,7 +51,7 @@ export default async function ShippingPage({ params }: Props) {
         className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-label text-ink-mid"
       >
         <Link href="/" className="transition-colors hover:text-ink">
-          YU.R
+          Asian Beauty Shop
         </Link>
         <span aria-hidden>·</span>
         <span className="text-ink">{page.title}</span>

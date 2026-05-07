@@ -21,8 +21,8 @@ type Props = { params: Promise<{ locale: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   return {
-    title: "Brands — YU.R Skin Solution",
-    description: "Every brand carried by YU.R Skin Solution.",
+    title: "Brands — Asian Beauty Shop",
+    description: "Every brand carried by Asian Beauty Shop.",
     alternates: {
       canonical: `/${locale}/brands`,
       languages: {
@@ -49,7 +49,7 @@ export default async function BrandsIndexPage({ params }: Props) {
           {t("brands")}
         </div>
         <h1 className="mt-3 font-display text-display-md leading-tight text-ink md:text-display-lg">
-          Every YU.R line, in one place.
+          Every Asian Beauty Shop line, in one place.
         </h1>
         <p className="mt-4 max-w-md text-[15px] leading-relaxed text-ink-mid">
           Tap a brand to browse only its products. Sofia uploads each

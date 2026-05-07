@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Top navigation — hanji-white backdrop, hairline underline on scroll.
-// Structure: YU.R wordmark (left) · primary links (center) · utility (right)
+// Structure: Asian Beauty Shop wordmark (left) · primary links (center) · utility (right)
 // ─────────────────────────────────────────────────────────────────────────
 
 "use client";

@@ -81,7 +81,7 @@ export async function generateMetadata({
   // Brand doesn't have dedicated SEO fields — synthesise from tagline
   // (plenty short for meta-description territory) falling back to a
   // trimmed story. Title is just the brand name — the base layout's
-  // template adds the " · YU.R" suffix.
+  // template adds the " · Asian Beauty Shop" suffix.
   const description =
     brand.tagline ?? stripHtml(brand.story) ?? undefined;
 

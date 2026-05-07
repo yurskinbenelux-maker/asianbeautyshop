@@ -102,7 +102,7 @@ export async function generateMetadata({
     },
     openGraph: {
       ...base.openGraph,
-      siteName: "YU.R Skin Solution",
+      siteName: "Asian Beauty Shop",
     },
     robots: { index: true, follow: true },
     // Brand favicon + social icons.

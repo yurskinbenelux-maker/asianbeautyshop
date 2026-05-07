@@ -2,7 +2,7 @@
 // Footer — editorial, four columns over a single hairline rule.
 // Intentionally minimal: Sofia can extend legal links via admin later.
 //
-// Admin-editable copy: `tagline` (the line under YU.R) and `rights` (the
+// Admin-editable copy: `tagline` (the line under Asian Beauty Shop) and `rights` (the
 // small © line on the right). Both are part of the `footer` SiteCopy
 // section; everything else in the footer is UI chrome that stays in the
 // messages catalogue.

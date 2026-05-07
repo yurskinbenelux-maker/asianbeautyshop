@@ -198,7 +198,7 @@ export function ConciergeShell({
                       ? t("mode_quiz_label")
                       : mode === "chat"
                         ? t("mode_chat_label")
-                        : "YU.R"}
+                        : "Asian Beauty Shop"}
                   </div>
                 </div>
               </div>

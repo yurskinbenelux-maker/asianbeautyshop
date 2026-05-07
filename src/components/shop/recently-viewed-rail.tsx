@@ -81,7 +81,7 @@ export function RecentlyViewedRail({ excludeSlug, limit = 6 }: Props) {
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-[10px] uppercase tracking-label text-ink-mid">
-                    YU.R
+                    Asian Beauty Shop
                   </div>
                 )}
               </div>

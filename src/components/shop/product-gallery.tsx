@@ -408,7 +408,7 @@ function GalleryFallback({
             fontSize="14"
             letterSpacing="2"
           >
-            YU.R
+            Asian Beauty Shop
           </text>
         </svg>
       </div>

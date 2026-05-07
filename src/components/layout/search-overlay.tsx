@@ -207,7 +207,7 @@ export function SearchOverlay({ open, onClose }: Props) {
                                 />
                               ) : (
                                 <div className="flex h-full w-full items-center justify-center font-display text-[14px] text-ink-mid">
-                                  YU.R
+                                  Asian Beauty Shop
                                 </div>
                               )}
                             </div>

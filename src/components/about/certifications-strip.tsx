@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // CertificationsStrip — a small typographic trust-signal row.
 //
-// Shows the four regulatory / quality certifications YU.R carries, as
+// Shows the four regulatory / quality certifications Asian Beauty Shop carries, as
 // called out in the HQ brand doc:
 //   · CPNP     — EU Cosmetic Products Notification Portal
 //   · ECAS     — Emirates Conformity Assessment Scheme

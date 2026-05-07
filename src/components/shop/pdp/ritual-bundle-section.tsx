@@ -79,7 +79,7 @@ export function RitualBundleSection({
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center font-display text-[18px] text-ink-mid">
-                      YU.R
+                      Asian Beauty Shop
                     </div>
                   )}
                 </div>

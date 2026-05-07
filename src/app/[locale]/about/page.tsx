@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// /[locale]/about — editorial About page for YU.R Skin Solution.
+// /[locale]/about — editorial About page for Asian Beauty Shop.
 //
 // Pulls body copy from the `Page` DB table (key = "about"), same
 // infrastructure that powers /legal/*. The body is authored via
@@ -56,7 +56,7 @@ export default async function AboutPage({ params }: Props) {
         className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-label text-ink-mid"
       >
         <Link href="/" className="transition-colors hover:text-ink">
-          YU.R
+          Asian Beauty Shop
         </Link>
         <span aria-hidden>·</span>
         <span className="text-ink">{page.title}</span>

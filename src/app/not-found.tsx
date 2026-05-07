@@ -64,7 +64,7 @@ export default function NotFound() {
               textUnderlineOffset: "6px",
             }}
           >
-            Back to YU.R
+            Back to Asian Beauty Shop
           </a>
         </div>
       </body>

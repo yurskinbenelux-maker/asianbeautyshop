@@ -263,7 +263,7 @@ export function RegisterWelcomePopup({
                 ? "m-0 mb-3 font-display text-[24px] font-light leading-[1.15] tracking-tight text-ink"
                 : "m-0 mb-3.5 font-display text-[32px] font-light leading-[1.1] tracking-tight text-ink"
             }
-            // Allow Sofia's <em>YU.R</em> markup through. Allowlisted at
+            // Allow Sofia's <em>Asian Beauty Shop</em> markup through. Allowlisted at
             // save time (Zod schema), so this is a small controlled
             // surface — admin-edited content only, never user-supplied.
             dangerouslySetInnerHTML={{

@@ -25,7 +25,7 @@ import { loadQuizRitualIntoCart } from "@/lib/cart/quiz-ritual";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Your YU.R skincare routine · 15% off",
+  title: "Your Asian Beauty Shop skincare routine · 15% off",
   // Don't index the magic-link landing page — it's a personal redemption
   // URL, not a public destination.
   robots: { index: false, follow: false },
@@ -89,7 +89,7 @@ function ErrorState({
     },
     redeemed: {
       heading: "This skincare routine has been redeemed.",
-      body: "You've already used this quiz reward. Browse the full collection at our regular pricing — and thank you for being part of YU.R.",
+      body: "You've already used this quiz reward. Browse the full collection at our regular pricing — and thank you for being part of Asian Beauty Shop.",
       ctaHref: `/${localePrefix}/shop`,
       ctaLabel: "Browse the shop",
     },

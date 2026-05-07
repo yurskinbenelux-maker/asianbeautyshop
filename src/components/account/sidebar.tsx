@@ -40,7 +40,7 @@ type Section = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
-// Two-part list: the rows BEFORE the YU.R Club entry, then the rows AFTER.
+// Two-part list: the rows BEFORE the Asian Beauty Shop Club entry, then the rows AFTER.
 // This is the simplest way to slot the drawer trigger between Gift cards
 // and Profile without forking the renderer for one special case.
 const SECTIONS_BEFORE_CLUB: Section[] = [
@@ -102,7 +102,7 @@ export function AccountSidebar({
           {SECTIONS_BEFORE_CLUB.map((s) => (
             <SidebarRow key={s.href} section={s} t={t} active={isActive(s.href)} />
           ))}
-          {/* YU.R Club drawer trigger — sits between Gift cards and Profile
+          {/* Asian Beauty Shop Club drawer trigger — sits between Gift cards and Profile
               per Sofia's brief. Rendered as a button (not a Link) since
               clicking it opens a drawer rather than navigating. */}
           <li className="shrink-0">

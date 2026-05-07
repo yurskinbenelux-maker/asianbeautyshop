@@ -47,7 +47,7 @@ export default async function AccountLayout({ children, params }: Props) {
     .join(" ")
     .trim() || profile.email;
 
-  // YU.R Club drawer data — prefetched here so the sidebar entry +
+  // Asian Beauty Shop Club drawer data — prefetched here so the sidebar entry +
   // drawer render without a client round-trip and without N+1 queries
   // across child pages. Wrapped in try/catch so a loyalty-system hiccup
   // never blocks the customer from reaching their account.

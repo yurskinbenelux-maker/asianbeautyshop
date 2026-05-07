@@ -129,7 +129,7 @@ function QuickViewBody({
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <span className="font-kr text-[32px] text-ink-mid">YU.R</span>
+            <span className="font-kr text-[32px] text-ink-mid">Asian Beauty Shop</span>
           </div>
         )}
       </div>

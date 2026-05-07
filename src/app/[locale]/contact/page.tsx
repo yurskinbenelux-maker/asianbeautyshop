@@ -74,10 +74,10 @@ export default async function ContactPage({ params }: Props) {
             <dl className="mt-4 space-y-4 text-[14px] leading-relaxed text-ink">
               <ContactRow icon={<Mail className="h-4 w-4" aria-hidden />} term={t("label_email")}>
                 <a
-                  href="mailto:hello@yurskinsolution.eu"
+                  href="mailto:hello@asianbeautyshop.eu"
                   className="underline decoration-vermilion underline-offset-4 transition-colors hover:text-vermilion"
                 >
-                  hello@yurskinsolution.eu
+                  hello@asianbeautyshop.eu
                 </a>
               </ContactRow>
 

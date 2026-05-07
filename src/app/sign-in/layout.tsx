@@ -20,7 +20,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Sign in · YU.R Skin Solution",
+  title: "Sign in · Asian Beauty Shop",
   robots: { index: false, follow: false },
 };
 
