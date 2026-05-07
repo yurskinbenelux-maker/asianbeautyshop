@@ -17,7 +17,7 @@
     "cta_contact": "Contact"
   },
   "brand": {
-    "name": "YU.R Skin Solution",
+    "name": "Asian Beauty Shop",
     "tagline": "You Are the Skin Solution."
   },
   "nav": {
@@ -43,8 +43,8 @@
   },
   "announcement": {
     "free_shipping": "Gratis bezorging vanaf {amount}",
-    "yurclub": "Verdien punten bij elke bestelling — word gratis lid van YU.R Club. Registreer je om te beginnen",
-    "yurclub_balance": "{points, plural, =0 {Nog geen YU.R Club punten — winkel verder om te sparen} =1 {1 YU.R Club punt op je account — bekijk saldo} other {# YU.R Club punten op je account — bekijk saldo}}"
+    "yurclub": "Verdien punten bij elke bestelling — word gratis lid van A-Beauty Club. Registreer je om te beginnen",
+    "yurclub_balance": "{points, plural, =0 {Nog geen A-Beauty Club punten — winkel verder om te sparen} =1 {1 A-Beauty Club punt op je account — bekijk saldo} other {# A-Beauty Club punten op je account — bekijk saldo}}"
   },
   "hero": {
     "eyebrow": "Nieuw — lentecollectie",
@@ -79,11 +79,11 @@
     "protect": "Beschermen"
   },
   "ingredients": {
-    "meta_title": "Ingrediënten — YU.R Skin Solution",
+    "meta_title": "Ingrediënten — Asian Beauty Shop",
     "meta_description": "Elk actief ingrediënt waarmee we werken — alfabetisch, vertaald, met de producten waar het in zit. Blader per key asset of doorzoek de volledige INCI-lijst.",
     "eyebrow": "Ingrediënten",
     "title": "Wat er in de pot zit, uitgelegd.",
-    "lede": "Je moet precies weten wat je huid raakt. Elk ingrediënt dat we gebruiken staat hier — met INCI-naam, hoe het werkt en in welke YU.R producten het voorkomt.",
+    "lede": "Je moet precies weten wat je huid raakt. Elk ingrediënt dat we gebruiken staat hier — met INCI-naam, hoe het werkt en in welke producten het voorkomt.",
     "crumb": "Ingrediënten",
     "key_heading": "Key-actieven",
     "all_heading": "Alle ingrediënten",
@@ -105,7 +105,7 @@
     "empty_cta": "Shop het assortiment"
   },
   "rituals": {
-    "meta_title": "Huidverzorgingsroutines — YU.R Skin Solution",
+    "meta_title": "Huidverzorgingsroutines — Asian Beauty Shop",
     "meta_description": "Een Koreaans huidverzorgingsroutine in vier stappen — reinigen, verzorgen, hydrateren, beschermen. Bedachtzame producten, een stille routine, zichtbaar resultaat.",
     "eyebrow": "Het huidverzorgingsroutine",
     "title": "Vier stappen, rustig herhaald.",
@@ -232,16 +232,16 @@
     "title": "Nu in de aanbieding",
     "lede": "Geselecteerde favorieten met een zachtere prijs. Filter binnen de korting op merk, categorie of huidkwaal — kortingen worden automatisch toegepast bij het afrekenen.",
     "empty": "Er zijn op dit moment geen producten in de aanbieding. Kom snel terug — of bekijk de volledige collectie.",
-    "seo_title": "Sale — YU.R Skin Solution",
-    "seo_description": "Ontdek YU.R producten in de aanbieding in elke categorie. Filter op huidtype, zorg of merk binnen de afgeprijsde selectie."
+    "seo_title": "Sale — Asian Beauty Shop",
+    "seo_description": "Ontdek producten in de aanbieding in elke categorie. Filter op huidtype, zorg of merk binnen de afgeprijsde selectie."
   },
   "new_page": {
     "eyebrow": "Nieuw",
     "title": "Net binnen",
-    "lede": "De nieuwste stukken in de collectie — gekozen door Sofia, nooit automatisch gelijst. Filter op merk, categorie of zorg om je volgende favoriet te vinden.",
+    "lede": "De nieuwste stukken in de collectie — door ons gekozen, nooit automatisch gelijst. Filter op merk, categorie of zorg om je volgende favoriet te vinden.",
     "empty": "Er zijn nog geen nieuwe items uitgelicht. Bekijk in de tussentijd de volledige collectie.",
-    "seo_title": "Nieuw binnen — YU.R Skin Solution",
-    "seo_description": "De nieuwste YU.R producten zorgvuldig gekozen door Sofia. Filter op merk, categorie of zorg om je volgende ritueel te vinden."
+    "seo_title": "Nieuw binnen — Asian Beauty Shop",
+    "seo_description": "De nieuwste producten in de collectie zorgvuldig gekozen. Filter op merk, categorie of zorg om je volgende ritueel te vinden."
   },
   "shop": {
     "title": "De collectie",
@@ -522,7 +522,7 @@
     }
   },
   "quizPage": {
-    "meta_title": "Huidquiz — YU.R Skin Solution",
+    "meta_title": "Huidquiz — Asian Beauty Shop",
     "meta_description": "Zeven korte vragen en wij stellen een Koreaans huidritueel samen, gekozen op basis van de ingrediënten op de verpakking.",
     "eyebrow": "Huidquiz",
     "title": "Een paar rustige vragen over je huid.",
@@ -596,7 +596,7 @@
     "sign_in_lede": "Welkom terug. Voer je e-mail en wachtwoord in om verder te gaan.",
     "sign_in_cta": "Inloggen",
     "signing_in": "Bezig met inloggen…",
-    "sign_in_no_account": "Nieuw bij YU.R Skin Solution?",
+    "sign_in_no_account": "Nieuw bij Asian Beauty Shop?",
     "sign_in_create_account": "Account aanmaken",
     "sign_in_generic_error": "We konden je niet inloggen met die gegevens.",
     "forgot_password": "Wachtwoord vergeten?",
@@ -628,7 +628,7 @@
     "field_last_name": "Achternaam",
     "field_marketing": "Stuur me af en toe brieven met nieuwe producten, huidverzorgingsroutines en ingrediëntennotities. Altijd afmelden mogelijk.",
     "field_email_language": "E-mailtaal",
-    "field_email_language_help": "Bestelbevestigingen, aanvulherinneringen en YU.R Club e-mails sturen we in deze taal. Je kunt dit later wijzigen in je account.",
+    "field_email_language_help": "Bestelbevestigingen, aanvulherinneringen en A-Beauty Club e-mails sturen we in deze taal. Je kunt dit later wijzigen in je account.",
     "field_terms_pre": "Ik ga akkoord met de ",
     "field_terms_link": "voorwaarden & het privacybeleid",
     "field_terms_post": ".",
@@ -664,7 +664,7 @@
     "nav_addresses": "Adressen",
     "nav_wishlist": "Verlanglijst",
     "nav_gift_cards": "Cadeaubonnen",
-    "nav_yur_club": "YU.R Club",
+    "nav_yur_club": "A-Beauty Club",
     "nav_profile": "Profiel",
     "nav_privacy": "Privacy",
     "nav_sign_out": "Uitloggen",
@@ -841,10 +841,10 @@
     },
     "field_birthday": "Geboortedatum",
     "profile_birthday_hint": "Optioneel. We sturen je iets op je verjaardag.",
-    "glance_points": "YU.R Club-punten"
+    "glance_points": "A-Beauty Club-punten"
   },
   "privacy": {
-    "meta_title": "Jouw gegevens & privacy — YU.R Skin Solution",
+    "meta_title": "Jouw gegevens & privacy — Asian Beauty Shop",
     "eyebrow": "Account",
     "title": "Jouw gegevens, jouw keuze",
     "lede": "Alles wat we van je bewaren, blijft van jou. Download wanneer je wilt een kopie van je gegevens, of verwijder je account als je liever hebt dat we je vergeten.",
@@ -871,10 +871,10 @@
     "delete_error_server": "We konden de verwijdering niet inplannen. Probeer het over een moment opnieuw.",
     "delete_cta": "Mijn account verwijderen",
     "more_heading": "Iets anders nodig?",
-    "more_body": "Wil je gegevens laten corrigeren, een specifieke verwerking laten stoppen, of heb je een andere privacyvraag? Mail naar hello@yurskinsolution.eu en we reageren binnen één werkdag."
+    "more_body": "Wil je gegevens laten corrigeren, een specifieke verwerking laten stoppen, of heb je een andere privacyvraag? Mail naar hello@asianbeautyshop.eu en we reageren binnen één werkdag."
   },
   "returns": {
-    "meta_title": "Retour — YU.R Skin Solution",
+    "meta_title": "Retour — Asian Beauty Shop",
     "eyebrow": "Account",
     "title": "Jouw retourzendingen",
     "lede": "Een overzicht van elk retourverzoek dat je naar ons stuurt — vanaf het moment dat het binnenkomt tot de terugbetaling op je kaart verschijnt.",
@@ -902,7 +902,7 @@
       "ALLERGIC_REACTION": "Ik kreeg een reactie",
       "OTHER": "Iets anders"
     },
-    "form_meta_title": "Retour aanvragen — YU.R Skin Solution",
+    "form_meta_title": "Retour aanvragen — Asian Beauty Shop",
     "form_back_to_order": "Terug naar bestelling {number}",
     "form_eyebrow": "Retourverzoek",
     "form_title": "Laten we dit rechtzetten.",
@@ -930,7 +930,7 @@
       "server_error": "Er ging iets mis aan onze kant — probeer het over een moment opnieuw.",
       "order_not_returnable": "Deze bestelling komt nog niet in aanmerking voor retour."
     },
-    "detail_meta_title": "Retour {number} — YU.R Skin Solution",
+    "detail_meta_title": "Retour {number} — Asian Beauty Shop",
     "detail_back": "Terug naar je retourzendingen",
     "detail_eyebrow": "Retourverzoek",
     "detail_for_order": "Voor bestelling {number}",
@@ -947,19 +947,19 @@
     "detail_cancel_cta": "Dit verzoek annuleren"
   },
   "seo": {
-    "title_template": "%s · YU.R Skin Solution",
+    "title_template": "%s · Asian Beauty Shop",
     "home": {
-      "title": "YU.R Skin Solution — Koreaanse huidverzorging, met zorg gekozen.",
+      "title": "Asian Beauty Shop — Koreaanse huidverzorging, met zorg gekozen.",
       "description": "Zorgvuldig geselecteerde Koreaanse huidverzorging van de beste merken. Geformuleerd voor gevoelige huid, ontworpen voor een dagelijks huidverzorgingsroutine."
     },
     "shop": {
-      "title": "Webshop — YU.R Skin Solution",
+      "title": "Webshop — Asian Beauty Shop",
       "description": "Ontdek onze selectie Koreaanse huidverzorging. Filter op huidtype, behoefte, merk of ingrediënt en vind uw huidverzorgingsroutine."
     }
   },
   "search": {
     "eyebrow": "Zoeken",
-    "page_title": "Zoeken — YU.R Skin Solution",
+    "page_title": "Zoeken — Asian Beauty Shop",
     "page_description": "Vind uw volgende huidverzorgingsroutine — zoek op product, merk of ingrediënt.",
     "overlay_label": "De webshop doorzoeken",
     "placeholder": "Probeer “rijstreiniger” of “hydratatie”…",
@@ -967,7 +967,7 @@
     "searching": "Bezig met zoeken…",
     "no_results": "Niets gevonden. Probeer een merk, ingrediënt of huidbehoefte.",
     "suggest_heading": "Of begin bij een ritueelstap",
-    "suggest_lede": "Elk YU.R-product hoort bij een van de vier rustige, bewuste gebaren.",
+    "suggest_lede": "Elk product hoort bij een van de vier rustige, bewuste gebaren.",
     "ritual_cleanse": "Reinigen",
     "ritual_treat": "Verzorgen",
     "ritual_moisturise": "Hydrateren",
@@ -998,11 +998,11 @@
     "empty_body": "We verzamelen de openingsessays — één over ginseng, één over de Joseon-maankruik en een derde over het eerste gebaar van de ochtend. Ze verschijnen hier wanneer ze klaar zijn om gelezen te worden.",
     "empty_cta": "Bekijk de shop",
     "back_to_journal": "Terug naar het journaal",
-    "meta_title": "Journaal — YU.R Skin Solution",
+    "meta_title": "Journaal — Asian Beauty Shop",
     "meta_description": "Ingrediëntenstudies, rituele notities en stille gedachten over Koreaanse huidverzorging."
   },
   "contact": {
-    "meta_title": "Contact — YU.R Skin Solution",
+    "meta_title": "Contact — Asian Beauty Shop",
     "meta_description": "Vragen over je bestelling, retouren, wholesale of een product? Schrijf ons — we lezen elk bericht persoonlijk.",
     "eyebrow": "Een paar woorden",
     "title": "Schrijf ons.",
@@ -1114,7 +1114,7 @@
   },
   "yur_club": {
     "eyebrow": "Loyaliteit",
-    "title": "YU.R Club",
+    "title": "A-Beauty Club",
     "close": "Sluiten",
     "tier_label": "Jouw niveau",
     "points": "punten",
@@ -1139,7 +1139,7 @@
     "earn_ways_placeholder": "Plaats een bestelling, vier je verjaardag, verwijs een vriend, deel ons op social — elk gebaar levert punten op.",
     "section_history": "Mijn geschiedenis",
     "history_empty": "Je eerste activiteit verschijnt hier zodra je een bestelling plaatst of een beloning claimt.",
-    "footer": "YU.R · Skin Solution",
+    "footer": "Asian Beauty Shop",
     "share": "Delen",
     "milestones_disabled": "Mijlpaalbeloningen zijn op dit moment gepauzeerd — houd het in de gaten, ze komen terug.",
     "milestones_caption": "{done, number} / {total, number} bestellingen · +{points, number} pts bij bestelling #{target, number}"
