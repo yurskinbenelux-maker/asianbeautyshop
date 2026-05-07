@@ -16,10 +16,11 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 import { Locale } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { getEmailTemplate, PREVIEW_LOCALES } from "../registry";
+import { hasEditableCopy } from "../field-meta";
 import { TestSendForm } from "@/components/admin/emails/test-send-form";
 
 export const dynamic = "force-dynamic";
@@ -66,14 +67,28 @@ export default async function EmailPreviewPage({
       </Link>
 
       {/* masthead */}
-      <header className="mt-6 border-b border-ink/10 pb-6">
-        <div className="eyebrow">Preview</div>
-        <h1 className="mt-2 font-display text-[30px] leading-tight text-ink">
-          {template.label}
-        </h1>
-        <p className="mt-2 max-w-xl text-[13px] text-ink-mid">
-          {template.description}
-        </p>
+      <header className="mt-6 flex flex-wrap items-end justify-between gap-4 border-b border-ink/10 pb-6">
+        <div>
+          <div className="eyebrow">Preview</div>
+          <h1 className="mt-2 font-display text-[30px] leading-tight text-ink">
+            {template.label}
+          </h1>
+          <p className="mt-2 max-w-xl text-[13px] text-ink-mid">
+            {template.description}
+          </p>
+        </div>
+        {/* Edit-copy link — only shown when the email is registered in
+            FIELD_META as having editable fields. Click takes Sofia to
+            the per-locale editor with DeepL + Groq buttons. */}
+        {hasEditableCopy(template.key) && (
+          <Link
+            href={`/admin/emails/${template.key}/edit`}
+            className="inline-flex items-center gap-2 border border-ink bg-ink px-4 py-2 text-[12px] uppercase tracking-label text-rice transition-opacity hover:opacity-90"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit copy
+          </Link>
+        )}
       </header>
 
       {/* locale switcher ─ hidden for EN-only templates */}

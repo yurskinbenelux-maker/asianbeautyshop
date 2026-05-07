@@ -12,6 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { Locale } from "@prisma/client";
+import type { EmailOverrides } from "@/lib/email/copy-overrides";
 import { buildOrderConfirmationEmail } from "@/lib/email/order-confirmation";
 import { buildOrderShippedEmail } from "@/lib/email/order-shipped";
 import { buildOrderCancelledEmail } from "@/lib/email/order-cancelled";
@@ -65,8 +66,12 @@ export type EmailTemplate = {
    * Pure render function. Must be safe to call with any locale.
    * Returning null means "this template has nothing to say for the
    * current fixture" (e.g. empty low-stock report).
+   *
+   * `overrides` (optional) lets the editor preview show admin-edited
+   * copy live as Sofia types. Templates that don't accept overrides
+   * yet ignore the parameter — they just render their defaults.
    */
-  render: (locale: Locale) => RenderedEmail | null;
+  render: (locale: Locale, overrides?: EmailOverrides) => RenderedEmail | null;
 };
 
 /**
@@ -178,7 +183,8 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     description: "Sent to the customer the moment payment is confirmed.",
     audience: "customer",
     localised: true,
-    render: (locale) => buildOrderConfirmationEmail(fixtureOrder(locale)),
+    render: (locale, overrides) =>
+      buildOrderConfirmationEmail(fixtureOrder(locale), { overrides }),
   },
   {
     key: "order-shipped",

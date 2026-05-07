@@ -1728,6 +1728,34 @@ enum ContactStatus {
   ARCHIVED
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+//  EMAIL — per-locale copy overrides for the transactional layer
+//  Sofia edits in /admin/emails/[key]/edit; rows here win over the
+//  hardcoded STRINGS objects in src/lib/email/*.ts at send time. One
+//  row per (emailKey, locale, fieldKey) so a single field can be tweaked
+//  in NL only and the other 3 locales keep their defaults.
+// ────────────────────────────────────────────────────────────────────────────
+
+model EmailCopyOverride {
+  id        String   @id @default(uuid()) @db.Uuid
+  /// Matches the registry key in src/app/admin/emails/registry.ts
+  /// (e.g. "order-confirmation", "abandoned-cart").
+  emailKey  String
+  locale    Locale
+  /// Matches the field name in the email's STRINGS<Strings> shape
+  /// (e.g. "subject", "heading", "lede", "ledeDigital").
+  fieldKey  String
+  /// The override text. Plain text — no HTML expected. Function-typed
+  /// fields (e.g. `subject: (orderNo) => string`) are NOT editable in
+  /// the admin UI and shouldn't be saved here.
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+  updatedBy String?  @db.Uuid
+
+  @@unique([emailKey, locale, fieldKey])
+  @@index([emailKey])
+}
+
 model ContactMessage {
   id          String          @id @default(uuid()) @db.Uuid
   locale      Locale          @default(EN)

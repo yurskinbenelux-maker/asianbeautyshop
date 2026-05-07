@@ -3,22 +3,31 @@
 // ─────────────────────────────────────────────────────────────────────────
 // /admin/emails/actions.ts — server actions for the email-preview surface.
 //
-// The only action so far is "send a test copy of this template to my own
-// inbox". We deliberately hard-code the recipient to the *current admin's*
-// email (pulled from the Supabase session) rather than letting Sofia type
-// an arbitrary destination — that way the preview page can never be used
-// to spam someone else from our Resend domain.
+//   sendTestEmailAction — fire one copy at the current admin's address
+//   saveEmailOverrideAction — upsert an override row for one (key,locale,field)
+//   resetEmailOverrideAction — delete one override row (revert to default)
+//   translateEmailFieldAction — DeepL: translate a value into the other 3 locales
+//   polishEmailFieldAction — Groq: rewrite a value to be more polished
+//
+// All actions require admin + the `emails.send` capability so only owners
+// can edit transactional copy.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 import { Locale } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
+import { requireCapability } from "@/lib/auth-roles";
+import { prisma } from "@/lib/prisma";
 import {
   fromTransactional,
   getResend,
   replyToAddress,
 } from "@/lib/email/resend";
+import { translateBatch } from "@/lib/translate/deepl";
+import { polishEmailText } from "@/lib/ai/polish-email-text";
 import { getEmailTemplate, PREVIEW_LOCALES } from "./registry";
+import { getFieldMeta } from "./field-meta";
 
 export type ActionState = {
   ok: boolean;
@@ -30,7 +39,11 @@ const LOCALE_VALUES = PREVIEW_LOCALES.map((l) => l as string) as [
   ...string[],
 ];
 
-const Schema = z.object({
+// ─────────────────────────────────────────────────────────────────────────
+// Test send (unchanged)
+// ─────────────────────────────────────────────────────────────────────────
+
+const TestSendSchema = z.object({
   templateKey: z.string().min(1),
   locale: z.enum(LOCALE_VALUES),
 });
@@ -39,7 +52,6 @@ export async function sendTestEmailAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  // Auth — only admins may hit this.
   const user = await requireAdmin();
   const toAddress = user.email;
   if (!toAddress) {
@@ -49,26 +61,20 @@ export async function sendTestEmailAction(
     };
   }
 
-  const parsed = Schema.safeParse({
+  const parsed = TestSendSchema.safeParse({
     templateKey: formData.get("templateKey"),
     locale: formData.get("locale"),
   });
-  if (!parsed.success) {
-    return { ok: false, message: "Bad preview request." };
-  }
+  if (!parsed.success) return { ok: false, message: "Bad preview request." };
 
   const template = getEmailTemplate(parsed.data.templateKey);
-  if (!template) {
-    return { ok: false, message: "Unknown template." };
-  }
+  if (!template) return { ok: false, message: "Unknown template." };
 
-  // Render with the fixture at the requested locale.
   const rendered = template.render(parsed.data.locale as Locale);
   if (!rendered) {
     return {
       ok: false,
-      message:
-        "Template returned nothing for the current fixture — nothing to send.",
+      message: "Template returned nothing — nothing to send.",
     };
   }
 
@@ -76,15 +82,11 @@ export async function sendTestEmailAction(
   if (!client) {
     return {
       ok: false,
-      message:
-        "Resend is not configured (RESEND_API_KEY missing) — can't send. You can still preview the HTML above.",
+      message: "Resend not configured — set RESEND_API_KEY first.",
     };
   }
 
-  // Prefix the subject so the test copy is obvious in Sofia's inbox and
-  // she doesn't mistake it for a real customer email.
   const subject = `[TEST · ${parsed.data.locale}] ${rendered.subject}`;
-
   try {
     await client.emails.send({
       from: fromTransactional(),
@@ -99,15 +101,263 @@ export async function sendTestEmailAction(
         { name: "locale", value: parsed.data.locale },
       ],
     });
-    return {
-      ok: true,
-      message: `Sent to ${toAddress}. Check your inbox in a few seconds.`,
-    };
+    return { ok: true, message: `Sent to ${toAddress}.` };
   } catch (err) {
     console.error("[admin/emails] test send failed", err);
+    return { ok: false, message: "Resend rejected the send." };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Save override — upsert one (emailKey, locale, fieldKey) row.
+// Empty values delete the row (revert-to-default is the same as save-empty).
+// ─────────────────────────────────────────────────────────────────────────
+
+const SaveSchema = z.object({
+  emailKey: z.string().min(1),
+  locale: z.enum(LOCALE_VALUES),
+  fieldKey: z.string().min(1),
+  value: z.string().max(2000),
+});
+
+export async function saveEmailOverrideAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const ctx = await requireCapability("emails.send", "/admin/emails");
+
+  const parsed = SaveSchema.safeParse({
+    emailKey: formData.get("emailKey"),
+    locale: formData.get("locale"),
+    fieldKey: formData.get("fieldKey"),
+    value: formData.get("value") ?? "",
+  });
+  if (!parsed.success) return { ok: false, message: "Invalid field." };
+
+  // Guard: refuse to save overrides for fields the meta says are dynamic.
+  const meta = getFieldMeta(parsed.data.emailKey);
+  const field = meta?.find((f) => f.key === parsed.data.fieldKey);
+  if (!field) return { ok: false, message: "Unknown field." };
+  if (field.kind === "dynamic") {
     return {
       ok: false,
-      message: "Resend rejected the send — check the server logs.",
+      message: `"${field.label}" contains dynamic placeholders and can't be edited from admin — change it in the email's TS file.`,
+    };
+  }
+
+  const trimmed = parsed.data.value.trim();
+  const locale = parsed.data.locale as Locale;
+
+  if (trimmed.length === 0) {
+    // Empty save = revert to default
+    await prisma.emailCopyOverride.deleteMany({
+      where: {
+        emailKey: parsed.data.emailKey,
+        locale,
+        fieldKey: parsed.data.fieldKey,
+      },
+    });
+  } else {
+    await prisma.emailCopyOverride.upsert({
+      where: {
+        emailKey_locale_fieldKey: {
+          emailKey: parsed.data.emailKey,
+          locale,
+          fieldKey: parsed.data.fieldKey,
+        },
+      },
+      create: {
+        emailKey: parsed.data.emailKey,
+        locale,
+        fieldKey: parsed.data.fieldKey,
+        value: parsed.data.value,
+        updatedBy: ctx.user.id,
+      },
+      update: {
+        value: parsed.data.value,
+        updatedBy: ctx.user.id,
+      },
+    });
+  }
+
+  revalidatePath(`/admin/emails/${parsed.data.emailKey}/edit`);
+  revalidatePath(`/admin/emails/${parsed.data.emailKey}`);
+  return { ok: true, message: "Saved." };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Reset — delete one override row for one (locale, field).
+// ─────────────────────────────────────────────────────────────────────────
+
+export async function resetEmailOverrideAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireCapability("emails.send", "/admin/emails");
+
+  const emailKey = String(formData.get("emailKey") ?? "");
+  const localeStr = String(formData.get("locale") ?? "");
+  const fieldKey = String(formData.get("fieldKey") ?? "");
+
+  if (!emailKey || !fieldKey || !LOCALE_VALUES.includes(localeStr)) {
+    return { ok: false, message: "Bad request." };
+  }
+
+  await prisma.emailCopyOverride.deleteMany({
+    where: { emailKey, locale: localeStr as Locale, fieldKey },
+  });
+  revalidatePath(`/admin/emails/${emailKey}/edit`);
+  return { ok: true, message: "Reset to default." };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// DeepL translate — given a source value + source locale, translate it
+// into the OTHER three locales and upsert each as an override.
+// Sofia uses this when she tweaks the EN copy and wants the same tweak
+// reflected in NL/FR/RU without re-typing.
+// ─────────────────────────────────────────────────────────────────────────
+
+// DeepL translates from English only (per the existing translateBatch
+// wrapper). The editor surfaces this button only on the EN tab; the
+// action enforces the same constraint server-side.
+const TranslateSchema = z.object({
+  emailKey: z.string().min(1),
+  fieldKey: z.string().min(1),
+  value: z.string().min(1).max(2000),
+});
+
+export async function translateEmailFieldAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const ctx = await requireCapability("emails.send", "/admin/emails");
+  const parsed = TranslateSchema.safeParse({
+    emailKey: formData.get("emailKey"),
+    fieldKey: formData.get("fieldKey"),
+    value: formData.get("value") ?? "",
+  });
+  if (!parsed.success) return { ok: false, message: "Nothing to translate." };
+
+  const meta = getFieldMeta(parsed.data.emailKey);
+  const field = meta?.find((f) => f.key === parsed.data.fieldKey);
+  if (!field || field.kind === "dynamic") {
+    return { ok: false, message: "This field can't be auto-translated." };
+  }
+
+  const targets: Locale[] = [Locale.NL, Locale.FR, Locale.RU];
+
+  try {
+    // One DeepL call per target. Wrapped translateBatch is EN-source only.
+    const results = await Promise.all(
+      targets.map(async (target) => {
+        const out = await translateBatch([parsed.data.value], { target });
+        if (!out.ok) {
+          throw new Error(`DeepL ${out.error.kind}`);
+        }
+        return { target, value: out.translations[0] ?? "" };
+      }),
+    );
+    // Save each translation as an override
+    await Promise.all(
+      results.map(async ({ target, value }) => {
+        if (!value || !value.trim()) return;
+        await prisma.emailCopyOverride.upsert({
+          where: {
+            emailKey_locale_fieldKey: {
+              emailKey: parsed.data.emailKey,
+              locale: target,
+              fieldKey: parsed.data.fieldKey,
+            },
+          },
+          create: {
+            emailKey: parsed.data.emailKey,
+            locale: target,
+            fieldKey: parsed.data.fieldKey,
+            value,
+            updatedBy: ctx.user.id,
+          },
+          update: { value, updatedBy: ctx.user.id },
+        });
+      }),
+    );
+    revalidatePath(`/admin/emails/${parsed.data.emailKey}/edit`);
+    return {
+      ok: true,
+      message: `Translated to NL, FR, RU.`,
+    };
+  } catch (err) {
+    console.error("[admin/emails] DeepL translate failed", err);
+    return {
+      ok: false,
+      message: "DeepL rejected the request — check DEEPL_API_KEY.",
+    };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Groq polish — feed the value into the polish helper, save the result
+// as an override for the SAME locale.
+// ─────────────────────────────────────────────────────────────────────────
+
+const PolishSchema = z.object({
+  emailKey: z.string().min(1),
+  locale: z.enum(LOCALE_VALUES),
+  fieldKey: z.string().min(1),
+  value: z.string().min(1).max(2000),
+});
+
+export async function polishEmailFieldAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const ctx = await requireCapability("emails.send", "/admin/emails");
+  const parsed = PolishSchema.safeParse({
+    emailKey: formData.get("emailKey"),
+    locale: formData.get("locale"),
+    fieldKey: formData.get("fieldKey"),
+    value: formData.get("value") ?? "",
+  });
+  if (!parsed.success) return { ok: false, message: "Nothing to polish." };
+
+  const meta = getFieldMeta(parsed.data.emailKey);
+  const field = meta?.find((f) => f.key === parsed.data.fieldKey);
+  if (!field || field.kind === "dynamic") {
+    return { ok: false, message: "This field can't be auto-polished." };
+  }
+
+  try {
+    const polished = await polishEmailText({
+      locale: parsed.data.locale as Locale,
+      fieldLabel: field.label,
+      current: parsed.data.value,
+    });
+    if (!polished || !polished.trim()) {
+      return { ok: false, message: "Groq returned an empty result." };
+    }
+    await prisma.emailCopyOverride.upsert({
+      where: {
+        emailKey_locale_fieldKey: {
+          emailKey: parsed.data.emailKey,
+          locale: parsed.data.locale as Locale,
+          fieldKey: parsed.data.fieldKey,
+        },
+      },
+      create: {
+        emailKey: parsed.data.emailKey,
+        locale: parsed.data.locale as Locale,
+        fieldKey: parsed.data.fieldKey,
+        value: polished,
+        updatedBy: ctx.user.id,
+      },
+      update: { value: polished, updatedBy: ctx.user.id },
+    });
+    revalidatePath(`/admin/emails/${parsed.data.emailKey}/edit`);
+    return { ok: true, message: "Polished." };
+  } catch (err) {
+    console.error("[admin/emails] Groq polish failed", err);
+    return {
+      ok: false,
+      message: "Groq rejected the request — check GROQ_API_KEY.",
     };
   }
 }

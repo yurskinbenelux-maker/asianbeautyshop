@@ -200,6 +200,10 @@ async function sendCompletionEmail(args: {
       items,
       expiresOn,
       percentOff,
+      // Plumb the customer's locale through so the email + restore-link
+      // URL (`/{locale}/quiz/restore`) match the language they were
+      // browsing in. Falls back to EN inside the template if missing.
+      locale: args.locale,
     });
   } catch (err) {
     console.error("[quiz/claim] email send failed", err);

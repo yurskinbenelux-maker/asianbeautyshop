@@ -24,6 +24,11 @@ import {
 } from "./resend";
 import { BUSINESS_LEGAL_LINE, EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
 import {
+  applyOverrides,
+  getEmailOverrides,
+  type EmailOverrides,
+} from "./copy-overrides";
+import {
   formatEmailMoney,
   getOrderForEmail,
   type EmailOrder,
@@ -55,7 +60,7 @@ type Strings = {
   footer: string;
 };
 
-const STRINGS: Record<Locale, Strings> = {
+export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
   EN: {
     subject: (n) => `Your order ${n} is confirmed — YU.R Skin Solution`,
     preheader: "Thank you for your order. A skincare routine is on its way to you.",
@@ -180,11 +185,20 @@ function accountOrderUrl(order: EmailOrder): string {
 
 /**
  * Render the order confirmation for one order. Pure: no DB, no network.
+ *
+ * `options.overrides` (optional) lets the caller patch any string field
+ * with admin-edited copy fetched from `EmailCopyOverride`. Function
+ * fields (`subject`, `heading`) are never replaced — they need their
+ * dynamic placeholders to stay intact. See lib/email/copy-overrides.ts.
  */
 export function buildOrderConfirmationEmail(
   order: EmailOrder,
+  options?: { overrides?: EmailOverrides },
 ): OrderConfirmationEmail {
-  const s = STRINGS[order.locale] ?? STRINGS.EN;
+  const s = applyOverrides(
+    ORDER_CONFIRMATION_STRINGS[order.locale] ?? ORDER_CONFIRMATION_STRINGS.EN,
+    options?.overrides,
+  );
   const subject = s.subject(order.publicNumber);
   const money = (n: number) =>
     formatEmailMoney(n, order.currency, order.locale);
@@ -377,7 +391,10 @@ export async function sendOrderConfirmationEmail(
     return { sent: false, reason: "order-not-found" };
   }
 
-  const { subject, html, text } = buildOrderConfirmationEmail(order);
+  // Pull any admin-edited copy overrides for this email + locale.
+  // Empty Map when Sofia hasn't tweaked anything → builder uses defaults.
+  const overrides = await getEmailOverrides("order-confirmation", order.locale);
+  const { subject, html, text } = buildOrderConfirmationEmail(order, { overrides });
 
   const client = getResend();
   if (!client) {
