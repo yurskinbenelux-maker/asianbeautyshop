@@ -34,6 +34,19 @@ export type ActionState = {
   message?: string;
 };
 
+// Specialised return types — the translate/polish actions mutate state
+// the editor needs to reflect locally (the values they just wrote to
+// the DB). Returning them here saves a `router.refresh()` round-trip
+// and lets the client UI update instantly.
+export type TranslateActionState = ActionState & {
+  /** Map of target locale → translated value, set on success. */
+  translations?: Partial<Record<Locale, string>>;
+};
+export type PolishActionState = ActionState & {
+  /** The Groq-polished value that was saved as the override. */
+  polishedValue?: string;
+};
+
 const LOCALE_VALUES = PREVIEW_LOCALES.map((l) => l as string) as [
   string,
   ...string[],
@@ -263,9 +276,9 @@ const TranslateSchema = z.object({
 });
 
 export async function translateEmailFieldAction(
-  _prev: ActionState,
+  _prev: TranslateActionState,
   formData: FormData,
-): Promise<ActionState> {
+): Promise<TranslateActionState> {
   const ctx = await requireCapability("emails.send", "/admin/emails");
   const parsed = TranslateSchema.safeParse({
     emailKey: formData.get("emailKey"),
@@ -293,10 +306,14 @@ export async function translateEmailFieldAction(
         return { target, value: out.translations[0] ?? "" };
       }),
     );
-    // Save each translation as an override
+    // Save each translation as an override AND collect the values to
+    // ship back to the client so the editor can merge them into local
+    // state without a full page refresh.
+    const translations: Partial<Record<Locale, string>> = {};
     await Promise.all(
       results.map(async ({ target, value }) => {
         if (!value || !value.trim()) return;
+        translations[target] = value;
         await prisma.emailCopyOverride.upsert({
           where: {
             emailKey_locale_fieldKey: {
@@ -320,6 +337,7 @@ export async function translateEmailFieldAction(
     return {
       ok: true,
       message: `Translated to NL, FR, RU.`,
+      translations,
     };
   } catch (err) {
     console.error("[admin/emails] DeepL translate failed", err);
@@ -343,9 +361,9 @@ const PolishSchema = z.object({
 });
 
 export async function polishEmailFieldAction(
-  _prev: ActionState,
+  _prev: PolishActionState,
   formData: FormData,
-): Promise<ActionState> {
+): Promise<PolishActionState> {
   const ctx = await requireCapability("emails.send", "/admin/emails");
   const parsed = PolishSchema.safeParse({
     emailKey: formData.get("emailKey"),
@@ -388,7 +406,10 @@ export async function polishEmailFieldAction(
       update: { value: polished, updatedBy: ctx.user.id },
     });
     revalidatePath(`/admin/emails/${parsed.data.emailKey}/edit`);
-    return { ok: true, message: "Polished." };
+    // Ship the polished text back so the editor can drop it straight
+    // into the textarea — otherwise Sofia clicks "Polish" and nothing
+    // visible happens until she navigates away and back.
+    return { ok: true, message: "Polished.", polishedValue: polished };
   } catch (err) {
     console.error("[admin/emails] Groq polish failed", err);
     return {

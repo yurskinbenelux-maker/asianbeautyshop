@@ -142,6 +142,26 @@ export function EmailCopyEditor({
     }));
   };
 
+  // Bulk-apply translation results across NL/FR/RU at once. Called by
+  // FieldCard after a successful DeepL translate so the other-locale
+  // tabs immediately show the new copy without a page reload (the
+  // server action already wrote the rows to the DB).
+  const applyTranslations = (
+    fieldKey: string,
+    translations: Partial<Record<Locale, string>>,
+  ) => {
+    setOverrides((prev) => {
+      const next = { ...prev };
+      for (const [loc, value] of Object.entries(translations) as Array<
+        [Locale, string]
+      >) {
+        if (!value) continue;
+        next[loc] = { ...prev[loc], [fieldKey]: value };
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
       {/* ── Left column: editor ───────────────────────────────────── */}
@@ -216,6 +236,9 @@ export function EmailCopyEditor({
               defaultValue={defaults[activeLocale]?.[field.key] ?? ""}
               value={overrides[activeLocale]?.[field.key] ?? ""}
               onChange={(v) => updateField(activeLocale, field.key, v)}
+              onApplyTranslations={(translations) =>
+                applyTranslations(field.key, translations)
+              }
             />
           ))}
         </div>
@@ -284,6 +307,7 @@ function FieldCard({
   defaultValue,
   value,
   onChange,
+  onApplyTranslations,
 }: {
   emailKey: string;
   field: EmailFieldDescriptor;
@@ -291,6 +315,12 @@ function FieldCard({
   defaultValue: string;
   value: string;
   onChange: (v: string) => void;
+  /** Called after successful DeepL translate with the values that were
+   *  saved as overrides for the OTHER locales. The parent merges them
+   *  into shared state so switching tabs shows the new copy. */
+  onApplyTranslations: (
+    translations: Partial<Record<Locale, string>>,
+  ) => void;
 }) {
   const [pending, startTransition] = useTransition();
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -306,13 +336,19 @@ function FieldCard({
   // generate variants from the default copy without typing first.
   const polishSourceText = value.trim().length > 0 ? value : defaultValue;
 
-  const run = async (
+  // Generic action runner. Returns the action result via the
+  // onSuccess callback so callers can merge action-specific data
+  // (translations, polished text) into local state — without that
+  // hook the textareas / locale tabs would still show the pre-action
+  // values until a full reload, which is exactly the bug Sofia hit.
+  const run = async <T extends { ok: boolean; message?: string }>(
     kind: "save" | "reset" | "translate" | "polish",
     formData: FormData,
     fn: (
       _prev: { ok: boolean; message?: string },
       fd: FormData,
-    ) => Promise<{ ok: boolean; message?: string }>,
+    ) => Promise<T>,
+    onSuccess?: (result: T) => void,
   ) => {
     setBusyKind(kind);
     setError(null);
@@ -321,6 +357,7 @@ function FieldCard({
       if (result.ok) {
         setSavedAt(Date.now());
         setTimeout(() => setSavedAt(null), 2500);
+        onSuccess?.(result);
       } else {
         setError(result.message ?? "Something went wrong.");
       }
@@ -457,7 +494,15 @@ function FieldCard({
                 fd.set("emailKey", emailKey);
                 fd.set("fieldKey", field.key);
                 fd.set("value", value);
-                run("translate", fd, translateEmailFieldAction);
+                run("translate", fd, translateEmailFieldAction, (result) => {
+                  // Merge DeepL output into shared state so the
+                  // NL/FR/RU tabs immediately show the new copy.
+                  // Without this the DB row exists but the client's
+                  // useState still holds the empty initial value.
+                  if (result.translations) {
+                    onApplyTranslations(result.translations);
+                  }
+                });
               }}
               className="inline-flex items-center gap-1.5 border border-vermilion/30 bg-white px-3 py-1.5 text-[11px] uppercase tracking-label text-vermilion transition-colors hover:bg-vermilion/5 disabled:opacity-50"
               title="Auto-translate this value into NL, FR, RU and save each as an override"
@@ -483,7 +528,14 @@ function FieldCard({
                 fd.set("locale", locale);
                 fd.set("fieldKey", field.key);
                 fd.set("value", polishSourceText);
-                run("polish", fd, polishEmailFieldAction);
+                run("polish", fd, polishEmailFieldAction, (result) => {
+                  // Drop the polished text straight into the textarea
+                  // so Sofia sees the variant without flipping pages.
+                  // The action already saved it to the DB.
+                  if (result.polishedValue) {
+                    onChange(result.polishedValue);
+                  }
+                });
               }}
               className="inline-flex items-center gap-1.5 border border-ink/15 bg-white px-3 py-1.5 text-[11px] uppercase tracking-label text-ink transition-colors hover:border-vermilion hover:text-vermilion disabled:opacity-50"
               title={
