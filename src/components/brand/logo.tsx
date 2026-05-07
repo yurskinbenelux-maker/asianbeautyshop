@@ -36,8 +36,13 @@ const SRC: Record<LogoVariant, string> = {
 type LogoProps = {
   variant?: LogoVariant;
   /** CSS height value — number (px) or any CSS length. Width follows the
-   *  natural aspect ratio of the variant's SVG. */
+   *  natural aspect ratio of the variant's SVG. Ignored when
+   *  `heightClass` is provided (Tailwind responsive classes win). */
   height?: number | string;
+  /** Tailwind responsive height utility (e.g. `"h-14 md:h-20"`). Use
+   *  this when the logo needs to be sized differently per breakpoint —
+   *  the nav uses it so mobile shows a smaller mark than desktop. */
+  heightClass?: string;
   /** Accessible label. Defaults to "Asian Beauty Shop"; pass explicit when needed. */
   alt?: string;
   className?: string;
@@ -46,11 +51,19 @@ type LogoProps = {
 export function Logo({
   variant = "lockup",
   height = 32,
+  heightClass,
   alt,
   className,
 }: LogoProps) {
   const label = alt ?? "Asian Beauty Shop";
-  const h = typeof height === "number" ? `${height}px` : height;
+  // Inline-style height is ONLY used when no Tailwind responsive class
+  // is provided. Setting both would let inline win and break responsive.
+  const inlineHeight = heightClass
+    ? undefined
+    : typeof height === "number"
+      ? `${height}px`
+      : height;
+  const mergedClass = [className, heightClass].filter(Boolean).join(" ");
 
   return (
     // Next.js <Image> would force explicit width/height and kick off its
@@ -59,9 +72,9 @@ export function Logo({
     <img
       src={SRC[variant]}
       alt={label}
-      className={className}
+      className={mergedClass || undefined}
       style={{
-        height: h,
+        height: inlineHeight,
         width: "auto",
         display: "block",
         // Guard against parents forcing a width that would squash the mark.

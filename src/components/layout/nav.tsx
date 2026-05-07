@@ -148,7 +148,7 @@ export function Nav({
         scrolled ? "glass border-b border-ink/5" : "bg-transparent",
       )}
     >
-      <div className="container flex h-16 items-center justify-between gap-3 md:h-20 md:gap-6">
+      <div className="container flex h-20 items-center justify-between gap-3 md:h-28 md:gap-6">
         {/* ── Hamburger (mobile only) ──────────────────────────────── */}
         {/* Sits on the leading edge — the conventional spot for mobile
             menu triggers and the easiest one for thumb reach. Hidden on
@@ -175,9 +175,14 @@ export function Nav({
           className="flex items-center"
           aria-label={t("brand.name")}
         >
-          {/* height=48 reads comfortably inside the h-16 mobile nav (64px)
-              and h-20 desktop nav (80px) without overwhelming either. */}
-          <Logo variant="lockup" height={48} alt={t("brand.name")} />
+          {/* Lockup sized responsively — h-14 (56px) on mobile inside the
+              h-20 (80px) bar, h-20 (80px) on desktop inside the h-28
+              (112px) bar. Both leave ~12-16px breathing room. */}
+          <Logo
+            variant="lockup"
+            heightClass="h-14 md:h-20"
+            alt={t("brand.name")}
+          />
         </Link>
 
         {/* ── Instagram link — sits right next to the wordmark on every
