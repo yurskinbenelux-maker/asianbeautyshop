@@ -171,10 +171,11 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
       "Sent the moment someone enters their email in the newsletter form (footer or exit-intent). Double opt-in: nothing happens to the subscriber list until they click.",
     audience: "customer",
     localised: true,
-    render: (locale) =>
+    render: (locale, overrides) =>
       buildConfirmationEmail({
         confirmUrl: "https://yurskinsolution.eu/api/newsletter/confirm?t=preview",
         locale,
+        overrides,
       }),
   },
   {
@@ -192,7 +193,8 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     description: "Sent when you mark an order as Shipped in admin.",
     audience: "customer",
     localised: true,
-    render: (locale) => buildOrderShippedEmail(fixtureOrder(locale)),
+    render: (locale, overrides) =>
+      buildOrderShippedEmail(fixtureOrder(locale), { overrides }),
   },
   {
     key: "order-cancelled",
@@ -200,7 +202,8 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     description: "Sent when an order is cancelled before shipping.",
     audience: "customer",
     localised: true,
-    render: (locale) => buildOrderCancelledEmail(fixtureOrder(locale)),
+    render: (locale, overrides) =>
+      buildOrderCancelledEmail(fixtureOrder(locale), { overrides }),
   },
   {
     key: "order-refunded",
@@ -209,10 +212,11 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
       "Sent after a full refund is issued. Partial-refund preview is on the roadmap.",
     audience: "customer",
     localised: true,
-    render: (locale) =>
+    render: (locale, overrides) =>
       buildOrderRefundedEmail(fixtureOrder(locale), {
         amount: 84.95,
         kind: "full",
+        overrides,
       }),
   },
   {
@@ -222,7 +226,8 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
       "Sent ~14 days after delivery asking the customer for a review.",
     audience: "customer",
     localised: true,
-    render: (locale) => buildReviewRequestEmail(fixtureOrder(locale)),
+    render: (locale, overrides) =>
+      buildReviewRequestEmail(fixtureOrder(locale), { overrides }),
   },
   {
     key: "abandoned-cart",
@@ -231,7 +236,8 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
       "Sent by the daily cron to customers who left items in their bag.",
     audience: "customer",
     localised: true,
-    render: (locale) => buildAbandonedCartEmail(fixtureAbandonedCart(locale)),
+    render: (locale, overrides) =>
+      buildAbandonedCartEmail(fixtureAbandonedCart(locale), { overrides }),
   },
   {
     key: "low-stock-alert",

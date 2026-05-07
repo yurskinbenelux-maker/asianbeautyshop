@@ -23,6 +23,11 @@ import {
   replyToAddress,
 } from "./resend";
 import { BUSINESS_LEGAL_LINE, EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
+import {
+  applyOverrides,
+  getEmailOverrides,
+  type EmailOverrides,
+} from "./copy-overrides";
 import { getOrderForEmail, type EmailOrder } from "./order-query";
 
 // ────────── per-locale copy ─────────────────────────────────────────────
@@ -38,7 +43,7 @@ type Strings = {
   footer: string;
 };
 
-const STRINGS: Record<Locale, Strings> = {
+export const ORDER_CANCELLED_STRINGS: Record<Locale, Strings> = {
   EN: {
     subject: (n) => `Your order ${n} has been cancelled — YU.R Skin Solution`,
     preheader: "Your order has been cancelled.",
@@ -114,8 +119,14 @@ function accountUrl(order: EmailOrder): string {
 }
 
 /** Pure builder — returns subject/html/text for the cancellation email. */
-export function buildOrderCancelledEmail(order: EmailOrder): OrderCancelledEmail {
-  const s = STRINGS[order.locale] ?? STRINGS.EN;
+export function buildOrderCancelledEmail(
+  order: EmailOrder,
+  options?: { overrides?: EmailOverrides },
+): OrderCancelledEmail {
+  const s = applyOverrides(
+    ORDER_CANCELLED_STRINGS[order.locale] ?? ORDER_CANCELLED_STRINGS.EN,
+    options?.overrides,
+  );
   const subject = s.subject(order.publicNumber);
 
   const body = /* html */ `
@@ -180,7 +191,8 @@ export async function sendOrderCancelledEmail(
     return { sent: false, reason: "order-not-found" };
   }
 
-  const { subject, html, text } = buildOrderCancelledEmail(order);
+  const overrides = await getEmailOverrides("order-cancelled", order.locale);
+  const { subject, html, text } = buildOrderCancelledEmail(order, { overrides });
 
   const client = getResend();
   if (!client) {

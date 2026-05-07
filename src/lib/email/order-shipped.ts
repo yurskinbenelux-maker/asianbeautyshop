@@ -16,6 +16,11 @@ import {
   replyToAddress,
 } from "./resend";
 import { BUSINESS_LEGAL_LINE, EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
+import {
+  applyOverrides,
+  getEmailOverrides,
+  type EmailOverrides,
+} from "./copy-overrides";
 import { getOrderForEmail, type EmailOrder } from "./order-query";
 
 // ────────── per-locale copy ─────────────────────────────────────────────
@@ -32,7 +37,7 @@ type Strings = {
   footer: string;
 };
 
-const STRINGS: Record<Locale, Strings> = {
+export const ORDER_SHIPPED_STRINGS: Record<Locale, Strings> = {
   EN: {
     subject: (n) => `Your order ${n} is on its way — YU.R Skin Solution`,
     preheader: "Your parcel has left the studio.",
@@ -108,10 +113,17 @@ function accountOrderUrl(order: EmailOrder): string {
 }
 
 /**
- * Render the shipped email. Pure.
+ * Render the shipped email. Pure. `options.overrides` lets the admin
+ * preview / production send pipeline swap in Sofia's edited copy.
  */
-export function buildOrderShippedEmail(order: EmailOrder): OrderShippedEmail {
-  const s = STRINGS[order.locale] ?? STRINGS.EN;
+export function buildOrderShippedEmail(
+  order: EmailOrder,
+  options?: { overrides?: EmailOverrides },
+): OrderShippedEmail {
+  const s = applyOverrides(
+    ORDER_SHIPPED_STRINGS[order.locale] ?? ORDER_SHIPPED_STRINGS.EN,
+    options?.overrides,
+  );
   const subject = s.subject(order.publicNumber);
 
   const hasTracking = Boolean(order.trackingNumber);
@@ -192,7 +204,9 @@ export async function sendOrderShippedEmail(
     return { sent: false, reason: "order-not-found" };
   }
 
-  const { subject, html, text } = buildOrderShippedEmail(order);
+  // Pull any admin-edited copy overrides for this email + locale.
+  const overrides = await getEmailOverrides("order-shipped", order.locale);
+  const { subject, html, text } = buildOrderShippedEmail(order, { overrides });
 
   const client = getResend();
   if (!client) {

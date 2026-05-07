@@ -17,6 +17,11 @@ import {
   replyToAddress,
 } from "./resend";
 import { EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
+import {
+  applyOverrides,
+  getEmailOverrides,
+  type EmailOverrides,
+} from "./copy-overrides";
 import type { AbandonedCart } from "@/lib/queries/abandoned-carts";
 
 // ────────── per-locale copy ─────────────────────────────────────────────
@@ -32,7 +37,7 @@ type Strings = {
   andMore: (n: number) => string;
 };
 
-const STRINGS: Record<Locale, Strings> = {
+export const ABANDONED_CART_STRINGS: Record<Locale, Strings> = {
   EN: {
     subject: "You left something in your bag — YU.R Skin Solution",
     preheader: "Pick up where you left off.",
@@ -103,8 +108,14 @@ function cartUrl(cart: AbandonedCart): string {
   return `${siteUrl()}/${locale}/cart`;
 }
 
-export function buildAbandonedCartEmail(cart: AbandonedCart): AbandonedCartEmail {
-  const s = STRINGS[cart.locale] ?? STRINGS.EN;
+export function buildAbandonedCartEmail(
+  cart: AbandonedCart,
+  options?: { overrides?: EmailOverrides },
+): AbandonedCartEmail {
+  const s = applyOverrides(
+    ABANDONED_CART_STRINGS[cart.locale] ?? ABANDONED_CART_STRINGS.EN,
+    options?.overrides,
+  );
 
   // Small item roster. Show up to 3, then "and N more".
   const itemsHtml = cart.items
@@ -195,7 +206,8 @@ export function buildAbandonedCartEmail(cart: AbandonedCart): AbandonedCartEmail
 export async function sendAbandonedCartEmail(
   cart: AbandonedCart,
 ): Promise<{ sent: boolean; reason?: string }> {
-  const { subject, html, text } = buildAbandonedCartEmail(cart);
+  const overrides = await getEmailOverrides("abandoned-cart", cart.locale);
+  const { subject, html, text } = buildAbandonedCartEmail(cart, { overrides });
 
   const client = getResend();
   if (!client) {

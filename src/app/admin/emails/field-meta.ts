@@ -47,9 +47,11 @@ export type EmailFieldDescriptor = {
  * an "Edit copy" button on /admin/emails. Order matters — the editor
  * renders fields top-to-bottom in this order.
  *
- * Currently wired: order-confirmation. The other 17 transactional
- * emails follow the same 3-line pattern and can be added when the
- * client wants to tweak their copy.
+ * Currently wired: order-confirmation, order-shipped, order-cancelled,
+ * order-refunded, review-request, abandoned-cart, newsletter-confirm.
+ * Auth-* templates and the multilingual variants are paste-to-Supabase
+ * — they don't go through our send pipeline so overrides wouldn't
+ * apply. Low-stock-alert + admin-only emails stay EN-only in code.
  */
 export const FIELD_META: Record<string, EmailFieldDescriptor[]> = {
   "order-confirmation": [
@@ -72,6 +74,69 @@ export const FIELD_META: Record<string, EmailFieldDescriptor[]> = {
     { key: "cta", label: "Call-to-action button", kind: "short" },
     { key: "signoff", label: "Sign-off", kind: "long", hint: "Use \\n for line breaks." },
     { key: "footer", label: "Legal footer line", kind: "short" },
+  ],
+  "order-shipped": [
+    { key: "subject", label: "Subject", kind: "dynamic", hint: "Contains the order number — managed in code." },
+    { key: "preheader", label: "Preheader (preview text)", kind: "short" },
+    { key: "heading", label: "Heading", kind: "dynamic", hint: "Greets the customer by first name — managed in code." },
+    { key: "lede", label: "Lede paragraph (when tracking is available)", kind: "long" },
+    { key: "trackingLabel", label: "Tracking number label", kind: "short" },
+    { key: "noTrackingLede", label: "Lede paragraph (no tracking yet)", kind: "long" },
+    { key: "cta", label: "Call-to-action button", kind: "short" },
+    { key: "signoff", label: "Sign-off", kind: "long" },
+    { key: "footer", label: "Legal footer line", kind: "short" },
+  ],
+  "order-cancelled": [
+    { key: "subject", label: "Subject", kind: "dynamic", hint: "Contains the order number — managed in code." },
+    { key: "preheader", label: "Preheader (preview text)", kind: "short" },
+    { key: "heading", label: "Heading", kind: "dynamic", hint: "Greets the customer by first name — managed in code." },
+    { key: "lede", label: "Lede paragraph", kind: "long" },
+    { key: "refundNote", label: "Refund note", kind: "long", hint: "Explains when/how the refund will appear." },
+    { key: "cta", label: "Call-to-action button", kind: "short" },
+    { key: "signoff", label: "Sign-off", kind: "long" },
+    { key: "footer", label: "Legal footer line", kind: "short" },
+  ],
+  "order-refunded": [
+    { key: "subject", label: "Subject", kind: "dynamic", hint: "Branches on full vs. partial refund + order number — managed in code." },
+    { key: "preheader", label: "Preheader", kind: "dynamic", hint: "Branches on full vs. partial refund — managed in code." },
+    { key: "heading", label: "Heading", kind: "dynamic", hint: "Greets by first name + branches on refund kind — managed in code." },
+    { key: "ledeFull", label: "Lede paragraph (full refund)", kind: "long" },
+    { key: "ledePartial", label: "Lede paragraph (partial refund)", kind: "long" },
+    { key: "amountLabel", label: "Refunded amount label", kind: "short" },
+    { key: "timingNote", label: "Timing note", kind: "long", hint: "When the customer should expect to see the money back." },
+    { key: "cta", label: "Call-to-action button", kind: "short" },
+    { key: "signoff", label: "Sign-off", kind: "long" },
+    { key: "footer", label: "Legal footer line", kind: "short" },
+  ],
+  "review-request": [
+    { key: "subject", label: "Subject", kind: "dynamic", hint: "Contains the order number — managed in code." },
+    { key: "preheader", label: "Preheader (preview text)", kind: "short" },
+    { key: "heading", label: "Heading", kind: "dynamic", hint: "Greets the customer by first name — managed in code." },
+    { key: "lede", label: "Lede paragraph", kind: "long" },
+    { key: "incentive", label: "Incentive line", kind: "long", hint: "Optional perk for leaving a review." },
+    { key: "cta", label: "Call-to-action button", kind: "short" },
+    { key: "signoff", label: "Sign-off", kind: "long" },
+    { key: "footer", label: "Legal footer line", kind: "short" },
+  ],
+  "abandoned-cart": [
+    { key: "subject", label: "Subject", kind: "short" },
+    { key: "preheader", label: "Preheader (preview text)", kind: "short" },
+    { key: "heading", label: "Heading", kind: "dynamic", hint: "Greets the customer by first name — managed in code." },
+    { key: "lede", label: "Lede paragraph", kind: "long" },
+    { key: "cta", label: "Call-to-action button", kind: "short" },
+    { key: "signoff", label: "Sign-off", kind: "long" },
+    { key: "footer", label: "Legal footer line", kind: "short" },
+    { key: "andMore", label: "\"And N more items\" line", kind: "dynamic", hint: "Inserts the remaining-item count — managed in code." },
+  ],
+  "newsletter-confirm": [
+    { key: "subject", label: "Subject", kind: "short" },
+    { key: "preheader", label: "Preheader (preview text)", kind: "short" },
+    { key: "greeting", label: "Greeting", kind: "short" },
+    { key: "lede", label: "Lede paragraph", kind: "long" },
+    { key: "cta", label: "Call-to-action button", kind: "short" },
+    { key: "alt", label: "Fallback link line", kind: "long", hint: "Shown if the CTA button doesn't work." },
+    { key: "signoff", label: "Sign-off", kind: "short" },
+    { key: "disclaimer", label: "GDPR disclaimer", kind: "long", hint: "Explains why the customer received this email." },
   ],
 };
 
@@ -124,6 +189,24 @@ async function loadStringsTable(
     case "order-confirmation":
       return (await import("@/lib/email/order-confirmation"))
         .ORDER_CONFIRMATION_STRINGS as never;
+    case "order-shipped":
+      return (await import("@/lib/email/order-shipped"))
+        .ORDER_SHIPPED_STRINGS as never;
+    case "order-cancelled":
+      return (await import("@/lib/email/order-cancelled"))
+        .ORDER_CANCELLED_STRINGS as never;
+    case "order-refunded":
+      return (await import("@/lib/email/order-refunded"))
+        .ORDER_REFUNDED_STRINGS as never;
+    case "review-request":
+      return (await import("@/lib/email/review-request"))
+        .REVIEW_REQUEST_STRINGS as never;
+    case "abandoned-cart":
+      return (await import("@/lib/email/abandoned-cart"))
+        .ABANDONED_CART_STRINGS as never;
+    case "newsletter-confirm":
+      return (await import("@/lib/newsletter/confirmation-email"))
+        .NEWSLETTER_CONFIRM_STRINGS as never;
     default:
       return null;
   }

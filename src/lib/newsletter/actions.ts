@@ -27,6 +27,7 @@ import { z } from "zod";
 import { Locale } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getResend, fromNewsletter, replyToAddress } from "@/lib/email/resend";
+import { getEmailOverrides } from "@/lib/email/copy-overrides";
 import { generateToken, hashToken } from "./tokens";
 import { buildConfirmationEmail } from "./confirmation-email";
 
@@ -146,9 +147,11 @@ export async function subscribeToNewsletterAction(
     return GENERIC_OK;
   }
 
+  const overrides = await getEmailOverrides("newsletter-confirm", locale);
   const { subject, html, text } = buildConfirmationEmail({
     confirmUrl: confirmUrl(rawToken),
     locale,
+    overrides,
   });
 
   try {

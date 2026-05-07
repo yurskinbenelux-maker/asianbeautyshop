@@ -17,6 +17,11 @@ import {
   replyToAddress,
 } from "./resend";
 import { EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
+import {
+  applyOverrides,
+  getEmailOverrides,
+  type EmailOverrides,
+} from "./copy-overrides";
 import { getOrderForEmail, type EmailOrder } from "./order-query";
 
 // ────────── per-locale copy ─────────────────────────────────────────────
@@ -32,7 +37,7 @@ type Strings = {
   footer: string;
 };
 
-const STRINGS: Record<Locale, Strings> = {
+export const REVIEW_REQUEST_STRINGS: Record<Locale, Strings> = {
   EN: {
     subject: (n) => `How did your ${n} skincare routine go? — YU.R Skin Solution`,
     preheader: "Share a few words about your products.",
@@ -108,8 +113,14 @@ function accountOrderUrl(order: EmailOrder): string {
 }
 
 /** Pure builder — returns subject/html/text for the review-request email. */
-export function buildReviewRequestEmail(order: EmailOrder): ReviewRequestEmail {
-  const s = STRINGS[order.locale] ?? STRINGS.EN;
+export function buildReviewRequestEmail(
+  order: EmailOrder,
+  options?: { overrides?: EmailOverrides },
+): ReviewRequestEmail {
+  const s = applyOverrides(
+    REVIEW_REQUEST_STRINGS[order.locale] ?? REVIEW_REQUEST_STRINGS.EN,
+    options?.overrides,
+  );
   const subject = s.subject(order.publicNumber);
 
   // Small item roster so the customer remembers which products this is
@@ -208,7 +219,8 @@ export async function sendReviewRequestEmail(
     return { sent: false, reason: "order-not-found" };
   }
 
-  const { subject, html, text } = buildReviewRequestEmail(order);
+  const overrides = await getEmailOverrides("review-request", order.locale);
+  const { subject, html, text } = buildReviewRequestEmail(order, { overrides });
 
   const client = getResend();
   if (!client) {

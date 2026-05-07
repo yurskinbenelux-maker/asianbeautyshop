@@ -15,6 +15,10 @@
 
 import { Locale } from "@prisma/client";
 import { esc, renderCtaButton, renderEmailShell } from "@/lib/email/html";
+import {
+  applyOverrides,
+  type EmailOverrides,
+} from "@/lib/email/copy-overrides";
 
 // ────────── per-locale strings ──────────────────────────────────────────
 
@@ -33,7 +37,7 @@ type Strings = {
   disclaimer: string;
 };
 
-const STRINGS: Record<Locale, Strings> = {
+export const NEWSLETTER_CONFIRM_STRINGS: Record<Locale, Strings> = {
   EN: {
     subject: "Confirm your subscription — YU.R Skin Solution",
     preheader: "One click to confirm your place on the monthly letter.",
@@ -85,6 +89,8 @@ const STRINGS: Record<Locale, Strings> = {
 export type ConfirmationEmailInput = {
   confirmUrl: string;
   locale: Locale;
+  /** Optional admin-edited copy overrides keyed by field name. */
+  overrides?: EmailOverrides;
 };
 
 /**
@@ -97,7 +103,10 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): {
   html: string;
   text: string;
 } {
-  const s = STRINGS[input.locale] ?? STRINGS.EN;
+  const s = applyOverrides(
+    NEWSLETTER_CONFIRM_STRINGS[input.locale] ?? NEWSLETTER_CONFIRM_STRINGS.EN,
+    input.overrides,
+  );
   const url = input.confirmUrl;
 
   const body = `

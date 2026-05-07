@@ -20,6 +20,11 @@ import {
 } from "./resend";
 import { BUSINESS_LEGAL_LINE, EMAIL_HR, esc, renderCtaButton, renderEmailShell } from "./html";
 import {
+  applyOverrides,
+  getEmailOverrides,
+  type EmailOverrides,
+} from "./copy-overrides";
+import {
   formatEmailMoney,
   getOrderForEmail,
   type EmailOrder,
@@ -42,7 +47,7 @@ type Strings = {
   footer: string;
 };
 
-const STRINGS: Record<Locale, Strings> = {
+export const ORDER_REFUNDED_STRINGS: Record<Locale, Strings> = {
   EN: {
     subject: (n, k) =>
       k === "full"
@@ -169,9 +174,12 @@ function accountOrderUrl(order: EmailOrder): string {
 
 export function buildOrderRefundedEmail(
   order: EmailOrder,
-  opts: { amount: number; kind: RefundKind },
+  opts: { amount: number; kind: RefundKind; overrides?: EmailOverrides },
 ): OrderRefundedEmail {
-  const s = STRINGS[order.locale] ?? STRINGS.EN;
+  const s = applyOverrides(
+    ORDER_REFUNDED_STRINGS[order.locale] ?? ORDER_REFUNDED_STRINGS.EN,
+    opts.overrides,
+  );
   const subject = s.subject(order.publicNumber, opts.kind);
   const money = formatEmailMoney(opts.amount, order.currency, order.locale);
 
@@ -249,7 +257,11 @@ export async function sendOrderRefundedEmail(
     return { sent: false, reason: "order-not-found" };
   }
 
-  const { subject, html, text } = buildOrderRefundedEmail(order, opts);
+  const overrides = await getEmailOverrides("order-refunded", order.locale);
+  const { subject, html, text } = buildOrderRefundedEmail(order, {
+    ...opts,
+    overrides,
+  });
 
   const client = getResend();
   if (!client) {
