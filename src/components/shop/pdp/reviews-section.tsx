@@ -14,6 +14,10 @@
 import { Star, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PdpReview, PdpReviewSummary } from "@/lib/queries/pdp";
+import {
+  PublicReviewForm,
+  type PublicReviewFormLabels,
+} from "./public-review-form";
 
 type Labels = {
   eyebrow: string;        // "Reviews"
@@ -31,11 +35,18 @@ export function ReviewsSection({
   reviews,
   labels,
   dateLocale,
+  productId,
+  locale,
+  formLabels,
 }: {
   summary: PdpReviewSummary;
   reviews: PdpReview[];
   labels: Labels;
   dateLocale: string;
+  /** Threaded through to <PublicReviewForm>. */
+  productId: string;
+  locale: string;
+  formLabels: PublicReviewFormLabels;
 }) {
   const fmtCount = (n: number) =>
     n === 1 ? labels.countOne : labels.countOther.replace("{count}", String(n));
@@ -96,6 +107,7 @@ export function ReviewsSection({
               <p className="mt-2 text-[13px] text-ink-mid">{labels.noneBody}</p>
             </div>
           ) : (
+            <>
             <ol className="divide-y divide-ink/10">
               {reviews.map((r) => (
                 <li key={r.id} className="py-6 first:pt-0">
@@ -129,7 +141,18 @@ export function ReviewsSection({
                 </li>
               ))}
             </ol>
+            </>
           )}
+
+          {/* Public review form — visible whether or not there are
+              existing reviews. Sofia explicitly asked for this so
+              non-buyers can also leave reviews. The form opens
+              inline; submissions go through admin moderation. */}
+          <PublicReviewForm
+            productId={productId}
+            locale={locale}
+            labels={formLabels}
+          />
         </div>
       </div>
     </section>

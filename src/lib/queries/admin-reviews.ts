@@ -79,13 +79,20 @@ export async function listAdminReviews(
 
   const rows: ReviewRow[] = reviews.map((r) => {
     const nameRow = r.product.translations[0];
+    // Display priority: stored authorName (set by guest reviews + new
+    // verified writes) → User's firstName + last → "Guest". Email
+    // priority: stored authorEmail (guest) → User's email (verified).
+    const fromUser = formatName(r.user);
+    const customerName =
+      r.authorName?.trim() ?? (fromUser !== "Guest" ? fromUser : "Guest");
+    const customerEmail = r.authorEmail ?? r.user?.email ?? null;
     return {
       id: r.id,
       productId: r.productId,
       productName: nameRow?.name ?? "(untitled product)",
       productSlug: nameRow?.slug ?? "",
-      customerName: formatName(r.user),
-      customerEmail: r.user?.email ?? null,
+      customerName,
+      customerEmail,
       rating: r.rating,
       title: r.title,
       body: r.body,

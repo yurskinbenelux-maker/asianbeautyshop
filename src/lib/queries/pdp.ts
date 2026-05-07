@@ -420,21 +420,20 @@ export async function getProductReviewSummary({
 
 export async function getProductReviews({
   productId,
-  locale,
   limit = 8,
 }: {
   productId: string;
-  locale: string;
+  /** @deprecated kept in the signature for callsite compatibility but no
+   *  longer filters — Sofia explicitly asked for all reviews to show
+   *  regardless of which locale the visitor is browsing. A French
+   *  shopper sees the Dutch reviews too. */
+  locale?: string;
   limit?: number;
 }): Promise<PdpReview[]> {
-  const loc = toPrismaLocale(locale);
-
-  // Strategy: prefer reviews in the current locale, then fall back to the
-  // rest. Instead of doing two queries, we just order by "is this locale"
-  // first — Prisma doesn't support that trick natively, so we do two
-  // queries and concatenate. `limit` caps the total.
-  const primary = await prisma.review.findMany({
-    where: { productId, isPublished: true, locale: loc },
+  // Simple flat query — no locale split. Verified reviews float to the
+  // top so trust signals win, then newest-first.
+  const rows = await prisma.review.findMany({
+    where: { productId, isPublished: true },
     orderBy: [{ isVerified: "desc" }, { createdAt: "desc" }],
     take: limit,
     include: {
@@ -444,32 +443,17 @@ export async function getProductReviews({
     },
   });
 
-  let combined = primary;
-  if (primary.length < limit) {
-    const rest = await prisma.review.findMany({
-      where: {
-        productId,
-        isPublished: true,
-        locale: { not: loc },
-      },
-      orderBy: [{ isVerified: "desc" }, { createdAt: "desc" }],
-      take: limit - primary.length,
-      include: {
-        user: {
-          select: { firstName: true, lastName: true },
-        },
-      },
-    });
-    combined = [...primary, ...rest];
-  }
-
-  return combined.map((r) => {
-    // "Sofia M." style — first name + last initial. If the user is null
-    // (guest review in future) we fall back to "Guest".
+  return rows.map((r) => {
+    // Author display priority:
+    //   1. authorName column (set by guest reviews + new verified writes)
+    //   2. User.firstName + LastInitial (legacy verified reviews)
+    //   3. "Guest" fallback
     const first = r.user?.firstName?.trim() ?? "";
     const last = r.user?.lastName?.trim() ?? "";
+    const stored = r.authorName?.trim() ?? "";
     let authorName = "Guest";
-    if (first && last) authorName = `${first} ${last[0]}.`;
+    if (stored) authorName = stored;
+    else if (first && last) authorName = `${first} ${last[0]}.`;
     else if (first) authorName = first;
     else if (last) authorName = last;
 

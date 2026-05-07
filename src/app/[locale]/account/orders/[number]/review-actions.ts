@@ -150,11 +150,23 @@ export async function submitProductReviewAction(
 
   // 5. Persist. isVerified=true because we just confirmed the customer
   // bought this product. isPublished=false → goes to admin moderation.
+  // We also denormalise the display name into `authorName` so the
+  // public PDP renderer doesn't have to join through User — the same
+  // column is used by guest-submitted reviews, so rendering stays
+  // uniform across both flows.
+  const first = profile.firstName?.trim() ?? "";
+  const last = profile.lastName?.trim() ?? "";
+  let authorName: string | null = null;
+  if (first && last) authorName = `${first} ${last[0]}.`;
+  else if (first) authorName = first;
+  else if (last) authorName = last;
+
   try {
     await prisma.review.create({
       data: {
         productId,
         userId: profile.id,
+        authorName,
         rating,
         title,
         body,

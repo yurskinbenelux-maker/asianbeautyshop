@@ -172,7 +172,9 @@ export default async function ProductDetailPage({
     getProductConcerns({ productId: product.id, locale }),
     getProductRitualSteps({ productId: product.id, locale }),
     getProductReviewSummary({ productId: product.id }),
-    getProductReviews({ productId: product.id, locale, limit: 8 }),
+    // No locale filter — Sofia wants the PDP to surface every approved
+    // review regardless of which locale the visitor is browsing.
+    getProductReviews({ productId: product.id, limit: 8 }),
     getProductBundle({ productId: product.id, locale }),
     getRelatedProducts({
       locale,
@@ -444,6 +446,8 @@ export default async function ProductDetailPage({
           summary={reviewSummary}
           reviews={reviews}
           dateLocale={currencyLocale}
+          productId={product.id}
+          locale={locale}
           labels={{
             eyebrow: t("reviews_eyebrow"),
             averageTitle: t("reviews_average"),
@@ -453,6 +457,35 @@ export default async function ProductDetailPage({
             noneTitle: t("reviews_none_title"),
             noneBody: t("reviews_none_body"),
             outOfFive: t("out_of_five"),
+          }}
+          formLabels={{
+            openCta: t("review_form_open_cta"),
+            heading: t("review_form_heading"),
+            ratingLabel: t("review_form_rating"),
+            nameLabel: t("review_form_name"),
+            namePlaceholder: t("review_form_name_placeholder"),
+            emailLabel: t("review_form_email"),
+            emailHint: t("review_form_email_hint"),
+            emailPlaceholder: t("review_form_email_placeholder"),
+            titleLabel: t("review_form_title"),
+            titlePlaceholder: t("review_form_title_placeholder"),
+            bodyLabel: t("review_form_body"),
+            bodyPlaceholder: t("review_form_body_placeholder"),
+            submit: t("review_form_submit"),
+            submitting: t("review_form_submitting"),
+            cancel: t("review_form_cancel"),
+            required: t("review_form_required"),
+            optional: t("review_form_optional"),
+            thanksTitle: t("review_form_thanks_title"),
+            thanksBody: t("review_form_thanks_body"),
+            moderationNote: t("review_form_moderation_note"),
+            errors: {
+              invalid_input: t("review_form_error_invalid_input"),
+              product_not_found: t("review_form_error_product_not_found"),
+              duplicate: t("review_form_error_duplicate"),
+              internal: t("review_form_error_internal"),
+              fallback: t("review_form_error_fallback"),
+            },
           }}
         />
 

@@ -1418,6 +1418,15 @@ model Review {
   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   userId     String?  @db.Uuid
   user       User?    @relation(fields: [userId], references: [id])
+  // Public display name. For verified-purchase reviews we copy
+  // "Firstname L." in at write time so the rendering layer doesn't
+  // have to chase the User relation. For guest reviews this is the
+  // name the shopper typed into the public form.
+  authorName  String?
+  // Optional contact for guest reviews — never displayed publicly,
+  // used by Sofia in moderation if a review needs follow-up
+  // (clarification, suspected-fake check, abuse).
+  authorEmail String?
   rating     Int      // 1-5
   title      String?
   body       String
