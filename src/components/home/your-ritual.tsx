@@ -29,7 +29,12 @@ export type RitualCopy = {
 };
 
 export function YourRitual({ copy }: { copy: RitualCopy }) {
-  const tRitual = useTranslations("skincare routine");
+  // Translation namespace key — must match messages/{locale}.json's
+  // top-level "ritual" object. Was briefly renamed to "skincare routine"
+  // by an over-eager find-replace and started crashing the whole
+  // homepage with MISSING_MESSAGE on every render (which then cascaded
+  // into hamburger / hydration failures on mobile).
+  const tRitual = useTranslations("ritual");
 
   const steps = [
     { n: "01", key: "cleanse", kr: "세안" },
@@ -40,7 +45,7 @@ export function YourRitual({ copy }: { copy: RitualCopy }) {
 
   return (
     <section
-      id="skincare routine"
+      id="ritual"
       // py-14 mobile / py-20 desktop. Earlier values left the section
       // floating with whitespace — the timeline is so visually small
       // (just four 14px dots) that bigger padding looks broken.
