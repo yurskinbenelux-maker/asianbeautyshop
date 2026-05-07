@@ -36,7 +36,7 @@ export const revalidate = 3600;
 
 const LOCALES = routing.locales; // ["en", "nl", "fr", "ru"]
 
-/** Site origin — e.g. https://yurskinsolution.eu. We trim any trailing slash
+/** Site origin — e.g. https://asianbeautyshop.eu. We trim any trailing slash
  *  because every path we emit is already prefixed with "/". */
 function getOrigin(): string {
   const raw = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -78,7 +78,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ── Static routes ─────────────────────────────────────────────────
   // Rendered under every locale. The homepage gets the highest priority;
   // shop is the other primary entry point. Auth pages are low-priority
-  // but still included (users searching for "yur sign in" etc.).
+  // but still included (users searching for "asian beauty sign in" etc.).
   const staticRoutes: Array<{
     tail: string;
     priority: number;
@@ -106,7 +106,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // ── Legal pages ───────────────────────────────────────────────────
   // /legal/<key> — 5 keys × 4 locales = 20 URLs. lastModified comes from
-  // the Page table so Google sees a fresh stamp when Sofia edits them.
+  // the Page table so Google sees a fresh stamp when an admin edits them.
   for (const key of LEGAL_PAGE_KEYS) {
     const tail = `/legal/${key}`;
     const alternates = sameTailAlternates(origin, tail);
@@ -198,7 +198,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ── Journal posts ─────────────────────────────────────────────────
   // Same shape as products: each post's URL is its locale-specific slug,
   // with EN as the fallback for any locale the post isn't translated
-  // into. lastModified comes from the post's updatedAt so Sofia's edits
+  // into. lastModified comes from the post's updatedAt so admin edits
   // propagate at the next crawl.
   const posts = await getAllPublishedJournalSlugs();
   for (const p of posts) {

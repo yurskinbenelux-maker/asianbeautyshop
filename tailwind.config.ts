@@ -1,6 +1,6 @@
 import type { Config } from "tailwindcss";
 
-// YU.R Skin Solution — ink & vermilion design tokens
+// Asian Beauty Shop — ink & vermilion design tokens
 // Source of truth for colours, fonts, radii, shadows. Edit here, not in components.
 
 const config: Config = {

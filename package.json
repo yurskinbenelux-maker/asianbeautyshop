@@ -1,8 +1,8 @@
 {
-  "name": "yurskin-solution",
+  "name": "asianbeautyshop",
   "version": "0.1.0",
   "private": true,
-  "description": "YU.R Skin Solution — luxury Korean cosmetics webshop. yurskinsolution.eu",
+  "description": "Asian Beauty Shop — curated K-beauty + Asian cosmetics webshop. asianbeautyshop.eu",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",

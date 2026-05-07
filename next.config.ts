@@ -50,7 +50,7 @@ const nextConfig: NextConfig = {
       // Setting NEXT_SERVER_ACTIONS_ENCRYPTION_KEY (a base64-encoded
       // 32-byte secret) on the Hostinger env panel makes the hashes
       // deterministic — old tabs still 404 after a deploy (the action
-      // signature genuinely changed if Sofia edited the form), but
+      // signature genuinely changed if an admin edited the form), but
       // workers stay in lockstep and routine redeploys stop breaking
       // open tabs unless the action body actually changed.
       //

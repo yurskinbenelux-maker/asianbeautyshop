@@ -109,12 +109,11 @@ export function AdminSidebar({
 
   return (
     <aside className="hidden w-64 flex-shrink-0 border-r border-ink/10 bg-white/40 md:flex md:flex-col">
-      {/* masthead — real brand logo (wordmark variant, no tagline at this
-          size) + "Admin" chip pushed to the right. The 유 CJK seal that
-          used to sit beside the wordmark has been retired along with the
-          .seal class; the vector logo carries the brand alone now. */}
+      {/* masthead — wordmark variant fits the tight 28px slot here; the
+          full lockup would crush at this size. + "Admin" chip pushed
+          to the right. */}
       <div className="flex h-16 items-center gap-3 border-b border-ink/10 px-6">
-        <Logo variant="wordmark" height={28} alt="YU.R" />
+        <Logo variant="wordmark" height={28} alt="Asian Beauty Shop" />
         <span className="ml-auto text-[10px] uppercase tracking-label text-ink-mid">
           Admin
         </span>

@@ -177,7 +177,7 @@ export function Nav({
         >
           {/* height=48 reads comfortably inside the h-16 mobile nav (64px)
               and h-20 desktop nav (80px) without overwhelming either. */}
-          <Logo variant="wordmark" height={48} alt={t("brand.name")} />
+          <Logo variant="lockup" height={48} alt={t("brand.name")} />
         </Link>
 
         {/* ── Instagram link — sits right next to the wordmark on every

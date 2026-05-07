@@ -19,15 +19,15 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "YU.R Skin Solution",
-    short_name: "YU.R",
+    name: "Asian Beauty Shop",
+    short_name: "ABS",
     description:
-      "Korean skincare, considered. A small editorial shop curated from Korean houses we trust.",
+      "Considered Asian beauty, curated. Korean, Japanese and beyond — small-batch houses we trust.",
     start_url: "/",
     display: "standalone",
     orientation: "portrait",
     background_color: "#F8F4EC", // rice cream
-    theme_color: "#C8102E", // vermilion
+    theme_color: "#B8302C", // cherry blossom red — matches the new brand mark
     lang: "en",
     dir: "ltr",
     categories: ["shopping", "lifestyle", "beauty"],
@@ -54,7 +54,7 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: "512x512",
         type: "image/png",
         // Android adaptive-icon mask. Same asset works because the
-        // wordmark sits well-centered with safe-zone padding around it.
+        // icon sits well-centered with safe-zone padding around it.
         purpose: "maskable",
       },
     ],

@@ -30,9 +30,10 @@ export default async function NoAccessPage() {
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-20">
       <div className="w-full max-w-sm">
-        {/* Real logo — wordmark variant. The 유 seal has been retired. */}
+        {/* Brand mark — full vertical lockup, generous height for the
+            centered editorial layout. */}
         <div className="mb-12">
-          <Logo variant="wordmark" height={34} alt="YU.R" />
+          <Logo variant="lockup" height={64} alt="Asian Beauty Shop" />
         </div>
 
         <div className="eyebrow">Restricted</div>

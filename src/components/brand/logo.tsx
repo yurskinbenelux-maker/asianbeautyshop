@@ -1,34 +1,36 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Logo — the real YU.R wordmark, used in every surface that currently
-// renders the brand visually.
+// Logo — the Asian Beauty Shop mark, used wherever the brand renders
+// visually. K'Elmus Group BV (legal entity) is identified separately
+// in legal pages + invoices, never via this component.
 //
 // Two variants, each backed by its own real SVG asset:
 //   lockup   → /brand/logo-lockup.svg
-//              Full artwork, `yu·r` + "SKIN SOLUTION" tagline underneath.
-//              Use where there's vertical space (footer, sign-in hero,
-//              email headers rendered via PNG exports).
-//   wordmark → /brand/favicon.svg
-//              Just `yu·r`, no tagline. Tightly cropped so the letters
-//              fill the frame — no wasted whitespace.
-//              Use in tight contexts (nav, admin sidebar, favicons).
+//              Full artwork — cherry-blossom branch above the
+//              "ASIAN BEAUTY SHOP" wordmark. Use anywhere with vertical
+//              breathing room: top nav (h48), footer (h72), sign-in,
+//              no-access. Email shells render this via PNG exports
+//              (see /brand/exports/email-logo.png).
+//   wordmark → /brand/wordmark.svg
+//              Just the "ASIAN / BEAUTY SHOP" wordmark, no branch.
+//              Use only in tight horizontal slots where the lockup
+//              would crush — currently just the admin sidebar (h28).
 //
-// Why two files instead of one cropped via CSS/viewBox:
-//   The stretched `y` in this logo has an exceptionally long descender
-//   that reaches DOWN to the same vertical zone where "SKIN SOLUTION"
-//   sits horizontally (the tagline lives to the right of the descender,
-//   not below it). A viewBox crop that hid the tagline would also clip
-//   the bottom of the y. So the wordmark variant needs its own SVG with
-//   the tagline paths actually removed — which favicon.svg already is.
+// favicon.svg is reserved for browser-tab + PWA contexts ONLY — it
+// holds the icon-only mark (A + branch). Don't reach for it from
+// here; use the wordmark variant for compact text contexts and the
+// lockup for everything else.
 //
-// If Sofia ever redraws the logo, re-export both files together from
-// the source .ai — keep them visually coherent.
+// All three assets descend from the same source pair stored in
+// public/brand/exports/ (lockup-source.svg + wordmark-source.svg +
+// icon-source.svg). Re-export all three together if the brand mark
+// is ever redrawn — keep them visually coherent.
 // ─────────────────────────────────────────────────────────────────────────
 
 type LogoVariant = "lockup" | "wordmark";
 
 const SRC: Record<LogoVariant, string> = {
   lockup: "/brand/logo-lockup.svg",
-  wordmark: "/brand/favicon.svg",
+  wordmark: "/brand/wordmark.svg",
 };
 
 type LogoProps = {
@@ -36,7 +38,7 @@ type LogoProps = {
   /** CSS height value — number (px) or any CSS length. Width follows the
    *  natural aspect ratio of the variant's SVG. */
   height?: number | string;
-  /** Accessible label. Defaults vary by variant; pass explicit when needed. */
+  /** Accessible label. Defaults to "Asian Beauty Shop"; pass explicit when needed. */
   alt?: string;
   className?: string;
 };
@@ -47,7 +49,7 @@ export function Logo({
   alt,
   className,
 }: LogoProps) {
-  const label = alt ?? (variant === "lockup" ? "YU.R Skin Solution" : "YU.R");
+  const label = alt ?? "Asian Beauty Shop";
   const h = typeof height === "number" ? `${height}px` : height;
 
   return (

@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// YurSkin service worker.
+// Asian Beauty Shop service worker.
 //
 // Two responsibilities, kept deliberately small:
 //   1. Cache static assets (fonts, brand PNGs, manifest) so the shell
@@ -14,7 +14,7 @@
 // cache so a brief offline blip doesn't dead-link the page mid-route.
 // ─────────────────────────────────────────────────────────────────────────
 
-const CACHE_VERSION = "yur-v1";
+const CACHE_VERSION = "abs-v1";
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 
 // Pre-warm a tiny set on install. The rest gets picked up lazily.
@@ -103,7 +103,7 @@ self.addEventListener("fetch", (event) => {
       fetch(req).catch(
         () =>
           new Response(
-            `<!doctype html><meta charset="utf-8"><title>Offline · YU.R</title>
+            `<!doctype html><meta charset="utf-8"><title>Offline · Asian Beauty Shop</title>
              <style>body{font-family:Georgia,serif;background:#F8F4EC;color:#121110;padding:48px;text-align:center}h1{font-size:28px}p{color:#5E5751}</style>
              <h1>You're offline</h1>
              <p>Your connection dropped. Refresh once you're back online.</p>`,
