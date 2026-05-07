@@ -65,14 +65,14 @@ export type AiSettings = {
 // ──────── defaults ──────────────────────────────────────────────────────
 
 // These are the values that apply when the DB row doesn't exist yet.
-// Deliberately conservative and aligned with YurSkin's Belgium/NL/FR/RU focus.
+// Deliberately conservative and aligned with Asian Beauty Shop's Belgium/NL/FR/RU focus.
 
 const DEFAULTS = {
   store: {
-    name: "YU.R Skin Solution",
-    supportEmail: "hello@yurskinsolution.eu",
+    name: "Asian Beauty Shop",
+    supportEmail: "hello@asianbeautyshop.eu",
     supportPhone: "",
-    signOff: "Thank you for choosing YU.R.",
+    signOff: "Thank you for choosing Asian Beauty Shop.",
   } satisfies StoreSettings,
 
   shipping: {

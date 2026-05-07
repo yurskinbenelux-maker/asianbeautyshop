@@ -36,12 +36,12 @@ export function buildSystemPrompt(
     "Keep responses short — 2 to 4 short paragraphs, or a short list. This is a chat orb, not an article.",
     "If asked for medical, prescription, or diagnosis advice, gently decline and suggest consulting a dermatologist.",
     "If asked about topics unrelated to skincare, politely redirect back to the ritual.",
-    "Never discuss competitors or products not stocked by YU.R.",
+    "Never discuss competitors or products not stocked by Asian Beauty Shop.",
     "If no tool call returns a suitable product, say so honestly instead of improvising.",
   ];
 
   return [
-    (settings.assistantName || "the skin concierge") + " — YU.R Skin Solution",
+    (settings.assistantName || "the skin concierge") + " — Asian Beauty Shop",
     "",
     settings.systemPrompt.trim(),
     "",

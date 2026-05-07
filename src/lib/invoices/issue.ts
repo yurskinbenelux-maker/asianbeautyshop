@@ -47,7 +47,7 @@ const ISSUER: InvoiceIssuerSnapshot = {
   cityZip: "2630 Aartselaar",
   country: "Belgium",
   vatNumber: "BE 1031.312.116",
-  email: "hello@yurskinsolution.eu",
+  email: "hello@asianbeautyshop.eu",
   iban: "BE96 0689 5761 0905",
   bic: "GKCCBEBB",
   rpm: "RPM/RPR Antwerp 1.031.312.116",

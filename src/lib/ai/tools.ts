@@ -33,7 +33,7 @@ export function buildAiTools(locale: string) {
     // ── searchCatalog ─────────────────────────────────────────────────
     searchCatalog: tool({
       description:
-        "Search YU.R's product catalogue by skin type, concern, category, " +
+        "Search Asian Beauty Shop's product catalogue by skin type, concern, category, " +
         "or free-text query. Use this before recommending specific products. " +
         "Returns compact product summaries with SKU, name, price, and tags.",
       parameters: z.object({

@@ -159,7 +159,7 @@ function buildParcelPayload(order: {
       city: "Aartselaar",
       postal_code: "2630",
       country_code: "BE",
-      email: "hello@yurskinsolution.eu",
+      email: "hello@asianbeautyshop.eu",
       phone_number: "",
     },
 
