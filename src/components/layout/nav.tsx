@@ -631,10 +631,14 @@ function NavLink({
   return (
     <Link
       href={href}
+      // whitespace-nowrap stops "SKIN QUIZ", "PRODUCT TYPES" etc. from
+      // wrapping mid-link when the bigger logo squeezes the available
+      // horizontal room. Each link stays one line, the row may scroll
+      // horizontally on very narrow screens (extremely rare on desktop).
       className={
         highlight
-          ? "relative text-[13px] uppercase tracking-label text-vermilion transition-colors hover:text-vermilion/80"
-          : "relative text-[13px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
+          ? "relative whitespace-nowrap text-[13px] uppercase tracking-label text-vermilion transition-colors hover:text-vermilion/80"
+          : "relative whitespace-nowrap text-[13px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
       }
     >
       {children}

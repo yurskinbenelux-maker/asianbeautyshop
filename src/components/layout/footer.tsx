@@ -41,13 +41,17 @@ export async function Footer() {
 
       <div className="container">
         {/* ── masthead ─────────────────────────────────────────── */}
-        {/* Real logo in lockup variant (shows "SKIN SOLUTION" tagline too,
-            because there's room here). The 유 CJK mark that used to sit
-            on the right has been retired along with the seal — the vector
-            wordmark now speaks for itself. Tagline text stays below the
-            mark for translated marketing copy (not part of the logo). */}
+        {/* Lockup at full prominence — footer has the vertical real estate
+            so we let the cherry-blossom mark + ASIAN BEAUTY SHOP wordmark
+            anchor the foot of the page. Mobile h-28 (112px), desktop
+            h-40 (160px). Tagline text stays below the mark for translated
+            marketing copy (not part of the logo). */}
         <div className="mb-16 flex flex-col items-start gap-4">
-          <Logo variant="lockup" height={72} alt={t("brand.name")} />
+          <Logo
+            variant="lockup"
+            heightClass="h-28 md:h-40"
+            alt={t("brand.name")}
+          />
           {tagline ? (
             <div className="text-[13px] text-ink-mid">{tagline}</div>
           ) : null}
