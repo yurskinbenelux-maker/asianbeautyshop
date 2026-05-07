@@ -39,7 +39,7 @@ type Strings = {
 
 export const ORDER_SHIPPED_STRINGS: Record<Locale, Strings> = {
   EN: {
-    subject: (n) => `Your order ${n} is on its way — YU.R Skin Solution`,
+    subject: (n) => `Your order ${n} is on its way — Asian Beauty Shop`,
     preheader: "Your parcel has left the studio.",
     heading: (f) => (f ? `${f}, your parcel is on its way.` : "Your parcel is on its way."),
     lede:
@@ -48,11 +48,11 @@ export const ORDER_SHIPPED_STRINGS: Record<Locale, Strings> = {
     noTrackingLede:
       "Your order has just been handed to the carrier. A tracking link will follow as soon as it's scanned into the network.",
     cta: "Track my parcel",
-    signoff: "See you soon,\nSofia · YU.R Skin Solution",
+    signoff: "See you soon,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
-    subject: (n) => `Je bestelling ${n} is onderweg — YU.R Skin Solution`,
+    subject: (n) => `Je bestelling ${n} is onderweg — Asian Beauty Shop`,
     preheader: "Je pakket heeft het atelier verlaten.",
     heading: (f) => (f ? `${f}, je pakket is onderweg.` : "Je pakket is onderweg."),
     lede:
@@ -61,11 +61,11 @@ export const ORDER_SHIPPED_STRINGS: Record<Locale, Strings> = {
     noTrackingLede:
       "Je bestelling is zojuist overhandigd aan de vervoerder. Een track-link volgt zodra het pakket is gescand in hun netwerk.",
     cta: "Pakket volgen",
-    signoff: "Tot binnenkort,\nSofia · YU.R Skin Solution",
+    signoff: "Tot binnenkort,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
-    subject: (n) => `Votre commande ${n} est en route — YU.R Skin Solution`,
+    subject: (n) => `Votre commande ${n} est en route — Asian Beauty Shop`,
     preheader: "Votre colis a quitté l'atelier.",
     heading: (f) => (f ? `${f}, votre colis est en route.` : "Votre colis est en route."),
     lede:
@@ -74,11 +74,11 @@ export const ORDER_SHIPPED_STRINGS: Record<Locale, Strings> = {
     noTrackingLede:
       "Votre commande vient d'être remise au transporteur. Un lien de suivi vous parviendra dès qu'elle sera scannée dans leur réseau.",
     cta: "Suivre mon colis",
-    signoff: "À très bientôt,\nSofia · YU.R Skin Solution",
+    signoff: "À très bientôt,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
-    subject: (n) => `Ваш заказ ${n} в пути — YU.R Skin Solution`,
+    subject: (n) => `Ваш заказ ${n} в пути — Asian Beauty Shop`,
     preheader: "Ваша посылка покинула ателье.",
     heading: (f) => (f ? `${f}, ваша посылка в пути.` : "Ваша посылка в пути."),
     lede:
@@ -87,7 +87,7 @@ export const ORDER_SHIPPED_STRINGS: Record<Locale, Strings> = {
     noTrackingLede:
       "Мы только что передали ваш заказ перевозчику. Ссылка для отслеживания появится, как только посылку зарегистрируют в сети.",
     cta: "Отследить посылку",
-    signoff: "До скорого,\nСофия · YU.R Skin Solution",
+    signoff: "До скорого,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -103,7 +103,7 @@ export type OrderShippedEmail = {
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 

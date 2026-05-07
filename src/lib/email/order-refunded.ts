@@ -51,8 +51,8 @@ export const ORDER_REFUNDED_STRINGS: Record<Locale, Strings> = {
   EN: {
     subject: (n, k) =>
       k === "full"
-        ? `Your refund for ${n} is on its way — YU.R Skin Solution`
-        : `A partial refund for ${n} has been issued — YU.R Skin Solution`,
+        ? `Your refund for ${n} is on its way — Asian Beauty Shop`
+        : `A partial refund for ${n} has been issued — Asian Beauty Shop`,
     preheader: (k) =>
       k === "full" ? "Your refund is on its way." : "A partial refund has been issued.",
     heading: (f, k) => {
@@ -69,14 +69,14 @@ export const ORDER_REFUNDED_STRINGS: Record<Locale, Strings> = {
     timingNote:
       "Most banks post the refund within 3–5 business days, though some can take a little longer.",
     cta: "View my order",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
     subject: (n, k) =>
       k === "full"
-        ? `Je terugbetaling voor ${n} is onderweg — YU.R Skin Solution`
-        : `Gedeeltelijke terugbetaling voor ${n} — YU.R Skin Solution`,
+        ? `Je terugbetaling voor ${n} is onderweg — Asian Beauty Shop`
+        : `Gedeeltelijke terugbetaling voor ${n} — Asian Beauty Shop`,
     preheader: (k) =>
       k === "full"
         ? "Je terugbetaling is onderweg."
@@ -95,14 +95,14 @@ export const ORDER_REFUNDED_STRINGS: Record<Locale, Strings> = {
     timingNote:
       "De meeste banken verwerken terugbetalingen binnen 3–5 werkdagen; in sommige gevallen kan het iets langer duren.",
     cta: "Bestelling bekijken",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
     subject: (n, k) =>
       k === "full"
-        ? `Votre remboursement pour ${n} est en cours — YU.R Skin Solution`
-        : `Remboursement partiel pour ${n} — YU.R Skin Solution`,
+        ? `Votre remboursement pour ${n} est en cours — Asian Beauty Shop`
+        : `Remboursement partiel pour ${n} — Asian Beauty Shop`,
     preheader: (k) =>
       k === "full"
         ? "Votre remboursement est en cours."
@@ -121,14 +121,14 @@ export const ORDER_REFUNDED_STRINGS: Record<Locale, Strings> = {
     timingNote:
       "La plupart des banques traitent le remboursement sous 3–5 jours ouvrés ; cela peut parfois être un peu plus long.",
     cta: "Voir ma commande",
-    signoff: "Avec attention,\nSofia · YU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
     subject: (n, k) =>
       k === "full"
-        ? `Возврат по заказу ${n} уже в пути — YU.R Skin Solution`
-        : `Частичный возврат по заказу ${n} — YU.R Skin Solution`,
+        ? `Возврат по заказу ${n} уже в пути — Asian Beauty Shop`
+        : `Частичный возврат по заказу ${n} — Asian Beauty Shop`,
     preheader: (k) =>
       k === "full"
         ? "Ваш возврат уже в пути."
@@ -147,7 +147,7 @@ export const ORDER_REFUNDED_STRINGS: Record<Locale, Strings> = {
     timingNote:
       "Обычно банки зачисляют возврат в течение 3–5 рабочих дней; иногда это занимает чуть больше времени.",
     cta: "Посмотреть заказ",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -163,7 +163,7 @@ export type OrderRefundedEmail = {
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 

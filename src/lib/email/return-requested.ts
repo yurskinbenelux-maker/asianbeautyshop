@@ -71,7 +71,7 @@ const STRINGS: Record<Locale, Strings> = {
     slaNote:
       "If you'd like to add a reason, a photo of a damaged product, or another item to the return, just reply to this email.",
     cta: "View my order",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
@@ -88,7 +88,7 @@ const STRINGS: Record<Locale, Strings> = {
     slaNote:
       "Wil je een reden, een foto van een beschadigd product of een extra artikel toevoegen? Antwoord gewoon op deze mail.",
     cta: "Bestelling bekijken",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
@@ -107,7 +107,7 @@ const STRINGS: Record<Locale, Strings> = {
     slaNote:
       "Souhaitez-vous ajouter un motif, la photo d'un produit endommagé ou un autre article à la demande ? Répondez simplement à cet e-mail.",
     cta: "Voir ma commande",
-    signoff: "Avec attention,\nSofia · YU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
@@ -126,7 +126,7 @@ const STRINGS: Record<Locale, Strings> = {
     slaNote:
       "Хотите добавить причину, фото повреждённого товара или ещё один товар к возврату? Просто ответьте на это письмо.",
     cta: "Посмотреть заказ",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -142,7 +142,7 @@ export type ReturnRequestedEmail = {
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 

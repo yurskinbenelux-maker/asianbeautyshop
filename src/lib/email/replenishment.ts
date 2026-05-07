@@ -36,7 +36,7 @@ const STRINGS: Record<Locale, Strings> = {
     lede: "It's been about six weeks since we sent your last order. If you've been using your products as part of a daily skincare routine, this is around the time most people start scraping the bottom of the bottle.",
     itemsLabel: "What was in that order",
     cta: "Reorder in one click",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
     hint: "If you topped up elsewhere or you're still going strong, please ignore this — we won't pester you again about this order.",
   },
@@ -47,7 +47,7 @@ const STRINGS: Record<Locale, Strings> = {
     lede: "Het is ongeveer zes weken geleden sinds we je vorige bestelling hebben verstuurd. Als je je producten dagelijks gebruikt, raken de meesten rond deze tijd op.",
     itemsLabel: "Wat zat er in die bestelling",
     cta: "Opnieuw bestellen in één klik",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
     hint: "Heb je elders bijgevuld of heb je nog voldoende? Negeer dit gerust — we sturen geen tweede herinnering voor deze bestelling.",
   },
@@ -58,7 +58,7 @@ const STRINGS: Record<Locale, Strings> = {
     lede: "Cela fait environ six semaines que nous avons expédié votre commande. Si vous avez utilisé vos produits quotidiennement, c'est l'époque où la plupart des gens approchent du fond du flacon.",
     itemsLabel: "Ce que contenait cette commande",
     cta: "Recommander en un clic",
-    signoff: "Avec attention,\nSofia · YU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
     hint: "Si vous vous êtes déjà ravitaillé ailleurs ou si vous avez encore tout, ignorez ce message — nous n'insisterons pas pour cette commande.",
   },
@@ -69,7 +69,7 @@ const STRINGS: Record<Locale, Strings> = {
     lede: "Прошло около шести недель с момента отправки заказа. Если вы используете средства как часть ежедневного рутины, обычно к этому моменту флаконы подходят к концу.",
     itemsLabel: "Что было в том заказе",
     cta: "Заказать снова в один клик",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
     hint: "Если уже пополнили или ещё хватает — просто проигнорируйте это письмо. Мы не будем напоминать повторно об этом заказе.",
   },
@@ -78,7 +78,7 @@ const STRINGS: Record<Locale, Strings> = {
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 

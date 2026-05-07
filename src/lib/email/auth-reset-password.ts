@@ -34,10 +34,10 @@ type Strings = {
 
 const STRINGS: Record<Locale, Strings> = {
   EN: {
-    subject: "Reset your YU.R password",
+    subject: "Reset your Asian Beauty Shop password",
     preheader: "Tap the button to choose a new password.",
     heading: "Reset your password.",
-    lede: "Tap the button below to set a new password for your YU.R account. The link is good for 60 minutes.",
+    lede: "Tap the button below to set a new password for your Asian Beauty Shop account. The link is good for 60 minutes.",
     cta: "Reset my password",
     fallbackIntro:
       "Trouble with the button? Copy and paste this link into your browser:",
@@ -45,14 +45,14 @@ const STRINGS: Record<Locale, Strings> = {
     notYouHeading: "Didn't request this?",
     notYouBody:
       "If you didn't ask to reset your password, you can ignore this email — your account is safe and your current password still works.",
-    signoff: "With care,\nYU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
-    subject: "Stel je YU.R-wachtwoord opnieuw in",
+    subject: "Stel je Asian Beauty Shop-wachtwoord opnieuw in",
     preheader: "Tik op de knop om een nieuw wachtwoord te kiezen.",
     heading: "Wachtwoord opnieuw instellen.",
-    lede: "Tik op de knop hieronder om een nieuw wachtwoord voor je YU.R-account in te stellen. De link is 60 minuten geldig.",
+    lede: "Tik op de knop hieronder om een nieuw wachtwoord voor je Asian Beauty Shop-account in te stellen. De link is 60 minuten geldig.",
     cta: "Wachtwoord opnieuw instellen",
     fallbackIntro:
       "Werkt de knop niet? Kopieer en plak deze link in je browser:",
@@ -60,15 +60,15 @@ const STRINGS: Record<Locale, Strings> = {
     notYouHeading: "Niet aangevraagd?",
     notYouBody:
       "Heb jij geen wachtwoordherstel aangevraagd? Dan kun je deze e-mail rustig negeren — je account is veilig en je huidige wachtwoord blijft werken.",
-    signoff: "Met zorg,\nYU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
-    subject: "Réinitialisez votre mot de passe YU.R",
+    subject: "Réinitialisez votre mot de passe Asian Beauty Shop",
     preheader:
       "Cliquez sur le bouton pour choisir un nouveau mot de passe.",
     heading: "Réinitialiser le mot de passe.",
-    lede: "Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe pour votre compte YU.R. Le lien est valable 60 minutes.",
+    lede: "Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe pour votre compte Asian Beauty Shop. Le lien est valable 60 minutes.",
     cta: "Réinitialiser mon mot de passe",
     fallbackIntro:
       "Le bouton ne fonctionne pas ? Copiez ce lien dans votre navigateur :",
@@ -76,14 +76,14 @@ const STRINGS: Record<Locale, Strings> = {
     notYouHeading: "Vous n'avez pas demandé cela ?",
     notYouBody:
       "Si vous n'avez pas demandé de réinitialisation, ignorez simplement cet e-mail — votre compte est en sécurité et votre mot de passe actuel reste valable.",
-    signoff: "Avec attention,\nYU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
-    subject: "Сброс пароля YU.R",
+    subject: "Сброс пароля Asian Beauty Shop",
     preheader: "Нажмите на кнопку, чтобы выбрать новый пароль.",
     heading: "Сброс пароля.",
-    lede: "Нажмите на кнопку ниже, чтобы задать новый пароль для аккаунта YU.R. Ссылка действует 60 минут.",
+    lede: "Нажмите на кнопку ниже, чтобы задать новый пароль для аккаунта Asian Beauty Shop. Ссылка действует 60 минут.",
     cta: "Сбросить пароль",
     fallbackIntro:
       "Кнопка не работает? Скопируйте и вставьте эту ссылку в браузер:",
@@ -91,7 +91,7 @@ const STRINGS: Record<Locale, Strings> = {
     notYouHeading: "Это были не вы?",
     notYouBody:
       "Если вы не запрашивали сброс, просто проигнорируйте письмо — ваш аккаунт в безопасности, текущий пароль продолжит работать.",
-    signoff: "С заботой,\nYU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };

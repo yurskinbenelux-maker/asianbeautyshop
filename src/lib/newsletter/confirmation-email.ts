@@ -3,7 +3,7 @@
 //
 // Refactored to use the shared `renderEmailShell` scaffold from
 // @/lib/email/html so this template now matches every other customer-
-// facing YU.R email pixel-for-pixel: logo PNG header, ivory card on
+// facing Asian Beauty Shop email pixel-for-pixel: logo PNG header, ivory card on
 // rice paper, vermilion CTA button, Aartselaar address. Previously
 // it had its own inlined scaffold (legacy, predated the helper) and
 // drifted on three details — Hangul seal "유알" in the header (retired
@@ -39,48 +39,48 @@ type Strings = {
 
 export const NEWSLETTER_CONFIRM_STRINGS: Record<Locale, Strings> = {
   EN: {
-    subject: "Confirm your subscription — YU.R Skin Solution",
+    subject: "Confirm your subscription — Asian Beauty Shop",
     preheader: "One click to confirm your place on the monthly letter.",
     greeting: "Hello,",
-    lede: "Thank you for signing up to the YU.R letter. Please confirm your email address so we know we have the right inbox.",
+    lede: "Thank you for signing up to the Asian Beauty Shop letter. Please confirm your email address so we know we have the right inbox.",
     cta: "Confirm my subscription",
     alt: "If the button above doesn't work, copy and paste this link into your browser:",
-    signoff: "— The YU.R team",
+    signoff: "— The Asian Beauty Shop team",
     disclaimer:
-      "You received this email because someone entered this address on yurskinsolution.eu. If it wasn't you, you can ignore this message — we won't add you without confirmation.",
+      "You received this email because someone entered this address on asianbeautyshop.eu. If it wasn't you, you can ignore this message — we won't add you without confirmation.",
   },
   NL: {
-    subject: "Bevestig je inschrijving — YU.R Skin Solution",
+    subject: "Bevestig je inschrijving — Asian Beauty Shop",
     preheader: "Eén klik om je plek op de maandelijkse brief te bevestigen.",
     greeting: "Hallo,",
-    lede: "Bedankt voor je inschrijving op de YU.R-brief. Bevestig je e-mailadres zodat we weten dat we het juiste postvak hebben.",
+    lede: "Bedankt voor je inschrijving op de Asian Beauty Shop-brief. Bevestig je e-mailadres zodat we weten dat we het juiste postvak hebben.",
     cta: "Inschrijving bevestigen",
     alt: "Werkt de knop niet? Kopieer dan deze link naar je browser:",
-    signoff: "— Het YU.R-team",
+    signoff: "— Het Asian Beauty Shop-team",
     disclaimer:
-      "Je ontvangt deze e-mail omdat iemand dit adres heeft ingevoerd op yurskinsolution.eu. Als dat niet jij was, kun je dit bericht negeren — we voegen je pas toe na bevestiging.",
+      "Je ontvangt deze e-mail omdat iemand dit adres heeft ingevoerd op asianbeautyshop.eu. Als dat niet jij was, kun je dit bericht negeren — we voegen je pas toe na bevestiging.",
   },
   FR: {
-    subject: "Confirmez votre inscription — YU.R Skin Solution",
+    subject: "Confirmez votre inscription — Asian Beauty Shop",
     preheader: "Un clic pour confirmer votre place dans la lettre mensuelle.",
     greeting: "Bonjour,",
-    lede: "Merci de vous être inscrit·e à la lettre YU.R. Veuillez confirmer votre adresse pour que nous sachions que c'est bien la bonne.",
+    lede: "Merci de vous être inscrit·e à la lettre Asian Beauty Shop. Veuillez confirmer votre adresse pour que nous sachions que c'est bien la bonne.",
     cta: "Confirmer mon inscription",
     alt: "Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :",
-    signoff: "— L'équipe YU.R",
+    signoff: "— L'équipe Asian Beauty Shop",
     disclaimer:
-      "Vous recevez cet e-mail parce que quelqu'un a saisi cette adresse sur yurskinsolution.eu. Si ce n'était pas vous, vous pouvez ignorer ce message — nous ne vous ajouterons pas sans confirmation.",
+      "Vous recevez cet e-mail parce que quelqu'un a saisi cette adresse sur asianbeautyshop.eu. Si ce n'était pas vous, vous pouvez ignorer ce message — nous ne vous ajouterons pas sans confirmation.",
   },
   RU: {
-    subject: "Подтвердите подписку — YU.R Skin Solution",
+    subject: "Подтвердите подписку — Asian Beauty Shop",
     preheader: "Один клик, чтобы подтвердить подписку на ежемесячное письмо.",
     greeting: "Здравствуйте,",
-    lede: "Спасибо за подписку на письмо YU.R. Подтвердите, пожалуйста, ваш адрес, чтобы мы были уверены, что это нужный ящик.",
+    lede: "Спасибо за подписку на письмо Asian Beauty Shop. Подтвердите, пожалуйста, ваш адрес, чтобы мы были уверены, что это нужный ящик.",
     cta: "Подтвердить подписку",
     alt: "Если кнопка не работает, скопируйте эту ссылку в браузер:",
-    signoff: "— Команда YU.R",
+    signoff: "— Команда Asian Beauty Shop",
     disclaimer:
-      "Вы получили это письмо, потому что кто-то ввёл этот адрес на yurskinsolution.eu. Если это были не вы — просто проигнорируйте его; без подтверждения мы не добавим вас в список.",
+      "Вы получили это письмо, потому что кто-то ввёл этот адрес на asianbeautyshop.eu. Если это были не вы — просто проигнорируйте его; без подтверждения мы не добавим вас в список.",
   },
 };
 

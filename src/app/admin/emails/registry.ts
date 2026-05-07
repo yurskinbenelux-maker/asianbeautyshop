@@ -84,7 +84,7 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     key: "auth-confirm",
     label: "Account confirmation (per-locale preview)",
     description:
-      "Per-locale preview of the YU.R-branded confirm-signup email. Supabase only ships ONE template at a time — for production, use the 'Account confirmation (multilingual)' entry below instead.",
+      "Per-locale preview of the Asian Beauty Shop-branded confirm-signup email. Supabase only ships ONE template at a time — for production, use the 'Account confirmation (multilingual)' entry below instead.",
     audience: "customer",
     localised: true,
     render: (locale) => {
@@ -173,7 +173,7 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     localised: true,
     render: (locale, overrides) =>
       buildConfirmationEmail({
-        confirmUrl: "https://yurskinsolution.eu/api/newsletter/confirm?t=preview",
+        confirmUrl: "https://asianbeautyshop.eu/api/newsletter/confirm?t=preview",
         locale,
         overrides,
       }),

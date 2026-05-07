@@ -65,7 +65,7 @@ const STRINGS: Record<Locale, Strings> = {
     nextBody:
       "As soon as inspection is complete we file the refund to your original payment method. EU law gives us 14 days — in practice it's almost always within two working days. You'll get a separate email the moment the refund is issued.",
     cta: "View my order",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
@@ -81,7 +81,7 @@ const STRINGS: Record<Locale, Strings> = {
     nextBody:
       "Zodra de controle klaar is, starten we de terugbetaling via je oorspronkelijke betaalmethode. De Europese wet geeft ons 14 dagen — in de praktijk is het bijna altijd binnen twee werkdagen. Je krijgt een aparte mail zodra de terugbetaling is uitgevoerd.",
     cta: "Bestelling bekijken",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
@@ -97,7 +97,7 @@ const STRINGS: Record<Locale, Strings> = {
     nextBody:
       "Dès que l'inspection est terminée, nous lançons le remboursement sur votre moyen de paiement initial. La loi européenne nous laisse 14 jours — en pratique c'est presque toujours sous deux jours ouvrés. Vous recevrez un e-mail distinct dès l'émission du remboursement.",
     cta: "Voir ma commande",
-    signoff: "Avec attention,\nSofia · YU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
@@ -113,7 +113,7 @@ const STRINGS: Record<Locale, Strings> = {
     nextBody:
       "Как только проверка будет завершена, мы запустим возврат средств на исходный способ оплаты. По европейскому закону у нас есть 14 дней — на практике это почти всегда в течение двух рабочих дней. Вы получите отдельное письмо в момент оформления возврата.",
     cta: "Посмотреть заказ",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -129,7 +129,7 @@ export type ReturnReceivedEmail = {
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 

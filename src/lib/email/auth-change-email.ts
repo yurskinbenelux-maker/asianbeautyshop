@@ -31,10 +31,10 @@ type Strings = {
 
 const STRINGS: Record<Locale, Strings> = {
   EN: {
-    subject: "Confirm your new YU.R email",
+    subject: "Confirm your new Asian Beauty Shop email",
     preheader: "Tap to confirm the email change.",
     heading: "Confirm your new email.",
-    lede: "Someone (we hope it was you) asked to update the email on a YU.R account. Tap the button below to confirm — your account will start using this new address as soon as you do.",
+    lede: "Someone (we hope it was you) asked to update the email on a Asian Beauty Shop account. Tap the button below to confirm — your account will start using this new address as soon as you do.",
     cta: "Confirm new email",
     fallbackIntro:
       "Trouble with the button? Copy and paste this link into your browser:",
@@ -42,14 +42,14 @@ const STRINGS: Record<Locale, Strings> = {
     notYouHeading: "Not you?",
     notYouBody:
       "If you didn't request this change, you can ignore the email — your account stays on its current address.",
-    signoff: "With care,\nYU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
-    subject: "Bevestig je nieuwe YU.R-e-mailadres",
+    subject: "Bevestig je nieuwe Asian Beauty Shop-e-mailadres",
     preheader: "Tik om de wijziging te bevestigen.",
     heading: "Bevestig je nieuwe e-mailadres.",
-    lede: "Iemand (we hopen jij) heeft gevraagd om het e-mailadres van een YU.R-account aan te passen. Tik op de knop hieronder om te bevestigen — je account gebruikt daarna meteen dit nieuwe adres.",
+    lede: "Iemand (we hopen jij) heeft gevraagd om het e-mailadres van een Asian Beauty Shop-account aan te passen. Tik op de knop hieronder om te bevestigen — je account gebruikt daarna meteen dit nieuwe adres.",
     cta: "Nieuw e-mailadres bevestigen",
     fallbackIntro:
       "Werkt de knop niet? Kopieer en plak deze link in je browser:",
@@ -57,14 +57,14 @@ const STRINGS: Record<Locale, Strings> = {
     notYouHeading: "Was jij dat niet?",
     notYouBody:
       "Heb jij deze wijziging niet aangevraagd? Dan kun je deze e-mail negeren — je account blijft op het huidige adres staan.",
-    signoff: "Met zorg,\nYU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
-    subject: "Confirmez votre nouvelle adresse YU.R",
+    subject: "Confirmez votre nouvelle adresse Asian Beauty Shop",
     preheader: "Cliquez pour confirmer le changement.",
     heading: "Confirmez votre nouvelle adresse.",
-    lede: "Quelqu'un (nous espérons que c'est vous) a demandé à modifier l'adresse e-mail d'un compte YU.R. Cliquez sur le bouton ci-dessous pour confirmer — votre compte utilisera cette nouvelle adresse dès que vous l'aurez fait.",
+    lede: "Quelqu'un (nous espérons que c'est vous) a demandé à modifier l'adresse e-mail d'un compte Asian Beauty Shop. Cliquez sur le bouton ci-dessous pour confirmer — votre compte utilisera cette nouvelle adresse dès que vous l'aurez fait.",
     cta: "Confirmer la nouvelle adresse",
     fallbackIntro:
       "Le bouton ne fonctionne pas ? Copiez ce lien dans votre navigateur :",
@@ -72,14 +72,14 @@ const STRINGS: Record<Locale, Strings> = {
     notYouHeading: "Ce n'était pas vous ?",
     notYouBody:
       "Si vous n'avez pas demandé ce changement, ignorez simplement cet e-mail — votre compte reste sur l'adresse actuelle.",
-    signoff: "Avec attention,\nYU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
-    subject: "Подтвердите новый адрес YU.R",
+    subject: "Подтвердите новый адрес Asian Beauty Shop",
     preheader: "Нажмите, чтобы подтвердить смену адреса.",
     heading: "Подтвердите новый адрес.",
-    lede: "Кто-то (надеемся, это вы) попросил изменить адрес e-mail у аккаунта YU.R. Нажмите на кнопку ниже, чтобы подтвердить — аккаунт сразу начнёт использовать новый адрес.",
+    lede: "Кто-то (надеемся, это вы) попросил изменить адрес e-mail у аккаунта Asian Beauty Shop. Нажмите на кнопку ниже, чтобы подтвердить — аккаунт сразу начнёт использовать новый адрес.",
     cta: "Подтвердить новый адрес",
     fallbackIntro:
       "Кнопка не работает? Скопируйте и вставьте эту ссылку в браузер:",
@@ -87,7 +87,7 @@ const STRINGS: Record<Locale, Strings> = {
     notYouHeading: "Это были не вы?",
     notYouBody:
       "Если вы не запрашивали смену, просто проигнорируйте письмо — аккаунт останется на прежнем адресе.",
-    signoff: "С заботой,\nYU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };

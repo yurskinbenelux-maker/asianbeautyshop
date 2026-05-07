@@ -45,7 +45,7 @@ type Strings = {
 
 export const ORDER_CANCELLED_STRINGS: Record<Locale, Strings> = {
   EN: {
-    subject: (n) => `Your order ${n} has been cancelled — YU.R Skin Solution`,
+    subject: (n) => `Your order ${n} has been cancelled — Asian Beauty Shop`,
     preheader: "Your order has been cancelled.",
     heading: (f) =>
       f ? `${f}, your order has been cancelled.` : "Your order has been cancelled.",
@@ -54,11 +54,11 @@ export const ORDER_CANCELLED_STRINGS: Record<Locale, Strings> = {
     refundNote:
       "If your payment was already captured, you'll see the refund on your statement within a few business days. If not, no charge has been made.",
     cta: "View my account",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
-    subject: (n) => `Je bestelling ${n} is geannuleerd — YU.R Skin Solution`,
+    subject: (n) => `Je bestelling ${n} is geannuleerd — Asian Beauty Shop`,
     preheader: "Je bestelling is geannuleerd.",
     heading: (f) =>
       f ? `${f}, je bestelling is geannuleerd.` : "Je bestelling is geannuleerd.",
@@ -67,11 +67,11 @@ export const ORDER_CANCELLED_STRINGS: Record<Locale, Strings> = {
     refundNote:
       "Als je betaling al was afgeschreven, zie je de terugbetaling binnen enkele werkdagen op je rekening. Zo niet, dan is er niets gedebiteerd.",
     cta: "Mijn account bekijken",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
-    subject: (n) => `Votre commande ${n} a été annulée — YU.R Skin Solution`,
+    subject: (n) => `Votre commande ${n} a été annulée — Asian Beauty Shop`,
     preheader: "Votre commande a été annulée.",
     heading: (f) =>
       f ? `${f}, votre commande a été annulée.` : "Votre commande a été annulée.",
@@ -80,11 +80,11 @@ export const ORDER_CANCELLED_STRINGS: Record<Locale, Strings> = {
     refundNote:
       "Si le paiement avait déjà été capturé, vous verrez le remboursement sur votre relevé sous quelques jours ouvrés. Sinon, aucun prélèvement n'a été effectué.",
     cta: "Voir mon compte",
-    signoff: "Avec attention,\nSofia · YU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
-    subject: (n) => `Ваш заказ ${n} отменён — YU.R Skin Solution`,
+    subject: (n) => `Ваш заказ ${n} отменён — Asian Beauty Shop`,
     preheader: "Ваш заказ отменён.",
     heading: (f) =>
       f ? `${f}, ваш заказ отменён.` : "Ваш заказ отменён.",
@@ -93,7 +93,7 @@ export const ORDER_CANCELLED_STRINGS: Record<Locale, Strings> = {
     refundNote:
       "Если платёж уже был списан, возврат средств отразится на выписке в течение нескольких рабочих дней. Если нет — списания не было.",
     cta: "Мой аккаунт",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -109,7 +109,7 @@ export type OrderCancelledEmail = {
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 

@@ -39,7 +39,7 @@ const STRINGS: Record<Locale, Strings> = {
       preheader: "Points just landed in your account.",
       heading: (f) => (f ? `Done, ${f}.` : "Done."),
       body: (t, p) =>
-        `We've added ${p} points to your account for "${t}". They're in your balance now — open the YU.R Club drawer to spend or save them.`,
+        `We've added ${p} points to your account for "${t}". They're in your balance now — open the Asian Beauty Shop Club drawer to spend or save them.`,
       cta: "Open my account",
     },
     rejected: {
@@ -50,7 +50,7 @@ const STRINGS: Record<Locale, Strings> = {
         `Thank you for submitting "${t}". This time it didn't quite meet the brief: ${reason} You're welcome to try again — same task, fresh submission.`,
       cta: "Try again",
     },
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
@@ -59,7 +59,7 @@ const STRINGS: Record<Locale, Strings> = {
       preheader: "Punten staan op je rekening.",
       heading: (f) => (f ? `Gedaan, ${f}.` : "Gedaan."),
       body: (t, p) =>
-        `We hebben ${p} punten op je account gezet voor "${t}". Ze staan nu in je saldo — open de YU.R Club lade om ze in te wisselen of te bewaren.`,
+        `We hebben ${p} punten op je account gezet voor "${t}". Ze staan nu in je saldo — open de Asian Beauty Shop Club lade om ze in te wisselen of te bewaren.`,
       cta: "Open mijn account",
     },
     rejected: {
@@ -70,7 +70,7 @@ const STRINGS: Record<Locale, Strings> = {
         `Bedankt voor je inzending van "${t}". Deze keer voldeed het net niet: ${reason} Je mag het gerust opnieuw proberen — zelfde taak, nieuwe inzending.`,
       cta: "Opnieuw proberen",
     },
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
@@ -79,7 +79,7 @@ const STRINGS: Record<Locale, Strings> = {
       preheader: "Vos points sont arrivés.",
       heading: (f) => (f ? `Voilà, ${f}.` : "Voilà."),
       body: (t, p) =>
-        `Nous avons crédité ${p} points sur votre compte pour "${t}". Ils sont disponibles dès maintenant — ouvrez le tiroir YU.R Club pour les utiliser ou les garder.`,
+        `Nous avons crédité ${p} points sur votre compte pour "${t}". Ils sont disponibles dès maintenant — ouvrez le tiroir Asian Beauty Shop Club pour les utiliser ou les garder.`,
       cta: "Ouvrir mon compte",
     },
     rejected: {
@@ -90,7 +90,7 @@ const STRINGS: Record<Locale, Strings> = {
         `Merci pour votre soumission "${t}". Cette fois, elle ne correspondait pas tout à fait : ${reason} N'hésitez pas à recommencer — même tâche, nouvelle soumission.`,
       cta: "Réessayer",
     },
-    signoff: "Avec attention,\nSofia · YU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
@@ -99,7 +99,7 @@ const STRINGS: Record<Locale, Strings> = {
       preheader: "Баллы уже на вашем счёте.",
       heading: (f) => (f ? `Готово, ${f}.` : "Готово."),
       body: (t, p) =>
-        `Мы добавили ${p} баллов на ваш счёт за «${t}». Они уже в балансе — откройте окно YU.R Club, чтобы потратить или сохранить.`,
+        `Мы добавили ${p} баллов на ваш счёт за «${t}». Они уже в балансе — откройте окно Asian Beauty Shop Club, чтобы потратить или сохранить.`,
       cta: "Открыть аккаунт",
     },
     rejected: {
@@ -110,7 +110,7 @@ const STRINGS: Record<Locale, Strings> = {
         `Спасибо за заявку на «${t}». В этот раз она не совсем подошла: ${reason} Можно попробовать снова — та же задача, новая заявка.`,
       cta: "Попробовать снова",
     },
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -139,7 +139,7 @@ export async function sendLoyaltyTaskDecisionEmail(
   const s = STRINGS[payload.locale];
   const siteOrigin =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu";
+    "https://asianbeautyshop.eu";
   const accountUrl = `${siteOrigin}/${payload.locale.toLowerCase()}/account`;
 
   const isApproved = payload.decision === "approved";

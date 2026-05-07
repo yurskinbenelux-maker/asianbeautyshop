@@ -25,10 +25,10 @@ const MUSTACHE_URL =
   "{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next={{ .RedirectTo }}";
 
 const STRINGS = {
-  subject: "Sign in to YU.R Skin Solution",
+  subject: "Sign in to Asian Beauty Shop",
   preheader: "Tap the button to sign in.",
-  heading: "Sign in to YU.R.",
-  lede: "Tap the button below to access the YU.R admin. The link is good for 60 minutes and works once.",
+  heading: "Sign in to Asian Beauty Shop.",
+  lede: "Tap the button below to access the Asian Beauty Shop admin. The link is good for 60 minutes and works once.",
   cta: "Sign me in",
   fallbackIntro:
     "Trouble with the button? Copy and paste this link into your browser:",
@@ -36,7 +36,7 @@ const STRINGS = {
   notYouHeading: "Didn't request this?",
   notYouBody:
     "If you didn't ask to sign in, you can safely ignore this email. The link won't do anything until someone clicks it.",
-  signoff: "YU.R Skin Solution",
+  signoff: "Asian Beauty Shop",
   footer: "K'Elmus Group BV · Aartselaar, Belgium",
 };
 

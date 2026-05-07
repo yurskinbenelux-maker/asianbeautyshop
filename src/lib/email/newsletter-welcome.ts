@@ -32,47 +32,47 @@ type Strings = {
 
 const STRINGS: Record<Locale, Strings> = {
   EN: {
-    subject: "Welcome to YU.R — your 10% is inside",
+    subject: "Welcome to Asian Beauty Shop — your 10% is inside",
     preheader: "Your code is waiting, and so is the ritual.",
     heading: "Welcome.",
     lede: "Thank you for joining us. Once a month we share quiet ideas about Korean skincare — what we're loving, what we're learning, and how to make a routine feel like a ritual rather than a chore.",
     codeLabel: "Your welcome code",
     codeNote: (p) => `Use it once for ${p}% off your first order. Valid for 60 days.`,
     cta: "Begin a ritual",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
-    subject: "Welkom bij YU.R — je 10% zit binnenin",
+    subject: "Welkom bij Asian Beauty Shop — je 10% zit binnenin",
     preheader: "Je code wacht, net als het ritueel.",
     heading: "Welkom.",
     lede: "Bedankt dat je je bij ons aansluit. Eens per maand delen we rustige gedachten over Koreaanse huidverzorging — wat we mooi vinden, wat we leren, en hoe een routine als een ritueel kan voelen.",
     codeLabel: "Je welkomstcode",
     codeNote: (p) => `Eenmalig te gebruiken voor ${p}% korting op je eerste bestelling. 60 dagen geldig.`,
     cta: "Begin een ritueel",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
-    subject: "Bienvenue chez YU.R — vos 10 % sont à l'intérieur",
+    subject: "Bienvenue chez Asian Beauty Shop — vos 10 % sont à l'intérieur",
     preheader: "Votre code vous attend, comme le rituel.",
     heading: "Bienvenue.",
     lede: "Merci de vous joindre à nous. Une fois par mois, nous partageons des réflexions discrètes sur les soins coréens — ce que nous aimons, ce que nous apprenons, et comment transformer une routine en rituel.",
     codeLabel: "Votre code de bienvenue",
     codeNote: (p) => `À utiliser une fois pour ${p} % de réduction sur votre première commande. Valable 60 jours.`,
     cta: "Commencer un rituel",
-    signoff: "Avec attention,\nSofia · YU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
-    subject: "Добро пожаловать в YU.R — ваши 10% внутри",
+    subject: "Добро пожаловать в Asian Beauty Shop — ваши 10% внутри",
     preheader: "Код ждёт вас, как и ритуал.",
     heading: "Добро пожаловать.",
     lede: "Благодарим за подписку. Раз в месяц мы делимся тихими мыслями о корейском уходе за кожей — тем, что нам нравится, тем, что мы узнаём, и тем, как превратить рутину в ритуал.",
     codeLabel: "Ваш приветственный код",
     codeNote: (p) => `Действует один раз и даёт ${p}% скидки на первый заказ. Срок — 60 дней.`,
     cta: "Начать ритуал",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -100,7 +100,7 @@ export async function sendNewsletterWelcomeEmail(
   const s = STRINGS[payload.locale];
   const siteOrigin =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu";
+    "https://asianbeautyshop.eu";
   const shopUrl = `${siteOrigin}/${payload.locale.toLowerCase()}/shop`;
   const html = renderHtml(payload, s, shopUrl);
 

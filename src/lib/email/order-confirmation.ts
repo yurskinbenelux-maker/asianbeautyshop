@@ -62,7 +62,7 @@ type Strings = {
 
 export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
   EN: {
-    subject: (n) => `Your order ${n} is confirmed — YU.R Skin Solution`,
+    subject: (n) => `Your order ${n} is confirmed — Asian Beauty Shop`,
     preheader: "Thank you for your order. A skincare routine is on its way to you.",
     heading: (f) => (f ? `Thank you, ${f}.` : "Thank you."),
     lede:
@@ -83,11 +83,11 @@ export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
     nextBodyDigital:
       "Your gift card code is in your inbox now. You can also see it any time in your account — codes apply at checkout, balances stack across orders.",
     cta: "View your order",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
-    subject: (n) => `Je bestelling ${n} is bevestigd — YU.R Skin Solution`,
+    subject: (n) => `Je bestelling ${n} is bevestigd — Asian Beauty Shop`,
     preheader: "Bedankt voor je bestelling. Je huidverzorgingsroutine is onderweg.",
     heading: (f) => (f ? `Bedankt, ${f}.` : "Bedankt."),
     lede:
@@ -108,11 +108,11 @@ export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
     nextBodyDigital:
       "Je cadeaubon-code staat nu in je inbox. Je kan hem ook altijd in je account bekijken — codes worden bij het afrekenen toegepast, en saldi blijven staan tussen bestellingen.",
     cta: "Bestelling bekijken",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
-    subject: (n) => `Votre commande ${n} est confirmée — YU.R Skin Solution`,
+    subject: (n) => `Votre commande ${n} est confirmée — Asian Beauty Shop`,
     preheader: "Merci pour votre commande. Un routine de soin est en route.",
     heading: (f) => (f ? `Merci, ${f}.` : "Merci."),
     lede:
@@ -133,11 +133,11 @@ export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
     nextBodyDigital:
       "Votre code carte cadeau est dans votre boîte mail. Vous pouvez aussi le retrouver à tout moment dans votre compte — les codes s'appliquent en caisse, et le solde se conserve d'une commande à l'autre.",
     cta: "Voir ma commande",
-    signoff: "Avec soin,\nSofia · YU.R Skin Solution",
+    signoff: "Avec soin,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
-    subject: (n) => `Ваш заказ ${n} подтверждён — YU.R Skin Solution`,
+    subject: (n) => `Ваш заказ ${n} подтверждён — Asian Beauty Shop`,
     preheader: "Спасибо за заказ. Ваш рутина уже в пути.",
     heading: (f) => (f ? `Спасибо, ${f}.` : "Спасибо."),
     lede:
@@ -158,7 +158,7 @@ export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
     nextBodyDigital:
       "Код подарочной карты уже у вас в почте. Также вы всегда можете увидеть его в своём аккаунте — коды применяются при оформлении заказа, баланс сохраняется между покупками.",
     cta: "Посмотреть заказ",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -174,7 +174,7 @@ export type OrderConfirmationEmail = {
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 

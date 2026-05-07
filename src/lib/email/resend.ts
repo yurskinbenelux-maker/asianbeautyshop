@@ -33,13 +33,13 @@ export function getResend(): Resend | null {
 
 /**
  * "From" address for the newsletter (monthly letter + double-opt-in).
- * Uses newsletter@yurskinsolution.eu so customers can visually separate
+ * Uses newsletter@asianbeautyshop.eu so customers can visually separate
  * marketing from transactional mail in their inbox filters.
  */
 export function fromNewsletter(): string {
   return (
     process.env.RESEND_FROM_NEWSLETTER ??
-    "YU.R Letter <newsletter@yurskinsolution.eu>"
+    "Asian Beauty Shop Letter <newsletter@asianbeautyshop.eu>"
   );
 }
 
@@ -52,7 +52,7 @@ export function fromNewsletter(): string {
 export function fromTransactional(): string {
   return (
     process.env.RESEND_FROM_TRANSACTIONAL ??
-    "YU.R Skin Solution <donotreply@yurskinsolution.eu>"
+    "Asian Beauty Shop <donotreply@asianbeautyshop.eu>"
   );
 }
 
@@ -61,7 +61,7 @@ export function fromTransactional(): string {
  * customers can write back even when we sent from donotreply@.
  */
 export function replyToAddress(): string | undefined {
-  return process.env.RESEND_REPLY_TO || "hello@yurskinsolution.eu";
+  return process.env.RESEND_REPLY_TO || "hello@asianbeautyshop.eu";
 }
 
 /**

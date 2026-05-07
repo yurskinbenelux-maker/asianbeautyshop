@@ -30,14 +30,14 @@ export type RegistrationWelcomeSendResult =
   | { sent: true }
   | { sent: false; reason: "resend-not-configured" | "send-failed" };
 
-const SUBJECT = "Welcome to YU.R — your 10% is inside";
+const SUBJECT = "Welcome to Asian Beauty Shop — your 10% is inside";
 const PREHEADER = "Your code is waiting, and so is your skincare routine.";
 const HEADING = "Welcome.";
 const LEDE =
   "Thank you for joining us. Your account is ready — order tracking, saved addresses, and your skin-quiz history all live there from now on. As a small hello, here's a single-use code for your first order.";
 const CODE_LABEL = "Your welcome code";
 const CTA = "Start your skincare routine";
-const SIGNOFF = "With care,\nSofia · YU.R Skin Solution";
+const SIGNOFF = "With care,\nThe Asian Beauty Shop team";
 const FOOTER = "K'Elmus Group BV · Aartselaar, Belgium";
 
 export async function sendRegistrationWelcomeEmail(
@@ -48,7 +48,7 @@ export async function sendRegistrationWelcomeEmail(
 
   const siteOrigin =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu";
+    "https://asianbeautyshop.eu";
   // English shop link — the popup is English-only and the email follows
   // the same convention. Customers can language-switch from the nav.
   const shopUrl = `${siteOrigin}/en/shop`;

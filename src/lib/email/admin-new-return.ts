@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Admin new-return notification — sent to admin@yurskinsolution.eu the
+// Admin new-return notification — sent to admin@asianbeautyshop.eu the
 // moment a customer submits a return via /account (future #93 flow) or
 // one is created by Sofia on their behalf.
 //
@@ -35,7 +35,7 @@ export type AdminRmaContext = {
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 

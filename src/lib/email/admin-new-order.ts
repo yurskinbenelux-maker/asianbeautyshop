@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Admin new-order notification — sent to admin@yurskinsolution.eu the
+// Admin new-order notification — sent to admin@asianbeautyshop.eu the
 // moment an order flips to PAID.
 //
 // English-only (internal). Minimal chrome, maximum skimability — the goal
@@ -25,7 +25,7 @@ import { Locale } from "@prisma/client";
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 

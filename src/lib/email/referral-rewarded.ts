@@ -30,9 +30,9 @@ const STRINGS: Record<Locale, Strings> = {
     heading: (f) =>
       f ? `Thank you, ${f}.` : "Thank you.",
     body: (p, e) =>
-      `${e} just placed their first YU.R order — your gesture put them on a calmer skin path. We've added ${p} bonus points to your YU.R Club balance as a small thanks. Spend them whenever feels right.`,
+      `${e} just placed their first Asian Beauty Shop order — your gesture put them on a calmer skin path. We've added ${p} bonus points to your Asian Beauty Shop Club balance as a small thanks. Spend them whenever feels right.`,
     cta: "Open my account",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
@@ -40,9 +40,9 @@ const STRINGS: Record<Locale, Strings> = {
     preheader: "Bonuspunten zijn binnen.",
     heading: (f) => (f ? `Dank je, ${f}.` : "Dank je."),
     body: (p, e) =>
-      `${e} heeft net hun eerste YU.R bestelling geplaatst — jouw gebaar bracht ze op een rustiger huidpad. We hebben ${p} bonuspunten toegevoegd aan je YU.R Club saldo als kleine dank. Wissel ze in wanneer het goed voelt.`,
+      `${e} heeft net hun eerste Asian Beauty Shop bestelling geplaatst — jouw gebaar bracht ze op een rustiger huidpad. We hebben ${p} bonuspunten toegevoegd aan je Asian Beauty Shop Club saldo als kleine dank. Wissel ze in wanneer het goed voelt.`,
     cta: "Open mijn account",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
@@ -50,9 +50,9 @@ const STRINGS: Record<Locale, Strings> = {
     preheader: "Des points bonus sont arrivés.",
     heading: (f) => (f ? `Merci, ${f}.` : "Merci."),
     body: (p, e) =>
-      `${e} vient de passer sa première commande YU.R — votre geste l'a mise sur un chemin de peau plus calme. Nous avons ajouté ${p} points bonus à votre solde YU.R Club en remerciement. Utilisez-les quand bon vous semble.`,
+      `${e} vient de passer sa première commande Asian Beauty Shop — votre geste l'a mise sur un chemin de peau plus calme. Nous avons ajouté ${p} points bonus à votre solde Asian Beauty Shop Club en remerciement. Utilisez-les quand bon vous semble.`,
     cta: "Ouvrir mon compte",
-    signoff: "Avec attention,\nSofia · YU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
@@ -60,9 +60,9 @@ const STRINGS: Record<Locale, Strings> = {
     preheader: "Бонусные баллы зачислены.",
     heading: (f) => (f ? `Спасибо, ${f}.` : "Спасибо."),
     body: (p, e) =>
-      `${e} только что оформил(а) свой первый заказ YU.R — ваш жест направил его(её) к более спокойной коже. Мы добавили ${p} бонусных баллов на ваш счёт YU.R Club в знак благодарности. Используйте, когда будет уместно.`,
+      `${e} только что оформил(а) свой первый заказ Asian Beauty Shop — ваш жест направил его(её) к более спокойной коже. Мы добавили ${p} бонусных баллов на ваш счёт Asian Beauty Shop Club в знак благодарности. Используйте, когда будет уместно.`,
     cta: "Открыть аккаунт",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -88,7 +88,7 @@ export async function sendReferralRewardedEmail(
   const s = STRINGS[payload.locale];
   const siteOrigin =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu";
+    "https://asianbeautyshop.eu";
   const accountUrl = `${siteOrigin}/${payload.locale.toLowerCase()}/account`;
 
   const html = renderEmailShell({
