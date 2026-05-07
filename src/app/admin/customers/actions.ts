@@ -241,7 +241,7 @@ export async function softDeleteCustomerAction(
   // Anonymise identifying fields; keep the row so FK relations remain.
   // Email gets a placeholder that's still unique (needed because email has a
   // @unique constraint) but clearly marks the row as deleted.
-  const shadowEmail = `deleted+${user.id}@yurskinsolution.local`;
+  const shadowEmail = `deleted+${user.id}@asianbeautyshop.local`;
 
   await prisma.$transaction([
     prisma.user.update({
