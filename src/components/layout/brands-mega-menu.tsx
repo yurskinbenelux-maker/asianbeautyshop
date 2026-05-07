@@ -107,11 +107,11 @@ export function BrandsMegaMenu({
           }
         }}
         className={cn(
-          "relative inline-flex items-center gap-1.5 text-[13px] uppercase tracking-label transition-colors",
+          "relative inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] uppercase tracking-label transition-colors",
           open ? "text-vermilion" : "text-ink hover:text-vermilion",
         )}
       >
-        <span>{t("brands")}</span>
+        <span className="whitespace-nowrap">{t("brands")}</span>
         {/* Same disclosure chevron as the Product types trigger —
             consistent affordance across the two desktop mega-menus. */}
         {hasContent && (
