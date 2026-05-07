@@ -50,7 +50,7 @@ export function Nav({
   // categories first.
   const [mobileShopOpen, setMobileShopOpen] = useState(false);
   // Per-parent expansion inside the mobile Shop accordion — a Set so
-  // multiple parents can be open simultaneously (Sofia's customers may
+  // multiple parents can be open simultaneously (an admin's customers may
   // want to compare sub-shelves across two parents at once).
   const [mobileExpandedParents, setMobileExpandedParents] = useState<
     Set<string>

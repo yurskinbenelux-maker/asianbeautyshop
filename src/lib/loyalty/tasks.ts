@@ -12,7 +12,7 @@
 //
 // First-touch behaviour: lazily seed two default AUTO rows (place-order +
 // celebrate-birthday) so the customer drawer renders something on a
-// fresh install. Sofia can edit text/points or add new tasks any time.
+// fresh install. an admin can edit text/points or add new tasks any time.
 // ─────────────────────────────────────────────────────────────────────────
 
 import "server-only";

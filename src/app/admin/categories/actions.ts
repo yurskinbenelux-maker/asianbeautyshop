@@ -139,7 +139,7 @@ export async function createCategoryAction(
   const seoTitles = readLocaleField(formData, "translations", "seoTitle");
   const seoDescs = readLocaleField(formData, "translations", "seoDescription");
 
-  // Auto-slug from the English name if Sofia left it blank.
+  // Auto-slug from the English name if an admin left it blank.
   const desiredSlug = slugify(basic.data.slug || enName);
   const taken = new Set(
     (await prisma.category.findMany({ select: { slug: true } })).map((c) => c.slug),

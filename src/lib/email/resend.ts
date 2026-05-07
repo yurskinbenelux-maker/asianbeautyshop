@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Resend client — lazy, null-safe.
 //
-// Why null-safe: during local dev Sofia (and Max) might not have a
+// Why null-safe: during local dev an admin (and Max) might not have a
 // RESEND_API_KEY set. Instead of crashing the newsletter server action,
 // we return null and let the caller no-op the send (logging a warning).
 // Production deploys will always have the key set in hPanel env.

@@ -11,7 +11,7 @@
 //   · `mediaId` is the upsert key — re-running on the same set of
 //     posts is a no-op apart from refreshing CDN URLs (Meta rotates
 //     these every couple of weeks).
-//   · Posts that disappear from IG (deleted by Sofia) are NOT
+//   · Posts that disappear from IG (deleted by an admin) are NOT
 //     deleted from our cache automatically — that would risk
 //     wiping out the section if Meta returns an empty page during
 //     a transient API hiccup. Instead we age them out: anything

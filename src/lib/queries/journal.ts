@@ -80,7 +80,7 @@ export async function getJournalTeasers(
 export async function listPublishedJournalPosts(
   urlLocale: string,
 ): Promise<JournalTeaserCard[]> {
-  // 100 posts is more than enough until we need pagination. If Sofia ever
+  // 100 posts is more than enough until we need pagination. If an admin ever
   // blows past this we'll pageinate; for now, simpler is better.
   return getJournalTeasers(urlLocale, 100);
 }

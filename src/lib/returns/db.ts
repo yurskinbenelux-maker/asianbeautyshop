@@ -337,7 +337,7 @@ export async function transitionReturnStatus(
     })) as RawReturn;
 
     // Restock — reason RETURN, orderId from the return's parent order so
-    // Sofia can trace "why did stock go up on 14 Feb?" back to YUR-1042-R1.
+    // an admin can trace "why did stock go up on 14 Feb?" back to YUR-1042-R1.
     for (const pair of restockPairs) {
       await applyMovement(tx, {
         variantId: pair.variantId,

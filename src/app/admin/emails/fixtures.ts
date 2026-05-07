@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Email preview fixtures — sample data used ONLY by the /admin/emails
-// preview surface. Lets Sofia QA every template offline (no need to place
+// preview surface. Lets an admin QA every template offline (no need to place
 // a real order just to see what the "Order shipped" email looks like).
 //
 // We deliberately avoid querying the DB: fixtures are frozen sample data

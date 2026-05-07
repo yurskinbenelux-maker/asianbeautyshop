@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Refund form — full or partial. Logs the intent; actual Mollie refund
 // happens in a separate webhook path (future work). The "external"
-// checkbox is for when Sofia has already moved money by hand (bank
+// checkbox is for when an admin has already moved money by hand (bank
 // transfer, shop credit, etc.) and just needs to keep the record tidy.
 // ─────────────────────────────────────────────────────────────────────────
 

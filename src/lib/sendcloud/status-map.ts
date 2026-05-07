@@ -78,7 +78,7 @@ export function nextOrderStatusForBucket(
       return OrderStatus.DELIVERED;
     case "failed":
       // Cancelled / lost / returned-to-sender. We don't auto-move the
-      // order to a "failed" state because Sofia probably wants to
+      // order to a "failed" state because an admin probably wants to
       // contact the customer first. The webhook handler will log
       // loudly so it surfaces in admin notifications.
       return null;

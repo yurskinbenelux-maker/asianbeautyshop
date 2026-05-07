@@ -5,7 +5,7 @@
 // audience. Each card links to /admin/emails/[key] for a full visual
 // preview + send-test-to-my-inbox.
 //
-// Sofia should open this before launch (and any time we change a template)
+// an admin should open this before launch (and any time we change a template)
 // to confirm the emails look right in EN/NL/FR/RU before customers see
 // them.
 // ─────────────────────────────────────────────────────────────────────────

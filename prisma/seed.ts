@@ -3,7 +3,7 @@
 // Run with:  npm run seed    (after `npx prisma migrate dev --name init`)
 //
 // Idempotent: uses upsert by slug/sku, so running twice won't create dupes.
-// Sofia can later edit/delete/add via the admin panel.
+// an admin can later edit/delete/add via the admin panel.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { PrismaClient, Locale, ProductStatus } from "@prisma/client";

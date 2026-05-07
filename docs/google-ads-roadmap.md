@@ -44,7 +44,7 @@ This is the most important number. CPA = total ad spend ÷ orders attributed to 
 
 ### 1.4 Target ROAS (Return on Ad Spend)
 
-ROAS = revenue / spend. Easier to talk to Sofia about.
+ROAS = revenue / spend. Easier to talk to an admin about.
 
 - ROAS = AOV / CPA = €55 / €18 = **3.0x minimum target**
 - 4x+ ROAS = healthy
@@ -84,7 +84,7 @@ Each tier assumes target CPA of €18 and AOV of €55 (3x ROAS).
 - **Shopping ads** via Google Merchant Center (€180/mo) — single biggest lever for small e-commerce.
 - **Remarketing** to site visitors who didn't buy (€60/mo) — cheapest acquisitions you'll ever get.
 
-**Output:** real signal in GA4 after ~30 days. Smart Bidding starts learning. Sofia sees actual conversion data she can show partners.
+**Output:** real signal in GA4 after ~30 days. Smart Bidding starts learning. an admin sees actual conversion data she can show partners.
 
 ### Scenario C — Smart growth (€800/month)
 
@@ -111,7 +111,7 @@ Each tier assumes target CPA of €18 and AOV of €55 (3x ROAS).
 | Gross profit     | €2,283  |
 | **Net after ads**| **+€783** |
 
-**Use case:** only after C has been profitable for 60 days. Add YouTube remarketing video, Demand Gen, broader commercial keywords. Hire someone to manage if Sofia can't put 5h/week into it.
+**Use case:** only after C has been profitable for 60 days. Add YouTube remarketing video, Demand Gen, broader commercial keywords. Hire someone to manage if an admin can't put 5h/week into it.
 
 ---
 
@@ -192,7 +192,7 @@ Negative keywords: `-jobs -recipe -diy -recipe -free -cheap -tutorial -recruitme
 
 ## 5. Concrete first-month playbook
 
-If Sofia has **€300 to test**, here's the exact split:
+If an admin has **€300 to test**, here's the exact split:
 
 | Campaign                  | Type           | Budget/day | Target           | Expected orders |
 |--------------------------|----------------|----------|------------------|-----------------|
@@ -235,4 +235,4 @@ If you're in red after 30 days, stop spending and audit landing pages, mobile UX
 
 ## 7. The one-line summary
 
-**Spend €300/month on Brand + Shopping + Remarketing for 90 days. Target CPA €18, target ROAS 3x. Don't touch broad keywords or display until conversion data proves the funnel. Reinvest profit into scale, not test campaigns Sofia hasn't validated.**
+**Spend €300/month on Brand + Shopping + Remarketing for 90 days. Target CPA €18, target ROAS 3x. Don't touch broad keywords or display until conversion data proves the funnel. Reinvest profit into scale, not test campaigns an admin hasn't validated.**

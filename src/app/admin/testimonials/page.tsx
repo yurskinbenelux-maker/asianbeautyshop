@@ -2,7 +2,7 @@
 // /admin/testimonials — list page for the homepage "voices" strip.
 //
 // Server component: reads every testimonial (regardless of isActive) so
-// Sofia can see hidden ones too, then renders a compact table with the
+// an admin can see hidden ones too, then renders a compact table with the
 // EN-preview quote, language count, rating, and active toggle.
 // ─────────────────────────────────────────────────────────────────────────
 

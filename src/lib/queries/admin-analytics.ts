@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Admin analytics queries.
 //
-// Everything here is "last 30 days" only. Sofia doesn't need a BI tool —
+// Everything here is "last 30 days" only. an admin doesn't need a BI tool —
 // she needs a calm glance at: how much did we sell, how many orders, what's
 // selling, what's stuck in the fulfilment queue.
 //
@@ -24,7 +24,7 @@ const REVENUE_STATES: OrderStatus[] = [
   OrderStatus.PARTIALLY_REFUNDED,
 ];
 
-/** Orders that are actionable (need Sofia to do something). */
+/** Orders that are actionable (need an admin to do something). */
 const ACTIVE_STATES: OrderStatus[] = [
   OrderStatus.PAID,
   OrderStatus.FULFILLING,
@@ -60,11 +60,11 @@ export type AnalyticsSummary = {
   aovCents: number;
   /** One row per day, oldest → newest. Empty days are filled with zeros. */
   daily: DailyRevenuePoint[];
-  /** Status breakdown across ALL time (not just window), so Sofia sees what's stuck. */
+  /** Status breakdown across ALL time (not just window), so an admin sees what's stuck. */
   statusBreakdown: StatusSlice[];
   /** Top 5 sellers in the window by units sold. */
   topSellers: TopSeller[];
-  /** Orders waiting for Sofia's attention right now. */
+  /** Orders waiting for an admin's attention right now. */
   activeOrdersCount: number;
   /** Pending reviews across all time. */
   pendingReviewsCount: number;

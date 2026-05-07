@@ -399,7 +399,7 @@ export function MediaDrawer({
               The two slots use different aspect ratios:
                 · Card thumbnail (4:5)  → /journal listing + homepage teaser
                 · Article hero (16:9)   → top of /journal/[slug]
-              Sofia picks the post + the slot, the action writes the URL. */}
+              an admin picks the post + the slot, the action writes the URL. */}
           <div className="border-t border-ink/10 pt-6">
             <div className="eyebrow flex items-center gap-2">
               <BookOpen className="h-3 w-3" />
@@ -489,7 +489,7 @@ export function MediaDrawer({
 
               {/* Slot picker — radios styled as button group. Disabled
                   visually until a post is picked but kept clickable so
-                  Sofia can pre-pick if she likes. */}
+                  an admin can pre-pick if she likes. */}
               <fieldset
                 className={cn(
                   "border border-ink/15 bg-white p-2",

@@ -4,7 +4,7 @@
 // Three stacked sections:
 //
 //   1. NewVariantForm
-//      "Add a size" card at the top. Sofia fills in label ("15 ml"),
+//      "Add a size" card at the top. an admin fills in label ("15 ml"),
 //      SKU, optional price override, optional opening stock — submits
 //      to createVariantAction. Idempotent on SKU collision (P2002 →
 //      friendly error).
@@ -17,14 +17,14 @@
 //                   default, set sort order. Posts to updateVariantAction.
 //      A separate Delete button trips inline confirmation; if the variant
 //      has any past OrderItems the server-side action refuses (history
-//      stays intact — Sofia archives the parent product instead).
+//      stays intact — an admin archives the parent product instead).
 //
 //   3. MovementTimeline
 //      Flat chronological list of recent InventoryMovement rows across
 //      all variants of this product. Same as before.
 //
 // Why one form per variant instead of a single big form?
-//   · Each adjustment is its own atomic thing in Sofia's head.
+//   · Each adjustment is its own atomic thing in an admin's head.
 //   · Per-row useActionState lets us scope status messages correctly.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -60,7 +60,7 @@ type VariantRow = {
 type Props = {
   productId: string;
   /** Product.price as a Decimal-safe string — shown as the inherited
-   *  fallback in the "Add variant" form so Sofia knows what blank means. */
+   *  fallback in the "Add variant" form so an admin knows what blank means. */
   productPrice: string;
   variants: VariantRow[];
   movements: InventoryRow[];
@@ -197,7 +197,7 @@ function NewVariantForm({
       className="border border-ink/10 bg-white/70 p-5"
       // The action has its own success message; we let useFormState reset
       // form fields by rerendering with key-on-success in a follow-up if
-      // Sofia asks. For now successful submit just shows the toast and
+      // an admin asks. For now successful submit just shows the toast and
       // the new row appears below — fields stay so she can add another.
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr,1fr,auto,auto]">

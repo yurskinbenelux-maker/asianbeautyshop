@@ -1,6 +1,6 @@
 # YU.R Skin Solution — production webshop
 
-A luxury Korean cosmetics webshop for **yurskinsolution.eu**, built with Next.js 15, TypeScript, Prisma, Supabase, Mollie, and Anthropic Claude. Designed so the owner (Sofia) can run every aspect of the shop — products, images, content, journal, translations, AI concierge — without touching code.
+A luxury Korean cosmetics webshop for **asianbeautyshop.eu**, built with Next.js 15, TypeScript, Prisma, Supabase, Mollie, and Anthropic Claude. Designed so the owner (an admin) can run every aspect of the shop — products, images, content, journal, translations, AI concierge — without touching code.
 
 **Business:** K'Elmus Group · Boomsesteenweg 41/4b · 2630 Aartselaar · Belgium
 **Hosting:** Hostinger Business plan (Managed Node.js + GitHub auto-deploy)
@@ -129,8 +129,8 @@ Open http://localhost:3000. You'll see the homepage with Hero B (Moon Jar) once 
    - Build command: `pnpm install --frozen-lockfile && pnpm prisma generate && pnpm build`
    - Start command: `pnpm start -p $PORT`
    - Root: `/`
-4. Open the Node.js app → **Environment variables** → paste every key from `.env.local` (production values where different: live Mollie key, production Supabase project, `NEXT_PUBLIC_SITE_URL=https://yurskinsolution.eu`).
-5. Point `yurskinsolution.eu` at the Node.js app in hPanel → Domains.
+4. Open the Node.js app → **Environment variables** → paste every key from `.env.local` (production values where different: live Mollie key, production Supabase project, `NEXT_PUBLIC_SITE_URL=https://asianbeautyshop.eu`).
+5. Point `asianbeautyshop.eu` at the Node.js app in hPanel → Domains.
 6. First deploy will run automatically from the `main` push. Check logs in hPanel; any issues will show there.
 
 ---
@@ -165,10 +165,10 @@ Open http://localhost:3000. You'll see the homepage with Hero B (Moon Jar) once 
 
 | Phase | What ships                                  | Ready when                         |
 | ----- | ------------------------------------------- | ---------------------------------- |
-| **1** | Foundations, design system, homepage        | Sofia sees the styled homepage live |
+| **1** | Foundations, design system, homepage        | an admin sees the styled homepage live |
 | **2** | Shop, filters, PDP, cart, checkout (Mollie) | She can take a real €0.01 order    |
 | **3** | AI concierge (streaming + tool calling)     | The orb talks and recommends       |
-| **4** | Admin panel (CRUD, Tiptap, translations)    | Sofia adds a product herself       |
+| **4** | Admin panel (CRUD, Tiptap, translations)    | an admin adds a product herself       |
 | **5** | Launch hardening (GDPR, Sendcloud, SEO)     | DNS flipped, live                  |
 
 ## Running costs (at steady state)

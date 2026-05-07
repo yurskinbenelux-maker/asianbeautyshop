@@ -9,7 +9,7 @@
 //      clean even if a spammer gets past the client-side required attrs.
 //   2. Write a ContactMessage row (source of truth; never silently dropped
 //      even if email delivery fails).
-//   3. Fire-and-forget an admin notification through Resend so Sofia sees
+//   3. Fire-and-forget an admin notification through Resend so an admin sees
 //      the enquiry in her inbox within seconds.
 //
 // Guest vs logged-in: if the submitter happens to be logged in we attach
@@ -172,7 +172,7 @@ export async function submitContactMessage(
     },
   });
 
-  // 2 ── notify Sofia — never block the user on this; log and continue.
+  // 2 ── notify an admin — never block the user on this; log and continue.
   try {
     const outcome = await sendContactInquiryEmail(created.id);
     if (outcome.sent) {

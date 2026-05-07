@@ -130,7 +130,7 @@ Before push:
 
 After push, on Hostinger env:
 - Optional: `EDITOR_ALLOWED_EMAILS` + `FULFILMENT_ALLOWED_EMAILS` if
-  you want to actually hand out narrower keys to Sofia's VA or
+  you want to actually hand out narrower keys to an admin's VA or
   copywriter. Empty lists = existing behaviour (owner-only) preserved.
 
 ---
@@ -171,7 +171,7 @@ errors from overnight work.
 
 ## Batch 5 — Company legal sweep + HQ brand doc integration
 
-Triggered by Sofia sending real VAT + IBAN and the HQ brand materials
+Triggered by an admin sending real VAT + IBAN and the HQ brand materials
 doc. Two passes, both landed uncommitted.
 
 ### 5.1  Legal / compliance placeholder sweep
@@ -181,7 +181,7 @@ Group BV data. Spots touched:
 - `/contact` page — address swapped to Boomsesteenweg 41/4b · 2630
   Aartselaar (was Rue de la Clinique / Anderlecht); VAT + KBO → BE
   1031.312.116; phone row removed (all contact routes through
-  `hello@yurskinsolution.eu`).
+  `hello@asianbeautyshop.eu`).
 - `/legal/imprint` — VAT + KBO real values across EN / NL / FR / RU;
   phone row removed from all 4 locales; new "Bank" block added with
   IBAN BE96 0689 5761 0905 + BIC GKCCBEBB.
@@ -206,7 +206,7 @@ Group BV data. Spots touched:
 
 ### 5.2  HQ brand doc integration
 
-The materials Sofia forwarded (Mr. & Mrs. Jung founding story, "You
+The materials an admin forwarded (Mr. & Mrs. Jung founding story, "You
 Are the Skin Solution" philosophy, ECIS + CIT production, CPNP / ECAS /
 Montaji / GMP certifications) rewritten into the site:
 - **New `/[locale]/about` route** — `src/app/[locale]/about/page.tsx`
@@ -215,7 +215,7 @@ Montaji / GMP certifications) rewritten into the site:
   EN-fallback pipeline. The footer + nav "About" link now lands
   somewhere instead of 404-ing.
 - **About body copy** seeded via `prisma/seed-legal.ts` (key "about",
-  EN only — NL/FR/RU fall back until Sofia approves translations).
+  EN only — NL/FR/RU fall back until an admin approves translations).
   Covers philosophy → founding story → mission → values → production →
   certifications → pregnancy advisory, straight from the HQ doc.
 - **Certifications strip** — new `src/components/about/certifications-strip.tsx`,
@@ -225,10 +225,10 @@ Montaji / GMP certifications) rewritten into the site:
 - **Homepage brand tagline** — `messages/*.json` `brand.tagline`
   swapped from "Korean skincare, considered." to "You Are the Skin
   Solution." across all 4 locales. Propagates to the footer. SiteCopy
-  overrides still win, so Sofia can revert via /admin/homepage.
+  overrides still win, so an admin can revert via /admin/homepage.
 - **Deliberately deferred** (flagged in task #133 now closed, but
   worth a second pass):
-  · First journal article "You Are the Skin Solution" — needs Sofia's
+  · First journal article "You Are the Skin Solution" — needs an admin's
     approval on voice before it goes live.
   · NL / FR / RU translations for /about (EN fallback kicks in now).
   · PDP product descriptions from section 4 of the doc (CCC / DD
@@ -282,7 +282,7 @@ Linked from nav/footer but previously 404-ing: `/shipping`, `/faq`,
   day windows by zone, packaging (FSC + moulded pulp, no plastic void
   fill), damaged-in-transit instructions, VAT position. Written to
   satisfy BE Code of Economic Law Art. VI.45 pre-contractual disclosure.
-- EN only in seed; NL/FR/RU fall back until Sofia ships translations.
+- EN only in seed; NL/FR/RU fall back until an admin ships translations.
 
 ### 6.2  /faq  ✅
 - `src/app/[locale]/faq/page.tsx` — same static-page pipeline, key
@@ -315,7 +315,7 @@ Linked from nav/footer but previously 404-ing: `/shipping`, `/faq`,
 - `src/app/[locale]/ingredients/page.tsx` — two-lane layout:
   "Key actives" featured cards at the top, then an alphabetised A-Z
   index with a desktop jump bar. Graceful empty state (the Ingredient
-  table is currently unseeded — Sofia populates via /admin/products).
+  table is currently unseeded — an admin populates via /admin/products).
 - `src/app/[locale]/ingredients/[slug]/page.tsx` — detail page with
   key-asset + allergen flags, full rich-text description, and every
   product using the ingredient as a visual card row with INCI badge,
@@ -329,7 +329,7 @@ After push:
 - Run `pnpm tsx prisma/seed-legal.ts --force=shipping,faq` to materialise
   the seeded bodies. (The About seed from last night is already in
   that same file under `--force=about`.)
-- Next time you/Sofia add products, populate ingredients via the
+- Next time you/an admin add products, populate ingredients via the
   existing admin product edit page — that's the only way rows get into
   `Ingredient` until we build a dedicated `/admin/ingredients` CRUD.
   In the meantime `/ingredients` shows the friendly empty state.
@@ -357,7 +357,7 @@ Typecheck: 0 new errors from this batch.
 
 ### 7.1  /admin/ingredients CRUD ✅
 
-Sofia can now curate the ingredient library end-to-end without going
+an admin can now curate the ingredient library end-to-end without going
 through the product-edit screen every time.
 
 New files:
@@ -437,7 +437,7 @@ their "fallback" state:
 
 **How to set them on Hostinger Business** (Node.js app hosting):
 
-1. hPanel → Hosting → `yurskinsolution.eu` → Website → "Node.js app"
+1. hPanel → Hosting → `asianbeautyshop.eu` → Website → "Node.js app"
    (or "Manage" if hosting the build directly).
 2. Scroll to **Environment variables** section.
 3. Click **Add variable** and fill in each key/value pair above.
@@ -463,7 +463,7 @@ HQ needs to supply the real SKUs with:
 - EN + ideally NL/FR/RU copy (else EN fallback works)
 - Category assignment (cleansers / treatments / moisturisers / sunscreens)
 
-Once those land, Sofia can bulk-import via `/admin/products/import`
+Once those land, an admin can bulk-import via `/admin/products/import`
 (CSV) or enter one-by-one in the product editor. The whole public
 surface (homepage bestsellers, /shop, /ingredients, PDPs, search) will
 populate the moment those rows arrive.

@@ -10,7 +10,7 @@
 //   • isVerified = false → these reviews never get the "Verified
 //     purchase" badge on the PDP. The badge stays meaningful: it only
 //     ever signals "this person actually bought the product".
-//   • isPublished = false → every public review goes through Sofia's
+//   • isPublished = false → every public review goes through an admin's
 //     moderation queue at /admin/reviews. Spam, duplicates, and abuse
 //     get filtered there. The cost: reviews don't appear instantly.
 //     The benefit: zero moderation = a brand-killing problem on a
@@ -27,11 +27,11 @@
 //
 // Capture surface:
 //   We capture authorName + optional authorEmail. Email is never
-//   displayed on the PDP — only Sofia sees it in the moderation
+//   displayed on the PDP — only an admin sees it in the moderation
 //   queue, used to follow up if a review needs clarification. Locale
 //   is captured for the moderator's benefit, not for filtering on
 //   display (the PDP shows all reviews regardless of locale per
-//   Sofia's request — a French shopper still sees Dutch reviews).
+//   an admin's request — a French shopper still sees Dutch reviews).
 // ─────────────────────────────────────────────────────────────────────────
 
 "use server";
@@ -167,7 +167,7 @@ export async function submitPublicReviewAction(
   }
 
   // No revalidation needed — the new review is isPublished:false so
-  // it can't appear on the public PDP until Sofia approves it. The
+  // it can't appear on the public PDP until an admin approves it. The
   // PDP cache stays valid.
   return { ok: true };
 }

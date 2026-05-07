@@ -263,7 +263,7 @@ export async function readLoyaltyAccountSummary(
 }
 
 /** Recent history for the drawer's "My history" section. Default 50 rows;
- *  the full history page can paginate if Sofia ever asks. */
+ *  the full history page can paginate if an admin ever asks. */
 export async function readLoyaltyHistory(opts: {
   userId: string;
   limit?: number;

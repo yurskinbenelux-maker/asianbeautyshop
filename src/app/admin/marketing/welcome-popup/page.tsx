@@ -7,7 +7,7 @@
 // with ?saved=1, busts the public layout cache.
 //
 // Image URL is pasted (paste from /admin/media after upload). Same
-// pattern Sofia uses for /admin/homepage/hero — keeps muscle memory
+// pattern an admin uses for /admin/homepage/hero — keeps muscle memory
 // consistent across editors.
 // ─────────────────────────────────────────────────────────────────────────
 

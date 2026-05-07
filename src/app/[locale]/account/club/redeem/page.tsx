@@ -80,7 +80,7 @@ export default async function RedeemCataloguePage({ params }: Props) {
             Rewards coming soon
           </p>
           <p className="mx-auto mt-2 max-w-md text-[13px] text-ink-mid">
-            Sofia is curating what you can spend points on. Check back shortly.
+            an admin is curating what you can spend points on. Check back shortly.
           </p>
         </div>
       ) : (

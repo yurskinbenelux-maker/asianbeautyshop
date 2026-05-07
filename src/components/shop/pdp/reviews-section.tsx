@@ -145,7 +145,7 @@ export function ReviewsSection({
           )}
 
           {/* Public review form — visible whether or not there are
-              existing reviews. Sofia explicitly asked for this so
+              existing reviews. an admin explicitly asked for this so
               non-buyers can also leave reviews. The form opens
               inline; submissions go through admin moderation. */}
           <PublicReviewForm

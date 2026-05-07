@@ -9,7 +9,7 @@
 //
 // Context — why roles + capabilities exist:
 //   The original `requireAdmin()` had a single allow-list
-//   (ADMIN_ALLOWED_EMAILS). That's fine when it's just Sofia, but as soon
+//   (ADMIN_ALLOWED_EMAILS). That's fine when it's just an admin, but as soon
 //   as a freelancer helps with content or a VA helps with fulfilment, we
 //   want to *not* hand them the settings panel, customer export, or the
 //   ability to delete products.
@@ -17,12 +17,12 @@
 //   Roles are allow-list-derived, **not** DB-derived. That means:
 //     · No migration.
 //     · Role assignment is an env-var edit (auditable via git/Hostinger).
-//     · Sofia never has to think about "user management UI" — it's a
+//     · an admin never has to think about "user management UI" — it's a
 //       config change the dev-of-record applies when needed.
 //
 // Three roles:
 //   OWNER      — full access (the original ADMIN_ALLOWED_EMAILS list).
-//                Sofia + the dev-of-record (Max).
+//                an admin + the dev-of-record (Max).
 //   EDITOR     — content work: products, categories, banners, journal,
 //                homepage copy, static pages, testimonials, ingredients,
 //                media. Can read orders + customers (for context) but

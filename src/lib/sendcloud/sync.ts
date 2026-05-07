@@ -95,10 +95,10 @@ function buildParcelPayload(order: {
   // Total weight = Σ(product weight × quantity) + packaging tare.
   //
   // Carriers (PostNL/DPD/bpost) price by weight bracket and re-weigh at
-  // intake; under-declaring means Sofia gets a surcharge bill weeks
+  // intake; under-declaring means an admin gets a surcharge bill weeks
   // later. We must include the empty box + packing tape + filler.
   //
-  // Sofia has 3 box sizes registered in her Sendcloud "Boxes" panel:
+  // an admin has 3 box sizes registered in her Sendcloud "Boxes" panel:
   //   yurskinsolution 16 (16×16×10)   — small,  1 item
   //   yurskinsolution 19 (19×14×10)   — medium, 2-3 items
   //   yurskinsolution 30 (23.5×23.5×10) — large, 4+ items
@@ -112,7 +112,7 @@ function buildParcelPayload(order: {
     itemCount >= 4 ? 180 : itemCount >= 2 ? 120 : 100;
 
   // Per-product weight: fall back to 100g/unit if weightGrams isn't set
-  // in admin. Sofia should fill these in for accurate billing — TODO
+  // in admin. an admin should fill these in for accurate billing — TODO
   // surface a "missing weights" admin warning.
   const itemsGrams = order.items.reduce((sum, item) => {
     const each = item.product.weightGrams ?? 100;
@@ -131,7 +131,7 @@ function buildParcelPayload(order: {
   //     "kilogram" (Sendcloud rejects "kilogram" with a strict-enum error)
   //   • Per-item declared value is `price`, not `value`
   //   • `ship_with: { type: "shipping_rules" }` defers carrier choice to
-  //     Sofia's panel rules (replaces v2's `apply_shipping_rules: true`)
+  //     an admin's panel rules (replaces v2's `apply_shipping_rules: true`)
   return {
     // ── Recipient ─────────────────────────────────────────────────────
     to_address: {
@@ -147,8 +147,8 @@ function buildParcelPayload(order: {
       phone_number: a.phone ?? "",
     },
 
-    // ── Sender (K'Elmus Group BV — Sofia's legal entity) ─────────────
-    // Hard-coded here for now; if Sofia ever moves we update once.
+    // ── Sender (K'Elmus Group BV — an admin's legal entity) ─────────────
+    // Hard-coded here for now; if an admin ever moves we update once.
     // Long-term, this could be pulled from a Setting row keyed by
     // "sendcloud.from_address" so it's editable without a deploy.
     from_address: {
@@ -170,7 +170,7 @@ function buildParcelPayload(order: {
     // confirmed the canonical pattern: pass `sendcloud:letter` as a
     // placeholder shipping_option_code, then set `apply_shipping_rules:
     // true` — the rules engine overrides the placeholder with whatever
-    // Sofia's panel rules dictate (PostNL for BE/NL, etc.).
+    // an admin's panel rules dictate (PostNL for BE/NL, etc.).
     //
     // We never want a real letter shipped — the placeholder is just to
     // satisfy schema validation; if rules don't match for some reason,
@@ -186,7 +186,7 @@ function buildParcelPayload(order: {
     apply_shipping_rules: true,
 
     // ── Identifiers ──────────────────────────────────────────────────
-    // `order_number` is what Sofia sees in the panel; `external_reference`
+    // `order_number` is what an admin sees in the panel; `external_reference`
     // is what Sendcloud dedupes against on retry.
     order_number: order.publicNumber,
     external_reference: order.id,
@@ -320,7 +320,7 @@ export async function syncOrderToSendcloud(
 
   // Digital-only orders (every line is a gift card) have nothing to ship.
   // Skip cleanly so the Mollie webhook's `Promise.allSettled([..., sync])`
-  // doesn't log a false-negative, and Sofia doesn't see a phantom parcel
+  // doesn't log a false-negative, and an admin doesn't see a phantom parcel
   // in her Sendcloud dashboard.
   const hasPhysical = order.items.some(
     (i) => i.product.kind !== "GIFT_CARD",
@@ -354,7 +354,7 @@ export async function syncOrderToSendcloud(
     // v3 endpoint James from Sendcloud support pointed us at:
     //   "Create a shipment with rules and/or defaults and announce it
     //    synchronously" — single call that creates the shipment, applies
-    //    Sofia's panel shipping rules, and generates the label.
+    //    an admin's panel shipping rules, and generates the label.
     // The actual v3 endpoint is just `POST /api/v3/shipments` — James
     // from Sendcloud support confirmed. The long slug we saw earlier
     // (".../create-a-shipment-with-rules-and-or-default-and-announce-it-

@@ -52,11 +52,11 @@ export type DrawerData = {
    *  the top 4 with a "See all" link to /account/club/earn. */
   topTasks: TaskWithStatus[];
   /** Milestone progress visualisation for the drawer's Milestone block.
-   *  Null when Sofia disabled the feature in /admin/loyalty/settings. */
+   *  Null when an admin disabled the feature in /admin/loyalty/settings. */
   milestone: {
     /** How many paid orders the customer has placed in total (lifetime). */
     paidOrderCount: number;
-    /** Sofia's setting — every Nth order awards milestonePoints. */
+    /** an admin's setting — every Nth order awards milestonePoints. */
     every: number;
     /** Bonus points each milestone awards. */
     bonusPoints: number;
@@ -135,7 +135,7 @@ export async function getDrawerData(opts: {
 
   const resolved = resolveTier(account.pointsLifetime, tiers);
 
-  // Build milestone progress only when Sofia has the feature on. The
+  // Build milestone progress only when an admin has the feature on. The
   // current cycle position = paidOrderCount mod every, the dots-to-fill
   // visualization in the drawer divides by `every` to render N dots.
   const milestone =

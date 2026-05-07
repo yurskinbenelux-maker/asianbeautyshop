@@ -2,7 +2,7 @@
 // Change-email-address email — multilingual.
 //
 // Fires when a customer changes their email in /account/profile (or
-// when Sofia changes someone's email in the Supabase admin panel).
+// when an admin changes someone's email in the Supabase admin panel).
 // Supabase sends this template to the NEW address as a confirmation
 // step before swapping it in.
 //

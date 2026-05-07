@@ -10,7 +10,7 @@
 //                   toward the EU OSS €10,000 small-distance-seller
 //                   threshold (Council Directive 2006/112/EC, art.
 //                   369). Once this bucket exceeds €10k in a calendar
-//                   year, Sofia must register for OSS and start
+//                   year, an admin must register for OSS and start
 //                   charging destination VAT rates.
 //
 // We sum from Invoice (not Order) so the dashboard only counts orders

@@ -4,7 +4,7 @@
 // ClaimDecisionForms — Approve / Reject UI for one claim.
 //
 // Approve is one click (with optional note). Reject opens a small
-// inline form that requires a one-liner reason — Sofia commits to the
+// inline form that requires a one-liner reason — an admin commits to the
 // "why" because the customer sees it in their email.
 // ─────────────────────────────────────────────────────────────────────────
 

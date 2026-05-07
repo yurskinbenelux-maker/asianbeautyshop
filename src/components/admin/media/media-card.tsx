@@ -53,7 +53,7 @@ export function MediaCard({
             // don't want a wall of videos all firing at once on the
             // grid). They start playing on hover via CSS-driven JS,
             // but the cheap solution: leave paused with a poster-less
-            // first-frame so Sofia can still tell what's in it.
+            // first-frame so an admin can still tell what's in it.
             // eslint-disable-next-line jsx-a11y/media-has-caption
             <video
               src={media.url}

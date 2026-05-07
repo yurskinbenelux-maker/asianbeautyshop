@@ -2,7 +2,7 @@
 // prisma/seed-gift-card.ts — creates / updates the gift-card product.
 //
 // Idempotent: upserts the product by SKU and the variants by SKU. Re-running
-// is safe — Sofia's later edits to the descriptions, slugs, or media are
+// is safe — an admin's later edits to the descriptions, slugs, or media are
 // preserved (we only `create:` translations the first time and skip on
 // subsequent runs via upsert).
 //

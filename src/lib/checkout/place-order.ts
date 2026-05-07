@@ -516,7 +516,7 @@ export async function placeOrder(
         currency: "EUR",
         value: toMollieAmount(pricing.grandTotalEur),
       },
-      description: `YU.R order ${publicNumber}`,
+      description: `Asian Beauty Shop order ${publicNumber}`,
       redirectUrl: `${siteUrl}/${input.locale}/checkout/success?order=${encodeURIComponent(publicNumber)}`,
       cancelUrl: `${siteUrl}/${input.locale}/checkout/failure?order=${encodeURIComponent(publicNumber)}&reason=cancelled`,
       // Mollie can only hit the webhook if the URL is publicly reachable.

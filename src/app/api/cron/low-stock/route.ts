@@ -4,8 +4,8 @@
 // How to wire on Hostinger:
 //   hPanel → Advanced → Cron Jobs → Add new:
 //     0 9 * * *    curl -fsS -H "Authorization: Bearer $CRON_SECRET" \
-//                    https://yurskinsolution.eu/api/cron/low-stock
-//   (Runs at 09:00 CET daily. Pick a time that fits Sofia's morning.)
+//                    https://asianbeautyshop.eu/api/cron/low-stock
+//   (Runs at 09:00 CET daily. Pick a time that fits an admin's morning.)
 //
 // Auth:
 //   • In prod: `Authorization: Bearer <CRON_SECRET>` OR `?secret=<CRON_SECRET>`.

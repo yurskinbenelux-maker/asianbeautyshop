@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 // VAT YTD widget — sits on the /admin overview, tracks BE-domestic and
-// cross-border (NL/FR/LU/DE) revenue YTD, and warns Sofia when she's
+// cross-border (NL/FR/LU/DE) revenue YTD, and warns an admin when she's
 // approaching the EU OSS €10,000 threshold.
 //
 // State colours:

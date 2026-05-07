@@ -4,7 +4,7 @@
 // How to wire (cron-job.org):
 //   Hourly (or as often as you'd like — empty runs are cheap)
 //     0 * * * *   curl -fsS -H "Authorization: Bearer $CRON_SECRET" \
-//                   https://yurskinsolution.eu/api/cron/back-in-stock
+//                   https://asianbeautyshop.eu/api/cron/back-in-stock
 //
 // What it does (per run):
 //   1. Pull every BackInStockSubscription where notifiedAt IS NULL whose

@@ -21,7 +21,7 @@
 //     the configurable delay timer.
 //   · Calls markHeroFinished() on every exit path so the quiz popup
 //     can chain in next.
-//   · "Every visit" frequency — no localStorage suppression (Sofia's
+//   · "Every visit" frequency — no localStorage suppression (an admin's
 //     deliberate choice). Backdrop click / Escape / × / product tap
 //     all dismiss.
 //   · Clicking a product → navigates to its PDP and dismisses.

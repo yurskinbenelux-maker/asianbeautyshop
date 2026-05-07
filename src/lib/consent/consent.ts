@@ -79,7 +79,7 @@ export async function writeConsentCookie(prefs: ConsentPrefs): Promise<void> {
 
 /** Append one ConsentLog row per purpose. We fire-and-forget the audit log
  *  — if the DB call fails we still let the banner close, since the cookie
- *  itself is the canonical consent record. Worst case Sofia loses some
+ *  itself is the canonical consent record. Worst case an admin loses some
  *  audit granularity for that one visitor; better than the banner looking
  *  broken. */
 export async function recordConsentAudit({

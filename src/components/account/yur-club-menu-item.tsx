@@ -20,7 +20,7 @@ export function YurClubMenuItem({ data }: { data: DrawerData | null }) {
   const tClub = useTranslations("yur_club");
   const [open, setOpen] = useState(false);
 
-  // Program disabled by Sofia → don't render the entry at all. Customers
+  // Program disabled by an admin → don't render the entry at all. Customers
   // mid-flow won't see the drawer disappear because the layout re-fetches
   // on every render; she'd have to disable it then refresh for it to go.
   if (!data || !data.programActive) return null;

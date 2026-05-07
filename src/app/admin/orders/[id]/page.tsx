@@ -6,7 +6,7 @@
 //   • RIGHT — status actions, tracking form, refund form, admin notes,
 //             invoice URL, event timeline
 //
-// Everything mutation-y is a small focused sub-form so Sofia can edit
+// Everything mutation-y is a small focused sub-form so an admin can edit
 // one thing without touching the rest. The event timeline is populated
 // by every server action — making corrections traceable is the whole
 // point of /admin/orders.
@@ -306,7 +306,7 @@ export default async function AdminOrderDetailPage({
                     ) : order.status === "PAID" ||
                       order.status === "FULFILLING" ? (
                       // Auto-sync didn't land — surface a manual retry
-                      // button so Sofia can re-fire without leaving the page.
+                      // button so an admin can re-fire without leaving the page.
                       <SendcloudRetryButton orderId={order.id} />
                     ) : (
                       "—"

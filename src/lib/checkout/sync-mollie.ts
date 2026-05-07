@@ -87,7 +87,7 @@ const orderSelect = {
   // Needed on the PAID transition to detect quiz-reward orders and
   // mark the user's QuizCompletion as redeemed (rule A enforcement).
   couponCode: true,
-  // YU.R Club accrual on the PAID transition needs the customer + the
+  // A-Beauty Club accrual on the PAID transition needs the customer + the
   // subtotal (we award on subtotal not grandTotal so shipping/tax don't
   // earn points). The user relation is optional because guest checkouts
   // don't earn loyalty points — anonymous orders have no account to
@@ -219,7 +219,7 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
   // errors, but we additionally wrap in allSettled.
   //
   // Sendcloud parcel creation lives here too — same allSettled guarantee.
-  // If the API call fails, the order still flipped to PAID; Sofia can
+  // If the API call fails, the order still flipped to PAID; an admin can
   // retry the parcel creation manually from the admin order page.
   if (willFlipToPaid) {
     // Quiz reward redemption — if this order was placed with a YUR-QUIZ-…
@@ -251,7 +251,7 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
     // retry is a no-op.
     await drainAttachedGiftCards(order.id);
 
-    // YU.R Club accrual — points for the order + milestone bonus if this
+    // A-Beauty Club accrual — points for the order + milestone bonus if this
     // order hit a multiple of LoyaltySettings.milestoneOrders. Both calls
     // are idempotent on the (orderId, kind) pair, so webhook retries are
     // safe. Wrapped in try/catch because a loyalty failure must never

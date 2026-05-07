@@ -36,7 +36,7 @@ export type SuggestTagsInput = {
   /** Volume / weight context — helps disambiguate cleanser size vs sample. */
   volumeMl: number | null;
   /** Available pill slugs the model is allowed to pick from. */
-  // Brand is intentionally NOT in the suggestion — Sofia picks the line
+  // Brand is intentionally NOT in the suggestion — an admin picks the line
   // (Asian Beauty Shop / Asian Beauty Shop Pro / Asian Beauty Shop Me) by hand because the choice depends on
   // marketing intent, not formulation. The AI is good at "is this an
   // exfoliating toner?" and bad at "is this Pro or Me line?".

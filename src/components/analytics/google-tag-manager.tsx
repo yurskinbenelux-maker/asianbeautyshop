@@ -26,7 +26,7 @@
 //   Consent Mode v2 is *designed* for this pattern — load the container,
 //   start in privacy-safe mode, upgrade when the user accepts. Gating
 //   the script entirely means we lose the modeled-conversions benefit
-//   for users who never accept (Sofia's bidding suffers).
+//   for users who never accept (an admin's bidding suffers).
 //
 // noscript fallback:
 //   Skipped on purpose. The fallback iframe runs without consent, which
@@ -83,7 +83,7 @@ export function GoogleTagManager({ initialConsent }: Props) {
   }, []);
 
   // Without an ID configured we don't load anything — convenient for
-  // local dev where Sofia's GTM container shouldn't see traffic.
+  // local dev where an admin's GTM container shouldn't see traffic.
   if (!GTM_ID) return null;
 
   const initialState = consentStateFromPrefs(

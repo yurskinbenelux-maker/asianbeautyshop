@@ -190,7 +190,7 @@ export default async function ProductsListPage({
       </header>
 
       {/* Hint under the masthead when there's a tail of €0 drafts that
-          the bulk action would skip — gives Sofia a nudge to set prices
+          the bulk action would skip — gives an admin a nudge to set prices
           before clicking. */}
       {publishableDraftCount > 0 && zeroPricedDraftCount > 0 && (
         <p className="mt-3 text-[11px] uppercase tracking-label text-ink-mid">
@@ -297,7 +297,7 @@ export default async function ProductsListPage({
                 <Th>Updated</Th>
                 {/*
                   Actions column — currently just Duplicate. Narrow so the
-                  rest of the table keeps the spacious rhythm Sofia is used
+                  rest of the table keeps the spacious rhythm an admin is used
                   to, and right-aligned so the icon lines up with the edge.
                 */}
                 <Th className="w-[1%] text-right">

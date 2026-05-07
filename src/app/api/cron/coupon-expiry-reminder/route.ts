@@ -4,7 +4,7 @@
 // Wire on cron-job.org — daily, 09:00 Europe/Brussels (after the customer
 // is awake but before lunch — best open rates):
 //   0 9 * * *  curl -fsS -H "Authorization: Bearer $CRON_SECRET" \
-//                https://yurskinsolution.eu/api/cron/coupon-expiry-reminder
+//                https://asianbeautyshop.eu/api/cron/coupon-expiry-reminder
 //
 // Walks every Coupon where:
 //   · sendExpiryReminder = true       (system-issued, personal)
@@ -12,7 +12,7 @@
 //   · isActive = true
 //   · redemptionsUsed < maxRedemptions OR maxRedemptions IS NULL
 //   · endsAt is between now+(N-0.5)d and now+(N+0.5)d  (where N comes from
-//     LoyaltySettings.couponExpiryReminderDays — Sofia tweakable)
+//     LoyaltySettings.couponExpiryReminderDays — an admin tweakable)
 //
 // For each match, send the localised reminder email and stamp
 // `reminderSentAt` so re-runs don't double-email.

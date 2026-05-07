@@ -5,7 +5,7 @@
 //   · public reference (YUR-1042-R1) + status pill
 //   · the order it belongs to (linked)
 //   · line items being returned + the reason the customer gave
-//   · optional tracking number/url (set by Sofia in admin)
+//   · optional tracking number/url (set by an admin in admin)
 //   · refund total + date once the return is REFUNDED
 //   · "Cancel request" button while still REQUESTED
 //

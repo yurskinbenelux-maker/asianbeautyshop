@@ -45,7 +45,7 @@ import {
 // ────────── email side-effects ──────────────────────────────────────────
 //
 // These fire *after* the DB transaction commits and the revalidate paths
-// run. We never want a failing email to roll back a status change — Sofia
+// run. We never want a failing email to roll back a status change — an admin
 // can resend manually if something blows up.
 //
 // Each helper already catches its own errors; we fire-and-await in
@@ -298,7 +298,7 @@ export async function updatePaymentStatusAction(
   revalidateOrder(orderId);
 
   // Only fire the "thanks for paying" pair on a real into-PAID transition.
-  // Toggling PAID → PAID (e.g. resaving the form) must not spam Sofia.
+  // Toggling PAID → PAID (e.g. resaving the form) must not spam an admin.
   if (next === "PAID" && !wasAlreadyPaid) {
     await notifyOrderPaid(orderId);
   }
@@ -644,7 +644,7 @@ export async function issueRefundAction(
 
   // Stock return policy: only a *full* refund of a previously-PAID order
   // implies the goods came back. Partial refunds are treated as monetary
-  // adjustments — Sofia can restock via the return flow or an admin
+  // adjustments — an admin can restock via the return flow or an admin
   // adjustment if the customer actually shipped items back.
   const wasPaid = order.paymentStatus === "PAID";
   const shouldRestock = wasPaid && kind === "full";
@@ -823,7 +823,7 @@ export async function updateInvoiceUrlAction(
 
 // ──────── bulk: mark fulfilling ────────────────────────────────────────
 //
-// Typical workflow: Sofia scans the PAID queue and flips a batch to
+// Typical workflow: an admin scans the PAID queue and flips a batch to
 // FULFILLING as she starts pulling stock. We only move orders where
 // the transition is legal; we silently skip the rest and report the
 // count actually touched.
@@ -901,7 +901,7 @@ export async function bulkMarkFulfillingAction(
 //
 // When the auto-sync that runs on Mollie webhook fails (Sendcloud down,
 // invalid address, rule mismatch), the order lands in PAID with no
-// sendcloudParcelId. This action lets Sofia re-fire the sync from the
+// sendcloudParcelId. This action lets an admin re-fire the sync from the
 // admin order page. Idempotent: if a parcel already exists the underlying
 // sync helper returns ok without creating a duplicate.
 
@@ -931,7 +931,7 @@ export async function retrySendcloudSyncAction(
     };
   }
 
-  // Failure — give Sofia the most actionable phrasing per reason.
+  // Failure — give an admin the most actionable phrasing per reason.
   switch (result.reason) {
     case "not-configured":
       return {

@@ -7,7 +7,7 @@
 // callouts (active orders, pending reviews).
 //
 // Everything reads from Prisma via getAdminAnalytics() + a small counter
-// query. No caching — Sofia opens this page when she wants the truth.
+// query. No caching — an admin opens this page when she wants the truth.
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
@@ -147,7 +147,7 @@ export default async function AdminOverviewPage() {
       </div>
 
       {/* Live visitors + VAT YTD tracker — paired strip. Visitors on
-          the left, VAT on the right. Sofia checks visitors when "is it
+          the left, VAT on the right. an admin checks visitors when "is it
           slow?" and VAT when "are we approaching €10k cross-border?". */}
       <section className="mt-14 grid gap-6 lg:grid-cols-[1fr_1fr]">
         <VisitorCountWidget data={visitorCount} />

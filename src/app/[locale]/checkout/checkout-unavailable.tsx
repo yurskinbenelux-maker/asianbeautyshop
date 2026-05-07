@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Shown when MOLLIE_API_KEY isn't configured on the server. Keeps the site
-// from serving a 500 during the brief window between deploy and "Sofia has
+// from serving a 500 during the brief window between deploy and "an admin has
 // pasted her key in Hostinger".
 // ─────────────────────────────────────────────────────────────────────────
 

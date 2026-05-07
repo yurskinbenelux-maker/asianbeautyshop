@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // RitualBundleSection — "Complete your skincare routine" block on the PDP.
 //
-// Renders a small horizontal strip of bundle suggestions curated by Sofia
+// Renders a small horizontal strip of bundle suggestions curated by an admin
 // in ProductRelated (reason ∋ "bundle"/"skincare routine"). Each card is a link to
 // the product's own PDP plus an "Add" quick-link that fires the cart
 // context. If the list is empty the section renders nothing.

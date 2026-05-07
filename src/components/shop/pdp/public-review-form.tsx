@@ -6,7 +6,7 @@
 // Hidden behind a "Write a review" button by default. Expanding it reveals:
 //   · Star rating (1-5) — required
 //   · Name — required, displayed publicly as "{Name}"
-//   · Email — optional, never displayed (Sofia uses it for moderation)
+//   · Email — optional, never displayed (an admin uses it for moderation)
 //   · Title — optional
 //   · Body — required, min 10 chars
 //   · Honeypot field "_company" — visually hidden, traps bots

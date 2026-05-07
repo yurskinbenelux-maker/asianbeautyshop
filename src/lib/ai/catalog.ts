@@ -96,7 +96,7 @@ export function deriveLinePreference(opts: {
 // the DB) that score positively for it. Order doesn't matter; presence
 // of any ingredient gives a +1, scored against the brief in the loop
 // below. The maps below cover roughly 90% of the INCI molecules in the
-// 35-product Sofia catalogue.
+// 35-product an admin catalogue.
 //
 // If you add new ingredients via /admin/ingredients, just append the
 // slug here under whichever concerns it addresses — no other code

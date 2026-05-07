@@ -6,8 +6,8 @@
 //
 // Idempotent — every upsert keys on slug, so re-running is a no-op.
 // Translations are minimal: EN/NL/FR/RU for categories (the names are short
-// enough that Sofia can refine in /admin/categories), and EN-only for
-// ingredients (INCI names are international; Sofia adds locale-specific
+// enough that an admin can refine in /admin/categories), and EN-only for
+// ingredients (INCI names are international; an admin adds locale-specific
 // display names from /admin/categories/ingredients/[id] as needed).
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -34,7 +34,7 @@ const CATEGORIES: ReadonlyArray<{
 ];
 
 // ─── Ingredients (INCI) ────────────────────────────────────────────────
-// Display name in EN matches the INCI standard form. Sofia can add
+// Display name in EN matches the INCI standard form. an admin can add
 // localised display names + descriptions later from the admin.
 const INGREDIENTS: ReadonlyArray<{ slug: string; inciName: string }> = [
   { slug: "acacia-senegal-bark-extract", inciName: "Acacia Senegal Bark Extract" },
@@ -133,7 +133,7 @@ async function main() {
       create: { slug: i.slug, inciName: i.inciName, isKeyAsset: true },
     });
     // EN displayName mirrors INCI — gives the public /ingredients page
-    // something readable until Sofia writes deeper copy.
+    // something readable until an admin writes deeper copy.
     await prisma.ingredientTranslation.upsert({
       where: { ingredientId_locale: { ingredientId: ing.id, locale: Locale.EN } },
       update: { displayName: i.inciName },

@@ -9,14 +9,14 @@
 // We exclude bots and admins so the number reads as "real people on
 // the customer-facing site right now". The Hostinger Max Processes
 // ceiling on the Business plan is 120 — when the live count climbs
-// past ~50 the widget starts pre-warning Sofia visually.
+// past ~50 the widget starts pre-warning an admin visually.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { prisma } from "@/lib/prisma";
 
 const ONLINE_WINDOW_MINUTES = 2;
 // Hostinger Business plan ceiling. Hard-coded because there's no
-// programmatic way to read it from Hostinger's API. If Sofia upgrades
+// programmatic way to read it from Hostinger's API. If an admin upgrades
 // her plan, she updates this constant + redeploys.
 const HOSTINGER_MAX_PROCESSES = 120;
 // We get nervous well before the ceiling because Max Processes counts
@@ -33,7 +33,7 @@ export type VisitorCount = {
    *  Max Processes graph spiking but online is 0?" */
   onlineWithBots: number;
   windowMinutes: number;
-  /** Hostinger Max Processes ceiling Sofia is paying for. */
+  /** Hostinger Max Processes ceiling an admin is paying for. */
   hostingerCeiling: number;
   status: "calm" | "amber" | "red";
   /** Top 3 paths visitors are currently on (for the "what's hot" hint). */

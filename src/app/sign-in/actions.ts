@@ -5,7 +5,7 @@
 // gets a clickable link by mail, lands at /auth/callback which exchanges
 // the one-time code for a session cookie.
 //
-// No passwords anywhere.  Zero-friction for Sofia, no password-reset
+// No passwords anywhere.  Zero-friction for an admin, no password-reset
 // drama, and fewer things to get hacked.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ export async function sendMagicLink(
   // branded magic-link email template uses our token-hash flow (route
   // /auth/confirm) and consumes {{ .RedirectTo }} as a plain `next`
   // target. Supabase still uses this value for its own redirect-allow-
-  // list check, so the safe `https://yurskinsolution.eu/...` shape
+  // list check, so the safe `https://asianbeautyshop.eu/...` shape
   // matters.
   const site =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??

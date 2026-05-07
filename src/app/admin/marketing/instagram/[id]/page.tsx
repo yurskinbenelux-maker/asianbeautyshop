@@ -3,7 +3,7 @@
 //
 // As of the Graph API rewrite, captions / images / permalinks come
 // from Meta and would be overwritten on the next sync, so they're
-// not editable here. The only thing Sofia can tweak per-post is
+// not editable here. The only thing an admin can tweak per-post is
 // the sort order (to pin a particular post on top of the homepage
 // row). Visibility toggle lives on the list page for one-click access.
 // ─────────────────────────────────────────────────────────────────────────

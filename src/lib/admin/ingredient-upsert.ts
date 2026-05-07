@@ -14,7 +14,7 @@
 //
 // New rows get a stub English IngredientTranslation (displayName = inciName)
 // so they show up correctly on the public /ingredients glossary and PDP
-// breakdown immediately. Sofia can later enrich the description + add
+// breakdown immediately. an admin can later enrich the description + add
 // other locales from /admin/ingredients.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -129,7 +129,7 @@ export function deslugifyToTitle(slug: string): string {
  *  Note: real INCI parsing is hard — names like "Caprylyl/Capryl Glucoside"
  *  or "1,2-Hexanediol" can confuse a naïve splitter. We accept that
  *  imperfection here; the worst case is a compound name lands as two stubs
- *  that Sofia merges later. The alternative (require a structured field)
+ *  that an admin merges later. The alternative (require a structured field)
  *  would be much worse for her workflow.
  */
 export function parseInciTextarea(raw: string): IngredientSeed[] {

@@ -3,7 +3,7 @@
 //
 // Wire on cron-job.org — daily at a quiet hour:
 //   0 9 * * *   curl -fsS -H "Authorization: Bearer $CRON_SECRET" \
-//                 https://yurskinsolution.eu/api/cron/replenishment
+//                 https://asianbeautyshop.eu/api/cron/replenishment
 //
 // Finds orders delivered 45-90 days ago whose customer hasn't reordered,
 // sends each a localised "running out?" email, and stamps an OrderEvent

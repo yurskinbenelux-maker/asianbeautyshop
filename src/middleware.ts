@@ -9,7 +9,7 @@
 //      we also refresh the Supabase session on top so customer-side
 //      pages like /en/account can use getCurrentCustomer() from RSC.
 //
-// Admin routes are NOT locale-prefixed on purpose: Sofia works in one
+// Admin routes are NOT locale-prefixed on purpose: an admin works in one
 // language, and splitting her panel across 4 locale trees would be noise.
 // ─────────────────────────────────────────────────────────────────────────
 

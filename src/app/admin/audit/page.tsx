@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // /admin/audit — append-only log of admin mutations.
 //
-// Read-only: Sofia can't edit entries from the UI (audit integrity). She can
+// Read-only: an admin can't edit entries from the UI (audit integrity). She can
 // search and filter by action/date. Entries are capped at 200 per query —
 // we'll add pagination later if the list outgrows that.
 // ─────────────────────────────────────────────────────────────────────────

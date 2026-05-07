@@ -165,7 +165,7 @@ export function BasicsForm({
       </Section>
 
       {/* ── Supplier / compliance ─────────────────────────────────── */}
-      {/* Honors the columns from Sofia's master-data sheet. Origin and
+      {/* Honors the columns from an admin's master-data sheet. Origin and
           audience surface on the public PDP; barcode + HS code are for
           ops (returns scanning, customs paperwork, retail compliance). */}
       <Section

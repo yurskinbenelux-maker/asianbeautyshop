@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Return received email — sent when the parcel lands at the warehouse and
-// Sofia marks it received in admin.
+// an admin marks it received in admin.
 //
 // This is the "we've got it, the refund is in motion" email. The actual
 // "your money is back" email is order-refunded.ts, triggered once she
@@ -10,11 +10,11 @@
 // Two outcomes are possible at inspection:
 //   · inspectionOk       — the normal case, refund is queued
 //   · inspectionNote     — item opened / seal broken / partial value loss,
-//                          we flag it and let Sofia decide the amount
+//                          we flag it and let an admin decide the amount
 //
 // We only send this template on the happy path (inspectionOk). The
 // discretionary / partial-refund case goes through order-refunded.ts with
-// kind: "partial" + an explanatory note Sofia writes in admin.
+// kind: "partial" + an explanatory note an admin writes in admin.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { Locale } from "@prisma/client";

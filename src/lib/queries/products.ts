@@ -216,19 +216,19 @@ export type ShopFilterArgs = {
  * lookup, label, and URL slug derives from here. Adding a fourth line
  * later is a one-row change.
  *
- * Why not a Brand row per line: the company is one brand (YU.R, one VAT,
+ * Why not a Brand row per line: the company is one brand (Asian Beauty Shop, one VAT,
  * one supplier). The "Pro" and "Me" labels are *sub-lines* within the
  * brand, not separate brands. Modelling them as a Product.productLine
  * column reflects the buyer mental model + keeps the Brand model clean
- * for a future where Sofia stocks a second supplier.
+ * for a future where an admin stocks a second supplier.
  *
  * `dbValues` is the set of strings that appear in Product.productLine for
  * that line. The default line includes both `null` and the empty string —
  * old imports wrote both depending on whether the supplier sheet had an
  * explicit blank or omitted the cell.
  */
-// Labels use U+2022 BULLET (•) per the YU.R brand book — "Yu•R", not
-// "Yu.R" or "YU.R". Matches the typography Max requested for the
+// Labels use U+2022 BULLET (•) per the Asian Beauty Shop brand book — "Yu•R", not
+// "Yu.R" or "Asian Beauty Shop". Matches the typography Max requested for the
 // front-end line tabs and the admin organize picker.
 export const PRODUCT_LINES = [
   { slug: "yur", label: "Yu•R", dbValues: [null as string | null, ""] },
@@ -246,7 +246,7 @@ export type ProductLineSlug = (typeof PRODUCT_LINES)[number]["slug"];
  *   · its `extraLines` array contains one of X's non-null dbValues
  *
  * The second arm is what lets a single product (e.g. a gift card) live
- * under every line tab — Sofia ticks all 3 boxes in admin and the rest
+ * under every line tab — an admin ticks all 3 boxes in admin and the rest
  * of the line's non-primary memberships go into extraLines.
  */
 function lineWhere(slugs: string[]): Prisma.ProductWhereInput {
@@ -510,7 +510,7 @@ export async function getShopCategories(
   });
 
   // When a line filter is active, hide categories with zero matches —
-  // they only confuse. Without a line filter we keep zeros (Sofia may be
+  // they only confuse. Without a line filter we keep zeros (an admin may be
   // staging a new shelf and wants the chip to render as "MORE" candidate).
   if (lineSlugs && lineSlugs.length > 0) {
     return mapped.filter((c) => c.count > 0);
@@ -909,7 +909,7 @@ export type ShopFilters = {
   /**
    * Product lines (Yu.R / Yu.R Pro / Yu.R Me). Counts are scoped to
    * published products and reflect each line's actual inventory volume.
-   * Always emitted in PRODUCT_LINES order, never alphabetised — Sofia
+   * Always emitted in PRODUCT_LINES order, never alphabetised — an admin
    * cares about the Pro/Me hierarchy reading consistently.
    */
   lines: ShopFilterTaxon[];
@@ -928,7 +928,7 @@ export type ShopFilters = {
  * with their natural counts so the user can always see (and add) other
  * facets. The grid itself does the final narrowing.
  *
- * Ingredients are optionally capped to the most-used ones because Sofia
+ * Ingredients are optionally capped to the most-used ones because an admin
  * can create hundreds of INCI rows and a 300-item sidebar is unusable.
  */
 export async function getShopFilters(
@@ -1137,7 +1137,7 @@ export async function getProductBySlug({
   slug: string;
   /**
    * When true, DRAFT and ARCHIVED products are also returned. Used by the
-   * admin "Preview as customer" flow so Sofia can QA a product page before
+   * admin "Preview as customer" flow so an admin can QA a product page before
    * flipping it to PUBLISHED. The caller MUST gate this behind an admin
    * auth check — never pass `true` based on an untrusted query param alone.
    * Soft-deleted products (`deletedAt`) remain hidden in either mode.
@@ -1149,7 +1149,7 @@ export async function getProductBySlug({
   // Lookup strategy:
   //   1. Strict match on (URL locale, slug) — the happy path.
   //   2. If that returns null, fall back to the EN translation with the
-  //      same slug. This catches the case where Sofia hasn't translated a
+  //      same slug. This catches the case where an admin hasn't translated a
   //      product into the visitor's chosen locale yet — the LocaleSwitcher
   //      sends them to /ru/shop/<EN slug> rather than 404'ing, and we
   //      surface the EN copy with localized chrome (nav, footer) around it.
@@ -1534,7 +1534,7 @@ export async function getAllPublishedProductSlugs(): Promise<
  * Category slugs are shared across locales (they live on Category, not on
  * CategoryTranslation), so a single slug emits four sitemap entries —
  * one per locale under /[locale]/shop/category/<slug>. `updatedAt` is
- * the category row's, so Google sees a fresh stamp when Sofia edits
+ * the category row's, so Google sees a fresh stamp when an admin edits
  * its hero copy.
  */
 export type CategorySitemapEntry = {
@@ -1557,7 +1557,7 @@ export async function getAllActiveCategorySlugs(): Promise<
  * getAllActiveBrandSlugs — brand slugs for the sitemap.
  *
  * Same treatment as category slugs: shared across locales, one entry
- * per (slug, locale) pair. Only active brands are emitted — Sofia may
+ * per (slug, locale) pair. Only active brands are emitted — an admin may
  * be staging a new brand and we don't want Google to find a
  * not-yet-launched URL.
  */

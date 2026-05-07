@@ -1,13 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────
 // /admin/invoices — listing of every issued VAT invoice.
 //
-// Sofia opens this for two reasons:
+// an admin opens this for two reasons:
 //   1. Quarterly bookkeeping — download a date range to send to the
 //      accountant.
 //   2. Re-send a specific invoice to a customer if they lost it.
 //
 // Phase 1 ships the listing + per-row download. ZIP export of a date
-// range is on the roadmap (#211 follow-up) — for now Sofia clicks one
+// range is on the roadmap (#211 follow-up) — for now an admin clicks one
 // row at a time, which is fine while order volume is small.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -71,7 +71,7 @@ export default async function AdminInvoicesPage() {
           <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-ink-mid">
             Every paid order generates a sequential VAT invoice (Belgian
             Royal Decree no. 1, art. 5). Stored 10 years per Belgian VAT
-            Code art. 60 — Sofia, this is your bookkeeping pile.
+            Code art. 60 — an admin, this is your bookkeeping pile.
           </p>
         </div>
       </header>

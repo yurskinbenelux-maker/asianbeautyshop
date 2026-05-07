@@ -32,7 +32,7 @@ Status: **schema staged, runtime deferred to Phase 2**.
 
 - Auto-create LoyaltyAccount + referralCode when a User signs up (or on first order for guests upgrading)
 - Customer dashboard: "Share your code" block with copy-link CTA
-  - Link: `https://yurskinsolution.eu/?ref=SOFIA-K4M7`
+  - Link: `https://asianbeautyshop.eu/?ref=SOFIA-K4M7`
 - Landing page picks up `?ref=` query → sets cookie + (later) auto-fills the coupon code at checkout
 - At checkout: if the cookie's referralCode resolves to a real account AND the customer is new (no prior orders), apply 10% off + create `Referral(PENDING, refereeEmail)` row
 - On Mollie PAID for a referral order: flip Referral to REWARDED + mint the referrer's bonus coupon + email them

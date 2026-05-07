@@ -6,14 +6,14 @@ Generated 2026-05-07. **Read-only audit — no edits made yet.**
 
 Every file containing one of these flagged strings was classified by path heuristic into one of the buckets below.
 
-Flagged strings: `YU.R`, `Yu.R`, `YU·R`, `yurskin`, `yurskinsolution`, `Sofia`, `YurClub`, `yur-club`.
+Flagged strings: `YU.R`, `Yu.R`, `YU·R`, `yurskin`, `yurskinsolution`, `an admin`, `YurClub`, `yur-club`.
 
 ## The three-tier rule (recap)
 
-- **REPLACE** — storefront identity (customer-visible "YU.R Skin Solution" / `yurskinsolution.eu` / "Sofia, founder").
+- **REPLACE** — storefront identity (customer-visible "YU.R Skin Solution" / `asianbeautyshop.eu` / "an admin, founder").
 - **PRESERVE** — K'Elmus Group BV (legal entity, owns the corp).
 - **PRESERVE** — YU.R / Yu.R Pro / Yu.R Me as a Brand row in the catalog (we still sell it).
-- **DELETE** — "Sofia" entirely (no replacement; she's no longer the public face).
+- **DELETE** — "an admin" entirely (no replacement; she's no longer the public face).
 - **RENAME** — "YurClub" → "A-Beauty Club" sitewide.
 
 ## Bucket counts
@@ -21,8 +21,8 @@ Flagged strings: `YU.R`, `Yu.R`, `YU·R`, `yurskin`, `yurskinsolution`, `Sofia`,
 | Bucket | Files | Hits | Action |
 |---|---|---|---|
 | **HIGH · i18n strings** | 4 | 122 | REPLACE — bulk find-replace, leave brand-row references alone |
-| **HIGH · legal page seeds** | 1 | 105 | REPLACE — Sofia footer line + YU.R brand voice; K'Elmus stays |
-| **HIGH · journal post seeds** | 1 | 13 | REPLACE — `authorName: "Sofia · YU.R"` → "The Asian Beauty Shop team" |
+| **HIGH · legal page seeds** | 1 | 105 | REPLACE — an admin footer line + YU.R brand voice; K'Elmus stays |
+| **HIGH · journal post seeds** | 1 | 13 | REPLACE — `authorName: "an admin · YU.R"` → "The Asian Beauty Shop team" |
 | **HIGH · email shell scaffold** | 1 | 5 | REPLACE — logo URL, wordmark text, default footer |
 | **HIGH · email body copy** | 34 | 295 | REPLACE — subject, signoff, brand mentions in 18+ templates |
 | **HIGH · JSON-LD schema.org** | 1 | 10 | REPLACE — Organization name, sameAs URLs (legalName stays K'Elmus) |

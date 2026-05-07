@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Order shipped email — sent when Sofia marks an order SHIPPED
+// Order shipped email — sent when an admin marks an order SHIPPED
 // (via markShippedAction or updateOrderStatusAction landing on SHIPPED).
 //
 // The tracking number is required by markShippedAction's schema, but
@@ -114,7 +114,7 @@ function accountOrderUrl(order: EmailOrder): string {
 
 /**
  * Render the shipped email. Pure. `options.overrides` lets the admin
- * preview / production send pipeline swap in Sofia's edited copy.
+ * preview / production send pipeline swap in an admin's edited copy.
  */
 export function buildOrderShippedEmail(
   order: EmailOrder,

@@ -11,7 +11,7 @@
 //
 //   The DB is "overrides only". An empty SiteCopy table = the site renders
 //   entirely from messages/{locale}.json. This lets us ship without a seed
-//   and gives Sofia a safe rollback path (delete a row → revert to JSON).
+//   and gives an admin a safe rollback path (delete a row → revert to JSON).
 //
 // Call sites:
 //   • Homepage components read specific sections via getSiteCopy(locale,
@@ -43,7 +43,7 @@ export const SITE_COPY_VOID = "__SITE_COPY_VOID__";
 // are even worth looking at. Keep in lockstep with the homepage components.
 //
 // Field order in each array IS the order the admin UI will show them — keep
-// eyebrow / title / lede at the top, CTAs at the bottom. Sofia will thank us.
+// eyebrow / title / lede at the top, CTAs at the bottom. an admin will thank us.
 
 export const SITE_COPY_SCHEMA = {
   "home.hero": [
@@ -120,7 +120,7 @@ export type SiteCopyDict = {
 // ── 2b. JSON fallback map ──────────────────────────────────────────────────
 //
 // Every (section, field) maps to a dotted path in messages/{locale}.json. The
-// admin UI uses this to show Sofia the current fallback value as a placeholder
+// admin UI uses this to show an admin the current fallback value as a placeholder
 // so she knows what the field will look like if she leaves her override blank.
 // Public components do NOT need this — they call t(field) inside the right
 // namespace and let next-intl resolve.
@@ -303,7 +303,7 @@ export function isFieldVoided<S extends SiteCopySection>(
  * `bestsellers.eyebrow`. The caller resolves the right t() value first
  * and passes it in.
  *
- * Critically, this honours the SITE_COPY_VOID sentinel — if Sofia has
+ * Critically, this honours the SITE_COPY_VOID sentinel — if an admin has
  * marked the field hidden in admin, this returns "" instead of leaking
  * the literal sentinel string to the page (which is what the inline
  * `?? tSection(...)` call sites used to do).
@@ -334,7 +334,7 @@ export type SiteCopyRow = {
  * Every row for a section, across all locales — so the admin form can show
  * a per-locale editor per field. Missing (field, locale) combinations are
  * NOT filled in here; the caller is expected to walk SITE_COPY_SCHEMA and
- * show an empty input so Sofia can type a value.
+ * show an empty input so an admin can type a value.
  */
 export async function listSiteCopyRows(
   section: SiteCopySection,
@@ -348,7 +348,7 @@ export async function listSiteCopyRows(
 
 /**
  * Upsert a single (section, field, locale) row. Empty string → delete row
- * (so Sofia can revert to the JSON fallback by clearing the input). Called
+ * (so an admin can revert to the JSON fallback by clearing the input). Called
  * from the /admin/homepage server action.
  */
 export async function upsertSiteCopy(args: {

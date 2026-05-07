@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Return approved email — sent once Sofia reviews a return request and is
+// Return approved email — sent once an admin reviews a return request and is
 // ready for the parcel to ship back.  This is the one that carries the
 // prepaid label (if any), the return address, and the 14-day "please ship
 // within" window required by EU law.

@@ -41,7 +41,7 @@ export function setNativeInputValue(
   } else {
     // Defensive fallback — every modern browser exposes the descriptor,
     // but if some polyfill mangled it we'd rather have a half-broken
-    // input than throw and leave Sofia staring at an empty field.
+    // input than throw and leave an admin staring at an empty field.
     el.value = value;
   }
 

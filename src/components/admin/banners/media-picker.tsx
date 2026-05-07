@@ -163,7 +163,7 @@ export function MediaPicker({
 // the parent (MediaPicker) exactly what was saved, letting it update its
 // `selected.alt` preview without a full router.refresh().
 //
-// Keyed by `mediaId` in the parent — when Sofia clicks a different thumb, the
+// Keyed by `mediaId` in the parent — when an admin clicks a different thumb, the
 // editor remounts with that image's alt as the new initial value.
 // ─────────────────────────────────────────────────────────────────────────
 function BannerAltEditor({

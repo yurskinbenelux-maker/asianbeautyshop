@@ -138,7 +138,7 @@ export function CartDrawer() {
             {/* Free-shipping meter — surfaces just above the subtotal so
                 the "€X to go" cue lands right where the customer is
                 already looking at the price. Self-hides when the
-                threshold is 0 (Sofia disabled it in admin). */}
+                threshold is 0 (an admin disabled it in admin). */}
             <FreeShippingMeter
               subtotalEur={cart.subtotalEur}
               thresholdEur={freeShippingThresholdEur}

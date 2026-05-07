@@ -63,7 +63,7 @@ const TestSendSchema = z.object({
 
 // ─────────────────────────────────────────────────────────────────────────
 // Live preview — called by the editor on every (debounced) keystroke so
-// Sofia can see her edits render in the iframe without saving first.
+// an admin can see her edits render in the iframe without saving first.
 // Takes the editor's in-memory draft state (a flat Record because Map
 // doesn't serialize across the RSC boundary) and renders the HTML.
 // Pure read operation — no DB writes, no auth side-effects beyond the
@@ -262,7 +262,7 @@ export async function resetEmailOverrideAction(
 // ─────────────────────────────────────────────────────────────────────────
 // DeepL translate — given a source value + source locale, translate it
 // into the OTHER three locales and upsert each as an override.
-// Sofia uses this when she tweaks the EN copy and wants the same tweak
+// an admin uses this when she tweaks the EN copy and wants the same tweak
 // reflected in NL/FR/RU without re-typing.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -407,7 +407,7 @@ export async function polishEmailFieldAction(
     });
     revalidatePath(`/admin/emails/${parsed.data.emailKey}/edit`);
     // Ship the polished text back so the editor can drop it straight
-    // into the textarea — otherwise Sofia clicks "Polish" and nothing
+    // into the textarea — otherwise an admin clicks "Polish" and nothing
     // visible happens until she navigates away and back.
     return { ok: true, message: "Polished.", polishedValue: polished };
   } catch (err) {

@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Footer — editorial, four columns over a single hairline rule.
-// Intentionally minimal: Sofia can extend legal links via admin later.
+// Intentionally minimal: an admin can extend legal links via admin later.
 //
 // Admin-editable copy: `tagline` (the line under Asian Beauty Shop) and `rights` (the
 // small © line on the right). Both are part of the `footer` SiteCopy
@@ -28,7 +28,7 @@ export async function Footer() {
   // (historical reason — the catalogue groups it with the masthead) and
   // footer.rights; the SiteCopy "footer" section flattens both under one
   // editable surface in /admin/homepage. siteCopyOr() honours the
-  // SITE_COPY_VOID sentinel and returns "" when Sofia hides the field.
+  // SITE_COPY_VOID sentinel and returns "" when an admin hides the field.
   const tagline = siteCopyOr(copy, "footer", "tagline", tBrand("tagline"));
   const rights = siteCopyOr(copy, "footer", "rights", t("footer.rights"));
 

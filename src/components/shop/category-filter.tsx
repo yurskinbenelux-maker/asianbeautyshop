@@ -22,7 +22,7 @@
 //
 // Why full navigations (not the old same-page ?category= refinement):
 // each category now has its own canonical URL so it ranks on its own
-// and Sofia can merchandise a hero per category. Because we're leaving
+// and an admin can merchandise a hero per category. Because we're leaving
 // the current page, scroll-to-top is desirable (the feedback rule about
 // preserving scroll only applies to *refinements* within the same page).
 // ─────────────────────────────────────────────────────────────────────────

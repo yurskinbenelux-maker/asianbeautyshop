@@ -448,7 +448,7 @@ export function CheckoutClient({
                   Each tile preselects a Mollie method so the hosted page
                   lands directly on that wallet/method UI (no extra click
                   on Mollie's picker). The "All methods" tile reverts to
-                  the default (Mollie shows everything Sofia enabled).
+                  the default (Mollie shows everything an admin enabled).
                   Apple Pay only shows on devices where it works; we let
                   Mollie's hosted page handle the unavailable case
                   gracefully — surfacing it everywhere is fine.

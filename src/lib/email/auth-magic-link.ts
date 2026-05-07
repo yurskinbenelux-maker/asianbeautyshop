@@ -6,7 +6,7 @@
 // password). Supabase's signInWithOtp() generates a one-time token
 // and sends this template via the SMTP we configured.
 //
-// EN-only on purpose — the audience is Sofia, Max, and a possible
+// EN-only on purpose — the audience is an admin, Max, and a possible
 // future fulfilment hire, all Belgium-based and EN-comfortable.
 // signInWithOtp doesn't accept a `data: { locale }` field anyway,
 // so we couldn't switch templates by locale even if we wanted to.

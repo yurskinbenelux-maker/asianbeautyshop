@@ -21,7 +21,7 @@
 //      the first click.
 //
 // Token-hash flow fixes all three:
-//   · The email link points to https://yurskinsolution.eu/auth/confirm?…
+//   · The email link points to https://asianbeautyshop.eu/auth/confirm?…
 //     — no more *.supabase.co URL visible to the customer.
 //   · verifyOtp({ token_hash, type }) doesn't need a code_verifier — works
 //     across browsers/devices.

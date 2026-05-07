@@ -5,8 +5,8 @@
 // Creator account. NOT the Basic Display API (deprecated end of 2024).
 //
 // What you need to use this:
-//   1. Sofia converts her IG account to a Business or Creator account.
-//   2. Sofia creates a Facebook Page (any name — IG accounts must link
+//   1. an admin converts her IG account to a Business or Creator account.
+//   2. an admin creates a Facebook Page (any name — IG accounts must link
 //      to a Page to access the Graph API).
 //   3. The IG account is connected to that Facebook Page.
 //   4. You create a Meta developer account at developers.facebook.com
@@ -110,7 +110,7 @@ export async function fetchUserMedia(args: {
 /**
  * Verify that an access token + IG user ID combination works without
  * actually pulling media. Used by the admin's "Test connection" button
- * to give Sofia immediate feedback when she pastes a token.
+ * to give an admin immediate feedback when she pastes a token.
  *
  * Returns the IG account's username on success, or throws.
  */

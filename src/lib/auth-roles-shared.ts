@@ -55,7 +55,7 @@ export type AdminCapability =
   | "emails.send"
   | "redirects.edit"
   | "audit.view"
-  // YU.R Club loyalty config — money-coded (Sofia tweaks pts/€, redemption
+  // A-Beauty Club loyalty config — money-coded (an admin tweaks pts/€, redemption
   // costs, milestone bonuses), so OWNER-only by default.
   | "loyalty.edit";
 

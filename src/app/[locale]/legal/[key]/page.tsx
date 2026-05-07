@@ -94,7 +94,7 @@ export default async function LegalPage({ params }: Props) {
 
       <div className="rule my-10" />
 
-      {/* Locale fallback notice — keeps Sofia honest about translation gaps */}
+      {/* Locale fallback notice — keeps an admin honest about translation gaps */}
       {page.isFallback && (
         <p className="mb-8 text-[13px] text-ink-mid">
           <em>{tLegal("fallback_notice")}</em>

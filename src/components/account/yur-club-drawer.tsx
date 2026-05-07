@@ -498,7 +498,7 @@ function MilestoneBlock({
 }) {
   const t = useTranslations("yur_club");
 
-  // Sofia disabled milestones, or settings haven't seeded yet — fall
+  // an admin disabled milestones, or settings haven't seeded yet — fall
   // back to a generic line so the drawer doesn't render a blank block.
   if (!milestone) {
     return (

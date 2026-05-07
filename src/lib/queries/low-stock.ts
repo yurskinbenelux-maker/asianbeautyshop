@@ -3,7 +3,7 @@
 // the configured threshold.
 //
 // Threshold lives in Setting (`inventory.lowStockThreshold`, integer) so
-// Sofia can tune it from the admin without a redeploy. Default is 5 if
+// an admin can tune it from the admin without a redeploy. Default is 5 if
 // unset. Must be >= 0.
 //
 // Returned rows are shaped for rendering in the low-stock digest email:
@@ -21,7 +21,7 @@ export type LowStockRow = {
   variantLabel: string;
   productName: string;
   stock: number;
-  /** Admin-panel URL for Sofia to jump straight to the product editor. */
+  /** Admin-panel URL for an admin to jump straight to the product editor. */
   adminUrl: string;
 };
 
@@ -60,7 +60,7 @@ export async function getLowStockThreshold(): Promise<number> {
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 

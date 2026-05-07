@@ -1,10 +1,10 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Admin new-return notification — sent to admin@asianbeautyshop.eu the
 // moment a customer submits a return via /account (future #93 flow) or
-// one is created by Sofia on their behalf.
+// one is created by an admin on their behalf.
 //
 // English-only (internal). Companion to admin-new-order.ts.  The goal is
-// for Sofia to glance at her inbox and know: which order, which customer,
+// for an admin to glance at her inbox and know: which order, which customer,
 // how many items, and — if the customer supplied one — the reason.
 // The CTA links back into /admin/returns/<id>.
 // ─────────────────────────────────────────────────────────────────────────
@@ -26,7 +26,7 @@ export type AdminRmaContext = {
   returnReference: string;
   /** Line items being returned. */
   items: Array<{ productName: string; quantity: number }>;
-  /** Customer-supplied reason; Sofia wants to see this at a glance. */
+  /** Customer-supplied reason; an admin wants to see this at a glance. */
   reason?: string | null;
   /** Customer-supplied refund preference, if any. */
   refundPreference?: "money" | "replacement" | null;

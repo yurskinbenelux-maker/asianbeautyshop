@@ -6,7 +6,7 @@
 //   RIGHT — profile form, role selector, password-reset, danger zone
 //
 // Everything mutation-y lives on the right rail in its own sub-form so
-// Sofia can fix one thing without touching the others.
+// an admin can fix one thing without touching the others.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { notFound } from "next/navigation";

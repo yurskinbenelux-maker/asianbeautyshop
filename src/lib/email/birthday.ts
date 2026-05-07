@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Birthday email — fired once per customer per year by the birthday
-// cron. Soft, warm, brand-voice — Sofia greeting the customer + a
+// cron. Soft, warm, brand-voice — an admin greeting the customer + a
 // personal-feeling discount code valid for 30 days.
 //
 // Localised EN / NL / FR / RU.

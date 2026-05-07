@@ -1,7 +1,7 @@
-// YU.R Skin Solution — Prisma schema
+// Asian Beauty Shop — Prisma schema
 // Database: PostgreSQL (Supabase)
 // Strategy: core scalar fields on the main models; localised fields live in
-// *Translation child tables keyed by (parentId, locale) so Sofia can translate
+// *Translation child tables keyed by (parentId, locale) so an admin can translate
 // EN/NL/FR/RU side-by-side in the admin without schema changes.
 
 generator client {
@@ -56,9 +56,9 @@ model User {
   birthday      DateTime?
   // Calendar year of the most recent birthday email we sent, used as a
   // sentinel to prevent the daily cron from re-sending if it runs twice
-  // on the same day or if Sofia hand-fires it for testing.
+  // on the same day or if an admin hand-fires it for testing.
   lastBirthdayEmailedYear Int?
-  // Independent sentinel for the YU.R Club birthday points award. Kept
+  // Independent sentinel for the A-Beauty Club birthday points award. Kept
   // separate from the email sentinel so an admin can disable / re-enable
   // either pathway without affecting the other.
   lastBirthdayLoyaltyYear Int?
@@ -242,7 +242,7 @@ model Product {
   isOnSale        Boolean         @default(false)
   salePercent     Int?                               // 1-90; ignored when isOnSale=false
   // Manual "New arrival" flag, drives /new page membership. Deliberately
-  // NOT createdAt-based — Sofia decides which products feel like newness
+  // NOT createdAt-based — an admin decides which products feel like newness
   // worth highlighting (could be a long-existing item that just got a
   // glossy hero shoot). Toggled in admin Basics form alongside isOnSale.
   isNew           Boolean         @default(false)
@@ -251,7 +251,7 @@ model Product {
   launchedAt      DateTime?
 
   // ── Supplier-spec fields ─────────────────────────────────────────────
-  // These mirror the columns on Sofia's master-data xlsx so a CSV round
+  // These mirror the columns on an admin's master-data xlsx so a CSV round
   // trip is lossless. They are language-agnostic (numbers, codes, ISO
   // country) — translatable copy lives on ProductTranslation instead.
 
@@ -312,7 +312,7 @@ model ProductTranslation {
   description      String   // rich HTML from Tiptap
   howToUse         String?  // rich HTML
   // Per-locale safety / regulatory copy. Lives here (not on Product) so
-  // Sofia can localise warnings — the legal phrasing differs across NL/FR
+  // an admin can localise warnings — the legal phrasing differs across NL/FR
   // jurisdictions even though the underlying caution is the same.
   warnings         String?  // plain text or simple HTML
   seoTitle         String?
@@ -776,7 +776,7 @@ model QuizCompletion {
 //
 // The PDF itself lives in Supabase Storage at
 //   invoices/{year}/{number}.pdf
-// in a private bucket — Sofia downloads via a signed URL from the
+// in a private bucket — an admin downloads via a signed URL from the
 // admin invoices page. The customer receives the PDF as an email
 // attachment on the order confirmation email; we don't expose a
 // public URL.
@@ -819,7 +819,7 @@ model Invoice {
 // Lightweight presence ping — every public page sends one heartbeat per
 // minute via /api/track. The admin dashboard's "visitors online" widget
 // counts unique sessionIds with a lastSeenAt in the last 2 minutes, so
-// Sofia sees when traffic is climbing toward Hostinger's Max Processes
+// an admin sees when traffic is climbing toward Hostinger's Max Processes
 // ceiling (120 on the Business plan).
 //
 // sessionId is an opaque random UUID stored in a `yur_session` cookie —
@@ -833,7 +833,7 @@ model VisitorPing {
   path        String                       // last URL path the user was on
   userAgent   String?                      // raw UA — used by bot filter
   isBot       Boolean  @default(false)     // pre-classified at insert time
-  isAdmin     Boolean  @default(false)     // exclude Sofia/Max from count
+  isAdmin     Boolean  @default(false)     // exclude an admin/Max from count
   lastSeenAt  DateTime @default(now())
 
   @@index([lastSeenAt])
@@ -883,14 +883,14 @@ model OrderEvent {
 //
 //  The customer-facing return flow.  One ReturnRequest belongs to exactly
 //  one Order but may cover a subset of its lines (ReturnItem rows).
-//  Sofia reviews each request and can move it through the status enum —
+//  an admin reviews each request and can move it through the status enum —
 //  the email templates in src/lib/email/return-*.ts are triggered by
 //  those transitions.
 // ────────────────────────────────────────────────────────────────────────────
 
 enum ReturnStatus {
-  REQUESTED     // customer just submitted — awaiting Sofia
-  APPROVED      // Sofia accepted, label/address issued to customer
+  REQUESTED     // customer just submitted — awaiting an admin
+  APPROVED      // an admin accepted, label/address issued to customer
   RECEIVED      // parcel arrived at warehouse
   REFUNDED      // money returned to customer
   REJECTED      // outside window / damaged beyond policy
@@ -924,10 +924,10 @@ model ReturnRequest {
   reason          ReturnReason  @default(OTHER)
   /// Customer's free-text explanation (optional).
   details         String?
-  /// Internal notes from Sofia / admins — never shown to customer.
+  /// Internal notes from an admin / admins — never shown to customer.
   adminNotes      String?
 
-  /// Monetary side (populated after Sofia reviews — not at request time).
+  /// Monetary side (populated after an admin reviews — not at request time).
   refundAmount    Decimal?      @db.Decimal(10, 2)
   refundedAt      DateTime?
 
@@ -1014,7 +1014,7 @@ model Coupon {
 // ────────────────────────────────────────────────────────────────────────────
 //  USER-GENERATED CONTENT
 //  Manually curated photos of customers using a product. Surfaced on the
-//  PDP under "How customers use this". Sofia uploads via /admin/ugc and
+//  PDP under "How customers use this". an admin uploads via /admin/ugc and
 //  taps each photo to a single product. Soft-deleteable.
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -1112,7 +1112,7 @@ enum LoyaltyEventKind {
   EARNED_ORDER         // accrued from a paid order (pointsPerEur × subtotal)
   EARNED_BIRTHDAY      // birthday gift, awarded by daily cron on DoB anniversary
   EARNED_TASK          // approved manual-review task (Instagram repost etc.)
-  EARNED_MILESTONE     // every Nth order milestone (Sofia-tweakable)
+  EARNED_MILESTONE     // every Nth order milestone (an admin-tweakable)
   EARNED_REFERRAL      // referee placed first paid order → referrer gets bonus
   REFERRAL_BONUS       // legacy alias kept so older rows decode (not emitted by new code)
   REDEEMED_COUPON      // burned points → minted a % or fixed coupon
@@ -1171,9 +1171,9 @@ model LoyaltyEvent {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-//  YU.R Club — admin-tweakable loyalty configuration.
+//  A-Beauty Club — admin-tweakable loyalty configuration.
 //
-//  Sofia owns these tables. Every economic lever — points-per-euro, birthday
+//  an admin owns these tables. Every economic lever — points-per-euro, birthday
 //  bonus, referral bonus, milestone cadence, tier thresholds, redemption
 //  costs, manual-task points — is editable from /admin/loyalty/* without
 //  touching code. Defaults live in the migration so a fresh install boots
@@ -1212,14 +1212,14 @@ model LoyaltySettings {
 model LoyaltyTier {
   id              String   @id @default(uuid()) @db.Uuid
   // Customer-facing name. Defaults seeded as Bud / Bloom / Aurora / Atelier;
-  // Sofia can rename.
+  // an admin can rename.
   name            String
   // Lifetime points needed to reach this tier. Customers move up monotonically.
   pointsThreshold Int
   // Optional icon key from the design system (matches LoyaltyTask.iconKey).
   iconKey         String?
   // For drawer rendering — tiers ordered ascending by threshold by default
-  // but Sofia can override with sortOrder if she wants a different display.
+  // but an admin can override with sortOrder if she wants a different display.
   sortOrder       Int      @default(0)
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
@@ -1237,7 +1237,7 @@ enum LoyaltyTaskKind {
 model LoyaltyTask {
   id               String          @id @default(uuid()) @db.Uuid
   // Stable handle — used by AUTO tasks the code references directly,
-  // e.g. "place-order" / "celebrate-birthday". Sofia can also create new
+  // e.g. "place-order" / "celebrate-birthday". an admin can also create new
   // MANUAL_REVIEW tasks with arbitrary slugs.
   slug             String          @unique
   title            String          // "Repost on Instagram"
@@ -1424,7 +1424,7 @@ model Review {
   // name the shopper typed into the public form.
   authorName  String?
   // Optional contact for guest reviews — never displayed publicly,
-  // used by Sofia in moderation if a review needs follow-up
+  // used by an admin in moderation if a review needs follow-up
   // (clarification, suspected-fake check, abuse).
   authorEmail String?
   rating     Int      // 1-5
@@ -1550,7 +1550,7 @@ model BannerTranslation {
 //  allowed (section, field) pairs lives in code as SITE_COPY_SCHEMA so the
 //  admin UI can render the right form without introspecting the table.
 //
-//  Empty DB = defaults from messages/{locale}.json. Sofia can fill rows
+//  Empty DB = defaults from messages/{locale}.json. an admin can fill rows
 //  locale-by-locale without blowing away fallbacks.
 
 model SiteCopy {
@@ -1569,7 +1569,7 @@ model SiteCopy {
 // ────────────────────────────────────────────────────────────────────────────
 //  TESTIMONIALS — homepage "Voices" strip, admin-editable
 // ────────────────────────────────────────────────────────────────────────────
-//  Independent of product Reviews — these are editorial quotes Sofia curates
+//  Independent of product Reviews — these are editorial quotes an admin curates
 //  for the homepage. Translations are per-locale so the same testimonial can
 //  be rewritten idiomatically in EN/NL/FR/RU.
 
@@ -1604,7 +1604,7 @@ model TestimonialTranslation {
 // ────────────────────────────────────────────────────────────────────────────
 //
 // Curated grid of Instagram posts surfaced on the homepage under the
-// journal section ("Join us on Instagram"). Sofia enters the post's
+// journal section ("Join us on Instagram"). an admin enters the post's
 // public URL + image URL from /admin/marketing/instagram. Clicking a
 // tile opens the actual IG post in a new tab. We deliberately don't
 // auto-pull from Meta — keeps the surface luxury-curated and avoids
@@ -1612,7 +1612,7 @@ model TestimonialTranslation {
 
 // ────────────────────────────────────────────────────────────────────────────
 //  INSTAGRAM — cache table populated by the Graph API sync (cron-driven).
-//  Manual CRUD has been retired — Sofia configures the access token in
+//  Manual CRUD has been retired — an admin configures the access token in
 //  /admin/marketing/instagram and a cron job pulls posts from her account
 //  every few hours. See src/lib/instagram/sync.ts for the sync logic.
 // ────────────────────────────────────────────────────────────────────────────
@@ -1645,7 +1645,7 @@ model InstagramPost {
   /// When the post was published on Instagram.
   postedAt      DateTime
 
-  /// Operational fields (Sofia tweakable in admin).
+  /// Operational fields (an admin tweakable in admin).
   isVisible     Boolean  @default(true)
   sortOrder     Int      @default(0)
 
@@ -1719,7 +1719,7 @@ model AiMessage {
 // ────────────────────────────────────────────────────────────────────────────
 //  CONTACT — inbound messages from the public contact form
 // ────────────────────────────────────────────────────────────────────────────
-//  Saved for audit even if Resend delivery fails.  Sofia reads/archives in
+//  Saved for audit even if Resend delivery fails.  an admin reads/archives in
 //  /admin/contact; replies happen out-of-band in her normal email client.
 
 enum ContactSubject {
@@ -1739,7 +1739,7 @@ enum ContactStatus {
 
 // ────────────────────────────────────────────────────────────────────────────
 //  EMAIL — per-locale copy overrides for the transactional layer
-//  Sofia edits in /admin/emails/[key]/edit; rows here win over the
+//  an admin edits in /admin/emails/[key]/edit; rows here win over the
 //  hardcoded STRINGS objects in src/lib/email/*.ts at send time. One
 //  row per (emailKey, locale, fieldKey) so a single field can be tweaked
 //  in NL only and the other 3 locales keep their defaults.
@@ -1817,15 +1817,15 @@ model ConsentLog {
 
 // ────────────────────────────────────────────────────────────────────────────
 //  REDIRECTS — admin-editable URL aliases, keeps bookmarks + SEO alive when
-//  Sofia renames a product, category, or brand slug.
+//  an admin renames a product, category, or brand slug.
 // ────────────────────────────────────────────────────────────────────────────
 //  fromPath  → the OLD path the visitor hit (locale-prefixed, e.g. "/en/shop/old-serum")
 //  toPath    → the NEW path to send them to ("/en/shop/new-serum")
 //  code      → PERMANENT (301, SEO-transferring) or TEMPORARY (302)
 //  source    → "auto:product-slug" | "auto:category-slug" | "manual" — lets us
-//              distinguish redirects Sofia typed vs. auto-inserted ones she can
+//              distinguish redirects an admin typed vs. auto-inserted ones she can
 //              prune later.
-//  hits / lastHitAt — so Sofia can see which ones are still earning their keep.
+//  hits / lastHitAt — so an admin can see which ones are still earning their keep.
 
 enum RedirectCode {
   PERMANENT // HTTP 301 — permanent move, search engines transfer rank
@@ -1838,7 +1838,7 @@ model Redirect {
   toPath     String                            // starts with "/"
   code       RedirectCode @default(PERMANENT)
   source     String?                           // "auto:product-slug" | "manual" | …
-  note       String?                           // Sofia's own reminder to herself
+  note       String?                           // an admin's own reminder to herself
   hits       Int          @default(0)
   lastHitAt  DateTime?
   createdAt  DateTime     @default(now())
@@ -1851,7 +1851,7 @@ model Redirect {
 // ────────────────────────────────────────────────────────────────────────────
 //  AUDIT LOG
 // ────────────────────────────────────────────────────────────────────────────
-//  A linear trail of admin mutations so Sofia can see who changed what and
+//  A linear trail of admin mutations so an admin can see who changed what and
 //  roll back if something goes wrong. Entries are append-only (never edited)
 //  and NOT FK'd to User — we store an `actorEmail` snapshot so the row remains
 //  legible after the User row is tombstoned by GDPR erasure.
@@ -1886,7 +1886,7 @@ model AuditLog {
 // ────────────────────────────────────────────────────────────────────────────
 //  INVENTORY MOVEMENTS
 // ────────────────────────────────────────────────────────────────────────────
-//  Every time a variant's stock changes, append a row here. Lets Sofia see
+//  Every time a variant's stock changes, append a row here. Lets an admin see
 //  exactly where stock went — sold, returned, adjusted, imported — so she
 //  can reconcile when the warehouse count disagrees with the system count.
 //

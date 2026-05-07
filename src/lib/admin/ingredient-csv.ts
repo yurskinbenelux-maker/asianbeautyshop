@@ -7,7 +7,7 @@
 // row maps 1:1 to one Ingredient + its 4 IngredientTranslation rows.
 //
 // The intended workflow:
-//   1. Sofia clicks "Export" on /admin/ingredients → downloads a CSV
+//   1. an admin clicks "Export" on /admin/ingredients → downloads a CSV
 //      with one row per ingredient
 //   2. She fills missing description copy (or hands the file to an LLM
 //      to draft drafts in bulk)
@@ -31,7 +31,7 @@ import {
 
 /** Authoritative column list. Adding a column = bump this list and the
  *  row validator. Extra columns on the uploaded CSV are tolerated and
- *  ignored, so Sofia can round-trip exports without trimming. */
+ *  ignored, so an admin can round-trip exports without trimming. */
 export const INGREDIENT_CSV_COLUMNS = [
   "slug",
   "inci_name",

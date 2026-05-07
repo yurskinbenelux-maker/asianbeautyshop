@@ -153,7 +153,7 @@ export async function ensureUserProfile(
     },
   });
 
-  // YU.R Club: auto-create a LoyaltyAccount on first sight so the
+  // A-Beauty Club: auto-create a LoyaltyAccount on first sight so the
   // customer's referral code exists the moment they hit /account. The
   // helper is idempotent — fast path (single SELECT) on subsequent
   // logins, and never throws into auth flow if it fails.

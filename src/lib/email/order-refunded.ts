@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Order refunded email — sent when Sofia issues a refund via
+// Order refunded email — sent when an admin issues a refund via
 // issueRefundAction. Copy differs for full vs partial.
 //
 // The action already logs the refund to OrderEvent (kind:

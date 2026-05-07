@@ -9,7 +9,7 @@
 //   • kind:       PERCENT, value 10
 //   • maxRedemptions: 1
 //   • endsAt:     now + 60 days
-//   • firstOrderOnly: true (admin can override later if Sofia wants
+//   • firstOrderOnly: true (admin can override later if an admin wants
 //     returning customers to redeem too)
 // ─────────────────────────────────────────────────────────────────────────
 

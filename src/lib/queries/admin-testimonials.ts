@@ -40,7 +40,7 @@ export type AdminTestimonialDetail = {
 
 /**
  * Every testimonial, most-recently-updated first by default but sorted
- * primarily by `sortOrder` so Sofia controls the homepage order.
+ * primarily by `sortOrder` so an admin controls the homepage order.
  */
 export async function listAdminTestimonials(): Promise<
   AdminTestimonialListRow[]
@@ -56,7 +56,7 @@ export async function listAdminTestimonials(): Promise<
 
   return rows.map((r) => {
     // Prefer EN for the preview — that's the required locale and the row
-    // Sofia is most likely to be reading.
+    // an admin is most likely to be reading.
     const en = r.translations.find((t) => t.locale === Locale.EN);
     const any = en ?? r.translations[0];
     return {
@@ -123,7 +123,7 @@ export async function getAdminTestimonial(
 
 /**
  * Default sortOrder for a new row — one more than the current max so new
- * testimonials land at the bottom of the list. Sofia can reorder by editing
+ * testimonials land at the bottom of the list. an admin can reorder by editing
  * the value.
  */
 export async function nextTestimonialSortOrder(): Promise<number> {

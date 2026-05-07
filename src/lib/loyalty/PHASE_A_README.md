@@ -1,4 +1,4 @@
-# YU.R Club — Phase A (schema + accrual + reminders)
+# A-Beauty Club — Phase A (schema + accrual + reminders)
 
 **Shipped in this PR.** Read this before merging — you'll need to run a
 migration and configure two new cron schedules.
@@ -70,12 +70,12 @@ singleton row with defaults. To pre-warm it before the first customer
 hits anything loyalty-related:
 
 ```bash
-curl -s 'https://yurskinsolution.eu/api/cron/loyalty-birthday' \
+curl -s 'https://asianbeautyshop.eu/api/cron/loyalty-birthday' \
   -H "Authorization: Bearer $CRON_SECRET"
 ```
 
 Even if no birthdays match, the cron's `isLoyaltyProgramActive()` check
-calls `getLoyaltySettings()` which seeds the row. After this, Sofia can
+calls `getLoyaltySettings()` which seeds the row. After this, an admin can
 edit values via `/admin/loyalty/settings` (Phase C).
 
 ## Sentry notes

@@ -271,7 +271,7 @@ function MediaTile({
       </div>
 
       {/*
-        Inline alt-text editor. Sofia edits and hits Save; no auto-save so a
+        Inline alt-text editor. an admin edits and hits Save; no auto-save so a
         stray keystroke can't silently wipe the field. Reuses the existing
         updateMediaAltAction from /admin/media — Media rows are a shared
         concept, not a product-specific one.

@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 export default async function NewTestimonialPage() {
   // Sensible defaults — rating 5, verified ON, active OFF. We default to
-  // hidden so Sofia can preview the row before flipping it live.
+  // hidden so an admin can preview the row before flipping it live.
   const sortOrder = await nextTestimonialSortOrder();
 
   const values: TestimonialFormValues = {

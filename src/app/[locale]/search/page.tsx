@@ -146,11 +146,11 @@ export default async function SearchPage({ params, searchParams }: Props) {
 
   const t = await getTranslations("search");
 
-  // The zero-result title + body are admin-editable so Sofia can speak to
+  // The zero-result title + body are admin-editable so an admin can speak to
   // "nothing to show" visitors in her own voice. Everything else on this
   // page (eyebrow, counts, skincare routine tiles, brand strip) stays in messages.
   // siteCopyOr() honours the SITE_COPY_VOID sentinel — returns "" when
-  // Sofia hides the field, so the literal "__SITE_COPY_VOID__" string
+  // an admin hides the field, so the literal "__SITE_COPY_VOID__" string
   // never leaks into the rendered output.
   const copy = await getSiteCopy(locale, ["search.empty"]);
   const emptyTitle = siteCopyOr(copy, "search.empty", "title", t("empty_title"));

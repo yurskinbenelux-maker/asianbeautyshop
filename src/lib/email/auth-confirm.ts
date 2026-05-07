@@ -45,7 +45,7 @@
 // ────────────────
 // Supabase's email template is a single piece of HTML; it doesn't
 // switch on the user's locale. Pragmatic choice: ship the EN version
-// in Supabase. Bilingual customers reading EN works fine. If Sofia
+// in Supabase. Bilingual customers reading EN works fine. If an admin
 // later wants per-locale templates we can move to the Send Email Hook
 // (Edge Function) approach which lets us swap templates at send time.
 //

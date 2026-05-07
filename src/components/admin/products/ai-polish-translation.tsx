@@ -3,24 +3,24 @@
 // the product translation copy for the active locale.
 //
 // Flow:
-//   1. Sofia clicks "Polish with AI" on a locale tab
+//   1. an admin clicks "Polish with AI" on a locale tab
 //   2. Server action calls Groq with name + INCI + current values
 //      (and EN source on non-EN tabs)
 //   3. Modal opens with FOUR rows (name / shortDescription /
 //      description / howToUse). Each row shows current text on the left,
 //      polished text on the right, with a per-field "Apply" toggle.
-//   4. Sofia ticks the rows she wants and clicks "Apply selected"
+//   4. an admin ticks the rows she wants and clicks "Apply selected"
 //   5. The component injects values into the parent form via
-//      setNativeInputValue (same trick the DeepL button uses) — Sofia
+//      setNativeInputValue (same trick the DeepL button uses) — an admin
 //      then clicks "Save translation" to commit. No DB write here.
 //
 // Why per-field selection: the AI nails some fields and over-polishes
-// others. Letting Sofia pick "yes on description, no on name" is the
+// others. Letting an admin pick "yes on description, no on name" is the
 // difference between "useful tool" and "tool I always have to undo
 // after".
 //
 // HTML preview note: description + howToUse are HTML. The diff renders
-// them inside a <pre>-styled box so tags are visible — Sofia can spot
+// them inside a <pre>-styled box so tags are visible — an admin can spot
 // any unexpected markup before applying.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -54,7 +54,7 @@ const FIELD_ORDER: PolishableField[] = [
 type Props = {
   productId: string;
   locale: Locale;
-  /** Called when Sofia applies — receives the fields she ticked.
+  /** Called when an admin applies — receives the fields she ticked.
    *  Parent (LocalePanel) injects them into the form via
    *  setNativeInputValue. */
   onApply: (values: Partial<Record<PolishableField, string>>) => void;

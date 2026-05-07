@@ -119,7 +119,7 @@ export async function getAdminBanner(id: string): Promise<BannerDetail | null> {
 export async function listMediaForPicker(): Promise<
   { id: string; url: string; alt: string | null }[]
 > {
-  // Pull the most recent 200 images — Sofia's library is unlikely to be
+  // Pull the most recent 200 images — an admin's library is unlikely to be
   // bigger than this, but if it grows we can paginate.
   const rows = await prisma.media.findMany({
     where: { kind: "IMAGE" },

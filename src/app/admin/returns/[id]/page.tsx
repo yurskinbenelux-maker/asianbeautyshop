@@ -2,7 +2,7 @@
 // /admin/returns/[id] — single return detail + status transition controls.
 //
 // Admin-only. Renders:
-//   · Customer + order context (emails Sofia's reply-to is the customer)
+//   · Customer + order context (emails an admin's reply-to is the customer)
 //   · Line items with unit price and line total
 //   · Customer-provided reason + details
 //   · Transition buttons — only the transitions allowed by canTransition()

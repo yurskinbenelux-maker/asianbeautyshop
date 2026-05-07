@@ -6,7 +6,7 @@
 // one locked filter: onSaleOnly=true. Brand / category / etc still
 // work — the customer can narrow within the sale set.
 //
-// If Sofia hasn't toggled any product to On sale yet, the page renders
+// If an admin hasn't toggled any product to On sale yet, the page renders
 // gracefully empty (the t("empty") copy below covers it).
 // ─────────────────────────────────────────────────────────────────────────
 

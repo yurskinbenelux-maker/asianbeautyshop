@@ -211,7 +211,7 @@ export async function previewProductImport(
     if (missingIngs.length) {
       // Unlike the other taxonomy types we DO auto-create missing
       // ingredients on commit (so the master library grows organically
-      // when Sofia imports a new K-beauty supplier sheet). Surface this
+      // when an admin imports a new K-beauty supplier sheet). Surface this
       // as an info-style warning so she knows what's about to happen.
       warnings.push(
         `ingredients will be auto-created in the master library: ${missingIngs.join(", ")}`,
@@ -358,12 +358,12 @@ export async function commitProductImport(
 
   // Auto-grow the master Ingredient library. Any slug from the CSV that
   // doesn't exist yet gets a stub Ingredient + EN translation row so the
-  // ProductIngredient links land properly. Sofia can refine the
+  // ProductIngredient links land properly. an admin can refine the
   // displayName / description / extra locales from /admin/ingredients
   // afterwards. We only do this for ingredients (not the other
   // taxonomies) because INCI lists arrive in bulk from supplier sheets,
   // whereas categories / benefits / skin types / concerns are a small
-  // curated set Sofia maintains by hand.
+  // curated set an admin maintains by hand.
   const missingIngredientSlugs = allIngredientSlugs.filter(
     (s) => !ingredientIdBySlug.has(s),
   );

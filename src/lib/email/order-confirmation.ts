@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Order confirmation email — sent the moment paymentStatus flips to PAID.
 //
-// Customer-facing. Written in Sofia's voice: warm, understated, editorial.
+// Customer-facing. Written in an admin's voice: warm, understated, editorial.
 // All copy localised (EN / NL / FR / RU) based on the order's locale.
 //
 // Exported helpers:
@@ -392,7 +392,7 @@ export async function sendOrderConfirmationEmail(
   }
 
   // Pull any admin-edited copy overrides for this email + locale.
-  // Empty Map when Sofia hasn't tweaked anything → builder uses defaults.
+  // Empty Map when an admin hasn't tweaked anything → builder uses defaults.
   const overrides = await getEmailOverrides("order-confirmation", order.locale);
   const { subject, html, text } = buildOrderConfirmationEmail(order, { overrides });
 

@@ -23,7 +23,7 @@ import { prisma } from "@/lib/prisma";
 
 type Props = {
   /** Free-shipping threshold in EUR — passed in from the layout so the
-   *  bar reflects whatever Sofia has saved in /admin/settings/shipping. */
+   *  bar reflects whatever an admin has saved in /admin/settings/shipping. */
   thresholdEur: number;
   /** Active URL locale — needed for currency formatting (€50,00 NL vs
    *  €50.00 EN). Also used by getTranslations below. */

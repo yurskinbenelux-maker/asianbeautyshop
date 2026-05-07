@@ -13,14 +13,14 @@
 //   · 3-second delay after first paint so the hero gets a moment to
 //     breathe before the modal lands.
 //   · 14-day suppression cookie on dismissal, on submit-click, or on
-//     close. Stored in localStorage — Sofia's analytics intentionally
+//     close. Stored in localStorage — an admin's analytics intentionally
 //     not involved, no server hit.
 //   · Hidden entirely if the user is already signed in (passed in by
 //     the layout) — no point pestering an existing customer.
 //   · Dismissal via the X button or the Escape key only. Clicking the
-//     dim backdrop does NOT close the popup — Sofia's call: a stray
+//     dim backdrop does NOT close the popup — an admin's call: a stray
 //     click on the page outside the modal shouldn't cost us the offer.
-//   · Honors the master kill-switch from Sofia's admin (config.enabled).
+//   · Honors the master kill-switch from an admin's admin (config.enabled).
 //
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -130,7 +130,7 @@ export function RegisterWelcomePopup({
 
   if (!open) return null;
 
-  // Decide layout — if no image, fall back to single-column. Sofia can
+  // Decide layout — if no image, fall back to single-column. an admin can
   // always blank the image URL in admin to revert the layout.
   const hasImage = config.imageUrl.trim().length > 0;
 
@@ -147,7 +147,7 @@ export function RegisterWelcomePopup({
       aria-modal="true"
       aria-labelledby="yur-welcome-popup-title"
       // NB: deliberately no onClick handler — the dim backdrop must not
-      // dismiss the popup. Only the X button and Escape do (Sofia's call,
+      // dismiss the popup. Only the X button and Escape do (an admin's call,
       // to stop a stray click costing us the offer).
     >
       <div
@@ -263,7 +263,7 @@ export function RegisterWelcomePopup({
                 ? "m-0 mb-3 font-display text-[24px] font-light leading-[1.15] tracking-tight text-ink"
                 : "m-0 mb-3.5 font-display text-[32px] font-light leading-[1.1] tracking-tight text-ink"
             }
-            // Allow Sofia's <em>Asian Beauty Shop</em> markup through. Allowlisted at
+            // Allow an admin's <em>Asian Beauty Shop</em> markup through. Allowlisted at
             // save time (Zod schema), so this is a small controlled
             // surface — admin-edited content only, never user-supplied.
             dangerouslySetInnerHTML={{
@@ -390,7 +390,7 @@ export function RegisterWelcomePopup({
 // • renderInlineMarkdown — converts **bold** to <strong>, escapes the rest.
 //   Used in the bonus blocks.
 //
-// Both are admin-content surfaces (only Sofia and other admin editors
+// Both are admin-content surfaces (only an admin and other admin editors
 // can write the text). The Zod schema caps lengths and trims whitespace
 // at save time. We escape the input first then re-insert the allowed
 // tags so a stray "<" in body copy can't break out of the box.

@@ -21,7 +21,7 @@
 //   3. Delete each legacy category once nothing references it.
 //
 // SAFETY:
-//   This script writes to whatever DATABASE_URL is loaded. Sofia's
+//   This script writes to whatever DATABASE_URL is loaded. an admin's
 //   Supabase Pro tier has nightly backups; free tier doesn't (see #106).
 //   Take a manual snapshot of the Category + ProductCategory tables
 //   before running on production if you're nervous.
@@ -76,7 +76,7 @@ const TARGETS: TargetCategory[] = [
   },
   {
     // The "treatment" step on a K-beauty routine bundles essences and
-    // serums together. Sofia chose the umbrella label so customers
+    // serums together. an admin chose the umbrella label so customers
     // browsing this shelf see both formats without deciding upfront
     // which they need.
     slug: "essences-serums",

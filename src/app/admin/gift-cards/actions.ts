@@ -3,7 +3,7 @@
 //
 // Both actions are guarded by the `giftcards.manage` capability — only
 // owner-level admins can void or resend. They append AuditLog entries so
-// Sofia can trace any mutation.
+// an admin can trace any mutation.
 // ─────────────────────────────────────────────────────────────────────────
 
 "use server";
@@ -60,7 +60,7 @@ export async function voidGiftCardAction(formData: FormData): Promise<void> {
 /**
  * Resend the recipient email for a gift card. Useful when:
  *   · the friend says they never received it (spam folder, typo)
- *   · the buyer asks Sofia to nudge their friend
+ *   · the buyer asks an admin to nudge their friend
  *
  * Reuses the same template that fires from the Mollie paid webhook.
  */

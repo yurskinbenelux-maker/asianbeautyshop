@@ -63,7 +63,7 @@ export default async function TaskDetailPage({ params }: Props) {
         {task.instructionsHtml ? (
           <div
             className="prose prose-sm mt-6 max-w-none text-[14px] leading-relaxed text-ink"
-            // Admin-controlled content. Sanitisation is Sofia's
+            // Admin-controlled content. Sanitisation is an admin's
             // responsibility — admin role is OWNER-only.
             dangerouslySetInnerHTML={{ __html: task.instructionsHtml }}
           />
@@ -80,7 +80,7 @@ export default async function TaskDetailPage({ params }: Props) {
             <div>
               <p className="text-ink">We've received your submission.</p>
               <p className="mt-1">
-                Sofia will review within 48 hours. You'll get an email either way.
+                an admin will review within 48 hours. You'll get an email either way.
                 {latestClaim?.proofUrl ? (
                   <>
                     {" "}

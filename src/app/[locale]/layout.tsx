@@ -186,7 +186,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   // inside getShopMegaMenuData.
   const shopMenu = await getShopMegaMenuData(locale);
 
-  // Marketing popup configs + promo percentages — Sofia edits at
+  // Marketing popup configs + promo percentages — an admin edits at
   // /admin/marketing. All three are read in parallel so the layout
   // doesn't pay three round-trips. The quiz reward % from `promo`
   // drives the "−X%" chip under the Skin Quiz nav item.
@@ -225,7 +225,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   // Free-shipping threshold — surfaced as a progress indicator inside
   // the cart drawer so customers see "€X to go for free shipping"
   // every time they add an item, and as the headline value in the
-  // sitewide announcement banner. Reads Sofia's admin override (or
+  // sitewide announcement banner. Reads an admin's admin override (or
   // default €50) at request time.
   const shippingSettings = await readSetting("shipping");
   const freeShippingThresholdEur =
@@ -295,7 +295,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                   nav's sticky behaviour and z-index aren't disturbed.
                   Currently the only message is the free-shipping
                   threshold; the component reads the live setting so
-                  Sofia changing it in /admin/settings/shipping updates
+                  an admin changing it in /admin/settings/shipping updates
                   this bar AND the cart progress meter together. */}
               <AnnouncementBar
                 thresholdEur={freeShippingThresholdEur}
@@ -324,7 +324,7 @@ export default async function LocaleLayout({ children, params }: Props) {
               />
               {/* Hero popup — Variant A editorial card. Fires after the
                   welcome popup is finished, on homepage routes only.
-                  Sofia edits all copy + product picks at
+                  an admin edits all copy + product picks at
                   /admin/marketing/hero-popup. Sits in the middle of
                   the popup chain: welcome → hero → quiz. */}
               <HeroPopup
@@ -348,7 +348,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                   localhost so dev-mode hot-reload isn't poisoned. */}
               <SwRegister />
               {/* Heartbeat to /api/track — powers the admin dashboard's
-                  "visitors online" widget so Sofia sees when traffic is
+                  "visitors online" widget so an admin sees when traffic is
                   approaching Hostinger's Max Processes ceiling. Fires
                   once on mount + every 60s while the tab is visible. */}
               <VisitorTracker />

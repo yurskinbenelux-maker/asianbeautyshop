@@ -7,7 +7,7 @@
 // Each popup awaits the previous one's "finished" signal before its own
 // delay timer starts. "Finished" means any of: closed by the user, CTA
 // clicked, suppressed (signed-in / route blocklist / cookie window /
-// disabled by Sofia).
+// disabled by an admin).
 //
 // We can't poll DOM state because the three popups are independent React
 // trees, so we use a tiny Promise handshake at module scope. Each stage

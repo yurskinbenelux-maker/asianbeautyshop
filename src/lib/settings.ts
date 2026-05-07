@@ -79,7 +79,7 @@ const DEFAULTS = {
     // Free-shipping threshold lowered to €50 — low enough that a single
     // mid-priced product or a 2-product ritual reaches it. The previous
     // €99.99 made customers do mental math; €50 is a clean conversion
-    // signal Sofia can also use as marketing copy ("From €50, delivery
+    // signal an admin can also use as marketing copy ("From €50, delivery
     // is free"). Live override still editable in /admin/settings/shipping.
     freeThresholdCents: 5000,
     flatRateCents: 595,
@@ -95,7 +95,7 @@ const DEFAULTS = {
   } satisfies TaxSettings,
 
   seo: {
-    defaultTitle: "YU.R Skin Solution · Korean skincare in Europe",
+    defaultTitle: "Asian Beauty Shop · Korean and Asian skincare in Europe",
     defaultDescription:
       "Minimalist Korean skincare routines, curated and shipped from Europe. Clinically-considered formulas, sensorial textures.",
     ogImageUrl: "",
@@ -106,7 +106,7 @@ const DEFAULTS = {
     enabled: true,
     assistantName: "YU",
     systemPrompt:
-      "You are YU, the in-house skincare concierge for YU.R Skin Solution — a Korean skincare shop serving customers across Belgium, the Netherlands, France, and Russian-speaking Europe.\n\nSpeak in the customer's language, stay concise, and recommend products only from the YU.R catalogue. Never invent ingredients, certifications, or results. When unsure, say so and invite the customer to email hello@yurskinsolution.eu.",
+      "You are the in-house skincare concierge for Asian Beauty Shop — a curated Asian skincare shop serving customers across Belgium, the Netherlands, France, and Russian-speaking Europe.\n\nSpeak in the customer's language, stay concise, and recommend products only from the Asian Beauty Shop catalogue. Never invent ingredients, certifications, or results. When unsure, say so and invite the customer to email hello@asianbeautyshop.eu.",
     maxResponseTokens: 600,
   } satisfies AiSettings,
 };

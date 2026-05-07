@@ -6,7 +6,7 @@
 // Panel layout: a row of brand cards, each linking to its
 // /shop/brand/[slug] filtered listing. A "View all brands" tile at
 // the end takes the visitor to /brands where every brand is listed
-// with its image. As Sofia adds more brands the cards wrap onto
+// with its image. As an admin adds more brands the cards wrap onto
 // additional rows naturally.
 // ─────────────────────────────────────────────────────────────────────────
 

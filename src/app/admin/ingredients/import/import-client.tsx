@@ -8,7 +8,7 @@
 //      quirks).
 //
 //   2. Preview — the server returns NEW / UPDATE / ERROR per row + a
-//      one-line "translation status" warning per row so Sofia can see at
+//      one-line "translation status" warning per row so an admin can see at
 //      a glance which locales are filled.
 //
 //   3. Commit — re-send the CSV text to commitIngredientImport, which

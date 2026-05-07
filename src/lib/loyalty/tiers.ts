@@ -2,9 +2,9 @@
 // Tier ladder — read the LoyaltyTier rows + compute current/next/progress.
 //
 // First-touch: lazy-seeds the default ladder on first read so the drawer
-// has something to render before Sofia opens /admin/loyalty/tiers.
+// has something to render before an admin opens /admin/loyalty/tiers.
 // Defaults are peony-lifecycle-themed (Bud / Bloom / Aurora / Atelier);
-// Sofia can rename or replace via the admin CRUD (Phase C).
+// an admin can rename or replace via the admin CRUD (Phase C).
 // ─────────────────────────────────────────────────────────────────────────
 
 import "server-only";
@@ -12,7 +12,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { LoyaltyTier } from "@prisma/client";
 
-/** The starter ladder. Sofia can rewrite these any time from
+/** The starter ladder. an admin can rewrite these any time from
  *  /admin/loyalty/tiers — these are just opinionated defaults so a fresh
  *  install isn't an empty drawer. Threshold = lifetime points needed. */
 export const DEFAULT_TIERS = [

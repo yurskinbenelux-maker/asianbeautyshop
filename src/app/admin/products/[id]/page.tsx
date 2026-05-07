@@ -67,7 +67,7 @@ export default async function ProductEditPage({
     where: { id },
     include: {
       // brand: needed by the Organise tab's Brand picker. Cheap
-      // single-row include — even if Sofia never opens that tab the
+      // single-row include — even if an admin never opens that tab the
       // overhead is one indexed FK read.
       brand: { select: { id: true } },
       translations: {
@@ -91,7 +91,7 @@ export default async function ProductEditPage({
       benefits: { select: { benefitId: true } },
       ingredients: { select: { ingredientId: true } },
       // Inventory tab — list + stock per variant, ordered by sortOrder
-      // so Sofia sees them in the same order the PDP shows them.
+      // so an admin sees them in the same order the PDP shows them.
       // price/comparePrice are needed so the Edit form can pre-populate
       // the inputs with current overrides.
       variants: {
@@ -121,7 +121,7 @@ export default async function ProductEditPage({
   // For Categories specifically: we hide archived (isActive=false) entries
   // from the picker so legacy flat shelves don't clutter the UI after the
   // nested-tree migration. EXCEPT for any archived category this product
-  // is still tagged with — those stay visible (greyed out) so Sofia can
+  // is still tagged with — those stay visible (greyed out) so an admin can
   // untag them. parentId / isActive / sortOrder come along for the
   // grouped-by-parent renderer in OrganiseForm.
   const currentCategoryIds = product.categories.map((x) => x.categoryId);
@@ -175,7 +175,7 @@ export default async function ProductEditPage({
       orderBy: { inciName: "asc" },
     }),
     // Brand picker — show ALL active brands plus any inactive brand the
-    // current product is still tagged with (so Sofia can untag it).
+    // current product is still tagged with (so an admin can untag it).
     // Same pattern as the category filter above.
     prisma.brand.findMany({
       where: {
@@ -277,7 +277,7 @@ export default async function ProductEditPage({
           {/*
             Preview as customer — opens the PDP with ?preview=1. The PDP route
             verifies the visitor is an admin before unlocking DRAFT/ARCHIVED
-            products, so the URL itself isn't a leak. Lets Sofia QA how a
+            products, so the URL itself isn't a leak. Lets an admin QA how a
             draft product will look (gallery, ritual steps, bundle suggestions,
             real reviews) before flipping status to PUBLISHED.
 
@@ -302,7 +302,7 @@ export default async function ProductEditPage({
             )}
 
           {/*
-            Duplicate — clone this product (as DRAFT) and drop Sofia into the
+            Duplicate — clone this product (as DRAFT) and drop an admin into the
             editor for the copy. Massive time-saver when she's adding a new
             product that's only a small variation of an existing one.
           */}
@@ -466,7 +466,7 @@ export default async function ProductEditPage({
           <InventoryPanel
             productId={product.id}
             // Product price as a Decimal-safe string — shown in the
-            // "Add variant" form's price placeholder so Sofia knows
+            // "Add variant" form's price placeholder so an admin knows
             // what blank inherits to.
             productPrice={Number(product.price).toFixed(2)}
             variants={product.variants.map((v) => ({

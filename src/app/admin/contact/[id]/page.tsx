@@ -7,7 +7,7 @@
 //   · Mark as read / replied / archived  → status toggles
 //
 // Opening the page implicitly marks NEW → READ so the sidebar badge
-// is accurate even if Sofia doesn't click anything.
+// is accurate even if an admin doesn't click anything.
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";

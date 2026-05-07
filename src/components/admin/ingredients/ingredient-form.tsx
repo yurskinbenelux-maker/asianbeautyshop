@@ -8,7 +8,7 @@
 //   · Translations fieldset — one block per EN/NL/FR/RU with display name
 //     and description (plain textarea; the public page already accepts
 //     HTML so paste from Tiptap works, but a plain textarea is the lowest-
-//     friction surface for Sofia's first editorial pass).
+//     friction surface for an admin's first editorial pass).
 //
 // Only EN is required. Other locales fall back to EN on the public site
 // (see getIngredientBySlug + listActiveIngredients).

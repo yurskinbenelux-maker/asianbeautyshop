@@ -18,7 +18,7 @@
 // ────────────
 // • Never throws on failure. An audit hiccup MUST NOT block a real save,
 //   so we log errors and swallow. If the audit table is missing entirely
-//   (migration not run yet) we also swallow — Sofia won't see audit entries
+//   (migration not run yet) we also swallow — an admin won't see audit entries
 //   until she runs prisma migrate dev, and that's fine.
 // • `actorEmail` is snapshotted so entries remain legible after GDPR erasure.
 // • `meta` is a small JSON blob; keep it under a few KB.

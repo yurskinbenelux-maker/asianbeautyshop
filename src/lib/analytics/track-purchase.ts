@@ -15,11 +15,11 @@
 //
 // Currency:
 //   Hardcoded EUR everywhere in the shop's pricing engine, but exposed
-//   as a parameter for future-proofing if Sofia ever sells in CHF, GBP,
+//   as a parameter for future-proofing if an admin ever sells in CHF, GBP,
 //   etc. via a separate Mollie account.
 //
 // `affiliation` is optional — Google uses it to group orders by store
-// in multi-store reports. We send "YU.R Skin Solution" so it's not
+// in multi-store reports. We send "Asian Beauty Shop" so it's not
 // blank, but it doesn't change attribution.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -37,10 +37,10 @@ export type PurchaseItem = {
   quantity: number;
   /** Optional category — surfaces in GA4 product reports. */
   item_category?: string;
-  /** Optional brand — currently always "YU.R" but future-proof for
+  /** Optional brand — currently always "Asian Beauty Shop" but future-proof for
    *  multi-brand catalogues. */
   item_brand?: string;
-  /** Optional variant — e.g. "30ml" / "50ml". Helps Sofia see which SKU
+  /** Optional variant — e.g. "30ml" / "50ml". Helps an admin see which SKU
    *  size sells better. */
   item_variant?: string;
 };
@@ -73,7 +73,7 @@ export function trackPurchase(event: PurchaseEvent): void {
       shipping: event.shipping ?? 0,
       currency: event.currency,
       coupon: event.coupon,
-      affiliation: "YU.R Skin Solution",
+      affiliation: "Asian Beauty Shop",
       items: event.items,
     },
   });

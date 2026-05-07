@@ -12,7 +12,7 @@
 // Three rendered states:
 //   1. trigger     — small link "Leave a review"
 //   2. open form   — rating stars + optional title + body + submit
-//   3. submitted   — quiet thank-you chip ("Thanks — Sofia will publish it
+//   3. submitted   — quiet thank-you chip ("Thanks — an admin will publish it
 //                    after a quick read.")
 //
 // The "already reviewed" branch isn't surfaced inline because the parent

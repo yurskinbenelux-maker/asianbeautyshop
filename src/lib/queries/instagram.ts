@@ -24,7 +24,7 @@ export type InstagramPostCard = {
 /**
  * Top N visible Instagram posts for the homepage. Ordered by IG
  * publish time (newest first) so the section always shows fresh
- * activity, with `sortOrder` as a manual override Sofia can use to
+ * activity, with `sortOrder` as a manual override an admin can use to
  * pin a particular post on top.
  */
 export async function getInstagramTilesForHome(

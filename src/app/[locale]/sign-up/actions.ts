@@ -141,7 +141,7 @@ export async function signUpAction(
     });
     // Referral linkage on the no-confirmation path. The flow used in
     // production has email-confirmation ON so /auth/confirm handles this;
-    // this branch covers dev + the (unlikely) case where Sofia disables
+    // this branch covers dev + the (unlikely) case where an admin disables
     // confirmation in Supabase later.
     if (parsed.data.referralCode) {
       try {

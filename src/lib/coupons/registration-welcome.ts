@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 // issueRegistrationWelcomeCoupon — mints a single-use 10%-off coupon for
-// a freshly-confirmed YU.R account holder, then emails it to them.
+// a freshly-confirmed Asian Beauty Shop account holder, then emails it to them.
 //
 // Replaces the older newsletter-confirmation coupon flow: the 10% offer
 // now rewards account creation, not the newsletter list. The popup on
@@ -96,7 +96,7 @@ export async function issueRegistrationWelcomeCoupon(args: {
   }
 
   // Email is best-effort — the customer can also see the code on
-  // /account if Sofia surfaces it there later. Logging the failure is
+  // /account if an admin surfaces it there later. Logging the failure is
   // enough for now.
   try {
     await sendRegistrationWelcomeEmail({

@@ -2,7 +2,7 @@
 // BrandTabs — top-row tab strip on /shop. Single source of truth for the
 // brand filter (replaced the legacy LineTabs which read PRODUCT_LINES
 // constants). Reads the active Brand rows from the DB so the strip
-// auto-updates when Sofia adds AHC / iUNIK / etc. via /admin/brands.
+// auto-updates when an admin adds AHC / iUNIK / etc. via /admin/brands.
 //
 // Toggle behaviour (single-select):
 //   • Click "PRO" → /shop?brand=yur-pro
@@ -35,7 +35,7 @@ type Props = {
 
 // Hardcoded YU.R house-line order so the strip reads YU•R · YU•R Pro ·
 // YU•R Me regardless of alphabetical name sort. Brands NOT in this list
-// fall through to alphabetical-by-name order. When Sofia adds AHC /
+// fall through to alphabetical-by-name order. When an admin adds AHC /
 // COSRX / etc., they'll show after the YU.R cluster — which is the
 // correct hierarchy (house brand first, partner brands after).
 const YUR_PRIORITY: Record<string, number> = {

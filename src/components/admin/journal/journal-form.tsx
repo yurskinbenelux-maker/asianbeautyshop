@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 const LOCALES: Locale[] = [Locale.EN, Locale.NL, Locale.FR, Locale.RU];
 
 /** Fields we feed through DeepL. Slug is excluded — it's URL-shaped and
- *  Sofia derives it from the translated title herself. */
+ *  an admin derives it from the translated title herself. */
 const TRANSLATABLE_FIELDS: ReadonlyArray<{
   name: "title" | "excerpt" | "body" | "seoTitle" | "seoDescription";
   isHtml: boolean;
@@ -185,7 +185,7 @@ export function JournalForm({
             name="authorName"
             defaultValue={data.authorName ?? ""}
             className="input"
-            placeholder="Sofia"
+            placeholder="an admin"
             maxLength={120}
           />
         </Field>

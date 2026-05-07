@@ -66,7 +66,7 @@ export default async function CheckoutSuccessPage({
   //    `purchase` event for both GA4 ecommerce reports and the Google
   //    Ads conversion. Skipping the join would mean GA4 sees revenue
   //    but no items, which breaks the product-performance reports
-  //    Sofia will care about most.
+  //    an admin will care about most.
   const order = await prisma.order.findUnique({
     where: { publicNumber },
     select: {

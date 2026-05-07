@@ -52,7 +52,7 @@ export default async function BrandsIndexPage({ params }: Props) {
           Every Asian Beauty Shop line, in one place.
         </h1>
         <p className="mt-4 max-w-md text-[15px] leading-relaxed text-ink-mid">
-          Tap a brand to browse only its products. Sofia uploads each
+          Tap a brand to browse only its products. an admin uploads each
           brand&rsquo;s logo and tagline from the admin panel.
         </p>
       </header>
@@ -91,7 +91,7 @@ export default async function BrandsIndexPage({ params }: Props) {
               {/* ── Caption strip ──────────────────────────────────
                   Brand name + tagline. Anchored to the bottom of the
                   card so cards with logos still surface the metadata
-                  cleanly. (Product count was removed per Sofia — felt
+                  cleanly. (Product count was removed per an admin — felt
                   too "inventory" for a luxury feel.) */}
               <div className="flex items-end gap-3 border-t border-ink/10 bg-rice px-5 py-4">
                 <div className="min-w-0">

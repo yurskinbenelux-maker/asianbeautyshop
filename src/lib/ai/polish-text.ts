@@ -14,7 +14,7 @@
 //        the current translated value so the model can choose: use the
 //        translation if non-empty (improve it), else translate from EN.
 //
-// Cosmetic-claim guardrail (EU CPNP regulation): Sofia faces fines if
+// Cosmetic-claim guardrail (EU CPNP regulation): an admin faces fines if
 // she ships product copy with unsubstantiated medical or efficacy
 // claims. The system prompt explicitly forbids "anti-aging", "cures",
 // "treats", "heals", "removes wrinkles", and similar. The model is
@@ -35,7 +35,7 @@ import { getGroqModel } from "./groq";
 
 // ──────── Brand voice — derived from Asian Beauty Shop's own product copy ───────────
 //
-// Inferred from the existing seed product descriptions. Sofia's client
+// Inferred from the existing seed product descriptions. an admin's client
 // (the Asian Beauty Shop brand owner) wrote those, so they ARE the voice. If the
 // brand voice ever drifts, edit this constant rather than hunting
 // through every prompt.

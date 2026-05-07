@@ -2,7 +2,7 @@
 // Admin layout — own <html>, English-only, guard + sidebar + main area.
 //
 // This route group lives OUTSIDE /[locale] on purpose:
-//   • Sofia runs the shop in English, always
+//   • an admin runs the shop in English, always
 //   • no i18n provider or message loading to worry about
 //   • still shares the design tokens via globals.css
 //

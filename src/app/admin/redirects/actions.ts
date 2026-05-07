@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Server Actions for /admin/redirects.
 //
-// Sofia uses this panel two ways:
+// an admin uses this panel two ways:
 //   1. Manually add a redirect ("move /shop/old-serum → /shop/new-serum")
 //   2. Review and prune auto-inserted redirects from slug renames
 //
@@ -173,7 +173,7 @@ export async function updateRedirectAction(
         toPath,
         code: parsed.data.code,
         note: parsed.data.note,
-        // Once Sofia edits a row herself, we re-label it "manual" so it
+        // Once an admin edits a row herself, we re-label it "manual" so it
         // won't look ambiguous in the list.
         source: existing.source?.startsWith("auto:") ? "manual" : existing.source ?? "manual",
       },

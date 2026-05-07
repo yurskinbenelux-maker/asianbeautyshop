@@ -70,7 +70,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // Detect admin so we don't pollute the live-visitors count with
-  // Sofia + Max sitting in the admin panel. Cheap — Supabase server
+  // an admin + Max sitting in the admin panel. Cheap — Supabase server
   // client just reads cookies. isAdminEmail() checks the env allow-list
   // so unconfirmed users don't accidentally suppress the count.
   let isAdmin = false;

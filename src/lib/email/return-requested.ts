@@ -1,11 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Return requested email — sent to the customer the moment they submit a
-// return via the (future) /account/orders/[id]/return form or after Sofia
+// return via the (future) /account/orders/[id]/return form or after an admin
 // creates a return on their behalf from the admin.
 //
 // This is the "we've got your request — here's what's next" acknowledgement.
 // The real logistics (label, address) come in `return-approved.ts` once
-// Sofia has reviewed. We keep the two separate because:
+// an admin has reviewed. We keep the two separate because:
 //   · EU consumer law gives the customer 14 days to notify us — we want
 //     to confirm that timer has been stopped the moment they write in.
 //   · Labels often need a manual check (oversize parcels, cross-border,
@@ -67,7 +67,7 @@ const STRINGS: Record<Locale, Strings> = {
     itemsLabel: "Items to return",
     whatNextTitle: "What happens next",
     whatNextBody:
-      "Sofia reviews each return personally. Within two working days you'll receive a follow-up with your return reference, either a prepaid label or the return address, and packing instructions.",
+      "an admin reviews each return personally. Within two working days you'll receive a follow-up with your return reference, either a prepaid label or the return address, and packing instructions.",
     slaNote:
       "If you'd like to add a reason, a photo of a damaged product, or another item to the return, just reply to this email.",
     cta: "View my order",
@@ -84,7 +84,7 @@ const STRINGS: Record<Locale, Strings> = {
     itemsLabel: "Te retourneren artikelen",
     whatNextTitle: "Wat gebeurt er nu",
     whatNextBody:
-      "Sofia bekijkt elke retour persoonlijk. Binnen twee werkdagen ontvang je een vervolgmail met je retourreferentie, een retourlabel of adres, en inpakinstructies.",
+      "an admin bekijkt elke retour persoonlijk. Binnen twee werkdagen ontvang je een vervolgmail met je retourreferentie, een retourlabel of adres, en inpakinstructies.",
     slaNote:
       "Wil je een reden, een foto van een beschadigd product of een extra artikel toevoegen? Antwoord gewoon op deze mail.",
     cta: "Bestelling bekijken",
@@ -103,7 +103,7 @@ const STRINGS: Record<Locale, Strings> = {
     itemsLabel: "Articles à retourner",
     whatNextTitle: "La suite",
     whatNextBody:
-      "Sofia examine chaque retour personnellement. Sous deux jours ouvrés, vous recevrez un suivi avec votre référence de retour, une étiquette prépayée ou l'adresse de retour, et les instructions d'emballage.",
+      "an admin examine chaque retour personnellement. Sous deux jours ouvrés, vous recevrez un suivi avec votre référence de retour, une étiquette prépayée ou l'adresse de retour, et les instructions d'emballage.",
     slaNote:
       "Souhaitez-vous ajouter un motif, la photo d'un produit endommagé ou un autre article à la demande ? Répondez simplement à cet e-mail.",
     cta: "Voir ma commande",
@@ -122,7 +122,7 @@ const STRINGS: Record<Locale, Strings> = {
     itemsLabel: "Товары к возврату",
     whatNextTitle: "Что дальше",
     whatNextBody:
-      "София рассматривает каждый возврат лично. В течение двух рабочих дней вы получите письмо с номером возврата, предоплаченной этикеткой или адресом, а также инструкциями по упаковке.",
+      "админ рассматривает каждый возврат лично. В течение двух рабочих дней вы получите письмо с номером возврата, предоплаченной этикеткой или адресом, а также инструкциями по упаковке.",
     slaNote:
       "Хотите добавить причину, фото повреждённого товара или ещё один товар к возврату? Просто ответьте на это письмо.",
     cta: "Посмотреть заказ",

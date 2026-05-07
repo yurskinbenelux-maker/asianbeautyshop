@@ -2,7 +2,7 @@
 // prisma/seed-legal.ts — seeds legal / informational Page rows.
 //
 // Creates five Page entries keyed by a short identifier:
-//   · privacy   — GDPR-compliant privacy policy (placeholder; Sofia to refine with counsel)
+//   · privacy   — GDPR-compliant privacy policy (placeholder; an admin to refine with counsel)
 //   · terms     — terms & conditions of sale
 //   · cookies   — cookie policy that mirrors the banner categories
 //   · returns   — right of withdrawal / refund policy (mandatory in EU)
@@ -11,7 +11,7 @@
 // Run with:  npx tsx prisma/seed-legal.ts
 //
 // Idempotent: upserts by unique Page.key and PageTranslation [pageId,locale],
-// so Sofia can re-run safely. Re-runs DON'T overwrite edits — we only create
+// so an admin can re-run safely. Re-runs DON'T overwrite edits — we only create
 // translations that are missing. To reset to placeholder copy, first delete
 // the PageTranslation rows in the admin, then re-run this seed.
 // ─────────────────────────────────────────────────────────────────────────
@@ -23,7 +23,7 @@ const prisma = new PrismaClient();
 // ─────────────────────────────────────────────────────────────────────────
 // Page copy. All bodies are rich HTML — wrapped in paragraphs / headings so
 // the PageBody renderer can style them with the `prose-editorial` utility.
-// The copy is intentionally generic + jurisdiction-neutral so Sofia (or her
+// The copy is intentionally generic + jurisdiction-neutral so an admin (or her
 // lawyer) can tune it via the admin without touching this file.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -803,7 +803,7 @@ BIC/SWIFT: GKCCBEBB</p>
 
   // ── About ───────────────────────────────────────────────────────────────
   // Seeded from the HQ brand materials doc (2026-04-23). EN only for now;
-  // NL / FR / RU translations to follow after Sofia's sign-off on the copy.
+  // NL / FR / RU translations to follow after an admin's sign-off on the copy.
   // Structure mirrors the HQ doc: philosophy → story → mission → values
   // → production → certifications.
   {
@@ -851,14 +851,14 @@ BIC/SWIFT: GKCCBEBB</p>
       // NL / FR / RU translations are deliberately omitted. The Page
       // query layer falls back to EN if a locale is missing, so /nl/about
       // etc. will render the EN copy (with a small fallback banner) until
-      // Sofia ships proper translations via /admin/pages.
+      // an admin ships proper translations via /admin/pages.
     },
   },
 
   // ── Shipping ────────────────────────────────────────────────────────────
   // Public pre-contractual shipping info. Mandatory under Belgian Code of
   // Economic Law Art. VI.45 (delivery time + cost must be disclosed before
-  // the customer is bound). EN-first; other locales fall back until Sofia
+  // the customer is bound). EN-first; other locales fall back until an admin
   // translates them via /admin/pages.
   {
     key: "shipping",
@@ -906,7 +906,7 @@ BIC/SWIFT: GKCCBEBB</p>
   },
 
   // ── FAQ ─────────────────────────────────────────────────────────────────
-  // Q&A-style page covering the top questions Sofia gets over email, so
+  // Q&A-style page covering the top questions an admin gets over email, so
   // we deflect the obvious ones and leave her time for real skincare
   // conversations. Structure mirrors Google's FAQ schema (each <h3> is a
   // question, each <p>/<ul> after it is the answer) so we can attach
@@ -986,13 +986,13 @@ BIC/SWIFT: GKCCBEBB</p>
 
 async function main() {
   // ── CLI flags ────────────────────────────────────────────────────────
-  // Default behaviour: don't overwrite existing translations (Sofia may
+  // Default behaviour: don't overwrite existing translations (an admin may
   // have edited them in admin).
   //
   //   --force           overwrite ALL legal translations
   //   --force=returns   overwrite just one key (comma-separated list OK)
   //
-  // The "just one key" flavour is the one Sofia will reach for when we
+  // The "just one key" flavour is the one an admin will reach for when we
   // refresh, e.g., the returns policy to reflect a legal-counsel update.
   const args = process.argv.slice(2);
   const forceFlag = args.find((a) => a === "--force" || a.startsWith("--force="));
@@ -1022,7 +1022,7 @@ async function main() {
     const shouldOverwrite = forceAll || forcedKeys.has(p.key);
 
     // 2. For each locale, upsert the translation.  By default we don't
-    //    overwrite existing rows — Sofia may have edited them.  With
+    //    overwrite existing rows — an admin may have edited them.  With
     //    --force or --force=<key> we overwrite in place.
     for (const locale of Object.keys(p.translations) as Locale[]) {
       const t = p.translations[locale];

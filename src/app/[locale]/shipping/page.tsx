@@ -6,7 +6,7 @@
 // Law Art. VI.45 requires pre-contractual disclosure of delivery cost
 // and time, so this page is a launch requirement, not optional.
 //
-// Sofia can refine wording any time via /admin/pages. Rates themselves
+// an admin can refine wording any time via /admin/pages. Rates themselves
 // still live in /admin/settings/shipping — this is narrative copy that
 // explains them.
 // ─────────────────────────────────────────────────────────────────────────

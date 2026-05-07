@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // /admin/marketing/instagram — Graph API status + cached posts.
 //
-// Three modes Sofia sees on this page:
+// Three modes an admin sees on this page:
 //   1. NOT CONFIGURED — token field is empty. Section explains the
 //      Meta dev steps and shows a "Save & verify" form. No post grid.
 //   2. CONFIGURED, NO POSTS YET — token saved but cron hasn't run.
@@ -10,7 +10,7 @@
 //   3. CONFIGURED + POSTS CACHED — full status panel + grid of
 //      cached posts. Each post has visibility toggle + sort order.
 //
-// Most fields are read-only because they come from Meta — Sofia can
+// Most fields are read-only because they come from Meta — an admin can
 // only toggle visibility / reorder. Editing caption / image /
 // permalink would just be overwritten on the next sync.
 // ─────────────────────────────────────────────────────────────────────────
@@ -384,7 +384,7 @@ function ConfigBlock({
 
 // ─────────────────────────────────────────────────────────────────────────
 // Setup block — shown when no config exists. Combines the form +
-// brief instructions so Sofia (or you) can paste straight in.
+// brief instructions so an admin (or you) can paste straight in.
 // ─────────────────────────────────────────────────────────────────────────
 
 function SetupBlock() {
@@ -457,7 +457,7 @@ function ConfigForm() {
 
 // ─────────────────────────────────────────────────────────────────────────
 // Setup reference — collapsible step-by-step at the bottom of the page.
-// Always visible so Sofia / Max can re-read it after the initial setup.
+// Always visible so an admin / Max can re-read it after the initial setup.
 // ─────────────────────────────────────────────────────────────────────────
 
 function SetupReference() {

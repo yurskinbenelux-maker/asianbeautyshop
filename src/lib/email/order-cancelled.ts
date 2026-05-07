@@ -1,12 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Order cancelled email — sent when Sofia cancels an order via
+// Order cancelled email — sent when an admin cancels an order via
 // cancelOrderAction.
 //
 // Notes on copy:
 //   • We deliberately do NOT forward the admin's internal `reason` string
 //     to the customer. That field is for our audit trail ("chargeback
 //     risk", "duplicate order", "customer ghost") and isn't always
-//     customer-facing. If Sofia wants to explain, she can email manually.
+//     customer-facing. If an admin wants to explain, she can email manually.
 //   • If the order had been paid, the refund happens via a separate
 //     action (issueRefundAction) which triggers its own email. So here
 //     we keep the wording soft and non-committal on refunds — "If your

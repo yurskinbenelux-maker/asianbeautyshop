@@ -7,7 +7,7 @@
 // friendly "pick up where you left off" link.
 //
 // Localised EN / NL / FR / RU. From donotreply@, Reply-To hello@ so if
-// the customer replies with questions Sofia sees them.
+// the customer replies with questions an admin sees them.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { Locale } from "@prisma/client";

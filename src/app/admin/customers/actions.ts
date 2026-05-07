@@ -13,7 +13,7 @@
 // personally-identifying fields on soft-delete, satisfying GDPR erasure
 // while keeping the audit trail useful.
 //
-// Sofia can't accidentally demote herself from ADMIN because we refuse
+// an admin can't accidentally demote herself from ADMIN because we refuse
 // any role-change that targets the currently-signed-in admin. Prevents
 // the "last admin locks themselves out" footgun.
 // ─────────────────────────────────────────────────────────────────────────

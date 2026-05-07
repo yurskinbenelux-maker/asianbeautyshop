@@ -18,7 +18,7 @@ import { generateToken, hashToken } from "@/lib/newsletter/tokens";
 // the homepage RegisterWelcomePopup). The newsletter still works as a
 // double-opt-in subscriber list; we just don't hand out a coupon at
 // confirm-time anymore. mintWelcomeCoupon + sendNewsletterWelcomeEmail
-// stay in the codebase so Sofia can wire up a separate welcome email
+// stay in the codebase so an admin can wire up a separate welcome email
 // later (e.g. for journal teasers) without rebuilding the plumbing.
 
 function localePath(locale: string | null | undefined, path: string): string {

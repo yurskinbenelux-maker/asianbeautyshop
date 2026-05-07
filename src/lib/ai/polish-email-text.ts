@@ -25,7 +25,7 @@ export type PolishEmailInput = {
   /** Field's human label (e.g. "Lede paragraph") so the model knows what
    *  kind of voice it's editing. */
   fieldLabel: string;
-  /** The current value Sofia typed. */
+  /** The current value an admin typed. */
   current: string;
 };
 

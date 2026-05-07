@@ -3,18 +3,18 @@
 //
 // Configure in Sendcloud panel → Settings → Integrations → your
 // integration → enable "Webhook feedback" + paste this URL:
-//   https://yurskinsolution.eu/api/webhooks/sendcloud
+//   https://asianbeautyshop.eu/api/webhooks/sendcloud
 //
 // Sendcloud signs every payload with HMAC-SHA256 over the raw request
 // body, using the **same Secret Key** that powers the API auth — there
 // is no separate webhook secret in their UI. We read SENDCLOUD_SECRET_KEY
 // for verification, with SENDCLOUD_WEBHOOK_SECRET as an optional override
-// in case Sofia ever wants distinct keys (rare; supported for flexibility).
+// in case an admin ever wants distinct keys (rare; supported for flexibility).
 // Signature arrives in the `Sendcloud-Signature` header (lowercase hex).
 //
 // We respond 200 to *any* signed payload, even ones we don't recognise
 // or whose order we can't find. Sendcloud retries on non-2xx; a wrong
-// 500 here pulls Sofia into noisy webhook retries.
+// 500 here pulls an admin into noisy webhook retries.
 //
 // State changes:
 //   • status bucket "in_transit"  → Order.status = SHIPPED + send shipped email
@@ -174,7 +174,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // Audit log — every status change we recognise + the failed bucket
-  // (so Sofia can find lost / cancelled parcels with a single grep).
+  // (so an admin can find lost / cancelled parcels with a single grep).
   await prisma.orderEvent
     .create({
       data: {

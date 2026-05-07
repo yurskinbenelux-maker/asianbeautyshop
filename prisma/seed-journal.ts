@@ -8,7 +8,7 @@
 // slug) and PageTranslation [postId, locale]. Re-runs are safe; existing
 // posts are updated with the latest body.
 //
-// We seed EN only — Sofia can translate to NL/FR/RU through the admin
+// We seed EN only — an admin can translate to NL/FR/RU through the admin
 // rich-text editor as the brand grows. The infrastructure for translated
 // posts is already there; this seed just gives the launch a starting
 // point that doesn't read as "1 post, December 2025".
@@ -16,7 +16,7 @@
 // Voice notes (so future articles match):
 //   • Quiet, considered, editorial. Never marketing-y.
 //   • Sentences are short but unhurried. No exclamation marks.
-//   • First-person plural ("we", "our") — Sofia + the brand together.
+//   • First-person plural ("we", "our") — an admin + the brand together.
 //   • Each piece links to 2-3 products in-line via /shop/<slug>. The
 //     links don't shout "BUY NOW" — they're embedded the way a serious
 //     magazine threads them.

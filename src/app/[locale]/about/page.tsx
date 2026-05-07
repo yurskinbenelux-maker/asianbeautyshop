@@ -3,7 +3,7 @@
 //
 // Pulls body copy from the `Page` DB table (key = "about"), same
 // infrastructure that powers /legal/*. The body is authored via
-// /admin/pages so Sofia can refine wording without a deploy. If the
+// /admin/pages so an admin can refine wording without a deploy. If the
 // requested locale has no translation yet, the EN copy renders and a
 // small "translation coming soon" banner appears.
 //

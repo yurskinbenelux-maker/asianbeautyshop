@@ -2,7 +2,7 @@
 // redeemReward — burn points, mint a coupon, log the event.
 //
 // All four LoyaltyReward kinds collapse onto the same output shape: a
-// per-user single-use Coupon row. Sofia gets to design the customer-
+// per-user single-use Coupon row. an admin gets to design the customer-
 // facing variety; the redemption plumbing stays simple:
 //
 //   COUPON_FIXED   → Coupon kind=FIXED, value=valueEur
@@ -112,7 +112,7 @@ export async function redeemReward(opts: {
   rewardId: string;
   firstName?: string | null;
 }): Promise<RedeemResult> {
-  // Guard: program-active gate. Sofia pausing the programme should also
+  // Guard: program-active gate. an admin pausing the programme should also
   // freeze redemptions — otherwise customers can drain balances while
   // she's mid-config.
   const settings = await prisma.loyaltySettings.findFirst();

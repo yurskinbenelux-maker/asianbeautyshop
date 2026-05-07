@@ -103,7 +103,7 @@ export function AccountSidebar({
             <SidebarRow key={s.href} section={s} t={t} active={isActive(s.href)} />
           ))}
           {/* A-Beauty Club drawer trigger — sits between Gift cards and Profile
-              per Sofia's brief. Rendered as a button (not a Link) since
+              per an admin's brief. Rendered as a button (not a Link) since
               clicking it opens a drawer rather than navigating. */}
           <li className="shrink-0">
             <YurClubMenuItem data={yurClubData} />

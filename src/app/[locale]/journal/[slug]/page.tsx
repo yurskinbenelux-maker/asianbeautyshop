@@ -159,7 +159,7 @@ export default async function JournalPostPage({ params }: Props) {
 
                 Frame stays a fixed 16:9 so the page rhythm holds, but
                 `object-contain` shows the WHOLE image inside instead of
-                cropping when Sofia (or anyone) uploads a portrait into
+                cropping when an admin (or anyone) uploads a portrait into
                 the hero slot. The cream `bg-rice-dim` lets the
                 letterboxing read as intentional editorial framing. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // i18n routing — next-intl locale config
 // Locales: EN (default), NL (Dutch for BE/NL customers), FR (Belgian French),
-// RU (Russian-speaking expats — a K-beauty audience Sofia asked us to cover).
+// RU (Russian-speaking expats — a K-beauty audience an admin asked us to cover).
 // ─────────────────────────────────────────────────────────────────────────
 
 import { defineRouting } from "next-intl/routing";

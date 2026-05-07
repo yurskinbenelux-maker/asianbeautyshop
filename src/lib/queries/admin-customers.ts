@@ -19,7 +19,7 @@
 //     newsletter form (NewsletterSubscriber table). No account, no
 //     orders; only email + locale + source + opt-in status.
 //
-// We merge both sources so Sofia sees the full mailing list in one view
+// We merge both sources so an admin sees the full mailing list in one view
 // under the "Newsletter" segment. The `kind` discriminator lets the
 // table renderer degrade subscriber rows gracefully (no name, no orders,
 // no click-through to a customer detail page).
@@ -214,7 +214,7 @@ export async function listAdminCustomers(
     if (!params.includeDeleted) subWhere.unsubscribedAt = null;
     if (q) subWhere.email = { contains: q, mode: "insensitive" };
 
-    // If Sofia is also searching for a name/phone — fields subscribers
+    // If an admin is also searching for a name/phone — fields subscribers
     // don't have — we still want email matches to land. The block above
     // already narrows by email, so no extra action needed.
 
@@ -246,7 +246,7 @@ export async function listAdminCustomers(
       lastName: null,
       phone: null,
       // Being on the list IS the opt-in, by definition. The extra status
-      // field below tells Sofia whether they've confirmed the double
+      // field below tells an admin whether they've confirmed the double
       // opt-in yet.
       marketingOptIn: true,
       preferredLocale: s.locale,

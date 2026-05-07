@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Testimonial queries — the homepage "voices" strip.
 //
-// Sofia curates a small, hand-picked set of quotes (NOT the product reviews
+// an admin curates a small, hand-picked set of quotes (NOT the product reviews
 // feed). We keep these independent so she can publish an aspirational quote
 // on the homepage without it being tied to a specific purchase.
 //

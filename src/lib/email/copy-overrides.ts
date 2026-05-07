@@ -2,7 +2,7 @@
 // Email copy overrides — read layer + merger.
 //
 // Each transactional email file ships a hardcoded `STRINGS: Record<Locale,
-// Strings>` object holding default copy. Sofia can override any string
+// Strings>` object holding default copy. an admin can override any string
 // field per-locale via /admin/emails/[key]/edit; those overrides land in
 // the `EmailCopyOverride` table. At send time the `applyOverrides()`
 // helper produces a merged Strings object: overridden string fields win,
@@ -21,7 +21,7 @@ import { prisma } from "@/lib/prisma";
 export type EmailOverrides = Map<string, string>;
 
 /** Read every override row for a single (emailKey, locale) combo and
- *  return a Map keyed by fieldKey. Empty Map if Sofia hasn't tweaked
+ *  return a Map keyed by fieldKey. Empty Map if an admin hasn't tweaked
  *  this email in this locale yet. */
 export async function getEmailOverrides(
   emailKey: string,
@@ -69,7 +69,7 @@ export async function getAllOverridesByLocale(
  *    the override Map has a non-empty entry for `k`, the override wins.
  *  · Function fields (`subject: (n) => string`) are kept as-is. The
  *    admin UI flags those as read-only with a "contains dynamic
- *    content" warning so Sofia can't accidentally replace them with
+ *    content" warning so an admin can't accidentally replace them with
  *    plain text and lose her order-number / first-name interpolations.
  *  · Empty-string overrides are ignored — clearing a textarea in admin
  *    means "use the default", not "send blank".

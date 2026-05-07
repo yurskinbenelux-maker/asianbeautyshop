@@ -10,7 +10,7 @@
 //                   admin can send a prepaid label later if needed)
 //       RECEIVED → sendReturnReceivedEmail
 //       REFUNDED → sendOrderRefundedEmail (existing template)
-//     REJECTED / CANCELLED don't auto-notify — Sofia replies by hand.
+//     REJECTED / CANCELLED don't auto-notify — an admin replies by hand.
 // ─────────────────────────────────────────────────────────────────────────
 
 "use server";

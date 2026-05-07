@@ -7,7 +7,7 @@
 // Client component because useActionState + useFormStatus drive the
 // loading spinner and success/error line. The server action itself
 // (`sendTestEmailAction`) decides who receives the email — the button
-// never asks for or accepts a recipient address, so Sofia can't
+// never asks for or accepts a recipient address, so an admin can't
 // accidentally spam a customer from the preview screen.
 // ─────────────────────────────────────────────────────────────────────────
 

@@ -38,7 +38,7 @@ const TRANSLATABLE_FIELDS: ReadonlyArray<{
 ];
 
 /** Page keys that contain legally-binding text. Auto-translation is
- *  permitted as a starting draft but the UI surfaces a warning so Sofia
+ *  permitted as a starting draft but the UI surfaces a warning so an admin
  *  knows to have a native speaker review before publishing. */
 const LEGAL_PAGE_KEYS = new Set([
   "privacy",

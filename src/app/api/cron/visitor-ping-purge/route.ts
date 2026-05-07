@@ -11,7 +11,7 @@
 // ~1.5M rows/year. Daily purge keeps it under ~10K rows at any time.
 //
 // Schedule via cron-job.org:
-//   0 4 * * *   GET https://yurskinsolution.eu/api/cron/visitor-ping-purge
+//   0 4 * * *   GET https://asianbeautyshop.eu/api/cron/visitor-ping-purge
 //   Header:     Authorization: Bearer $CRON_SECRET
 // ─────────────────────────────────────────────────────────────────────────
 

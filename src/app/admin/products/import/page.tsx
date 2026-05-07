@@ -3,7 +3,7 @@
 //
 // Server shell: guards the route, renders the client UI. The actual
 // upload/preview/commit flow is driven by the client component so we
-// can give Sofia rich feedback (preview tables, warnings, per-row
+// can give an admin rich feedback (preview tables, warnings, per-row
 // errors) without full-page reloads between each step.
 // ─────────────────────────────────────────────────────────────────────────
 

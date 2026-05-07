@@ -7,7 +7,7 @@
 import { Locale } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
-/** The fixed set of page keys Sofia can edit. Keeping this constrained to a
+/** The fixed set of page keys an admin can edit. Keeping this constrained to a
  * union (rather than accepting arbitrary slugs) means a typo in the URL
  * 404s cleanly instead of scanning the Page table. */
 export const LEGAL_PAGE_KEYS = [
@@ -49,7 +49,7 @@ export type PageView = {
 
 /**
  * Fetch a legal page by key + URL locale. Returns null if the page does not
- * exist at all (e.g. key is valid but Sofia archived it). Falls back to the
+ * exist at all (e.g. key is valid but an admin archived it). Falls back to the
  * EN translation if the requested locale is missing so we never ship an
  * empty legal page.
  */
@@ -109,7 +109,7 @@ export async function getLegalPage({
 // "about", "faq", "shipping"). Used by /[locale]/about and any future
 // content routes.
 //
-// EN fallback kicks in for locales Sofia hasn't translated yet — the UI
+// EN fallback kicks in for locales an admin hasn't translated yet — the UI
 // surfaces this via `isFallback` so users know they're seeing the EN copy.
 // ─────────────────────────────────────────────────────────────────────────
 export type StaticPageView = Omit<PageView, "key"> & { key: string };

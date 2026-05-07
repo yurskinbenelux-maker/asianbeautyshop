@@ -131,7 +131,7 @@ export default async function AdminOrdersPage({
           Two exports, both filter-aware.
            · Export CSV        — one row per order (operations / fulfilment)
            · Export line items — one row per OrderItem, with ex-tax + VAT
-                                 columns. This is the shape Sofia's
+                                 columns. This is the shape an admin's
                                  accountant asked for.
         */}
         <div className="flex flex-wrap items-center gap-2">
@@ -258,7 +258,7 @@ export default async function AdminOrdersPage({
                   <Th className="w-[42px] text-center">
                     {/* select-all is best-effort client-side; SSR table can't
                         own checkbox state, so we skip a master checkbox for
-                        MVP and let Sofia click each row. */}
+                        MVP and let an admin click each row. */}
                     <span className="sr-only">Select</span>
                   </Th>
                   <Th className="w-[14%]">Order</Th>
@@ -427,7 +427,7 @@ function buildFilterHref(
 /**
  * Build the export URL, carrying forward every filter except paging.
  * The optional `format` arg switches between the order-summary CSV (default)
- * and the line-items CSV that Sofia's accountant uses for VAT filings.
+ * and the line-items CSV that an admin's accountant uses for VAT filings.
  */
 function buildExportHref(
   sp: Record<string, string | undefined>,

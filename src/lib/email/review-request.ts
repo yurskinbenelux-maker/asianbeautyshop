@@ -7,7 +7,7 @@
 // five separate emails to someone who bought five things.
 //
 // Localised EN / NL / FR / RU. Uses fromTransactional() + hello@ Reply-To
-// (so replies go to Sofia if the customer has something to say).
+// (so replies go to an admin if the customer has something to say).
 // ─────────────────────────────────────────────────────────────────────────
 
 import { Locale } from "@prisma/client";

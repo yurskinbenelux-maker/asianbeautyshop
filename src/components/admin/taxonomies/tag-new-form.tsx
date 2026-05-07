@@ -30,7 +30,7 @@ export function TagNewForm({
   const [state, action] = useActionState(createSimpleTaxonomyAction, INITIAL);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // On success, wipe the inputs so Sofia can type the next tag.
+  // On success, wipe the inputs so an admin can type the next tag.
   if (state.ok && formRef.current) {
     formRef.current.reset();
   }

@@ -54,7 +54,7 @@ export default async function EarnPage({ params, searchParams }: Props) {
             Submitted
           </p>
           <p className="mt-1 text-[13px] text-ink">
-            Sofia will review within 48 hours. You'll get an email either way.
+            an admin will review within 48 hours. You'll get an email either way.
           </p>
         </div>
       ) : null}
@@ -66,7 +66,7 @@ export default async function EarnPage({ params, searchParams }: Props) {
             Tasks coming soon
           </p>
           <p className="mx-auto mt-2 max-w-md text-[13px] text-ink-mid">
-            Sofia is curating fresh ways to earn points. Check back shortly.
+            an admin is curating fresh ways to earn points. Check back shortly.
           </p>
         </div>
       ) : (

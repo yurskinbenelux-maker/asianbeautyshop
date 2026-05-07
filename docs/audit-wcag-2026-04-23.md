@@ -38,7 +38,7 @@ reaching the main content. This fails 2.4.1.
 top of `<body>` that jumps to `#main`. Given the same `id` to the
 `<main>` element in `src/app/[locale]/layout.tsx`. The link styles match
 the editorial aesthetic (ink on rice, hairline border, ink-drop on
-focus) so Sofia's brand isn't broken when it appears.
+focus) so an admin's brand isn't broken when it appears.
 
 Files touched:
 - `src/app/[locale]/layout.tsx`
@@ -153,7 +153,7 @@ table.
 
 `/sign-in/layout.tsx`, `/no-access/layout.tsx`, and `/not-found.tsx`
 set `lang="en"` regardless of the user's locale. Admin is English-only
-by design (Sofia works in English) so `/admin/layout.tsx` is fine, but
+by design (an admin works in English) so `/admin/layout.tsx` is fine, but
 the customer-facing auth routes and the 404 page should respect the
 URL prefix.
 

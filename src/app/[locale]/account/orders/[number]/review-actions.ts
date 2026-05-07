@@ -17,7 +17,7 @@
 //     `already_reviewed` rather than creating a duplicate row.
 //
 // Moderation:
-//   New reviews land with isPublished = false. Sofia approves them in
+//   New reviews land with isPublished = false. an admin approves them in
 //   /admin/reviews (#42) before they show on the PDP. Doing publish-on-
 //   submit would be faster but exposes the shop to "I'll come back and
 //   change my review to one star next week" behaviour and abusive copy.

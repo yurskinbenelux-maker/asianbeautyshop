@@ -5,7 +5,7 @@
 //   • "create" — posts to createCategoryAction
 //   • "edit"   — posts to updateCategoryAction
 //
-// Each translation is its own tab so Sofia is never looking at four
+// Each translation is its own tab so an admin is never looking at four
 // description boxes at once. EN is required; NL/FR/RU inherit EN on the
 // public site when left blank.
 // ─────────────────────────────────────────────────────────────────────────

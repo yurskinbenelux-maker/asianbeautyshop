@@ -6,7 +6,7 @@
 //
 // We keep messages forever by default. Admin can Archive to hide from the
 // default NEW/READ list without losing audit trail. Hard-delete is not
-// exposed here by design — if Sofia needs it, that's a separate, guarded
+// exposed here by design — if an admin needs it, that's a separate, guarded
 // action (out of scope for #89).
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -66,7 +66,7 @@ export async function markAsReadIfNew(id: string): Promise<void> {
 }
 
 /**
- * Quick action from the detail view — jumps Sofia to her mail client with
+ * Quick action from the detail view — jumps an admin to her mail client with
  * the subject, To: and a threaded greeting pre-filled.
  */
 export async function openReplyInMailClient(formData: FormData) {
@@ -81,7 +81,7 @@ export async function openReplyInMailClient(formData: FormData) {
   });
   if (!msg) return;
 
-  // Flip to REPLIED as soon as Sofia hits "Reply" — the assumption is she
+  // Flip to REPLIED as soon as an admin hits "Reply" — the assumption is she
   // will actually reply; if she doesn't, she can toggle it back.
   await prisma.contactMessage.update({
     where: { id },
