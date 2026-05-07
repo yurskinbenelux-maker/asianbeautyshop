@@ -148,7 +148,7 @@ export function Nav({
         scrolled ? "glass border-b border-ink/5" : "bg-transparent",
       )}
     >
-      <div className="container flex h-20 items-center justify-between gap-3 md:h-28 md:gap-6">
+      <div className="container flex h-16 items-center justify-between gap-3 md:h-20 md:gap-6">
         {/* ── Hamburger (mobile only) ──────────────────────────────── */}
         {/* Sits on the leading edge — the conventional spot for mobile
             menu triggers and the easiest one for thumb reach. Hidden on
@@ -175,13 +175,18 @@ export function Nav({
           className="flex items-center"
           aria-label={t("brand.name")}
         >
-          {/* Lockup sized responsively — h-14 (56px) on mobile inside the
-              h-20 (80px) bar, h-20 (80px) on desktop inside the h-28
-              (112px) bar. Both leave ~12-16px breathing room. */}
+          {/* Lockup intentionally OVERFLOWS the nav bar — h-14 (56px) on
+              mobile inside h-16 (64px) keeps mobile clean, but desktop
+              h-28 (112px) inside h-20 (80px) lets the cherry-blossom
+              branch poke ~16px above and below the bar. Editorial pattern
+              borrowed from Glossier / Aesop / peonybeauty — the logo
+              anchors the page rather than living inside the strip.
+              Requires the parent <header> to allow visible overflow. */}
           <Logo
             variant="lockup"
-            heightClass="h-14 md:h-20"
+            heightClass="h-14 md:h-28"
             alt={t("brand.name")}
+            className="md:relative md:z-10"
           />
         </Link>
 
