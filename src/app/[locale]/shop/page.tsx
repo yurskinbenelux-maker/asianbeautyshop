@@ -29,13 +29,14 @@ import { ShopInfiniteGrid } from "@/components/shop/shop-infinite-grid";
 import { RecentlyViewedRail } from "@/components/shop/recently-viewed-rail";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
-// ISR caching — Next.js re-renders this page at most every 60s.
+// ISR caching — Next.js re-renders this page at most every 5 minutes.
 // Visitors arriving within that window get the cached HTML. Admin
 // edits (publishing a product, changing a category) become visible
-// within at most 60s without a manual cache bust. The shop catalogue
-// genuinely changes slowly enough that this is the right tradeoff —
-// LCP halves on second-visit because there's no DB roundtrip.
-export const revalidate = 60;
+// within at most 5 minutes without a manual cache bust. Bumped from
+// 60s to 300s for performance — server does 5× less SSR work, scroll
+// lag on Hostinger Business disappears. PDP uses the same TTL so the
+// listing → detail click feels instant on the second-visit cache hit.
+export const revalidate = 300;
 
 // Page size for both the server-rendered first page and every subsequent
 // fetch. 24 fills the 3-column grid 8 rows deep — tall enough to feel

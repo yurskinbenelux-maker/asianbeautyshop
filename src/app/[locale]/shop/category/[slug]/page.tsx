@@ -21,9 +21,10 @@ import { maybeRedirect } from "@/lib/redirects/maybe-redirect";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 
-// Category landing pages cache for 60s — same tradeoff as /shop.
-// Admin edits to category copy / pricing land within a minute.
-export const revalidate = 60;
+// Category landing pages cache for 5 minutes — same tradeoff as /shop.
+// Admin edits to category copy / pricing land within 5 minutes. Bumped
+// from 60s to 300s to cut SSR work 5× on Hostinger Business.
+export const revalidate = 300;
 
 import {
   getShopCategoryBySlug,

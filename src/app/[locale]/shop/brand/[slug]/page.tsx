@@ -17,8 +17,9 @@ import { notFound } from "next/navigation";
 import { maybeRedirect } from "@/lib/redirects/maybe-redirect";
 import Image from "next/image";
 
-// Brand pages cache for 60s — same shape as category landings.
-export const revalidate = 60;
+// Brand pages cache for 5 minutes — same shape as category landings.
+// Bumped from 60s to 300s to cut SSR work 5× on Hostinger Business.
+export const revalidate = 300;
 
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";

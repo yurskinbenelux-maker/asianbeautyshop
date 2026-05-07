@@ -26,7 +26,9 @@ import { ShopInfiniteGrid } from "@/components/shop/shop-infinite-grid";
 import { RecentlyViewedRail } from "@/components/shop/recently-viewed-rail";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const revalidate = 60;
+// 5-minute ISR — matches /shop and category landings. Sale flag edits
+// land within 5 minutes; Hostinger SSR cost drops 5×.
+export const revalidate = 300;
 const PAGE_SIZE = 24;
 
 type Props = {
