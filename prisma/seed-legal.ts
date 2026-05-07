@@ -44,13 +44,13 @@ const PAGES: PageCopy[] = [
     translations: {
       [Locale.EN]: {
         title: "Privacy policy",
-        seoTitle: "Privacy policy — YU.R Skin Solution",
+        seoTitle: "Privacy policy — Asian Beauty Shop",
         seoDescription:
-          "How YU.R Skin Solution collects, uses, and protects your personal data under the GDPR.",
+          "How Asian Beauty Shop collects, uses, and protects your personal data under the GDPR.",
         body: `
 <p><em>Last updated: 21 April 2026.</em></p>
 
-<p>YU.R Skin Solution is operated by <strong>K'Elmus Group BV</strong>, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgium ("we", "us"). We are the data controller for the personal data processed through this website.</p>
+<p>Asian Beauty Shop is operated by <strong>K'Elmus Group BV</strong>, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgium ("we", "us"). We are the data controller for the personal data processed through this website.</p>
 
 <h2>What we collect</h2>
 <ul>
@@ -70,7 +70,7 @@ const PAGES: PageCopy[] = [
 <p>We share data only with processors we have contracts with: Supabase (hosting &amp; database, EU), Mollie (payments, EU), Sendcloud (shipping, EU), and our email provider. We do not sell your data.</p>
 
 <h2>Your rights</h2>
-<p>You can access, correct, export, or delete your personal data at any time. Email us at <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> and we will respond within 30 days. You also have the right to lodge a complaint with the Belgian Data Protection Authority (gegevensbeschermingsautoriteit.be).</p>
+<p>You can access, correct, export, or delete your personal data at any time. Email us at <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> and we will respond within 30 days. You also have the right to lodge a complaint with the Belgian Data Protection Authority (gegevensbeschermingsautoriteit.be).</p>
 
 <h2>Retention</h2>
 <p>Order records are kept for seven years (legal requirement for Belgian accounting). Account data is kept until you ask us to close your account. Marketing consent is kept until you unsubscribe.</p>
@@ -78,13 +78,13 @@ const PAGES: PageCopy[] = [
       },
       [Locale.NL]: {
         title: "Privacybeleid",
-        seoTitle: "Privacybeleid — YU.R Skin Solution",
+        seoTitle: "Privacybeleid — Asian Beauty Shop",
         seoDescription:
-          "Hoe YU.R Skin Solution jouw persoonsgegevens verzamelt, gebruikt en beschermt onder de AVG.",
+          "Hoe Asian Beauty Shop jouw persoonsgegevens verzamelt, gebruikt en beschermt onder de AVG.",
         body: `
 <p><em>Laatst bijgewerkt: 21 april 2026.</em></p>
 
-<p>YU.R Skin Solution wordt uitgebaat door <strong>K'Elmus Group BV</strong>, Boomsesteenweg 41/4b, 2630 Aartselaar, België ("wij", "ons"). Wij zijn de verwerkingsverantwoordelijke voor de persoonsgegevens die via deze website worden verwerkt.</p>
+<p>Asian Beauty Shop wordt uitgebaat door <strong>K'Elmus Group BV</strong>, Boomsesteenweg 41/4b, 2630 Aartselaar, België ("wij", "ons"). Wij zijn de verwerkingsverantwoordelijke voor de persoonsgegevens die via deze website worden verwerkt.</p>
 
 <h2>Wat we verzamelen</h2>
 <ul>
@@ -104,7 +104,7 @@ const PAGES: PageCopy[] = [
 <p>We delen gegevens enkel met verwerkers waarmee we een contract hebben: Supabase (hosting &amp; database, EU), Mollie (betalingen, EU), Sendcloud (verzending, EU) en onze e-mailprovider. Wij verkopen je gegevens niet.</p>
 
 <h2>Jouw rechten</h2>
-<p>Je kan je persoonsgegevens op elk moment inkijken, corrigeren, exporteren of laten verwijderen. Mail ons op <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> en we antwoorden binnen 30 dagen. Je hebt ook het recht om een klacht in te dienen bij de Gegevensbeschermingsautoriteit (gegevensbeschermingsautoriteit.be).</p>
+<p>Je kan je persoonsgegevens op elk moment inkijken, corrigeren, exporteren of laten verwijderen. Mail ons op <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> en we antwoorden binnen 30 dagen. Je hebt ook het recht om een klacht in te dienen bij de Gegevensbeschermingsautoriteit (gegevensbeschermingsautoriteit.be).</p>
 
 <h2>Bewaartermijn</h2>
 <p>Bestelgegevens worden zeven jaar bewaard (wettelijke verplichting voor Belgische boekhouding). Accountgegevens blijven bewaard tot je vraagt je account te sluiten. Marketingtoestemming blijft geldig tot je je uitschrijft.</p>
@@ -112,13 +112,13 @@ const PAGES: PageCopy[] = [
       },
       [Locale.FR]: {
         title: "Politique de confidentialité",
-        seoTitle: "Politique de confidentialité — YU.R Skin Solution",
+        seoTitle: "Politique de confidentialité — Asian Beauty Shop",
         seoDescription:
-          "Comment YU.R Skin Solution collecte, utilise et protège vos données personnelles dans le cadre du RGPD.",
+          "Comment Asian Beauty Shop collecte, utilise et protège vos données personnelles dans le cadre du RGPD.",
         body: `
 <p><em>Dernière mise à jour : 21 avril 2026.</em></p>
 
-<p>YU.R Skin Solution est exploité par <strong>K'Elmus Group BV</strong>, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgique (« nous »). Nous sommes le responsable du traitement des données personnelles collectées via ce site.</p>
+<p>Asian Beauty Shop est exploité par <strong>K'Elmus Group BV</strong>, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgique (« nous »). Nous sommes le responsable du traitement des données personnelles collectées via ce site.</p>
 
 <h2>Ce que nous collectons</h2>
 <ul>
@@ -138,7 +138,7 @@ const PAGES: PageCopy[] = [
 <p>Nous ne partageons vos données qu'avec des sous-traitants contractualisés : Supabase (hébergement &amp; base de données, UE), Mollie (paiements, UE), Sendcloud (expédition, UE) et notre fournisseur d'e-mail. Nous ne vendons pas vos données.</p>
 
 <h2>Vos droits</h2>
-<p>Vous pouvez à tout moment accéder, corriger, exporter ou supprimer vos données. Écrivez-nous à <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a>, nous répondrons sous 30 jours. Vous pouvez également introduire une plainte auprès de l'Autorité de protection des données belge (autoriteprotectiondonnees.be).</p>
+<p>Vous pouvez à tout moment accéder, corriger, exporter ou supprimer vos données. Écrivez-nous à <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a>, nous répondrons sous 30 jours. Vous pouvez également introduire une plainte auprès de l'Autorité de protection des données belge (autoriteprotectiondonnees.be).</p>
 
 <h2>Durée de conservation</h2>
 <p>Les commandes sont conservées sept ans (obligation comptable belge). Les données de compte sont conservées jusqu'à fermeture du compte. Le consentement marketing reste valable jusqu'à votre désinscription.</p>
@@ -146,13 +146,13 @@ const PAGES: PageCopy[] = [
       },
       [Locale.RU]: {
         title: "Политика конфиденциальности",
-        seoTitle: "Политика конфиденциальности — YU.R Skin Solution",
+        seoTitle: "Политика конфиденциальности — Asian Beauty Shop",
         seoDescription:
-          "Как YU.R Skin Solution собирает, использует и защищает ваши персональные данные согласно GDPR.",
+          "Как Asian Beauty Shop собирает, использует и защищает ваши персональные данные согласно GDPR.",
         body: `
 <p><em>Последнее обновление: 21 апреля 2026 г.</em></p>
 
-<p>Сайт YU.R Skin Solution принадлежит компании <strong>K'Elmus Group BV</strong>, Boomsesteenweg 41/4b, 2630 Aartselaar, Бельгия («мы»). Мы являемся контроллером персональных данных, обрабатываемых на этом сайте.</p>
+<p>Сайт Asian Beauty Shop принадлежит компании <strong>K'Elmus Group BV</strong>, Boomsesteenweg 41/4b, 2630 Aartselaar, Бельгия («мы»). Мы являемся контроллером персональных данных, обрабатываемых на этом сайте.</p>
 
 <h2>Что мы собираем</h2>
 <ul>
@@ -172,7 +172,7 @@ const PAGES: PageCopy[] = [
 <p>Мы передаём данные только проверенным обработчикам: Supabase (хостинг и база данных, ЕС), Mollie (платежи, ЕС), Sendcloud (доставка, ЕС) и нашему e-mail провайдеру. Мы не продаём ваши данные.</p>
 
 <h2>Ваши права</h2>
-<p>Вы можете в любой момент запросить доступ, исправление, экспорт или удаление данных. Напишите на <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a>, мы ответим в течение 30 дней. Также вы имеете право подать жалобу в бельгийский орган по защите данных (gegevensbeschermingsautoriteit.be).</p>
+<p>Вы можете в любой момент запросить доступ, исправление, экспорт или удаление данных. Напишите на <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a>, мы ответим в течение 30 дней. Также вы имеете право подать жалобу в бельгийский орган по защите данных (gegevensbeschermingsautoriteit.be).</p>
 
 <h2>Сроки хранения</h2>
 <p>Заказы хранятся семь лет (бельгийское бухгалтерское законодательство). Данные аккаунта — до запроса на его удаление. Согласие на маркетинг действует до вашей отписки.</p>
@@ -187,13 +187,13 @@ const PAGES: PageCopy[] = [
     translations: {
       [Locale.EN]: {
         title: "Terms &amp; conditions",
-        seoTitle: "Terms &amp; conditions — YU.R Skin Solution",
+        seoTitle: "Terms &amp; conditions — Asian Beauty Shop",
         seoDescription:
-          "The terms that apply to your use of yurskinsolution.eu and any purchase made on it.",
+          "The terms that apply to your use of asianbeautyshop.eu and any purchase made on it.",
         body: `
 <p><em>Last updated: 21 April 2026.</em></p>
 
-<p>These terms apply to every purchase made on yurskinsolution.eu. By placing an order you confirm that you have read, understood, and accepted them. The site is operated by <strong>K'Elmus Group BV</strong>, VAT BE&nbsp;1031.312.116, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgium.</p>
+<p>These terms apply to every purchase made on asianbeautyshop.eu. By placing an order you confirm that you have read, understood, and accepted them. The site is operated by <strong>K'Elmus Group BV</strong>, VAT BE&nbsp;1031.312.116, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgium.</p>
 
 <h2>1. Orders &amp; contract</h2>
 <p>A contract is formed when we send you the order confirmation email. Before that point we may refuse an order — for example if a product is unexpectedly out of stock, a pricing error is detected, or the delivery address is outside our shipping zone.</p>
@@ -208,7 +208,7 @@ const PAGES: PageCopy[] = [
 <p>As a consumer in the EU you have 14 calendar days from the moment you receive your order to withdraw from the contract, without giving a reason. See our <a href="/legal/returns">returns &amp; refunds policy</a> for the full procedure and exceptions.</p>
 
 <h2>5. Warranty</h2>
-<p>All products are covered by the statutory two-year conformity warranty. If a product reaches you damaged or defective, contact us within 14 days at <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> with a photo and your order number.</p>
+<p>All products are covered by the statutory two-year conformity warranty. If a product reaches you damaged or defective, contact us within 14 days at <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> with a photo and your order number.</p>
 
 <h2>6. Limitation of liability</h2>
 <p>We are not liable for skin reactions caused by known allergens disclosed on the product ingredient list. Patch-test new products before full use; discontinue and seek medical advice if irritation occurs.</p>
@@ -219,13 +219,13 @@ const PAGES: PageCopy[] = [
       },
       [Locale.NL]: {
         title: "Algemene voorwaarden",
-        seoTitle: "Algemene voorwaarden — YU.R Skin Solution",
+        seoTitle: "Algemene voorwaarden — Asian Beauty Shop",
         seoDescription:
-          "De voorwaarden voor het gebruik van yurskinsolution.eu en elke bestelling die je er plaatst.",
+          "De voorwaarden voor het gebruik van asianbeautyshop.eu en elke bestelling die je er plaatst.",
         body: `
 <p><em>Laatst bijgewerkt: 21 april 2026.</em></p>
 
-<p>Deze voorwaarden gelden voor elke bestelling op yurskinsolution.eu. Door te bestellen bevestig je dat je ze hebt gelezen, begrepen en aanvaard. De website wordt uitgebaat door <strong>K'Elmus Group BV</strong>, BTW BE&nbsp;1031.312.116, Boomsesteenweg 41/4b, 2630 Aartselaar, België.</p>
+<p>Deze voorwaarden gelden voor elke bestelling op asianbeautyshop.eu. Door te bestellen bevestig je dat je ze hebt gelezen, begrepen en aanvaard. De website wordt uitgebaat door <strong>K'Elmus Group BV</strong>, BTW BE&nbsp;1031.312.116, Boomsesteenweg 41/4b, 2630 Aartselaar, België.</p>
 
 <h2>1. Bestelling &amp; overeenkomst</h2>
 <p>De overeenkomst komt tot stand wanneer wij je de bevestigingsmail sturen. Tot dat moment kunnen we een bestelling weigeren — bijvoorbeeld bij onverwachte voorraadproblemen, een prijsfout of een adres buiten onze verzendzone.</p>
@@ -240,7 +240,7 @@ const PAGES: PageCopy[] = [
 <p>Als consument binnen de EU heb je 14 kalenderdagen vanaf ontvangst van je bestelling om de overeenkomst zonder opgave van reden te ontbinden. Zie ons <a href="/legal/returns">retour- en terugbetalingsbeleid</a> voor de volledige procedure en uitzonderingen.</p>
 
 <h2>5. Garantie</h2>
-<p>Alle producten vallen onder de wettelijke conformiteitsgarantie van twee jaar. Komt een product beschadigd of defect aan, contacteer ons binnen 14 dagen via <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> met een foto en je bestelnummer.</p>
+<p>Alle producten vallen onder de wettelijke conformiteitsgarantie van twee jaar. Komt een product beschadigd of defect aan, contacteer ons binnen 14 dagen via <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> met een foto en je bestelnummer.</p>
 
 <h2>6. Aansprakelijkheid</h2>
 <p>We zijn niet aansprakelijk voor huidreacties veroorzaakt door op de ingrediëntenlijst vermelde allergenen. Test nieuwe producten met een kleine dosis voor gebruik; stop bij irritatie en raadpleeg een arts.</p>
@@ -251,13 +251,13 @@ const PAGES: PageCopy[] = [
       },
       [Locale.FR]: {
         title: "Conditions générales",
-        seoTitle: "Conditions générales — YU.R Skin Solution",
+        seoTitle: "Conditions générales — Asian Beauty Shop",
         seoDescription:
-          "Les conditions applicables à toute utilisation de yurskinsolution.eu et à tout achat effectué.",
+          "Les conditions applicables à toute utilisation de asianbeautyshop.eu et à tout achat effectué.",
         body: `
 <p><em>Dernière mise à jour : 21 avril 2026.</em></p>
 
-<p>Les présentes conditions s'appliquent à tout achat effectué sur yurskinsolution.eu. En passant commande, vous confirmez les avoir lues, comprises et acceptées. Le site est exploité par <strong>K'Elmus Group BV</strong>, TVA BE&nbsp;1031.312.116, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgique.</p>
+<p>Les présentes conditions s'appliquent à tout achat effectué sur asianbeautyshop.eu. En passant commande, vous confirmez les avoir lues, comprises et acceptées. Le site est exploité par <strong>K'Elmus Group BV</strong>, TVA BE&nbsp;1031.312.116, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgique.</p>
 
 <h2>1. Commande &amp; contrat</h2>
 <p>Le contrat est formé à l'envoi de notre e-mail de confirmation de commande. Jusqu'à ce point nous pouvons refuser une commande — par exemple en cas de rupture de stock inattendue, d'erreur de prix ou d'adresse hors zone de livraison.</p>
@@ -272,7 +272,7 @@ const PAGES: PageCopy[] = [
 <p>En tant que consommateur dans l'UE, vous disposez de 14 jours calendrier à compter de la réception pour vous rétracter sans motif. Consultez notre <a href="/legal/returns">politique de retour</a> pour la procédure complète et les exceptions.</p>
 
 <h2>5. Garantie</h2>
-<p>Tous les produits bénéficient de la garantie légale de conformité de deux ans. En cas de produit endommagé ou défectueux, contactez-nous sous 14 jours à <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> avec photo et numéro de commande.</p>
+<p>Tous les produits bénéficient de la garantie légale de conformité de deux ans. En cas de produit endommagé ou défectueux, contactez-nous sous 14 jours à <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> avec photo et numéro de commande.</p>
 
 <h2>6. Responsabilité</h2>
 <p>Nous ne sommes pas responsables des réactions cutanées dues aux allergènes listés dans la composition. Faites un test de tolérance sur une petite zone avant usage ; arrêtez en cas d'irritation et consultez un médecin.</p>
@@ -283,13 +283,13 @@ const PAGES: PageCopy[] = [
       },
       [Locale.RU]: {
         title: "Пользовательское соглашение",
-        seoTitle: "Пользовательское соглашение — YU.R Skin Solution",
+        seoTitle: "Пользовательское соглашение — Asian Beauty Shop",
         seoDescription:
-          "Условия использования yurskinsolution.eu и совершения покупок на нём.",
+          "Условия использования asianbeautyshop.eu и совершения покупок на нём.",
         body: `
 <p><em>Последнее обновление: 21 апреля 2026 г.</em></p>
 
-<p>Настоящие условия применяются к каждой покупке на yurskinsolution.eu. Оформляя заказ, вы подтверждаете, что прочли и приняли их. Сайтом владеет <strong>K'Elmus Group BV</strong>, НДС BE&nbsp;1031.312.116, Boomsesteenweg 41/4b, 2630 Aartselaar, Бельгия.</p>
+<p>Настоящие условия применяются к каждой покупке на asianbeautyshop.eu. Оформляя заказ, вы подтверждаете, что прочли и приняли их. Сайтом владеет <strong>K'Elmus Group BV</strong>, НДС BE&nbsp;1031.312.116, Boomsesteenweg 41/4b, 2630 Aartselaar, Бельгия.</p>
 
 <h2>1. Заказ и договор</h2>
 <p>Договор заключается в момент, когда мы отправляем вам подтверждение заказа. До этого мы можем отказаться от заказа — например, если товар закончился, обнаружена ошибка в цене или адрес за пределами нашей зоны доставки.</p>
@@ -304,7 +304,7 @@ const PAGES: PageCopy[] = [
 <p>Как потребитель в ЕС, у вас есть 14 календарных дней с момента получения, чтобы отказаться от договора без объяснения причин. Подробная процедура и исключения — в нашей <a href="/legal/returns">политике возврата</a>.</p>
 
 <h2>5. Гарантия</h2>
-<p>На все товары действует установленная законом двухлетняя гарантия соответствия. Если товар пришёл повреждённым или неисправным, свяжитесь с нами в течение 14 дней по адресу <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a>, приложив фото и номер заказа.</p>
+<p>На все товары действует установленная законом двухлетняя гарантия соответствия. Если товар пришёл повреждённым или неисправным, свяжитесь с нами в течение 14 дней по адресу <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a>, приложив фото и номер заказа.</p>
 
 <h2>6. Ограничение ответственности</h2>
 <p>Мы не несём ответственности за реакции кожи на аллергены, указанные в составе. Проведите тест на небольшом участке перед применением; при раздражении прекратите использование и обратитесь к врачу.</p>
@@ -322,7 +322,7 @@ const PAGES: PageCopy[] = [
     translations: {
       [Locale.EN]: {
         title: "Cookie policy",
-        seoTitle: "Cookie policy — YU.R Skin Solution",
+        seoTitle: "Cookie policy — Asian Beauty Shop",
         seoDescription:
           "What cookies we set, why we set them, and how you can change your preferences.",
         body: `
@@ -351,7 +351,7 @@ const PAGES: PageCopy[] = [
       },
       [Locale.NL]: {
         title: "Cookiebeleid",
-        seoTitle: "Cookiebeleid — YU.R Skin Solution",
+        seoTitle: "Cookiebeleid — Asian Beauty Shop",
         seoDescription:
           "Welke cookies we plaatsen, waarom en hoe je je voorkeuren kan aanpassen.",
         body: `
@@ -380,7 +380,7 @@ const PAGES: PageCopy[] = [
       },
       [Locale.FR]: {
         title: "Politique de cookies",
-        seoTitle: "Politique de cookies — YU.R Skin Solution",
+        seoTitle: "Politique de cookies — Asian Beauty Shop",
         seoDescription:
           "Quels cookies nous déposons, pourquoi, et comment modifier vos préférences.",
         body: `
@@ -409,7 +409,7 @@ const PAGES: PageCopy[] = [
       },
       [Locale.RU]: {
         title: "Политика cookie",
-        seoTitle: "Политика cookie — YU.R Skin Solution",
+        seoTitle: "Политика cookie — Asian Beauty Shop",
         seoDescription:
           "Какие cookie мы используем, зачем и как изменить ваши предпочтения.",
         body: `
@@ -445,9 +445,9 @@ const PAGES: PageCopy[] = [
     translations: {
       [Locale.EN]: {
         title: "Returns &amp; refunds",
-        seoTitle: "Returns &amp; refunds — YU.R Skin Solution",
+        seoTitle: "Returns &amp; refunds — Asian Beauty Shop",
         seoDescription:
-          "How to return a YU.R order within 14 days under EU consumer law — process, timing, return address and the model withdrawal form.",
+          "How to return a Asian Beauty Shop order within 14 days under EU consumer law — process, timing, return address and the model withdrawal form.",
         body: `
 <p>We want you to love what you ordered. If something isn't right, here's how to send it back. This policy follows the EU Consumer Rights Directive 2011/83 and is the one that applies to every order shipped from Belgium.</p>
 
@@ -456,7 +456,7 @@ const PAGES: PageCopy[] = [
 
 <h2>How to start a return</h2>
 <ol>
-  <li>Email <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> with your order number (e.g. <em>YUR-1042</em>) and which items you'd like to return. You can also copy-paste the model withdrawal form at the bottom of this page.</li>
+  <li>Email <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> with your order number (e.g. <em>YUR-1042</em>) and which items you'd like to return. You can also copy-paste the model withdrawal form at the bottom of this page.</li>
   <li>We'll reply within two working days with a return reference and — depending on your country — a prepaid return label or the return address.</li>
   <li>Pack the products in their original box where possible. Include a note with your order number so we can match the parcel quickly.</li>
   <li>Ship the parcel within <strong>14 days</strong> of notifying us.</li>
@@ -477,15 +477,15 @@ Belgium</p>
 <p>Outbound shipping is refunded on your first return per order; return shipping is at your expense unless the product arrived damaged, defective, or not as described.</p>
 
 <h2>Damaged, defective, or wrong products</h2>
-<p>If your parcel arrives damaged or you receive the wrong product, email <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> with a photo and your order number within 14 days. We'll send a replacement or issue a full refund — including return shipping — at no cost to you.</p>
+<p>If your parcel arrives damaged or you receive the wrong product, email <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> with a photo and your order number within 14 days. We'll send a replacement or issue a full refund — including return shipping — at no cost to you.</p>
 
 <h2>Questions?</h2>
-<p>Write to <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a>. We reply within one working day (Mon–Fri).</p>
+<p>Write to <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a>. We reply within one working day (Mon–Fri).</p>
 
 <h2>Model withdrawal form</h2>
 <p>You aren't required to use this form — any clear statement of your decision to withdraw is enough — but you can copy, fill in and send the lines below if you prefer.</p>
 <blockquote>
-<p><em>To: K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgium — hello@yurskinsolution.eu</em></p>
+<p><em>To: K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgium — hello@asianbeautyshop.eu</em></p>
 <p>I/we hereby give notice that I/we withdraw from my/our contract of sale of the following goods:<br>
 Order number:<br>
 Ordered on / received on:<br>
@@ -501,9 +501,9 @@ Signature (only if this form is notified on paper):</p>
       },
       [Locale.NL]: {
         title: "Retour &amp; terugbetaling",
-        seoTitle: "Retour &amp; terugbetaling — YU.R Skin Solution",
+        seoTitle: "Retour &amp; terugbetaling — Asian Beauty Shop",
         seoDescription:
-          "Hoe je een YU.R-bestelling binnen 14 dagen retourneert volgens Europees consumentenrecht — procedure, termijnen, retouradres en modelformulier voor herroeping.",
+          "Hoe je een Asian Beauty Shop-bestelling binnen 14 dagen retourneert volgens Europees consumentenrecht — procedure, termijnen, retouradres en modelformulier voor herroeping.",
         body: `
 <p>We willen dat je houdt van wat je bestelde. Is er iets niet goed? Zo stuur je het terug. Dit beleid volgt de Europese richtlijn consumentenrechten 2011/83 en geldt voor elke bestelling die we verzenden vanuit België.</p>
 
@@ -512,7 +512,7 @@ Signature (only if this form is notified on paper):</p>
 
 <h2>Hoe start je een retour</h2>
 <ol>
-  <li>Mail <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> met je bestelnummer (bv. <em>YUR-1042</em>) en welke artikelen je wilt retourneren. Je kunt ook het modelformulier onderaan deze pagina kopiëren.</li>
+  <li>Mail <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> met je bestelnummer (bv. <em>YUR-1042</em>) en welke artikelen je wilt retourneren. Je kunt ook het modelformulier onderaan deze pagina kopiëren.</li>
   <li>We antwoorden binnen twee werkdagen met een retourreferentie en — afhankelijk van je land — een retourlabel of het retouradres.</li>
   <li>Verpak de producten indien mogelijk in hun oorspronkelijke doos. Voeg een briefje toe met je bestelnummer zodat we het pakket snel kunnen koppelen.</li>
   <li>Verstuur het pakket binnen <strong>14 dagen</strong> na je melding.</li>
@@ -533,15 +533,15 @@ België</p>
 <p>Uitgaande verzendkosten worden terugbetaald bij je eerste retour per bestelling; retourkosten zijn voor jouw rekening, tenzij het product beschadigd, defect of niet conform was.</p>
 
 <h2>Beschadigd, defect of verkeerd product</h2>
-<p>Is je pakket beschadigd aangekomen of heb je het verkeerde product ontvangen? Mail binnen 14 dagen naar <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> met een foto en je bestelnummer. We sturen een vervanging of betalen alles terug — inclusief retourkosten — kosteloos.</p>
+<p>Is je pakket beschadigd aangekomen of heb je het verkeerde product ontvangen? Mail binnen 14 dagen naar <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> met een foto en je bestelnummer. We sturen een vervanging of betalen alles terug — inclusief retourkosten — kosteloos.</p>
 
 <h2>Vragen?</h2>
-<p>Schrijf naar <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a>. We antwoorden binnen één werkdag (ma–vr).</p>
+<p>Schrijf naar <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a>. We antwoorden binnen één werkdag (ma–vr).</p>
 
 <h2>Modelformulier voor herroeping</h2>
 <p>Je bent niet verplicht dit formulier te gebruiken — elke duidelijke verklaring dat je de overeenkomst wilt herroepen volstaat — maar je mag onderstaande tekst kopiëren, invullen en opsturen als je dat prettig vindt.</p>
 <blockquote>
-<p><em>Aan: K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, België — hello@yurskinsolution.eu</em></p>
+<p><em>Aan: K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, België — hello@asianbeautyshop.eu</em></p>
 <p>Ik/wij deel/delen u hierbij mede dat ik/wij onze overeenkomst betreffende de verkoop van de volgende goederen herroep/herroepen:<br>
 Bestelnummer:<br>
 Besteld op / ontvangen op:<br>
@@ -557,9 +557,9 @@ Handtekening (alleen wanneer dit formulier op papier wordt ingediend):</p>
       },
       [Locale.FR]: {
         title: "Retours &amp; remboursements",
-        seoTitle: "Retours &amp; remboursements — YU.R Skin Solution",
+        seoTitle: "Retours &amp; remboursements — Asian Beauty Shop",
         seoDescription:
-          "Comment retourner une commande YU.R sous 14 jours conformément au droit européen — procédure, délais, adresse de retour et formulaire de rétractation.",
+          "Comment retourner une commande Asian Beauty Shop sous 14 jours conformément au droit européen — procédure, délais, adresse de retour et formulaire de rétractation.",
         body: `
 <p>Nous voulons que vous aimiez ce que vous avez commandé. Si quelque chose ne va pas, voici comment nous le renvoyer. Cette politique suit la directive européenne 2011/83 relative aux droits des consommateurs et s'applique à chaque commande expédiée depuis la Belgique.</p>
 
@@ -568,7 +568,7 @@ Handtekening (alleen wanneer dit formulier op papier wordt ingediend):</p>
 
 <h2>Comment initier un retour</h2>
 <ol>
-  <li>Écrivez à <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> avec votre numéro de commande (ex. <em>YUR-1042</em>) et les articles à retourner. Vous pouvez aussi copier-coller le formulaire type de rétractation en bas de cette page.</li>
+  <li>Écrivez à <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> avec votre numéro de commande (ex. <em>YUR-1042</em>) et les articles à retourner. Vous pouvez aussi copier-coller le formulaire type de rétractation en bas de cette page.</li>
   <li>Nous répondons sous deux jours ouvrés avec une référence de retour et — selon votre pays — une étiquette prépayée ou l'adresse de retour.</li>
   <li>Emballez les produits dans leur boîte d'origine si possible. Joignez un mot avec votre numéro de commande pour que nous puissions associer le colis rapidement.</li>
   <li>Expédiez le colis dans les <strong>14 jours</strong> suivant votre notification.</li>
@@ -589,15 +589,15 @@ Belgique</p>
 <p>Les frais d'expédition aller sont remboursés sur votre premier retour par commande ; les frais de retour restent à votre charge, sauf si le produit est arrivé endommagé, défectueux ou non conforme à la description.</p>
 
 <h2>Produit endommagé, défectueux ou incorrect</h2>
-<p>Si votre colis arrive endommagé ou que vous recevez un produit incorrect, écrivez-nous sous 14 jours à <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> avec une photo et votre numéro de commande. Nous envoyons un remplacement ou remboursons l'intégralité — frais de retour inclus — sans frais pour vous.</p>
+<p>Si votre colis arrive endommagé ou que vous recevez un produit incorrect, écrivez-nous sous 14 jours à <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> avec une photo et votre numéro de commande. Nous envoyons un remplacement ou remboursons l'intégralité — frais de retour inclus — sans frais pour vous.</p>
 
 <h2>Des questions ?</h2>
-<p>Écrivez à <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a>. Nous répondons sous un jour ouvré (lun–ven).</p>
+<p>Écrivez à <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a>. Nous répondons sous un jour ouvré (lun–ven).</p>
 
 <h2>Formulaire type de rétractation</h2>
 <p>Vous n'êtes pas tenu d'utiliser ce formulaire — toute déclaration claire de votre décision de vous rétracter suffit — mais vous pouvez copier, remplir et envoyer le texte ci-dessous si vous préférez.</p>
 <blockquote>
-<p><em>À : K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgique — hello@yurskinsolution.eu</em></p>
+<p><em>À : K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgique — hello@asianbeautyshop.eu</em></p>
 <p>Je/nous vous notifie/notifions par la présente ma/notre rétractation du contrat portant sur la vente des biens suivants :<br>
 Numéro de commande :<br>
 Commandé le / reçu le :<br>
@@ -613,9 +613,9 @@ Signature (uniquement en cas de notification du présent formulaire par papier) 
       },
       [Locale.RU]: {
         title: "Возврат и возмещение",
-        seoTitle: "Возврат и возмещение — YU.R Skin Solution",
+        seoTitle: "Возврат и возмещение — Asian Beauty Shop",
         seoDescription:
-          "Как вернуть заказ YU.R в течение 14 дней согласно европейскому законодательству — процедура, сроки, адрес возврата и типовая форма отказа.",
+          "Как вернуть заказ Asian Beauty Shop в течение 14 дней согласно европейскому законодательству — процедура, сроки, адрес возврата и типовая форма отказа.",
         body: `
 <p>Мы хотим, чтобы вам нравился ваш заказ. Если что-то не так — вот как его вернуть. Эта политика основана на Директиве ЕС 2011/83 о правах потребителей и действует для каждого заказа, отправленного из Бельгии.</p>
 
@@ -624,7 +624,7 @@ Signature (uniquement en cas de notification du présent formulaire par papier) 
 
 <h2>Как оформить возврат</h2>
 <ol>
-  <li>Напишите на <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> с номером заказа (например, <em>YUR-1042</em>) и списком товаров к возврату. Можно также скопировать типовую форму отказа в конце страницы.</li>
+  <li>Напишите на <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> с номером заказа (например, <em>YUR-1042</em>) и списком товаров к возврату. Можно также скопировать типовую форму отказа в конце страницы.</li>
   <li>Мы ответим в течение двух рабочих дней, пришлём номер возврата и — в зависимости от страны — предоплаченную этикетку либо адрес возврата.</li>
   <li>По возможности упакуйте товары в оригинальную коробку. Приложите записку с номером заказа, чтобы мы быстро сопоставили посылку.</li>
   <li>Отправьте посылку в течение <strong>14 дней</strong> после уведомления.</li>
@@ -645,15 +645,15 @@ Boomsesteenweg 41/4b<br>
 <p>Стоимость прямой доставки возмещается при первом возврате по заказу; обратная доставка оплачивается вами, если только товар не пришёл повреждённым, неисправным или не соответствующим описанию.</p>
 
 <h2>Повреждённый, неисправный или неверный товар</h2>
-<p>Если посылка пришла повреждённой или вы получили не тот товар — напишите в течение 14 дней на <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> с фотографией и номером заказа. Мы бесплатно отправим замену или вернём полную сумму, включая стоимость обратной доставки.</p>
+<p>Если посылка пришла повреждённой или вы получили не тот товар — напишите в течение 14 дней на <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> с фотографией и номером заказа. Мы бесплатно отправим замену или вернём полную сумму, включая стоимость обратной доставки.</p>
 
 <h2>Вопросы?</h2>
-<p>Пишите на <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a>. Мы отвечаем в течение одного рабочего дня (пн–пт).</p>
+<p>Пишите на <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a>. Мы отвечаем в течение одного рабочего дня (пн–пт).</p>
 
 <h2>Типовая форма отказа</h2>
 <p>Использовать эту форму не обязательно — достаточно любого ясного заявления о вашем намерении отказаться — но вы можете скопировать, заполнить и отправить приведённый ниже текст, если так удобнее.</p>
 <blockquote>
-<p><em>Кому: K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, Бельгия — hello@yurskinsolution.eu</em></p>
+<p><em>Кому: K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, Бельгия — hello@asianbeautyshop.eu</em></p>
 <p>Настоящим я/мы уведомляю/уведомляем об отказе от заключённого мной/нами договора купли-продажи следующих товаров:<br>
 Номер заказа:<br>
 Дата заказа / дата получения:<br>
@@ -676,9 +676,9 @@ Boomsesteenweg 41/4b<br>
     translations: {
       [Locale.EN]: {
         title: "Imprint",
-        seoTitle: "Imprint — YU.R Skin Solution",
+        seoTitle: "Imprint — Asian Beauty Shop",
         seoDescription:
-          "Legal information about K'Elmus Group BV, the company behind YU.R Skin Solution.",
+          "Legal information about K'Elmus Group BV, the company behind Asian Beauty Shop.",
         body: `
 <h2>Company</h2>
 <p><strong>K'Elmus Group BV</strong><br>
@@ -697,10 +697,9 @@ IBAN: <strong>BE96 0689 5761 0905</strong><br>
 BIC/SWIFT: GKCCBEBB</p>
 
 <h2>Contact</h2>
-<p>Email: <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a></p>
+<p>Email: <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a></p>
 
 <h2>Responsible for content</h2>
-<p>Sofia &mdash; Founder, K'Elmus Group BV.</p>
 
 <h2>Dispute resolution</h2>
 <p>The European Commission provides an online dispute resolution platform at <a href="https://ec.europa.eu/consumers/odr">ec.europa.eu/consumers/odr</a>. We are not obliged to participate in dispute resolution proceedings before a consumer arbitration board, but we are willing to do so.</p>
@@ -708,9 +707,9 @@ BIC/SWIFT: GKCCBEBB</p>
       },
       [Locale.NL]: {
         title: "Wettelijke vermeldingen",
-        seoTitle: "Wettelijke vermeldingen — YU.R Skin Solution",
+        seoTitle: "Wettelijke vermeldingen — Asian Beauty Shop",
         seoDescription:
-          "Juridische informatie over K'Elmus Group BV, het bedrijf achter YU.R Skin Solution.",
+          "Juridische informatie over K'Elmus Group BV, het bedrijf achter Asian Beauty Shop.",
         body: `
 <h2>Onderneming</h2>
 <p><strong>K'Elmus Group BV</strong><br>
@@ -729,10 +728,9 @@ IBAN: <strong>BE96 0689 5761 0905</strong><br>
 BIC/SWIFT: GKCCBEBB</p>
 
 <h2>Contact</h2>
-<p>E-mail: <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a></p>
+<p>E-mail: <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a></p>
 
 <h2>Verantwoordelijk voor de inhoud</h2>
-<p>Sofia &mdash; Oprichtster, K'Elmus Group BV.</p>
 
 <h2>Geschillenregeling</h2>
 <p>De Europese Commissie voorziet in een online geschillenplatform op <a href="https://ec.europa.eu/consumers/odr">ec.europa.eu/consumers/odr</a>. Wij zijn niet verplicht om deel te nemen aan een consumentenarbitrageprocedure, maar staan daarvoor open.</p>
@@ -740,9 +738,9 @@ BIC/SWIFT: GKCCBEBB</p>
       },
       [Locale.FR]: {
         title: "Mentions légales",
-        seoTitle: "Mentions légales — YU.R Skin Solution",
+        seoTitle: "Mentions légales — Asian Beauty Shop",
         seoDescription:
-          "Informations légales sur K'Elmus Group BV, la société derrière YU.R Skin Solution.",
+          "Informations légales sur K'Elmus Group BV, la société derrière Asian Beauty Shop.",
         body: `
 <h2>Société</h2>
 <p><strong>K'Elmus Group BV</strong><br>
@@ -761,10 +759,9 @@ IBAN : <strong>BE96 0689 5761 0905</strong><br>
 BIC/SWIFT : GKCCBEBB</p>
 
 <h2>Contact</h2>
-<p>E-mail : <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a></p>
+<p>E-mail : <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a></p>
 
 <h2>Responsable du contenu</h2>
-<p>Sofia &mdash; Fondatrice, K'Elmus Group BV.</p>
 
 <h2>Règlement des litiges</h2>
 <p>La Commission européenne met à disposition une plateforme de règlement en ligne des litiges : <a href="https://ec.europa.eu/consumers/odr">ec.europa.eu/consumers/odr</a>. Nous ne sommes pas tenus de participer à une procédure d'arbitrage de consommation, mais y sommes ouverts.</p>
@@ -772,9 +769,9 @@ BIC/SWIFT : GKCCBEBB</p>
       },
       [Locale.RU]: {
         title: "Выходные данные",
-        seoTitle: "Выходные данные — YU.R Skin Solution",
+        seoTitle: "Выходные данные — Asian Beauty Shop",
         seoDescription:
-          "Юридическая информация о K'Elmus Group BV, компании, стоящей за YU.R Skin Solution.",
+          "Юридическая информация о K'Elmus Group BV, компании, стоящей за Asian Beauty Shop.",
         body: `
 <h2>Компания</h2>
 <p><strong>K'Elmus Group BV</strong><br>
@@ -793,10 +790,9 @@ IBAN: <strong>BE96 0689 5761 0905</strong><br>
 BIC/SWIFT: GKCCBEBB</p>
 
 <h2>Контакты</h2>
-<p>E-mail: <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a></p>
+<p>E-mail: <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a></p>
 
 <h2>Ответственный за содержание</h2>
-<p>София &mdash; основательница, K'Elmus Group BV.</p>
 
 <h2>Разрешение споров</h2>
 <p>Еврокомиссия предоставляет онлайн-платформу для разрешения споров: <a href="https://ec.europa.eu/consumers/odr">ec.europa.eu/consumers/odr</a>. Мы не обязаны участвовать в процедуре потребительского арбитража, но готовы это делать.</p>
@@ -814,18 +810,18 @@ BIC/SWIFT: GKCCBEBB</p>
     key: "about",
     translations: {
       [Locale.EN]: {
-        title: "About YU.R Skin Solution",
-        seoTitle: "About — YU.R Skin Solution",
+        title: "About Asian Beauty Shop",
+        seoTitle: "About — Asian Beauty Shop",
         seoDescription:
-          "The brand, story, and philosophy behind YU.R Skin Solution — Korean skincare built on 30 years of expertise, made for skin that wants to work with it, not against it.",
+          "The brand, story, and philosophy behind Asian Beauty Shop — Korean skincare built on 30 years of expertise, made for skin that wants to work with it, not against it.",
         body: `
-<p class="lede"><em>You Are the Skin Solution.</em> YU.R Skin Solution is dedicated to high-performance skincare that blends traditional Korean beauty wisdom with modern cosmetic science. Founded on innovation and uncompromising quality, we create products that deliver visible results — and that respect the skin's long-term health while they do it.</p>
+<p class="lede"><em>You Are the Skin Solution.</em> Asian Beauty Shop is dedicated to high-performance skincare that blends traditional Korean beauty wisdom with modern cosmetic science. Founded on innovation and uncompromising quality, we create products that deliver visible results — and that respect the skin's long-term health while they do it.</p>
 
 <h2>Our story</h2>
-<p>Founded by Mr. and Mrs. Jung — renowned experts with over thirty years of experience in Korean skincare manufacturing — YU.R Skin Solution launched in South Korea in 2017, bringing together deep expertise, innovation, and a refined approach to skin health.</p>
+<p>Founded by Mr. and Mrs. Jung — renowned experts with over thirty years of experience in Korean skincare manufacturing — Asian Beauty Shop launched in South Korea in 2017, bringing together deep expertise, innovation, and a refined approach to skin health.</p>
 <p>Initially growing across the Commonwealth of Independent States, the brand has been expanding its global presence since 2023, entering and captivating international markets.</p>
-<p>YU.R was created in response to the growing need for effective, science-driven skincare that goes beyond surface-level results. The brand was founded with a clear vision: to deliver targeted solutions that address the root causes of skin concerns rather than simply concealing them.</p>
-<p>At the heart of YU.R lies its philosophy — <strong>"You Are the Skin Solution"</strong> — emphasising the importance of personalised care and the belief that healthy skin begins with understanding its unique needs.</p>
+<p>Asian Beauty Shop was created in response to the growing need for effective, science-driven skincare that goes beyond surface-level results. The brand was founded with a clear vision: to deliver targeted solutions that address the root causes of skin concerns rather than simply concealing them.</p>
+<p>At the heart of Asian Beauty Shop lies its philosophy — <strong>"You Are the Skin Solution"</strong> — emphasising the importance of personalised care and the belief that healthy skin begins with understanding its unique needs.</p>
 
 <h2>Our mission</h2>
 <p>To create intelligent, science-driven skincare that delivers visible and lasting results. We aim to provide targeted solutions that address individual skin concerns while supporting the skin's natural health, balance, and radiance.</p>
@@ -846,7 +842,7 @@ BIC/SWIFT: GKCCBEBB</p>
 <p>Sustainability remains a core part of our philosophy. Across both facilities, we prioritise eco-conscious processes, reducing waste and incorporating environmentally friendly materials wherever possible.</p>
 
 <h2>Certifications &amp; compliance</h2>
-<p>YU.R products are certified and compliant with international safety and cosmetic regulations, including <strong>CPNP</strong> (EU Cosmetic Notification), <strong>ECAS</strong> (Emirates Conformity Assessment Scheme), <strong>Montaji</strong> (Dubai Municipality Authority), and <strong>GMP</strong> (Good Manufacturing Practice).</p>
+<p>Asian Beauty Shop products are certified and compliant with international safety and cosmetic regulations, including <strong>CPNP</strong> (EU Cosmetic Notification), <strong>ECAS</strong> (Emirates Conformity Assessment Scheme), <strong>Montaji</strong> (Dubai Municipality Authority), and <strong>GMP</strong> (Good Manufacturing Practice).</p>
 
 <h2>A note on pregnancy &amp; breastfeeding</h2>
 <p>Our products are formulated with carefully selected ingredients and are designed to be gentle on the skin. During pregnancy and breastfeeding, skin can become more sensitive — we advise consulting a healthcare professional before introducing any new skincare into your routine during this period.</p>
@@ -869,7 +865,7 @@ BIC/SWIFT: GKCCBEBB</p>
     translations: {
       [Locale.EN]: {
         title: "Shipping",
-        seoTitle: "Shipping — YU.R Skin Solution",
+        seoTitle: "Shipping — Asian Beauty Shop",
         seoDescription:
           "Where we ship, how long it takes, and how much it costs. Flat-rate across Belgium, the Netherlands, France, Luxembourg and Germany — free above €75.",
         body: `
@@ -885,7 +881,7 @@ BIC/SWIFT: GKCCBEBB</p>
   <li><strong>Netherlands</strong> — 2–3 working days</li>
   <li><strong>France &amp; Germany</strong> — 3–5 working days</li>
 </ul>
-<p>Delivery times are indicative; they can stretch around public holidays and Belgian postal strike days. If a parcel takes longer than a week beyond the upper estimate, email <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> with your order number and we'll trace it together.</p>
+<p>Delivery times are indicative; they can stretch around public holidays and Belgian postal strike days. If a parcel takes longer than a week beyond the upper estimate, email <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> with your order number and we'll trace it together.</p>
 
 <h2>Tracking</h2>
 <p>Once your parcel ships you'll receive an email with a tracking link. You can also find it inside your <a href="/account/orders">account</a> under the order details.</p>
@@ -897,13 +893,13 @@ BIC/SWIFT: GKCCBEBB</p>
 <p>If your parcel is returned to us as undeliverable — wrong address, missed collection, refused delivery — we'll email you for the correct details. A re-shipment is covered by our flat-rate fee; we'll confirm the total before anything leaves the studio a second time.</p>
 
 <h2>Damaged in transit</h2>
-<p>If your parcel arrives damaged, email <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> with a photo and your order number within 14 days. We'll replace the affected items or issue a full refund at no cost to you — see our <a href="/legal/returns">returns policy</a> for full details.</p>
+<p>If your parcel arrives damaged, email <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> with a photo and your order number within 14 days. We'll replace the affected items or issue a full refund at no cost to you — see our <a href="/legal/returns">returns policy</a> for full details.</p>
 
 <h2>Packaging</h2>
 <p>Glass and ceramic go out in recycled moulded-pulp trays. The outer carton is FSC-certified cardboard, sealed with paper tape. No plastic void-fill. Everything we send is curb-side recyclable.</p>
 
 <h2>Questions</h2>
-<p>Anything we haven't covered? Write to <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> — we reply within one working day, Monday to Friday.</p>
+<p>Anything we haven't covered? Write to <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> — we reply within one working day, Monday to Friday.</p>
 `,
       },
     },
@@ -920,9 +916,9 @@ BIC/SWIFT: GKCCBEBB</p>
     translations: {
       [Locale.EN]: {
         title: "Frequently asked questions",
-        seoTitle: "FAQ — YU.R Skin Solution",
+        seoTitle: "FAQ — Asian Beauty Shop",
         seoDescription:
-          "Answers to the questions we get most often — about ordering, shipping, returns, ingredients, routines, and the YU.R brand.",
+          "Answers to the questions we get most often — about ordering, shipping, returns, ingredients, routines, and the Asian Beauty Shop brand.",
         body: `
 <p class="lede">Before writing to us, have a look below — the answer is probably here. If it isn't, we'd rather hear from you. <a href="/contact">Contact us</a> any time.</p>
 
@@ -935,7 +931,7 @@ BIC/SWIFT: GKCCBEBB</p>
 <p>Bancontact, iDEAL, credit card (Visa, Mastercard, Amex), and SEPA bank transfer — all processed securely by Mollie. We don't see or store your card details.</p>
 
 <h3>Can I change or cancel an order after it's placed?</h3>
-<p>If your order hasn't shipped yet, email <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> with your order number and the change you need — we'll help where we can. Once the parcel is with the carrier, you'll need to use our <a href="/legal/returns">returns flow</a> when it arrives.</p>
+<p>If your order hasn't shipped yet, email <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> with your order number and the change you need — we'll help where we can. Once the parcel is with the carrier, you'll need to use our <a href="/legal/returns">returns flow</a> when it arrives.</p>
 
 <h2>Shipping &amp; delivery</h2>
 
@@ -958,17 +954,17 @@ BIC/SWIFT: GKCCBEBB</p>
 
 <h2>Products &amp; ingredients</h2>
 
-<h3>Are YU.R products cruelty-free and vegan?</h3>
-<p>All YU.R products are cruelty-free — no animal testing at any stage, as required by EU cosmetic law and by our own standards. Most (not all) of our range is also vegan; check each product's detail page for the specific designation.</p>
+<h3>Are Asian Beauty Shop products cruelty-free and vegan?</h3>
+<p>All Asian Beauty Shop products are cruelty-free — no animal testing at any stage, as required by EU cosmetic law and by our own standards. Most (not all) of our range is also vegan; check each product's detail page for the specific designation.</p>
 
 <h3>Are your products suitable during pregnancy or breastfeeding?</h3>
 <p>Our formulas are gentle, but the skin can behave differently during pregnancy and breastfeeding. We advise consulting a healthcare professional before introducing any new skincare into your routine during this period.</p>
 
-<h3>Where are YU.R products manufactured?</h3>
+<h3>Where are Asian Beauty Shop products manufactured?</h3>
 <p>At two advanced facilities in South Korea — ECIS and CIT — both GMP-certified and compliant with EU (CPNP), Emirates (ECAS) and Dubai (Montaji) cosmetic regulations. Read more on our <a href="/about">about page</a>.</p>
 
 <h3>How do I choose the right products for my skin?</h3>
-<p>Take the <a href="/quiz">skin quiz</a> — four short questions and we'll suggest a four-step routine that fits. If you'd rather talk it through, tap the YU.R seal in the bottom-right corner and our concierge will help you narrow it down.</p>
+<p>Take the <a href="/quiz">skin quiz</a> — four short questions and we'll suggest a four-step routine that fits. If you'd rather talk it through, tap the Asian Beauty Shop seal in the bottom-right corner and our concierge will help you narrow it down.</p>
 
 <h2>Account &amp; privacy</h2>
 
@@ -981,7 +977,7 @@ BIC/SWIFT: GKCCBEBB</p>
 <h2>Business &amp; wholesale</h2>
 
 <h3>Do you offer wholesale or professional accounts?</h3>
-<p>Yes — if you run a salon, spa, or retail space and want to stock YU.R, email <a href="mailto:hello@yurskinsolution.eu">hello@yurskinsolution.eu</a> with a brief description of your business. We'll come back with the wholesale terms and the onboarding steps.</p>
+<p>Yes — if you run a salon, spa, or retail space and want to stock Asian Beauty Shop, email <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> with a brief description of your business. We'll come back with the wholesale terms and the onboarding steps.</p>
 `,
       },
     },

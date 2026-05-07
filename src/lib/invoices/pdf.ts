@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Invoice PDF renderer — A4, branded YU.R, server-side via pdfkit.
+// Invoice PDF renderer — A4, branded Asian Beauty Shop, server-side via pdfkit.
 //
 // Why pdfkit: zero-dep at runtime besides the package itself, no headless
 // browser needed, runs cleanly on Hostinger Node. Output is a Buffer that
@@ -115,7 +115,7 @@ export async function renderInvoicePdf(
           Title: input.number,
           Author: input.issuer.legalName,
           Subject: `Invoice ${input.number}`,
-          Producer: "YU.R Skin Solution",
+          Producer: "Asian Beauty Shop",
         },
       });
 
@@ -456,8 +456,8 @@ function drawFooter(
   // Right column: company registry + thanks.
   const rightLines = [
     `${input.issuer.legalName} · ${input.issuer.rpm}`,
-    "Thank you for choosing YU.R Skin Solution.",
-    "yurskinsolution.eu",
+    "Thank you for choosing Asian Beauty Shop.",
+    "asianbeautyshop.eu",
   ];
   doc.text(rightLines.join("\n"), left + 290, y, {
     width: right - (left + 290),
