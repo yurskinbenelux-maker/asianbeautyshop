@@ -4,22 +4,29 @@
 // EmailCopyEditor — full per-locale copy editor for one email template.
 //
 // Layout:
-//   ┌─ Locale tabs (EN · NL · FR · RU) ──────────────────────────────┐
-//   │ ┌─ Warning banner (always visible) ─────────────────────────┐  │
-//   │ ┌─ Field card ─────────────────────────────────────────────┐  │
-//   │ │ Label · current state badge                               │  │
-//   │ │ [textarea, prefilled with override OR placeholder=default]│  │
-//   │ │ [Save] [Reset] [DeepL→others (EN only)] [Groq polish]    │  │
-//   │ └───────────────────────────────────────────────────────────┘  │
-//   │ ... one card per field                                         │
-//   └────────────────────────────────────────────────────────────────┘
+//   ┌─ Locale tabs (EN · NL · FR · RU) ──────┐ ┌─ Live preview iframe ─┐
+//   │ ┌─ Warning banner ─────────────────┐   │ │                       │
+//   │ ┌─ Field card ────────────────────┐│   │ │   Email rendered      │
+//   │ │ Label · badges                  ││   │ │   with current draft  │
+//   │ │ [textarea]                      ││   │ │   overrides applied,  │
+//   │ │ [Save] [Reset] [DeepL] [Polish] ││   │ │   debounced 400ms.    │
+//   │ └─────────────────────────────────┘│   │ │                       │
+//   │ ... one card per field             │   │ │ (sticky on lg+)       │
+//   └────────────────────────────────────┘   │ └───────────────────────┘
 //
-// Dynamic fields (subject, heading) render read-only with an
-// orange "Contains dynamic placeholders" warning. Sofia can see the
-// default text but can't edit it.
+// Live preview: every text change kicks off a debounced `previewEmailAction`
+// call — the iframe srcDoc updates in ~400ms without leaving the page.
+//
+// Polish button is always visible (when not dynamic). If the field is
+// empty, polish runs against the default text and saves the result as
+// the override — Sofia gets variants of the built-in copy without
+// having to type a starting point.
+//
+// Dynamic fields (subject, heading) render read-only with an orange
+// "Contains dynamic placeholders" warning.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import {
   AlertTriangle,
   Check,
@@ -41,6 +48,7 @@ import {
   resetEmailOverrideAction,
   translateEmailFieldAction,
   polishEmailFieldAction,
+  previewEmailAction,
 } from "@/app/admin/emails/actions";
 
 const LOCALES: Locale[] = [Locale.EN, Locale.NL, Locale.FR, Locale.RU];
@@ -54,17 +62,54 @@ export function EmailCopyEditor({
   initialOverrides,
 }: {
   emailKey: string;
-  /** Just for context if we ever want to show it in the warning. */
   templateLabel: string;
   fieldMeta: EmailFieldDescriptor[];
   defaults: DefaultStringsByLocale;
   initialOverrides: OverrideMap;
 }) {
   const [activeLocale, setActiveLocale] = useState<Locale>(Locale.EN);
-  // Editor's current "in flight" values per (locale, fieldKey). On
-  // successful save these are committed; reset clears them back to
-  // defaults; the page reloads fresh data from the server on revalidation.
   const [overrides, setOverrides] = useState<OverrideMap>(initialOverrides);
+
+  // Live preview state
+  const [previewHtml, setPreviewHtml] = useState<string>("");
+  const [previewSubject, setPreviewSubject] = useState<string>("");
+  const [previewLoading, setPreviewLoading] = useState<boolean>(false);
+  const previewDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Refresh the preview iframe — debounced so we don't fire a request
+  // on every keystroke. 400ms feels live without hammering the server.
+  const refreshPreview = useCallback(
+    (nextOverrides: OverrideMap, locale: Locale) => {
+      if (previewDebounce.current) clearTimeout(previewDebounce.current);
+      previewDebounce.current = setTimeout(async () => {
+        setPreviewLoading(true);
+        try {
+          const result = await previewEmailAction({
+            emailKey,
+            locale,
+            overrides: nextOverrides[locale] ?? {},
+          });
+          if (result.ok) {
+            setPreviewHtml(result.html);
+            setPreviewSubject(result.subject);
+          }
+        } catch (err) {
+          console.error("[email-editor] preview failed", err);
+        } finally {
+          setPreviewLoading(false);
+        }
+      }, 400);
+    },
+    [emailKey],
+  );
+
+  // First load + every locale switch + every text change → refresh preview
+  useEffect(() => {
+    refreshPreview(overrides, activeLocale);
+    return () => {
+      if (previewDebounce.current) clearTimeout(previewDebounce.current);
+    };
+  }, [refreshPreview, overrides, activeLocale]);
 
   const updateField = (locale: Locale, fieldKey: string, value: string) => {
     setOverrides((prev) => ({
@@ -74,90 +119,122 @@ export function EmailCopyEditor({
   };
 
   return (
-    <div className="mt-8">
-      {/* ── Warning banner about dynamic fields ────────────────────── */}
-      <div className="mb-6 flex items-start gap-3 border border-gold/40 bg-gold/5 px-4 py-3">
-        <AlertTriangle
-          className="mt-0.5 h-4 w-4 flex-shrink-0 text-gold"
-          aria-hidden
-        />
-        <div className="text-[13px] leading-relaxed text-ink">
-          <strong className="font-medium">Heads up — dynamic fields.</strong>{" "}
-          Some fields below are marked{" "}
-          <span className="inline-flex items-center bg-gold/15 px-1.5 py-0.5 text-[10px] uppercase tracking-label text-gold">
-            Dynamic
+    <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+      {/* ── Left column: editor ───────────────────────────────────── */}
+      <div className="min-w-0">
+        {/* Warning banner about dynamic fields */}
+        <div className="mb-6 flex items-start gap-3 border border-gold/40 bg-gold/5 px-4 py-3">
+          <AlertTriangle
+            className="mt-0.5 h-4 w-4 flex-shrink-0 text-gold"
+            aria-hidden
+          />
+          <div className="text-[13px] leading-relaxed text-ink">
+            <strong className="font-medium">Heads up — dynamic fields.</strong>{" "}
+            Some fields below are marked{" "}
+            <span className="inline-flex items-center bg-gold/15 px-1.5 py-0.5 text-[10px] uppercase tracking-label text-gold">
+              Dynamic
+            </span>{" "}
+            because they contain placeholders that get filled at send
+            time (the customer&apos;s order number, first name, etc.).
+            Those fields are read-only here. Editing them would
+            compromise the email — to change a dynamic field, ask your
+            developer to update the email&apos;s TS file directly.
+          </div>
+        </div>
+
+        {/* Locale tabs */}
+        <div
+          role="tablist"
+          aria-label="Locale"
+          className="mb-6 flex flex-wrap items-center gap-1 border-b border-ink/10"
+        >
+          {LOCALES.map((loc) => {
+            const isActive = activeLocale === loc;
+            const overrideCount = Object.values(overrides[loc] ?? {}).filter(
+              (v) => v && v.trim().length > 0,
+            ).length;
+            return (
+              <button
+                key={loc}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveLocale(loc)}
+                className={cn(
+                  "relative flex items-center gap-2 px-4 py-2 text-[12px] uppercase tracking-label transition-colors",
+                  isActive
+                    ? "border-b-2 border-ink text-ink"
+                    : "border-b-2 border-transparent text-ink-mid hover:text-ink",
+                )}
+              >
+                {loc}
+                {overrideCount > 0 && (
+                  <span
+                    className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-vermilion px-1 text-[10px] font-medium text-rice"
+                    title={`${overrideCount} override${overrideCount === 1 ? "" : "s"}`}
+                  >
+                    {overrideCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Fields */}
+        <div className="space-y-5">
+          {fieldMeta.map((field) => (
+            <FieldCard
+              key={field.key}
+              emailKey={emailKey}
+              field={field}
+              locale={activeLocale}
+              defaultValue={defaults[activeLocale]?.[field.key] ?? ""}
+              value={overrides[activeLocale]?.[field.key] ?? ""}
+              onChange={(v) => updateField(activeLocale, field.key, v)}
+            />
+          ))}
+        </div>
+
+        <p className="mt-10 text-[12px] leading-relaxed text-ink-mid">
+          Tip — edit the <span className="font-medium text-ink">EN</span>{" "}
+          tab first, then hit{" "}
+          <span className="inline-flex items-center gap-1">
+            <Languages className="h-3 w-3 text-vermilion" /> Translate to
+            NL/FR/RU
           </span>{" "}
-          because they contain placeholders that get filled at send time
-          (the customer&apos;s order number, first name, etc.). Those
-          fields are read-only here. Editing them would compromise the
-          email — to change a dynamic field, ask your developer to update
-          the email&apos;s TS file directly.
+          on each field. DeepL handles the heavy lifting; you can still
+          hand-tweak after.
+        </p>
+      </div>
+
+      {/* ── Right column: live preview iframe ─────────────────────── */}
+      <div className="lg:sticky lg:top-6 lg:self-start">
+        <div className="border border-ink/10 bg-white">
+          {/* Preview header — locale + subject + loading dot */}
+          <div className="flex items-center justify-between gap-3 border-b border-ink/10 px-4 py-3">
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase tracking-label text-ink-mid">
+                Live preview · {activeLocale}
+              </div>
+              <div className="mt-0.5 truncate font-mono text-[12px] text-ink">
+                {previewSubject || "—"}
+              </div>
+            </div>
+            {previewLoading && (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-ink-mid" />
+            )}
+          </div>
+          {/* Iframe — sandboxed so the email's inline styles can't
+              leak into the admin chrome. Updates as Sofia types. */}
+          <iframe
+            title="Email live preview"
+            srcDoc={previewHtml}
+            sandbox=""
+            className="block h-[760px] w-full bg-white"
+          />
         </div>
       </div>
-
-      {/* ── Locale tabs ─────────────────────────────────────────────── */}
-      <div
-        role="tablist"
-        aria-label="Locale"
-        className="mb-6 flex flex-wrap items-center gap-1 border-b border-ink/10"
-      >
-        {LOCALES.map((loc) => {
-          const isActive = activeLocale === loc;
-          const overrideCount = Object.values(overrides[loc] ?? {}).filter(
-            (v) => v && v.trim().length > 0,
-          ).length;
-          return (
-            <button
-              key={loc}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              onClick={() => setActiveLocale(loc)}
-              className={cn(
-                "relative flex items-center gap-2 px-4 py-2 text-[12px] uppercase tracking-label transition-colors",
-                isActive
-                  ? "border-b-2 border-ink text-ink"
-                  : "border-b-2 border-transparent text-ink-mid hover:text-ink",
-              )}
-            >
-              {loc}
-              {overrideCount > 0 && (
-                <span
-                  className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-vermilion px-1 text-[10px] font-medium text-rice"
-                  title={`${overrideCount} override${overrideCount === 1 ? "" : "s"} saved`}
-                >
-                  {overrideCount}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── Fields ──────────────────────────────────────────────────── */}
-      <div className="space-y-5">
-        {fieldMeta.map((field) => (
-          <FieldCard
-            key={field.key}
-            emailKey={emailKey}
-            field={field}
-            locale={activeLocale}
-            defaultValue={defaults[activeLocale]?.[field.key] ?? ""}
-            value={overrides[activeLocale]?.[field.key] ?? ""}
-            onChange={(v) => updateField(activeLocale, field.key, v)}
-          />
-        ))}
-      </div>
-
-      <p className="mt-10 text-[12px] leading-relaxed text-ink-mid">
-        Tip — edit the <span className="font-medium text-ink">EN</span> tab
-        first, then hit the{" "}
-        <span className="inline-flex items-center gap-1">
-          <Languages className="h-3 w-3 text-vermilion" /> Translate to NL/FR/RU
-        </span>{" "}
-        button on each field. DeepL handles the heavy lifting; you can
-        still hand-tweak the result.
-      </p>
     </div>
   );
 }
@@ -190,8 +267,11 @@ function FieldCard({
 
   const isDynamic = field.kind === "dynamic";
   const hasOverride = value.trim().length > 0;
+  // For polish: use override text if any, otherwise the default text.
+  // The button is always visible (when not dynamic) so Sofia can
+  // generate variants from the default copy without typing first.
+  const polishSourceText = value.trim().length > 0 ? value : defaultValue;
 
-  // Run any of our four server actions, threading FormData through.
   const run = async (
     kind: "save" | "reset" | "translate" | "polish",
     formData: FormData,
@@ -206,7 +286,6 @@ function FieldCard({
       const result = await fn({ ok: false }, formData);
       if (result.ok) {
         setSavedAt(Date.now());
-        // Hide the "Saved" indicator after 2.5s
         setTimeout(() => setSavedAt(null), 2500);
       } else {
         setError(result.message ?? "Something went wrong.");
@@ -222,7 +301,7 @@ function FieldCard({
         isDynamic ? "border-gold/30 bg-gold/5" : "border-ink/10",
       )}
     >
-      {/* ── Header row ─────────────────────────────────────────────── */}
+      {/* Header row */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-[12px] font-medium uppercase tracking-label text-ink">
@@ -248,9 +327,9 @@ function FieldCard({
         )}
       </div>
 
-      {/* ── Default text (always shown for dynamic; placeholder otherwise) ── */}
+      {/* Default text (always shown for dynamic; placeholder otherwise) */}
       {isDynamic ? (
-        <pre className="mt-3 whitespace-pre-wrap break-words rounded-none border border-gold/20 bg-white px-3 py-2 font-mono text-[12px] leading-relaxed text-ink-mid">
+        <pre className="mt-3 whitespace-pre-wrap break-words border border-gold/20 bg-white px-3 py-2 font-mono text-[12px] leading-relaxed text-ink-mid">
           {defaultValue || "(no default available — managed in code)"}
         </pre>
       ) : (
@@ -272,7 +351,7 @@ function FieldCard({
               className="mt-3 w-full border border-ink/15 bg-white px-3 py-2 text-[13px] text-ink placeholder:text-ink-mid/60 focus:border-ink focus:outline-none"
             />
           )}
-          <div className="mt-1 flex items-center justify-between text-[11px] text-ink-mid">
+          <div className="mt-1 flex items-center justify-between gap-3 text-[11px] text-ink-mid">
             <span>
               {field.hint ?? "Empty textarea = use the built-in default."}
             </span>
@@ -283,32 +362,34 @@ function FieldCard({
         </>
       )}
 
-      {/* ── Action row ──────────────────────────────────────────────── */}
+      {/* Action row */}
       {!isDynamic && (
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          {/* Save */}
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => {
-              const fd = new FormData();
-              fd.set("emailKey", emailKey);
-              fd.set("locale", locale);
-              fd.set("fieldKey", field.key);
-              fd.set("value", value);
-              run("save", fd, saveEmailOverrideAction);
-            }}
-            className="inline-flex items-center gap-1.5 border border-ink bg-ink px-3 py-1.5 text-[11px] uppercase tracking-label text-rice transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            {busyKind === "save" ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <Save className="h-3 w-3" />
-            )}
-            Save
-          </button>
+          {/* Save — only if there's a value to save */}
+          {value.trim() && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => {
+                const fd = new FormData();
+                fd.set("emailKey", emailKey);
+                fd.set("locale", locale);
+                fd.set("fieldKey", field.key);
+                fd.set("value", value);
+                run("save", fd, saveEmailOverrideAction);
+              }}
+              className="inline-flex items-center gap-1.5 border border-ink bg-ink px-3 py-1.5 text-[11px] uppercase tracking-label text-rice transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {busyKind === "save" ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Save className="h-3 w-3" />
+              )}
+              Save
+            </button>
+          )}
 
-          {/* Reset (only if there's a saved override) */}
+          {/* Reset — only if there's a saved override */}
           {hasOverride && (
             <button
               type="button"
@@ -319,7 +400,7 @@ function FieldCard({
                 fd.set("locale", locale);
                 fd.set("fieldKey", field.key);
                 run("reset", fd, resetEmailOverrideAction);
-                onChange(""); // optimistic clear
+                onChange("");
               }}
               className="inline-flex items-center gap-1.5 border border-ink/15 bg-white px-3 py-1.5 text-[11px] uppercase tracking-label text-ink-mid transition-colors hover:border-ink hover:text-ink disabled:opacity-50"
             >
@@ -332,7 +413,7 @@ function FieldCard({
             </button>
           )}
 
-          {/* DeepL — only on EN tab, only when there's a value to push */}
+          {/* DeepL — EN tab only, requires a value to push */}
           {locale === Locale.EN && value.trim() && (
             <button
               type="button"
@@ -356,8 +437,9 @@ function FieldCard({
             </button>
           )}
 
-          {/* Groq polish */}
-          {value.trim() && (
+          {/* Groq polish — always visible (when not dynamic). Acts on
+              custom text if present, otherwise on the default copy. */}
+          {polishSourceText.trim() && (
             <button
               type="button"
               disabled={pending}
@@ -366,18 +448,22 @@ function FieldCard({
                 fd.set("emailKey", emailKey);
                 fd.set("locale", locale);
                 fd.set("fieldKey", field.key);
-                fd.set("value", value);
+                fd.set("value", polishSourceText);
                 run("polish", fd, polishEmailFieldAction);
               }}
               className="inline-flex items-center gap-1.5 border border-ink/15 bg-white px-3 py-1.5 text-[11px] uppercase tracking-label text-ink transition-colors hover:border-vermilion hover:text-vermilion disabled:opacity-50"
-              title="Polish with Groq — rewrites this value in the same locale, brand voice"
+              title={
+                hasOverride
+                  ? "Polish your custom text with AI"
+                  : "Suggest a variant of the default copy"
+              }
             >
               {busyKind === "polish" ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
               ) : (
                 <Sparkles className="h-3 w-3" />
               )}
-              Polish with AI
+              {hasOverride ? "Polish my text" : "Suggest variant"}
             </button>
           )}
 

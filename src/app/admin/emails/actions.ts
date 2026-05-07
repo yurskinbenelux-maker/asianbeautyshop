@@ -48,6 +48,42 @@ const TestSendSchema = z.object({
   locale: z.enum(LOCALE_VALUES),
 });
 
+// ─────────────────────────────────────────────────────────────────────────
+// Live preview — called by the editor on every (debounced) keystroke so
+// Sofia can see her edits render in the iframe without saving first.
+// Takes the editor's in-memory draft state (a flat Record because Map
+// doesn't serialize across the RSC boundary) and renders the HTML.
+// Pure read operation — no DB writes, no auth side-effects beyond the
+// admin gate.
+// ─────────────────────────────────────────────────────────────────────────
+
+export async function previewEmailAction(input: {
+  emailKey: string;
+  locale: string;
+  /** Draft override values keyed by fieldKey. Empty strings = "use default". */
+  overrides: Record<string, string>;
+}): Promise<{ ok: true; subject: string; html: string } | { ok: false }> {
+  await requireCapability("emails.send", "/admin/emails");
+
+  if (!LOCALE_VALUES.includes(input.locale)) return { ok: false };
+  const template = getEmailTemplate(input.emailKey);
+  if (!template) return { ok: false };
+
+  // Build a Map<fieldKey, value> filtering out empties — the merger
+  // already ignores empties but doing it here keeps the contract
+  // explicit: "no key in the Map means no override for that field".
+  const map = new Map<string, string>();
+  for (const [k, v] of Object.entries(input.overrides)) {
+    if (typeof v === "string" && v.trim().length > 0) {
+      map.set(k, v);
+    }
+  }
+
+  const rendered = template.render(input.locale as Locale, map);
+  if (!rendered) return { ok: false };
+  return { ok: true, subject: rendered.subject, html: rendered.html };
+}
+
 export async function sendTestEmailAction(
   _prev: ActionState,
   formData: FormData,
