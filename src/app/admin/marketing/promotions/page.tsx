@@ -50,7 +50,7 @@ export default async function AdminPromotionsPage({
           Promotions
         </h1>
         <p className="mt-3 text-[13px] leading-relaxed text-ink-mid">
-          The percent-off values for YU.R&apos;s automated coupons. Editing
+          The percent-off values for Asian Beauty Shop&apos;s automated coupons. Editing
           a number here changes every place the discount is displayed (the
           welcome popup, exit-intent popup, quiz card, emails) <em>and</em>{" "}
           the actual discount applied to coupons issued going forward.

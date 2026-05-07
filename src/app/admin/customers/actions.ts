@@ -188,7 +188,7 @@ export async function sendPasswordResetAction(
   // resetPasswordForEmail fires the magic email — Supabase hosts the
   // /reset page and redirects back to our site on success. We rely on
   // the existing auth.callback flow.
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "https://yurskinsolution.eu";
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "https://asianbeautyshop.eu";
   const { error } = await supabaseAdmin().auth.resetPasswordForEmail(user.email, {
     redirectTo: `${origin}/en/account/reset`,
   });

@@ -39,7 +39,7 @@ const STRINGS: Record<Locale, Strings> = {
       preheader: "Points just landed in your account.",
       heading: (f) => (f ? `Done, ${f}.` : "Done."),
       body: (t, p) =>
-        `We've added ${p} points to your account for "${t}". They're in your balance now — open the Asian Beauty Shop Club drawer to spend or save them.`,
+        `We've added ${p} points to your account for "${t}". They're in your balance now — open the A-Beauty Club drawer to spend or save them.`,
       cta: "Open my account",
     },
     rejected: {
@@ -59,7 +59,7 @@ const STRINGS: Record<Locale, Strings> = {
       preheader: "Punten staan op je rekening.",
       heading: (f) => (f ? `Gedaan, ${f}.` : "Gedaan."),
       body: (t, p) =>
-        `We hebben ${p} punten op je account gezet voor "${t}". Ze staan nu in je saldo — open de Asian Beauty Shop Club lade om ze in te wisselen of te bewaren.`,
+        `We hebben ${p} punten op je account gezet voor "${t}". Ze staan nu in je saldo — open de A-Beauty Club lade om ze in te wisselen of te bewaren.`,
       cta: "Open mijn account",
     },
     rejected: {
@@ -79,7 +79,7 @@ const STRINGS: Record<Locale, Strings> = {
       preheader: "Vos points sont arrivés.",
       heading: (f) => (f ? `Voilà, ${f}.` : "Voilà."),
       body: (t, p) =>
-        `Nous avons crédité ${p} points sur votre compte pour "${t}". Ils sont disponibles dès maintenant — ouvrez le tiroir Asian Beauty Shop Club pour les utiliser ou les garder.`,
+        `Nous avons crédité ${p} points sur votre compte pour "${t}". Ils sont disponibles dès maintenant — ouvrez le tiroir A-Beauty Club pour les utiliser ou les garder.`,
       cta: "Ouvrir mon compte",
     },
     rejected: {
@@ -99,7 +99,7 @@ const STRINGS: Record<Locale, Strings> = {
       preheader: "Баллы уже на вашем счёте.",
       heading: (f) => (f ? `Готово, ${f}.` : "Готово."),
       body: (t, p) =>
-        `Мы добавили ${p} баллов на ваш счёт за «${t}». Они уже в балансе — откройте окно Asian Beauty Shop Club, чтобы потратить или сохранить.`,
+        `Мы добавили ${p} баллов на ваш счёт за «${t}». Они уже в балансе — откройте окно A-Beauty Club, чтобы потратить или сохранить.`,
       cta: "Открыть аккаунт",
     },
     rejected: {

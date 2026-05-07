@@ -68,7 +68,7 @@ const SECTIONS: Section[] = [
   { href: "/admin/customers",  label: "Customers",  icon: Users,            cap: "customers.view" },
   { href: "/admin/coupons",    label: "Coupons",    icon: BadgePercent,     cap: "coupons.edit" },
   { href: "/admin/gift-cards", label: "Gift cards", icon: Gift,             cap: "giftcards.view" },
-  { href: "/admin/loyalty",    label: "YU.R Club",  icon: Sparkles,         cap: "loyalty.edit" },
+  { href: "/admin/loyalty",    label: "A-Beauty Club",  icon: Sparkles,         cap: "loyalty.edit" },
   { href: "/admin/reviews",      label: "Reviews",      icon: MessageSquare, cap: "reviews.moderate" },
   { href: "/admin/contact",      label: "Messages",     icon: Mail,          cap: "contact.view" },
   { href: "/admin/testimonials", label: "Testimonials", icon: Quote,         cap: "testimonials.edit" },

@@ -88,12 +88,12 @@ export async function openReplyInMailClient(formData: FormData) {
     data: { status: ContactStatus.REPLIED },
   });
 
-  const subject = `Re: your message to YU.R Skin Solution`;
+  const subject = `Re: your message to Asian Beauty Shop`;
   const quoted = msg.message
     .split("\n")
     .map((line: string) => `> ${line}`)
     .join("\n");
-  const body = `Hi ${msg.name},\n\n\n\n— YU.R Skin Solution\n\n${quoted}`;
+  const body = `Hi ${msg.name},\n\n\n\n— Asian Beauty Shop\n\n${quoted}`;
 
   const mailto = `mailto:${encodeURIComponent(msg.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 

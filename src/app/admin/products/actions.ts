@@ -1031,9 +1031,9 @@ export async function updateOrganise(
   // the single Brand picker, but homepage/shop "Yu•R / Yu•R Pro / Yu•R Me"
   // tabs still query by Product.productLine. Mapping the brand slug to
   // the canonical PRODUCT_LINES dbValue keeps those queries working
-  // without any frontend refactor. Non-YU.R brands (when Sofia adds
+  // without any frontend refactor. Non-Asian Beauty Shop brands (when Sofia adds
   // AHC/COSRX/etc.) get productLine=null — they simply don't appear on
-  // the YU.R-branded line tabs.
+  // the Asian Beauty Shop-branded line tabs.
   const rawBrandId = String(formData.get("brandId") ?? "").trim();
   let brandIdToWrite: string | null = null;
   let brandSlugForLineDerivation: string | null = null;
@@ -1074,9 +1074,9 @@ export async function updateOrganise(
   // already encodes the brand-slug → DB-value mapping (yur → null,
   // yur-pro → "Yu.R PRO", yur-me → "Yu.R Me") so we just look it up.
   // Brands outside that set (future K-beauty additions) get productLine
-  // = null, which means they don't appear on any YU.R-branded line tab —
+  // = null, which means they don't appear on any Asian Beauty Shop-branded line tab —
   // the right behaviour, since Yu•R / Yu•R Pro / Yu•R Me tabs are
-  // YU.R-house concepts and don't apply to outside brands.
+  // Asian Beauty Shop-house concepts and don't apply to outside brands.
   //
   // extraLines is now always [] because the multi-select Lines picker
   // was retired. If a future requirement re-emerges to put one product
@@ -1825,7 +1825,7 @@ export type SuggestTagsResult =
       // The current tags so the client can diff without an extra
       // round-trip. Slugs only — labels are looked up from the
       // existing pill options that the form already has. Brand is
-      // intentionally NOT in the AI suggestion (Sofia picks YU.R / Pro
+      // intentionally NOT in the AI suggestion (Sofia picks Asian Beauty Shop / Pro
       // / Me by hand) so it's not in current either.
       current: {
         categorySlugs: string[];
@@ -1991,7 +1991,7 @@ export async function suggestProductTags(
 // invalid id past), then writes ProductCategory + the three
 // single-axis taxonomies in one transaction per relation.
 //
-// Brand is intentionally NOT touched — Sofia picks the YU.R line
+// Brand is intentionally NOT touched — Sofia picks the Asian Beauty Shop line
 // (Yu•R / Yu•R Pro / Yu•R Me) by hand because the choice depends on
 // marketing intent, not formulation. Apply preserves whatever brand
 // is currently set on the product.

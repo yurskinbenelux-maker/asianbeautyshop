@@ -540,7 +540,7 @@ function SetupReference() {
             </a>{" "}
             create a new job:
             <pre className="mt-2 overflow-x-auto bg-ink/5 p-3 font-mono text-[11px] text-ink">
-{`URL:      https://yurskinsolution.eu/api/cron/instagram-sync
+{`URL:      https://asianbeautyshop.eu/api/cron/instagram-sync
 Schedule: every 4 hours
 Header:   Authorization: Bearer <your CRON_SECRET>`}
             </pre>

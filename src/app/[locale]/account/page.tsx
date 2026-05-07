@@ -74,7 +74,7 @@ export default async function AccountOverviewPage({ params }: Props) {
       )}
 
       {/* ── glance stats ────────────────────────────────────────── */}
-      {/* Middle cell swapped from "lifetime spend" to live Asian Beauty Shop Club
+      {/* Middle cell swapped from "lifetime spend" to live A-Beauty Club
           points — the actionable number for a customer who's already
           decided to come back. Clickable link drops them straight into
           the redeem catalogue so the stat doubles as a CTA. Falls back

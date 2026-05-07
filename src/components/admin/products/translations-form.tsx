@@ -199,7 +199,7 @@ function LocalePanel({
           1. Auto-translate (DeepL): non-EN only. Fills empty fields
              with literal translations of the EN copy. Already wired.
           2. Polish with AI (Groq): every locale. Improves grammar,
-             matches YU.R voice, fixes awkward translation phrasing.
+             matches Asian Beauty Shop voice, fixes awkward translation phrasing.
              Diff modal so Sofia approves field-by-field.
           Polish doesn't touch slug, warnings, or SEO fields. */}
       <div className="flex flex-wrap items-start gap-3">
@@ -310,7 +310,7 @@ function LocalePanel({
             label="SEO title"
             name="seoTitle"
             defaultValue={initial.seoTitle}
-            placeholder="e.g. Centella Calming Essence · YU.R"
+            placeholder="e.g. Centella Calming Essence · Asian Beauty Shop"
             inputRef={(el) => {
               inputRefs.current.seoTitle = el;
             }}

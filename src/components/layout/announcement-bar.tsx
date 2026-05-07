@@ -6,7 +6,7 @@
 //   2. Ink (black): YurClub strip — copy switches by auth state:
 //        · Signed-out → "Earn points on every order — join free"
 //                       (links to sign-up)
-//        · Signed-in  → "{N} points in your Asian Beauty Shop Club balance"
+//        · Signed-in  → "{N} points in your A-Beauty Club balance"
 //                       (links to /account where the drawer opens)
 //
 // The signed-in path runs ONE extra cheap query (LoyaltyAccount.pointsBalance

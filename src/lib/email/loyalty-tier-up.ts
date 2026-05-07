@@ -25,48 +25,48 @@ type Strings = {
 const STRINGS: Record<Locale, Strings> = {
   EN: {
     subject: (t) => `You're now ${t}`,
-    preheader: "A new tier in your Asian Beauty Shop Club account.",
+    preheader: "A new tier in your A-Beauty Club account.",
     heading: (t) => `${t}.`,
     body: (t, prev) =>
       prev
-        ? `Just a quick note: your Asian Beauty Shop Club tier just moved from ${prev} to ${t}. Keep going at your own pace.`
-        : `Welcome to ${t} — your first Asian Beauty Shop Club tier. Keep going at your own pace.`,
+        ? `Just a quick note: your A-Beauty Club tier just moved from ${prev} to ${t}. Keep going at your own pace.`
+        : `Welcome to ${t} — your first A-Beauty Club tier. Keep going at your own pace.`,
     cta: "Open my account",
     signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
     subject: (t) => `Je bent nu ${t}`,
-    preheader: "Een nieuw niveau in je Asian Beauty Shop Club account.",
+    preheader: "Een nieuw niveau in je A-Beauty Club account.",
     heading: (t) => `${t}.`,
     body: (t, prev) =>
       prev
-        ? `Een korte notitie: je Asian Beauty Shop Club-niveau is zojuist veranderd van ${prev} naar ${t}. Ga in je eigen tempo verder.`
-        : `Welkom bij ${t} — je eerste Asian Beauty Shop Club-niveau. Ga in je eigen tempo verder.`,
+        ? `Een korte notitie: je A-Beauty Club-niveau is zojuist veranderd van ${prev} naar ${t}. Ga in je eigen tempo verder.`
+        : `Welkom bij ${t} — je eerste A-Beauty Club-niveau. Ga in je eigen tempo verder.`,
     cta: "Open mijn account",
     signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
     subject: (t) => `Vous êtes désormais ${t}`,
-    preheader: "Un nouveau palier dans votre Asian Beauty Shop Club.",
+    preheader: "Un nouveau palier dans votre A-Beauty Club.",
     heading: (t) => `${t}.`,
     body: (t, prev) =>
       prev
-        ? `Un mot rapide : votre palier Asian Beauty Shop Club vient de passer de ${prev} à ${t}. Continuez à votre rythme.`
-        : `Bienvenue au palier ${t} — votre premier dans le Asian Beauty Shop Club. Continuez à votre rythme.`,
+        ? `Un mot rapide : votre palier A-Beauty Club vient de passer de ${prev} à ${t}. Continuez à votre rythme.`
+        : `Bienvenue au palier ${t} — votre premier dans le A-Beauty Club. Continuez à votre rythme.`,
     cta: "Ouvrir mon compte",
     signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
     subject: (t) => `Вы теперь ${t}`,
-    preheader: "Новый уровень в Asian Beauty Shop Club.",
+    preheader: "Новый уровень в A-Beauty Club.",
     heading: (t) => `${t}.`,
     body: (t, prev) =>
       prev
-        ? `Короткая заметка: ваш уровень Asian Beauty Shop Club только что поднялся с ${prev} до ${t}. Продолжайте в своём темпе.`
-        : `Добро пожаловать на уровень ${t} — ваш первый в Asian Beauty Shop Club. Продолжайте в своём темпе.`,
+        ? `Короткая заметка: ваш уровень A-Beauty Club только что поднялся с ${prev} до ${t}. Продолжайте в своём темпе.`
+        : `Добро пожаловать на уровень ${t} — ваш первый в A-Beauty Club. Продолжайте в своём темпе.`,
     cta: "Открыть аккаунт",
     signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",

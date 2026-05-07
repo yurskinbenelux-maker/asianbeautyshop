@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// /admin/loyalty — YU.R Club hub.
+// /admin/loyalty — A-Beauty Club hub.
 //
 // Dashboard with the key live numbers (members, points outstanding,
 // pending task claims, recent events) plus four big tiles linking to
@@ -70,7 +70,7 @@ export default async function AdminLoyaltyHubPage() {
     <div className="mx-auto max-w-6xl px-8 py-10">
       <header className="mb-8 flex items-end justify-between gap-6">
         <div>
-          <div className="eyebrow">YU.R Club</div>
+          <div className="eyebrow">A-Beauty Club</div>
           <h1 className="mt-2 font-display text-[30px] leading-tight text-ink">
             Loyalty programme
           </h1>

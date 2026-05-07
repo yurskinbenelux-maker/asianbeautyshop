@@ -67,7 +67,7 @@ type Props = {
     /**
      * Currently-selected brand ID (single-select, optional). null when
      * the product has no brand attached — typical for legacy rows
-     * before the YU.R seed ran. Drives the Brand picker at the top of
+     * before the Asian Beauty Shop seed ran. Drives the Brand picker at the top of
      * the form, which writes back to Product.brandId. Server derives
      * Product.productLine from the chosen brand's slug on save.
      */
@@ -220,7 +220,7 @@ export function OrganiseForm({ productId, initial, options }: Props) {
 
       {/* ── Brand ──────────────────────────────────────────────────────
           Single-select. Drives the right column of the customer-facing
-          mega-menu. Initially we seed YU.R / YU.R Pro / YU.R Me here so
+          mega-menu. Initially we seed Yu.R / Yu.R Pro / Yu.R Me here so
           Sofia just picks one; when K-beauty brands arrive she'll add
           AHC / iUNIK / etc. via /admin/brands and they'll appear in
           this dropdown automatically. Hidden input "brandId" feeds the
@@ -634,7 +634,7 @@ function BrandSection({ options, value, onChange }: BrandSectionProps) {
       <div className="mt-5 flex flex-wrap gap-2">
         {active.length === 0 ? (
           <span className="text-[13px] italic text-ink-mid">
-            No brands yet \u2014 seed via the YU.R brands script or add via
+            No brands yet \u2014 seed via the Asian Beauty Shop brands script or add via
             /admin/brands.
           </span>
         ) : (

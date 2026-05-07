@@ -606,7 +606,7 @@ function readCsv(
   if (typeof raw !== "string" || raw.length === 0) {
     return { ok: false, message: "No CSV text was submitted." };
   }
-  // Rough sanity cap — ~8 MB of CSV is easily enough for the whole YU.R
+  // Rough sanity cap — ~8 MB of CSV is easily enough for the whole Asian Beauty Shop
   // catalogue. Prevents a rogue upload from pushing the action over the
   // Next.js 4 MB body limit (we'd get a 413 before reaching here, but the
   // belt-and-braces is nice).
