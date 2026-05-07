@@ -1,72 +1,92 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Popup coordinator — keeps the welcome and quiz popups from talking
-// over each other.
+// Popup coordinator — keeps the on-load popups from talking over each
+// other. The chain is:
 //
-// The site fires two on-load popups (welcome + quiz) and the quiz one
-// must wait for the welcome to be either dismissed by the user OR
-// suppressed (signed-in customer, route blocklist, 14-day cookie). We
-// can't poll DOM state because both popups are independent React trees,
-// so we use a tiny Promise handshake at module scope:
+//   welcome → hero → quiz
 //
-//   • Welcome popup calls markWelcomeFinished() on close / skip / never-show.
-//   • Quiz popup calls awaitWelcomeFinished() — its scheduling timer
-//     starts the moment the promise resolves.
+// Each popup awaits the previous one's "finished" signal before its own
+// delay timer starts. "Finished" means any of: closed by the user, CTA
+// clicked, suppressed (signed-in / route blocklist / cookie window /
+// disabled by Sofia).
+//
+// We can't poll DOM state because the three popups are independent React
+// trees, so we use a tiny Promise handshake at module scope. Each stage
+// has its own resolved-flag + lazy promise:
+//
+//   welcomeFinished  ← first to fire
+//   heroFinished     ← awaits welcomeFinished, then its own timer
+//   (quiz)           ← awaits heroFinished, then its own timer
 //
 // Module-scoped state lives for the lifetime of the page session, which
-// is exactly what we want — once welcome is done, the quiz timer fires
-// and never has to re-coordinate. The promise is created lazily (first
-// caller wins) so import order doesn't matter.
+// is exactly what we want — once a stage is done, downstream popups
+// resolve immediately and never re-coordinate. Promises are created
+// lazily (first caller wins) so import order doesn't matter.
 //
 // Server-render safety: only touches plain JS. No window/localStorage
-// access. The popups themselves handle SSR-vs-client gating.
+// access. Each popup handles SSR-vs-client gating itself.
 // ─────────────────────────────────────────────────────────────────────────
 
-let resolved = false;
-let resolveFn: (() => void) | null = null;
-let promise: Promise<void> | null = null;
+type Stage = {
+  resolved: boolean;
+  resolveFn: (() => void) | null;
+  promise: Promise<void> | null;
+};
 
-function ensurePromise(): Promise<void> {
-  if (promise) return promise;
-  promise = new Promise<void>((resolve) => {
-    if (resolved) {
-      // Someone already called markWelcomeFinished() before any awaiter
-      // — resolve immediately.
+function makeStage(): Stage {
+  return { resolved: false, resolveFn: null, promise: null };
+}
+
+const welcome = makeStage();
+const hero = makeStage();
+
+function ensurePromise(stage: Stage): Promise<void> {
+  if (stage.promise) return stage.promise;
+  stage.promise = new Promise<void>((resolve) => {
+    if (stage.resolved) {
       resolve();
       return;
     }
-    resolveFn = resolve;
+    stage.resolveFn = resolve;
   });
-  return promise;
+  return stage.promise;
 }
 
-/**
- * Welcome popup calls this when:
- *   · The user clicks the X
- *   · The user clicks the CTA (which navigates away)
- *   · The user presses Escape
- *   · The popup decides not to show at all (signed in, blocklisted route,
- *     14-day suppression cookie still active)
- *
- * Idempotent — second and later calls are no-ops, so the welcome popup
- * can call it from every exit path without bookkeeping.
- */
-export function markWelcomeFinished(): void {
-  if (resolved) return;
-  resolved = true;
-  if (resolveFn) {
-    resolveFn();
-    resolveFn = null;
+function markFinished(stage: Stage): void {
+  if (stage.resolved) return;
+  stage.resolved = true;
+  if (stage.resolveFn) {
+    stage.resolveFn();
+    stage.resolveFn = null;
   }
-  // If no one had awaited yet, ensurePromise() will resolve immediately
-  // when called later — see the `if (resolved)` check above.
 }
 
-/**
- * Quiz popup awaits this before starting its own delay timer. Resolves
- * the moment the welcome popup signals it's done (or immediately if
- * welcome already finished by the time quiz mounts — common when the
- * welcome popup is suppressed).
- */
+// ────────── welcome ───────────────────────────────────────────────────
+
+/** Welcome popup calls this on every exit path: close, CTA, Escape, or
+ *  any of its bail-out reasons (signed in, route blocked, suppression
+ *  cookie). Idempotent. */
+export function markWelcomeFinished(): void {
+  markFinished(welcome);
+}
+
+/** Hero popup awaits this before starting its own delay timer.
+ *  Resolves the moment the welcome popup signals it's done (or
+ *  immediately if welcome already finished by the time hero mounts). */
 export function awaitWelcomeFinished(): Promise<void> {
-  return ensurePromise();
+  return ensurePromise(welcome);
+}
+
+// ────────── hero ──────────────────────────────────────────────────────
+
+/** Hero popup calls this on every exit path: close, product click,
+ *  Escape, or its bail-out reasons (disabled, no products, route
+ *  blocked). Idempotent. */
+export function markHeroFinished(): void {
+  markFinished(hero);
+}
+
+/** Quiz popup awaits this before starting its own delay timer.
+ *  Resolves the moment the hero popup signals it's done. */
+export function awaitHeroFinished(): Promise<void> {
+  return ensurePromise(hero);
 }

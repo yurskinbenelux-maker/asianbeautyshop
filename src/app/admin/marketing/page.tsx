@@ -25,6 +25,7 @@ import {
 import { requireCapability } from "@/lib/auth-roles";
 import { readWelcomePopupSettings } from "@/lib/queries/welcome-popup";
 import { readQuizPopupSettings } from "@/lib/queries/quiz-popup";
+import { readHeroPopupSettings } from "@/lib/queries/hero-popup";
 import { readPromoSettings } from "@/lib/queries/promotions";
 import { getAllInstagramPosts } from "@/lib/queries/instagram";
 
@@ -33,9 +34,10 @@ export const dynamic = "force-dynamic";
 export default async function AdminMarketingIndex() {
   await requireCapability("homepage.edit", "/admin");
 
-  const [welcome, quiz, promo, instagramPosts] = await Promise.all([
+  const [welcome, quiz, hero, promo, instagramPosts] = await Promise.all([
     readWelcomePopupSettings(),
     readQuizPopupSettings(),
+    readHeroPopupSettings(),
     readPromoSettings(),
     getAllInstagramPosts(),
   ]);
@@ -84,6 +86,24 @@ export default async function AdminMarketingIndex() {
             </>
           }
           enabled={quiz.enabled}
+        />
+
+        <Card
+          href="/admin/marketing/hero-popup"
+          icon={Sparkles}
+          title="Hero popup (product picks)"
+          description={
+            <>
+              Editorial centred card that lands between the welcome and
+              quiz popups. Hand-pick 3–6 products; the popup shows their
+              images and routes shoppers to the PDP on tap. Currently has{" "}
+              <strong>{hero.productIds.length}</strong>{" "}
+              {hero.productIds.length === 1 ? "product" : "products"}{" "}
+              picked, fires <strong>{hero.delaySeconds}s</strong> after
+              the welcome popup is closed.
+            </>
+          }
+          enabled={hero.enabled}
         />
 
         <Card

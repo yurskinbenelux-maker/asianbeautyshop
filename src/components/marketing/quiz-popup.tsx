@@ -25,7 +25,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { QuizPopupSettings } from "@/lib/queries/quiz-popup";
-import { awaitWelcomeFinished } from "@/lib/marketing/popup-coordinator";
+import { awaitHeroFinished } from "@/lib/marketing/popup-coordinator";
 
 const STORAGE_KEY = "yur:quiz-popup-dismissed";
 const SUPPRESS_DAYS = 14;
@@ -69,11 +69,11 @@ export function QuizPopup({ config }: { config: QuizPopupSettings }) {
     let timer: number | undefined;
     let cancelled = false;
 
-    // Wait for the welcome popup to be finished, THEN start the
-    // quiz-specific delay timer. If welcome was already finished by
-    // mount time (suppressed user, blocklisted route), this resolves
-    // synchronously and the timer fires after the configured delay.
-    awaitWelcomeFinished().then(() => {
+    // Wait for the HERO popup to be finished (which itself awaits the
+    // welcome popup). Chain: welcome → hero → quiz. If any earlier
+    // stage was suppressed, the awaiter resolves synchronously and our
+    // timer fires after the configured delay.
+    awaitHeroFinished().then(() => {
       if (cancelled) return;
       timer = window.setTimeout(
         () => setOpen(true),

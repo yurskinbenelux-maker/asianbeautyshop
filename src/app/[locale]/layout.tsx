@@ -29,8 +29,14 @@ import { readSetting } from "@/lib/settings";
 import { CookieBanner } from "@/components/consent/cookie-banner";
 import { RegisterWelcomePopup } from "@/components/marketing/register-welcome-popup";
 import { QuizPopup } from "@/components/marketing/quiz-popup";
+import { HeroPopup } from "@/components/marketing/hero-popup";
 import { readWelcomePopupSettings } from "@/lib/queries/welcome-popup";
 import { readQuizPopupSettings } from "@/lib/queries/quiz-popup";
+import {
+  readHeroPopupSettings,
+  resolveHeroPopupCopy,
+  getHeroPopupProductCards,
+} from "@/lib/queries/hero-popup";
 import { readPromoSettings } from "@/lib/queries/promotions";
 import { SwRegister } from "@/components/pwa/sw-register";
 import { GoogleTagManager } from "@/components/analytics/google-tag-manager";
@@ -183,11 +189,22 @@ export default async function LocaleLayout({ children, params }: Props) {
   // /admin/marketing. All three are read in parallel so the layout
   // doesn't pay three round-trips. The quiz reward % from `promo`
   // drives the "−X%" chip under the Skin Quiz nav item.
-  const [welcomePopup, quizPopup, promo] = await Promise.all([
+  const [welcomePopup, quizPopup, promo, heroPopup] = await Promise.all([
     readWelcomePopupSettings(),
     readQuizPopupSettings(),
     readPromoSettings(),
+    readHeroPopupSettings(),
   ]);
+
+  // Hydrate hero-popup product cards using the page's Prisma locale, so
+  // the popup speaks the visitor's language. Hero popup is the only one
+  // that displays product translations directly. We pull the cards on
+  // the server so the client component renders synchronously without
+  // a loading state.
+  const heroPopupCards = heroPopup.enabled
+    ? await getHeroPopupProductCards(heroPopup, prismaLocale)
+    : [];
+  const heroPopupCopy = resolveHeroPopupCopy(heroPopup, prismaLocale);
 
   // Free-shipping threshold — surfaced as a progress indicator inside
   // the cart drawer so customers see "€X to go for free shipping"
@@ -289,11 +306,21 @@ export default async function LocaleLayout({ children, params }: Props) {
                 isSignedIn={isSignedIn}
                 config={welcomePopup}
               />
-              {/* Quiz popup — fires after the welcome popup is finished
-                  (closed, dismissed, or skipped). Internal coordinator
-                  resolves a shared promise on welcome's exit so the two
-                  surfaces never overlap. Independent 14-day suppression
-                  cookie + own delay setting (default 30s). */}
+              {/* Hero popup — Variant A editorial card. Fires after the
+                  welcome popup is finished, on homepage routes only.
+                  Sofia edits all copy + product picks at
+                  /admin/marketing/hero-popup. Sits in the middle of
+                  the popup chain: welcome → hero → quiz. */}
+              <HeroPopup
+                enabled={heroPopup.enabled}
+                delaySeconds={heroPopup.delaySeconds}
+                copy={heroPopupCopy}
+                products={heroPopupCards}
+                locale={locale}
+              />
+              {/* Quiz popup — fires after the HERO popup is finished
+                  (which itself awaits the welcome popup). Independent
+                  14-day suppression cookie + own delay setting. */}
               <QuizPopup config={quizPopup} />
               {/* Silent: catches `?ref=CODE` on any page and persists it
                   to localStorage so the sign-up form can pre-fill the
