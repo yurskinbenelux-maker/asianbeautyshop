@@ -37,6 +37,7 @@ import {
   resolveHeroPopupCopy,
   getHeroPopupProductCards,
 } from "@/lib/queries/hero-popup";
+import { HERO_POPUP_DEFAULT_EN } from "@/lib/queries/hero-popup-types";
 import { readPromoSettings } from "@/lib/queries/promotions";
 import { SwRegister } from "@/components/pwa/sw-register";
 import { GoogleTagManager } from "@/components/analytics/google-tag-manager";
@@ -201,10 +202,25 @@ export default async function LocaleLayout({ children, params }: Props) {
   // that displays product translations directly. We pull the cards on
   // the server so the client component renders synchronously without
   // a loading state.
-  const heroPopupCards = heroPopup.enabled
-    ? await getHeroPopupProductCards(heroPopup, prismaLocale)
-    : [];
-  const heroPopupCopy = resolveHeroPopupCopy(heroPopup, prismaLocale);
+  //
+  // Defensive try/catch: a single throw here would 500 the entire site
+  // (this is the root layout — every page passes through it). A broken
+  // popup config / DB hiccup must never take the homepage down. On
+  // failure we just silently disable the popup for this request.
+  let heroPopupEnabled = heroPopup.enabled;
+  let heroPopupCards: Awaited<ReturnType<typeof getHeroPopupProductCards>> = [];
+  let heroPopupCopy = HERO_POPUP_DEFAULT_EN;
+  try {
+    heroPopupCards = heroPopup.enabled
+      ? await getHeroPopupProductCards(heroPopup, prismaLocale)
+      : [];
+    heroPopupCopy = resolveHeroPopupCopy(heroPopup, prismaLocale);
+  } catch (err) {
+    console.error("[layout] hero popup hydration failed — disabling popup for this request", err);
+    heroPopupEnabled = false;
+    heroPopupCards = [];
+    heroPopupCopy = HERO_POPUP_DEFAULT_EN;
+  }
 
   // Free-shipping threshold — surfaced as a progress indicator inside
   // the cart drawer so customers see "€X to go for free shipping"
@@ -312,7 +328,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                   /admin/marketing/hero-popup. Sits in the middle of
                   the popup chain: welcome → hero → quiz. */}
               <HeroPopup
-                enabled={heroPopup.enabled}
+                enabled={heroPopupEnabled}
                 delaySeconds={heroPopup.delaySeconds}
                 copy={heroPopupCopy}
                 products={heroPopupCards}
