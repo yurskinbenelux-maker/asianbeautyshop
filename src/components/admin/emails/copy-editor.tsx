@@ -70,18 +70,24 @@ export function EmailCopyEditor({
   const [activeLocale, setActiveLocale] = useState<Locale>(Locale.EN);
   const [overrides, setOverrides] = useState<OverrideMap>(initialOverrides);
 
-  // Live preview state
+  // Live preview state.
+  //
+  // `previewVersion` increments on every successful refresh. We pass it
+  // as the iframe's React `key` so the element remounts on each update —
+  // some browsers don't reliably re-paint iframe content when only
+  // `srcDoc` changes on the same DOM node (the existing read-only
+  // preview page got away with it because srcDoc was set ONCE during
+  // server render; here we update it client-side as Sofia types).
   const [previewHtml, setPreviewHtml] = useState<string>("");
   const [previewSubject, setPreviewSubject] = useState<string>("");
   const [previewLoading, setPreviewLoading] = useState<boolean>(false);
+  const [previewVersion, setPreviewVersion] = useState<number>(0);
   const previewDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Refresh the preview iframe — debounced so we don't fire a request
-  // on every keystroke. 400ms feels live without hammering the server.
   const refreshPreview = useCallback(
-    (nextOverrides: OverrideMap, locale: Locale) => {
+    (nextOverrides: OverrideMap, locale: Locale, immediate: boolean) => {
       if (previewDebounce.current) clearTimeout(previewDebounce.current);
-      previewDebounce.current = setTimeout(async () => {
+      const run = async () => {
         setPreviewLoading(true);
         try {
           const result = await previewEmailAction({
@@ -92,20 +98,38 @@ export function EmailCopyEditor({
           if (result.ok) {
             setPreviewHtml(result.html);
             setPreviewSubject(result.subject);
+            setPreviewVersion((v) => v + 1);
+          } else {
+            // Server-side render returned ok:false — usually a fixture
+            // / template mismatch. Surface it so the user knows
+            // something's off rather than silently leaving the iframe
+            // blank.
+            console.warn("[email-editor] preview returned ok:false");
           }
         } catch (err) {
           console.error("[email-editor] preview failed", err);
         } finally {
           setPreviewLoading(false);
         }
-      }, 400);
+      };
+      if (immediate) {
+        // First paint — fetch right away so the iframe doesn't sit
+        // blank for 400ms on page load.
+        void run();
+      } else {
+        previewDebounce.current = setTimeout(run, 400);
+      }
     },
     [emailKey],
   );
 
-  // First load + every locale switch + every text change → refresh preview
+  // First mount → fetch immediately. Locale switch + text changes →
+  // debounced. We split the two paths via a ref so we know whether
+  // it's the first effect run or a subsequent one.
+  const didInitialFetch = useRef(false);
   useEffect(() => {
-    refreshPreview(overrides, activeLocale);
+    refreshPreview(overrides, activeLocale, !didInitialFetch.current);
+    didInitialFetch.current = true;
     return () => {
       if (previewDebounce.current) clearTimeout(previewDebounce.current);
     };
@@ -226,13 +250,23 @@ export function EmailCopyEditor({
             )}
           </div>
           {/* Iframe — sandboxed so the email's inline styles can't
-              leak into the admin chrome. Updates as Sofia types. */}
-          <iframe
-            title="Email live preview"
-            srcDoc={previewHtml}
-            sandbox=""
-            className="block h-[760px] w-full bg-white"
-          />
+              leak into the admin chrome. The `key` forces a remount
+              every time the rendered HTML changes, working around a
+              React quirk where setting srcDoc on the same iframe
+              element doesn't always re-paint the content. */}
+          {previewHtml ? (
+            <iframe
+              key={previewVersion}
+              title="Email live preview"
+              srcDoc={previewHtml}
+              sandbox=""
+              className="block h-[760px] w-full bg-white"
+            />
+          ) : (
+            <div className="flex h-[760px] w-full items-center justify-center bg-rice-dim/40 text-[12px] text-ink-mid">
+              {previewLoading ? "Rendering preview…" : "No preview yet."}
+            </div>
+          )}
         </div>
       </div>
     </div>
