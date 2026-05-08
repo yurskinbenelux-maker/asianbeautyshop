@@ -39,3 +39,40 @@ export function tokensMatch(a: string, b: string): boolean {
   }
   return diff === 0;
 }
+
+/**
+ * Absolute unsubscribe URL for a given raw token. Used in both the email
+ * footer link AND the RFC2369 List-Unsubscribe header.
+ */
+export function unsubscribeUrl(rawToken: string): string {
+  const site =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    "http://localhost:3000";
+  return `${site}/api/newsletter/unsubscribe?token=${encodeURIComponent(rawToken)}`;
+}
+
+/**
+ * RFC2369 + RFC8058 List-Unsubscribe headers for any outbound newsletter
+ * email. Pass the raw (unhashed) per-recipient token so the gateway link
+ * carries that user's specific token; it gets POSTed back here when the
+ * user clicks "Unsubscribe" in Gmail / Outlook.
+ *
+ *   List-Unsubscribe       — RFC2369 (URL we open on click)
+ *   List-Unsubscribe-Post  — RFC8058 (declares one-click compliance, so
+ *                            mailbox providers POST without prompting)
+ *
+ * We deliberately omit the `mailto:` fallback — we don't run an
+ * unsubscribe@ inbox, and the HTTPS URL is what Gmail/Outlook actually use.
+ *
+ * Why this matters for deliverability: Gmail since Feb 2024 *requires*
+ * one-click unsubscribe on bulk senders. Without it, our newsletter goes
+ * straight to spam (or worse, gets the whole sending domain throttled).
+ */
+export function newsletterListUnsubscribeHeaders(
+  rawToken: string,
+): Record<string, string> {
+  return {
+    "List-Unsubscribe": `<${unsubscribeUrl(rawToken)}>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  };
+}
