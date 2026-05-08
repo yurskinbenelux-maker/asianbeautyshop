@@ -14,8 +14,12 @@ import {
 import { BrandLogoForm } from "@/components/admin/taxonomies/brand-logo-form";
 import { BrandCoverForm } from "@/components/admin/taxonomies/brand-cover-form";
 import { BrandAboutSourceForm } from "@/components/admin/taxonomies/brand-about-source-form";
-import { BrandTrustForm } from "@/components/admin/taxonomies/brand-trust-form";
+import {
+  BrandTrustForm,
+  type BrandTrustLocaleInitial,
+} from "@/components/admin/taxonomies/brand-trust-form";
 import { BrandDangerZone } from "@/components/admin/taxonomies/brand-danger-zone";
+import { Locale } from "@prisma/client";
 
 // JSONB column comes back as `unknown` from Prisma — narrow it once at
 // the boundary so the admin form receives a clean structured array
@@ -64,6 +68,22 @@ export default async function EditBrandPage({
       brand.translations.map((t) => [t.locale, { tagline: t.tagline, story: t.story }]),
     ),
   };
+
+  // Per-locale trust signals for the BrandTrustForm. The translations
+  // array is variable-length (only locales with at least one row);
+  // the form receives a Partial<Record<Locale, ...>> and falls back
+  // to empty for unset locales. Certifications JSONB is narrowed
+  // here so the form receives a typed array, not `unknown`.
+  const trustByLocale: Partial<Record<Locale, BrandTrustLocaleInitial>> =
+    Object.fromEntries(
+      brand.translations.map((t) => [
+        t.locale,
+        {
+          certifications: readCertificationsFromJson(t.certifications),
+          safetyNote: t.safetyNote ?? null,
+        },
+      ]),
+    );
 
   return (
     <div className="mx-auto max-w-5xl px-8 py-12">
@@ -163,10 +183,7 @@ export default async function EditBrandPage({
         <div className="mt-5">
           <BrandTrustForm
             brandId={brand.id}
-            initialCertifications={readCertificationsFromJson(
-              brand.certifications,
-            )}
-            initialSafetyNote={brand.safetyNote ?? null}
+            initialByLocale={trustByLocale}
           />
         </div>
       </section>

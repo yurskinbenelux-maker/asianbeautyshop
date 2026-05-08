@@ -189,6 +189,12 @@ model BrandTranslation {
   locale    Locale
   tagline   String?
   story     String? // rich HTML
+  // Trust signals authored per locale so DeepL can populate NL/FR/RU
+  // from the EN source. Replaces the old Brand-level globals (which
+  // remain in the schema as unread shadow columns until a future
+  // cleanup migration drops them).
+  certifications Json?
+  safetyNote     String?
   @@unique([brandId, locale])
 }
 

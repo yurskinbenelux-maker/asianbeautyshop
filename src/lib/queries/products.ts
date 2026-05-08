@@ -912,12 +912,20 @@ export async function getBrandAboutBySlug(
       isActive: true,
       coverImageUrl: true,
       coverPosition: true,
-      certifications: true,
-      safetyNote: true,
       aboutFromBrandId: true,
+      // Trust signals (certifications + safetyNote) live on
+      // BrandTranslation now, picked up in the translations select
+      // below. The Brand-level shadow columns are deliberately
+      // ignored — see migration 20260509200000_brand_trust_per_locale.
       translations: {
         where: { locale: { in: [loc, Locale.EN] } },
-        select: { locale: true, tagline: true, story: true },
+        select: {
+          locale: true,
+          tagline: true,
+          story: true,
+          certifications: true,
+          safetyNote: true,
+        },
       },
       // Pull the parent's content in the same query so we don't fan out a
       // second roundtrip when sub-brands resolve to a parent. Null when
@@ -927,11 +935,15 @@ export async function getBrandAboutBySlug(
           name: true,
           coverImageUrl: true,
           coverPosition: true,
-          certifications: true,
-          safetyNote: true,
           translations: {
             where: { locale: { in: [loc, Locale.EN] } },
-            select: { locale: true, tagline: true, story: true },
+            select: {
+              locale: true,
+              tagline: true,
+              story: true,
+              certifications: true,
+              safetyNote: true,
+            },
           },
         },
       },
@@ -947,6 +959,15 @@ export async function getBrandAboutBySlug(
   const localeTr = source.translations.find((t) => t.locale === loc);
   const enTr = source.translations.find((t) => t.locale === Locale.EN);
 
+  // Locale-first fallback for trust signals: NL/FR/RU value if set,
+  // else EN. Mirrors the tagline/story resolution above. The
+  // certifications array is treated atomically — if the requested
+  // locale has any rows we use that locale's whole array, we don't
+  // mix-and-match with EN's. That avoids fragile partial fallbacks.
+  const localeCerts = parseCertifications(localeTr?.certifications);
+  const enCerts = parseCertifications(enTr?.certifications);
+  const certifications = localeCerts.length > 0 ? localeCerts : enCerts;
+
   return {
     slug: brand.slug,
     name: brand.name,
@@ -954,8 +975,8 @@ export async function getBrandAboutBySlug(
     coverPosition: resolveCoverPosition(source.coverPosition),
     tagline: localeTr?.tagline ?? enTr?.tagline ?? null,
     story: localeTr?.story ?? enTr?.story ?? null,
-    certifications: parseCertifications(source.certifications),
-    safetyNote: source.safetyNote ?? null,
+    certifications,
+    safetyNote: localeTr?.safetyNote ?? enTr?.safetyNote ?? null,
     inheritedFromName: brand.aboutFromBrand?.name ?? null,
   };
 }
