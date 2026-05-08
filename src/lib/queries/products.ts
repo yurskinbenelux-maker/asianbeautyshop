@@ -829,6 +829,14 @@ export async function getBrandsForIndexPage(
 // brand's name as the page heading. One DB roundtrip via include.
 // ─────────────────────────────────────────────────────────────────────────
 
+/** Single certification row authored by the admin. Codes are usually
+ *  short universal acronyms (CPNP, ECAS, GMP); descriptions explain
+ *  the code in human language. */
+export type BrandCertification = {
+  code: string;
+  description: string;
+};
+
 export type ShopBrandAbout = {
   /** The slug used to reach this page (preserved even when content is inherited). */
   slug: string;
@@ -836,14 +844,62 @@ export type ShopBrandAbout = {
   name: string;
   /** Cover image URL — resolved from aboutFromBrand if set, else self. */
   coverImageUrl: string | null;
+  /** CSS `object-position` value for the cover crop. Resolved from the
+   *  same source as coverImageUrl so the position stays paired with
+   *  its photo (you don't get the parent's photo with the child's
+   *  position). */
+  coverPosition: string;
   /** Tagline — locale-first w/ EN fallback, resolved from inherited brand. */
   tagline: string | null;
   /** Story HTML — same resolution as tagline. */
   story: string | null;
+  /** Certifications — empty when none authored. Resolved from the source
+   *  brand (inherited if applicable). */
+  certifications: BrandCertification[];
+  /** Safety/usage note rendered as a callout box on the page. Same
+   *  inheritance rules as certifications. */
+  safetyNote: string | null;
   /** When true, this brand inherits from another (used to show a small
    *  "About {parentName}" subhead on the page). */
   inheritedFromName: string | null;
 };
+
+/** Whitelist of focal-point keywords the admin can pick. Any other value
+ *  (legacy null, hand-edited DB row, future addition we don't recognise)
+ *  falls back to "center" so the renderer never receives an arbitrary
+ *  string as inline CSS. */
+const COVER_POSITION_TO_CSS: Record<string, string> = {
+  "top-left": "left top",
+  top: "center top",
+  "top-right": "right top",
+  left: "left center",
+  center: "center center",
+  right: "right center",
+  "bottom-left": "left bottom",
+  bottom: "center bottom",
+  "bottom-right": "right bottom",
+};
+
+function resolveCoverPosition(raw: string | null | undefined): string {
+  if (!raw) return COVER_POSITION_TO_CSS.center;
+  return COVER_POSITION_TO_CSS[raw] ?? COVER_POSITION_TO_CSS.center;
+}
+
+/** Defensive parser for the certifications JSONB column — admins can
+ *  paste odd values, the migration is permissive, so we filter out
+ *  malformed rows rather than render `[object Object]` to customers. */
+function parseCertifications(raw: unknown): BrandCertification[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const r = row as Record<string, unknown>;
+    const code = typeof r.code === "string" ? r.code.trim() : "";
+    const description =
+      typeof r.description === "string" ? r.description.trim() : "";
+    if (!code && !description) return [];
+    return [{ code, description }];
+  });
+}
 
 export async function getBrandAboutBySlug(
   locale: string,
@@ -859,6 +915,9 @@ export async function getBrandAboutBySlug(
       name: true,
       isActive: true,
       coverImageUrl: true,
+      coverPosition: true,
+      certifications: true,
+      safetyNote: true,
       aboutFromBrandId: true,
       translations: {
         where: { locale: { in: [loc, Locale.EN] } },
@@ -871,6 +930,9 @@ export async function getBrandAboutBySlug(
         select: {
           name: true,
           coverImageUrl: true,
+          coverPosition: true,
+          certifications: true,
+          safetyNote: true,
           translations: {
             where: { locale: { in: [loc, Locale.EN] } },
             select: { locale: true, tagline: true, story: true },
@@ -893,8 +955,11 @@ export async function getBrandAboutBySlug(
     slug: brand.slug,
     name: brand.name,
     coverImageUrl: source.coverImageUrl,
+    coverPosition: resolveCoverPosition(source.coverPosition),
     tagline: localeTr?.tagline ?? enTr?.tagline ?? null,
     story: localeTr?.story ?? enTr?.story ?? null,
+    certifications: parseCertifications(source.certifications),
+    safetyNote: source.safetyNote ?? null,
     inheritedFromName: brand.aboutFromBrand?.name ?? null,
   };
 }

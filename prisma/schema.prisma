@@ -158,6 +158,24 @@ model Brand {
   // no extra information). PDPs can render "Brand from {country}" by
   // joining through Product.brand.country.
   country    String?
+  // Trust signals on the brand About page. Both are GLOBAL (not per-
+  // locale) for now to keep admin authoring simple — codes like CPNP /
+  // ECAS / GMP are universal acronyms anyway, and the safety note is
+  // typically supplied in English by the brand. Per-locale variants can
+  // be added later via BrandTranslation if Sofia ever asks.
+  //
+  //   certifications: Array<{ code: string; description: string }>
+  //   safetyNote     : free text, rendered as a soft callout
+  certifications Json?
+  safetyNote     String?
+  // Cover photo focal-point keyword for the About page hero. Lets an
+  // admin anchor the letterbox crop so faces / product hero shots
+  // don't get sliced. Stored as one of: top-left | top | top-right |
+  // left | center | right | bottom-left | bottom | bottom-right.
+  // Null = "center" (the CSS default). Translated to CSS
+  // object-position at render time so the storage value stays human-
+  // readable in the DB.
+  coverPosition  String?
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
   translations BrandTranslation[]

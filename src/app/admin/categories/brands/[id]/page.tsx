@@ -14,7 +14,26 @@ import {
 import { BrandLogoForm } from "@/components/admin/taxonomies/brand-logo-form";
 import { BrandCoverForm } from "@/components/admin/taxonomies/brand-cover-form";
 import { BrandAboutSourceForm } from "@/components/admin/taxonomies/brand-about-source-form";
+import { BrandTrustForm } from "@/components/admin/taxonomies/brand-trust-form";
 import { BrandDangerZone } from "@/components/admin/taxonomies/brand-danger-zone";
+
+// JSONB column comes back as `unknown` from Prisma — narrow it once at
+// the boundary so the admin form receives a clean structured array
+// rather than re-parsing inside the component.
+function readCertificationsFromJson(
+  raw: unknown,
+): Array<{ code: string; description: string }> {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const r = row as Record<string, unknown>;
+    const code = typeof r.code === "string" ? r.code : "";
+    const description =
+      typeof r.description === "string" ? r.description : "";
+    if (!code && !description) return [];
+    return [{ code, description }];
+  });
+}
 
 export const dynamic = "force-dynamic";
 
@@ -104,6 +123,7 @@ export default async function EditBrandPage({
           <BrandCoverForm
             brandId={brand.id}
             coverImageUrl={brand.coverImageUrl ?? null}
+            coverPosition={brand.coverPosition ?? null}
           />
         </div>
       </section>
@@ -123,6 +143,30 @@ export default async function EditBrandPage({
             brandId={brand.id}
             currentAboutFromBrandId={brand.aboutFromBrandId ?? null}
             options={aboutPickerOptions}
+          />
+        </div>
+      </section>
+
+      <section className="mt-14 border-t border-ink/10 pt-10">
+        <div className="eyebrow">Trust signals</div>
+        <h2 className="mt-2 font-display text-[20px] text-ink">
+          Certifications &amp; safety note
+        </h2>
+        <p className="mt-1 max-w-md text-[12px] text-ink-mid">
+          Renders below the brand story on /brands/{brand.slug}/about.
+          Certifications appear as a small 2-column grid; the safety
+          note as a soft callout box. Both inherit through the About
+          source picker — set them once on the parent brand
+          (e.g. Yu.R Skin Solution) and Yu.R Pro / Yu.R Me display
+          them automatically.
+        </p>
+        <div className="mt-5">
+          <BrandTrustForm
+            brandId={brand.id}
+            initialCertifications={readCertificationsFromJson(
+              brand.certifications,
+            )}
+            initialSafetyNote={brand.safetyNote ?? null}
           />
         </div>
       </section>

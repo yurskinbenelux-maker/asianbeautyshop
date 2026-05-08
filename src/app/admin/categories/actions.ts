@@ -631,6 +631,124 @@ export async function setBrandAboutSourceAction(
   return OK_SAVED;
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Narrow action — writes the brand's About-page trust signals
+// (certifications grid + safety/usage callout). Same "narrow action"
+// pattern as setBrandAboutSourceAction so an empty submit can't
+// accidentally clobber translations or other brand fields.
+//
+// Certifications wire format: a textarea where each line is
+// `CODE | description` (e.g. `CPNP | EU Cosmetic Notification`).
+// We parse line-by-line, drop blanks, and tolerate either `|` or `:`
+// as the separator. Persisted as a JSONB array of {code, description}.
+//
+// Safety note: free text. Empty input clears the field.
+// ─────────────────────────────────────────────────────────────────────────
+export async function setBrandTrustAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, message: "Missing brand id." };
+
+  const certificationsRaw = String(formData.get("certifications") ?? "");
+  const safetyRaw = String(formData.get("safetyNote") ?? "").trim();
+
+  const certifications = parseCertificationsTextarea(certificationsRaw);
+  const safetyNote = safetyRaw.length > 0 ? safetyRaw : null;
+
+  await prisma.brand.update({
+    where: { id },
+    data: {
+      // Empty array stored as null so the public renderer's
+      // `certifications.length === 0` check works without a separate
+      // is-it-an-array branch.
+      certifications:
+        certifications.length === 0
+          ? Prisma.JsonNull
+          : (certifications as unknown as Prisma.InputJsonValue),
+      safetyNote,
+    },
+  });
+
+  refresh();
+  return OK_SAVED;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Narrow action — sets the cover photo's focal-point keyword. Lives
+// alongside uploadBrandCoverAction / clearBrandCoverAction so the
+// position can be tweaked without re-uploading the photo. The keyword
+// is one of nine well-known values; anything else gets coerced to
+// "center" by the public renderer (defence in depth).
+// ─────────────────────────────────────────────────────────────────────────
+const ALLOWED_COVER_POSITIONS = new Set([
+  "top-left",
+  "top",
+  "top-right",
+  "left",
+  "center",
+  "right",
+  "bottom-left",
+  "bottom",
+  "bottom-right",
+]);
+
+export async function setBrandCoverPositionAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, message: "Missing brand id." };
+
+  const raw = String(formData.get("coverPosition") ?? "").trim();
+  // "center" is the default — store as null so the column reflects
+  // "no admin override" cleanly. Anything outside the whitelist is
+  // rejected so a hand-crafted form can't smuggle arbitrary CSS.
+  let next: string | null;
+  if (raw === "" || raw === "center") {
+    next = null;
+  } else if (ALLOWED_COVER_POSITIONS.has(raw)) {
+    next = raw;
+  } else {
+    return { ok: false, message: "Unknown cover position." };
+  }
+
+  await prisma.brand.update({
+    where: { id },
+    data: { coverPosition: next },
+  });
+
+  refresh();
+  return OK_SAVED;
+}
+
+/** Parse the certifications textarea into structured rows. Tolerates
+ *  blank lines, mixed `|` / `:` separators, and trims aggressively. */
+function parseCertificationsTextarea(
+  text: string,
+): Array<{ code: string; description: string }> {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => {
+      // Prefer `|` (less likely to appear in descriptions) then fall
+      // back to the first `:` so admins can author either form.
+      const sepIdx =
+        line.indexOf("|") !== -1 ? line.indexOf("|") : line.indexOf(":");
+      if (sepIdx === -1) {
+        return { code: line.trim(), description: "" };
+      }
+      const code = line.slice(0, sepIdx).trim();
+      const description = line.slice(sepIdx + 1).trim();
+      return { code, description };
+    })
+    .filter((row) => row.code.length > 0 || row.description.length > 0);
+}
+
 export async function deleteBrandAction(
   _prev: ActionState,
   formData: FormData,

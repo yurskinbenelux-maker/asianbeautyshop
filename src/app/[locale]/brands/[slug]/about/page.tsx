@@ -95,6 +95,10 @@ export default async function BrandAboutPage({ params }: Props) {
             fill
             sizes="100vw"
             className="object-cover"
+            // Inline `objectPosition` so the focal point picked in
+            // /admin/categories/brands/[id] anchors the letterbox crop.
+            // Default is "center center" when the column is null.
+            style={{ objectPosition: brand.coverPosition }}
             priority
           />
         </div>
@@ -151,6 +155,54 @@ export default async function BrandAboutPage({ params }: Props) {
           <p className="mt-10 text-[14px] leading-relaxed text-ink-mid">
             {tBrand("about_empty")}
           </p>
+        )}
+
+        {/* ── Certifications grid ─────────────────────────────────
+            Authored as `CODE | description` lines in admin and
+            persisted as JSONB. Renders as a 2-column responsive grid
+            so the page gets a scannable trust block — same visual
+            language as PDP ingredient strips (compact eyebrow code +
+            short prose explanation). Hidden when none authored. */}
+        {brand.certifications.length > 0 && (
+          <section className="mt-16 border-t border-ink/10 pt-10">
+            <h2 className="text-[11px] uppercase tracking-label text-vermilion">
+              {tBrand("about_certifications")}
+            </h2>
+            <dl className="mt-6 grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
+              {brand.certifications.map((c) => (
+                <div
+                  key={`${c.code}-${c.description}`}
+                  className="border-l-2 border-vermilion/40 pl-4"
+                >
+                  <dt className="font-display text-[15px] leading-tight text-ink">
+                    {c.code || c.description}
+                  </dt>
+                  {c.code && c.description && (
+                    <dd className="mt-1 text-[13px] leading-relaxed text-ink-mid">
+                      {c.description}
+                    </dd>
+                  )}
+                </div>
+              ))}
+            </dl>
+          </section>
+        )}
+
+        {/* ── Safety / usage callout ──────────────────────────────
+            Soft callout box for pregnancy/breastfeeding warnings,
+            allergy notices, or patch-test guidance. Visually distinct
+            from prose — sage left border + warm cream background — so
+            customers don't miss it but it doesn't shout. */}
+        {brand.safetyNote && (
+          <aside
+            role="note"
+            className="mt-12 border-l-2 border-sage bg-sage/5 px-5 py-4 text-[14px] leading-relaxed text-ink"
+          >
+            <div className="text-[10px] uppercase tracking-label text-sage">
+              {tBrand("about_safety_note")}
+            </div>
+            <p className="mt-2 whitespace-pre-line">{brand.safetyNote}</p>
+          </aside>
         )}
 
         <div className="mt-16 border-t border-ink/10 pt-10">
