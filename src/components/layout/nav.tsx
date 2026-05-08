@@ -165,7 +165,14 @@ export function Nav({
           : "bg-transparent",
       )}
     >
-      <div className="container flex h-16 items-center justify-between gap-3 md:h-20 md:gap-6">
+      {/* Full-width inner shell (no `container` max-width cap) so the
+          logo hugs the left viewport edge and the utility cluster
+          hugs the right on wide displays. The page CONTENT below
+          still uses `container` and stays centred — only this strip
+          is edge-to-edge so the brand wordmark and cart cluster get
+          the full width to breathe in instead of sitting inside
+          a 1536px-capped band with empty 200px gutters either side. */}
+      <div className="flex h-16 w-full items-center justify-between gap-3 px-4 md:h-20 md:gap-6 md:px-8">
         {/* ── Hamburger (mobile only) ──────────────────────────────── */}
         {/* Sits on the leading edge — the conventional spot for mobile
             menu triggers and the easiest one for thumb reach. Hidden on
