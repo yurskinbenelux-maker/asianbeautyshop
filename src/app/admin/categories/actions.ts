@@ -677,23 +677,16 @@ export async function setBrandTrustAction(
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Narrow action — sets the cover photo's focal-point keyword. Lives
-// alongside uploadBrandCoverAction / clearBrandCoverAction so the
-// position can be tweaked without re-uploading the photo. The keyword
-// is one of nine well-known values; anything else gets coerced to
-// "center" by the public renderer (defence in depth).
+// Narrow action — sets the cover photo's focal point. Lives alongside
+// uploadBrandCoverAction / clearBrandCoverAction so the position can be
+// tweaked without re-uploading the photo.
+//
+// Stored format: "X% Y%" where X and Y are 0-100. Centred (50% 50%) is
+// stored as null so the column reflects "no admin override" cleanly.
+// Anything outside that format is rejected so a hand-crafted form
+// can't smuggle arbitrary CSS into the public page's inline style.
 // ─────────────────────────────────────────────────────────────────────────
-const ALLOWED_COVER_POSITIONS = new Set([
-  "top-left",
-  "top",
-  "top-right",
-  "left",
-  "center",
-  "right",
-  "bottom-left",
-  "bottom",
-  "bottom-right",
-]);
+const COVER_POSITION_RE = /^(\d{1,3})% (\d{1,3})%$/;
 
 export async function setBrandCoverPositionAction(
   _prev: ActionState,
@@ -704,21 +697,30 @@ export async function setBrandCoverPositionAction(
   if (!id) return { ok: false, message: "Missing brand id." };
 
   const raw = String(formData.get("coverPosition") ?? "").trim();
-  // "center" is the default — store as null so the column reflects
-  // "no admin override" cleanly. Anything outside the whitelist is
-  // rejected so a hand-crafted form can't smuggle arbitrary CSS.
-  let next: string | null;
-  if (raw === "" || raw === "center") {
-    next = null;
-  } else if (ALLOWED_COVER_POSITIONS.has(raw)) {
-    next = raw;
-  } else {
-    return { ok: false, message: "Unknown cover position." };
+
+  // Empty input or centred = clear the override.
+  if (raw === "" || raw === "50% 50%") {
+    await prisma.brand.update({
+      where: { id },
+      data: { coverPosition: null },
+    });
+    refresh();
+    return OK_SAVED;
+  }
+
+  const match = raw.match(COVER_POSITION_RE);
+  if (!match) {
+    return { ok: false, message: "Invalid focal point format." };
+  }
+  const x = Number.parseInt(match[1], 10);
+  const y = Number.parseInt(match[2], 10);
+  if (x < 0 || x > 100 || y < 0 || y > 100) {
+    return { ok: false, message: "Focal point must be between 0 and 100%." };
   }
 
   await prisma.brand.update({
     where: { id },
-    data: { coverPosition: next },
+    data: { coverPosition: `${x}% ${y}%` },
   });
 
   refresh();

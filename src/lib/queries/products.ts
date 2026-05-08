@@ -864,25 +864,21 @@ export type ShopBrandAbout = {
   inheritedFromName: string | null;
 };
 
-/** Whitelist of focal-point keywords the admin can pick. Any other value
- *  (legacy null, hand-edited DB row, future addition we don't recognise)
- *  falls back to "center" so the renderer never receives an arbitrary
- *  string as inline CSS. */
-const COVER_POSITION_TO_CSS: Record<string, string> = {
-  "top-left": "left top",
-  top: "center top",
-  "top-right": "right top",
-  left: "left center",
-  center: "center center",
-  right: "right center",
-  "bottom-left": "left bottom",
-  bottom: "center bottom",
-  "bottom-right": "right bottom",
-};
+/** Cover position is stored as `"X% Y%"` where X and Y are 0-100. The
+ *  admin focal-point picker writes percentages directly, which gives
+ *  pixel-accurate control vs. the original 9-keyword grid. Any value
+ *  that doesn't match the expected format (legacy keyword values,
+ *  hand-edited DB rows, garbage) falls back to centred so the renderer
+ *  never receives arbitrary CSS. */
+const COVER_POSITION_PCT_RE = /^\d{1,3}% \d{1,3}%$/;
 
 function resolveCoverPosition(raw: string | null | undefined): string {
-  if (!raw) return COVER_POSITION_TO_CSS.center;
-  return COVER_POSITION_TO_CSS[raw] ?? COVER_POSITION_TO_CSS.center;
+  if (!raw) return "50% 50%";
+  if (!COVER_POSITION_PCT_RE.test(raw)) return "50% 50%";
+  // Defensive bounds-check: regex allows up to 999%, clamp to 100.
+  const [x, y] = raw.split(" ").map((s) => Number.parseInt(s, 10));
+  if (x > 100 || y > 100) return "50% 50%";
+  return raw;
 }
 
 /** Defensive parser for the certifications JSONB column — admins can

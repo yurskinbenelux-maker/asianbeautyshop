@@ -22,26 +22,22 @@ import { cn } from "@/lib/utils";
 
 const INITIAL: ActionState = { ok: false };
 
-// Mapping that mirrors COVER_POSITION_TO_CSS in queries/products.ts. We
-// keep a copy here so the admin preview shows the same crop as the
-// public page without round-tripping through the server.
-const POSITION_CSS: Record<string, string> = {
-  "top-left": "left top",
-  top: "center top",
-  "top-right": "right top",
-  left: "left center",
-  center: "center center",
-  right: "right center",
-  "bottom-left": "left bottom",
-  bottom: "center bottom",
-  "bottom-right": "right bottom",
-};
+/** Parse the stored "X% Y%" string back into numeric percentages.
+ *  Anything that doesn't match (null, legacy keywords, hand-edited
+ *  garbage) defaults to centred. Mirrors resolveCoverPosition in
+ *  queries/products.ts. */
+function parseInitialPosition(raw: string | null): { x: number; y: number } {
+  if (!raw) return { x: 50, y: 50 };
+  const m = raw.match(/^(\d{1,3})% (\d{1,3})%$/);
+  if (!m) return { x: 50, y: 50 };
+  const x = Math.min(100, Math.max(0, Number.parseInt(m[1], 10)));
+  const y = Math.min(100, Math.max(0, Number.parseInt(m[2], 10)));
+  return { x, y };
+}
 
-const POSITION_GRID = [
-  ["top-left", "top", "top-right"],
-  ["left", "center", "right"],
-  ["bottom-left", "bottom", "bottom-right"],
-] as const;
+function clamp(n: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, n));
+}
 
 export function BrandCoverForm({
   brandId,
@@ -50,11 +46,12 @@ export function BrandCoverForm({
 }: {
   brandId: string;
   coverImageUrl: string | null;
-  /** One of the nine keywords or null (= centred). */
+  /** "X% Y%" (0-100 each) or null = centred. */
   coverPosition: string | null;
 }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
   const [state, action] = useActionState(uploadBrandCoverAction, INITIAL);
   const [clearState, clearAction] = useActionState(
     clearBrandCoverAction,
@@ -66,33 +63,147 @@ export function BrandCoverForm({
   );
   const [isDragging, setIsDragging] = useState(false);
   const [, startRefresh] = useTransition();
-  // Optimistic local state so the preview snaps as soon as the admin
-  // clicks a cell — the actual save happens in the background and
-  // router.refresh() reconciles afterwards.
-  const [activePosition, setActivePosition] = useState<string>(
-    coverPosition ?? "center",
-  );
 
-  const previewPositionCss =
-    POSITION_CSS[activePosition] ?? POSITION_CSS.center;
+  // Drag-pick focal point. `pos` is the current visual state; `dragging`
+  // gates pointermove updates so a passive mouse hover doesn't trigger
+  // saves. Initialised from the saved value so an admin returning to
+  // the page sees their previous choice.
+  const [pos, setPos] = useState(() => parseInitialPosition(coverPosition));
+  const [pointerActive, setPointerActive] = useState(false);
+
+  const objectPositionCss = `${pos.x}% ${pos.y}%`;
+
+  /** Translate a pointer event to a 0-100 % coordinate inside the
+   *  preview's bounding box. Clamped so off-edge drags pin to the
+   *  nearest valid value rather than wrapping. */
+  function calcPos(e: React.PointerEvent<HTMLDivElement>): {
+    x: number;
+    y: number;
+  } {
+    const el = previewRef.current;
+    if (!el) return pos;
+    const rect = el.getBoundingClientRect();
+    const x = Math.round(
+      clamp(((e.clientX - rect.left) / rect.width) * 100, 0, 100),
+    );
+    const y = Math.round(
+      clamp(((e.clientY - rect.top) / rect.height) * 100, 0, 100),
+    );
+    return { x, y };
+  }
+
+  /** Persist the current pos to the server. Called on pointerup so a
+   *  drag streams visual updates locally and only writes once at
+   *  release. We build FormData directly rather than using a <form>
+   *  element so the closure captures the freshest pos. */
+  function persistPosition(next: { x: number; y: number }) {
+    const fd = new FormData();
+    fd.append("id", brandId);
+    fd.append("coverPosition", `${next.x}% ${next.y}%`);
+    positionAction(fd);
+    startRefresh(() => router.refresh());
+  }
+
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (!coverImageUrl) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setPointerActive(true);
+    setPos(calcPos(e));
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!pointerActive) return;
+    setPos(calcPos(e));
+  }
+
+  function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!pointerActive) return;
+    const finalPos = calcPos(e);
+    setPointerActive(false);
+    setPos(finalPos);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* pointer may have already been released — ignore */
+    }
+    persistPosition(finalPos);
+  }
 
   return (
     <div className="space-y-4">
-      {/* ── Wide preview ─────────────────────────────────────────────
-          Cover photos are letterbox (typically ~3:1 aspect), so the
-          preview is generously wide rather than the square swatch the
-          logo form uses. The preview honours the focal-point picker
-          below so an admin can see how the public page will crop
-          before saving. */}
+      {/* ── Interactive preview ──────────────────────────────────────
+          The preview IS the focal-point picker. Click anywhere on the
+          image to anchor the crop there; drag for fine-tuning. A
+          circular handle marks the current focal point. The save
+          fires on pointerup, so a drag streams local visual updates
+          and only writes once when the admin releases.
+          A short hint sits over the bottom-left so the affordance is
+          obvious — unlike the previous 9-cell grid, there's no visible
+          control to point at. */}
       {coverImageUrl ? (
-        <div className="relative aspect-[3/1] w-full overflow-hidden border border-ink/10 bg-rice-dim/40">
+        <div
+          ref={previewRef}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={() => setPointerActive(false)}
+          className={cn(
+            "relative aspect-[3/1] w-full overflow-hidden border border-ink/10 bg-rice-dim/40 select-none touch-none",
+            pointerActive ? "cursor-grabbing" : "cursor-crosshair",
+          )}
+          role="application"
+          aria-label="Cover photo focal-point picker"
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={coverImageUrl}
             alt="Brand cover"
-            className="h-full w-full object-cover transition-[object-position] duration-200"
-            style={{ objectPosition: previewPositionCss }}
+            draggable={false}
+            className={cn(
+              "pointer-events-none h-full w-full object-cover",
+              // Smooth the object-position change when not actively
+              // dragging — during a drag the transition would lag the
+              // pointer noticeably, so we disable it then.
+              pointerActive
+                ? ""
+                : "transition-[object-position] duration-200",
+            )}
+            style={{ objectPosition: objectPositionCss }}
           />
+
+          {/* Focal-point marker. Sits at (x%, y%) of the FRAME, which
+              for object-cover semantics maps 1:1 to the photo's own
+              x%/y% anchor — i.e. the ring shows the user "this point
+              of the photo will land at this spot in the public crop". */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-vermilion/70 shadow-[0_0_0_2px_rgba(0,0,0,0.35)]"
+            style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+          />
+
+          {/* Hint label — only shows when the cover hasn't been
+              repositioned yet (still at default centre). Once the
+              admin moves the marker, the label fades to avoid
+              competing with the photo. */}
+          <div
+            className={cn(
+              "pointer-events-none absolute bottom-2 left-2 bg-ink/70 px-2 py-1 text-[10px] uppercase tracking-label text-rice transition-opacity",
+              pos.x === 50 && pos.y === 50 && !pointerActive
+                ? "opacity-100"
+                : "opacity-0",
+            )}
+          >
+            Click or drag to anchor focus
+          </div>
+
+          {/* Coordinate read-out — shown during drag so the admin can
+              see the exact percentage they're committing to. */}
+          {pointerActive && (
+            <div className="pointer-events-none absolute bottom-2 right-2 bg-ink/80 px-2 py-1 font-mono text-[11px] text-rice">
+              {pos.x}% / {pos.y}%
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex aspect-[3/1] w-full items-center justify-center border border-dashed border-ink/20 bg-white/60 text-ink-mid">
@@ -193,91 +304,51 @@ export function BrandCoverForm({
         </div>
       </div>
 
-      {/* ── Focal-point picker ────────────────────────────────────
-          Only meaningful when there's a photo to anchor — hidden when
-          the brand has no cover. The 3×3 grid mirrors `object-position`
-          keywords; clicking a cell snaps the preview above and submits
-          the new value to the server in the background so admins can
-          experiment without filling out a form. */}
+      {/* ── Focal-point status + reset ────────────────────────────
+          The picker itself lives on the preview above. This row is
+          purely informational: a save/error indicator + a "centre"
+          button so admins can revert to default without dragging
+          back to the middle pixel-perfectly. */}
       {coverImageUrl && (
-        <form
-          action={(fd) => {
-            positionAction(fd);
-            startRefresh(() => router.refresh());
-          }}
-          className="mt-2 border-t border-ink/10 pt-5"
-        >
-          <input type="hidden" name="id" value={brandId} />
-          {/* Hidden input is what actually travels to the server — the
-              radio buttons below set its value via React state. We keep
-              the input hidden (not the radios) so JS-disabled clients
-              still get a working form via individual button submits. */}
-          <input
-            type="hidden"
-            name="coverPosition"
-            value={activePosition}
-          />
-          <div className="flex items-start justify-between gap-6">
-            <div>
-              <div className="text-[11px] uppercase tracking-label text-ink-mid">
-                Photo focus
-              </div>
-              <p className="mt-1 max-w-xs text-[12px] leading-relaxed text-ink-mid">
-                Click a cell to anchor the crop. The preview above
-                updates immediately. Use this when the default centred
-                crop slices through faces or product hero shots.
-              </p>
-            </div>
-            <div
-              role="radiogroup"
-              aria-label="Cover photo focal point"
-              className="grid grid-cols-3 gap-1.5"
-            >
-              {POSITION_GRID.flat().map((key) => {
-                const selected = activePosition === key;
-                return (
-                  <button
-                    key={key}
-                    type="submit"
-                    role="radio"
-                    aria-checked={selected}
-                    aria-label={key.replace("-", " ")}
-                    onClick={() => setActivePosition(key)}
-                    className={cn(
-                      "relative h-8 w-8 border transition-colors",
-                      selected
-                        ? "border-ink bg-ink"
-                        : "border-ink/20 bg-white hover:border-ink/60",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "pointer-events-none absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full",
-                        selected ? "bg-rice" : "bg-ink/40",
-                      )}
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          {positionState.message && (
-            <span
-              className={cn(
-                "mt-3 inline-flex items-center gap-1.5 text-[12px]",
-                positionState.ok ? "text-sage" : "text-vermilion",
-              )}
-              role="status"
-            >
-              {positionState.ok ? (
-                <CheckCircle2 className="h-3.5 w-3.5" />
-              ) : (
-                <AlertCircle className="h-3.5 w-3.5" />
-              )}
-              {positionState.ok ? "Focus saved." : positionState.message}
+        <div className="flex items-center justify-between gap-3 border-t border-ink/10 pt-4 text-[12px]">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] uppercase tracking-label text-ink-mid">
+              Photo focus
             </span>
+            <span className="font-mono text-[12px] text-ink">
+              {pos.x}% / {pos.y}%
+            </span>
+            {positionState.message && (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1",
+                  positionState.ok ? "text-sage" : "text-vermilion",
+                )}
+                role="status"
+              >
+                {positionState.ok ? (
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                ) : (
+                  <AlertCircle className="h-3.5 w-3.5" />
+                )}
+                {positionState.ok ? "Saved." : positionState.message}
+              </span>
+            )}
+          </div>
+          {(pos.x !== 50 || pos.y !== 50) && (
+            <button
+              type="button"
+              onClick={() => {
+                const centred = { x: 50, y: 50 };
+                setPos(centred);
+                persistPosition(centred);
+              }}
+              className="text-[11px] uppercase tracking-label text-ink-mid hover:text-vermilion"
+            >
+              Reset to centre
+            </button>
           )}
-        </form>
+        </div>
       )}
     </div>
   );
