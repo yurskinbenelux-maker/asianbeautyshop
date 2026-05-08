@@ -24,7 +24,9 @@
     "about_eyebrow": "Over het merk",
     "about_inherited_from": "Over-verhaal afkomstig van {parent}",
     "about_empty": "Verhaal volgt binnenkort.",
-    "about_browse_cta": "Bekijk {name}-producten →"
+    "about_browse_cta": "Bekijk {name}-producten →",
+    "about_certifications": "Certificeringen",
+    "about_safety_note": "Veiligheidsadvies"
   },
   "nav": {
     "shop": "Shop",

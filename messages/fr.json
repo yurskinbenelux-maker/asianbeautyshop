@@ -24,7 +24,9 @@
     "about_eyebrow": "À propos de la marque",
     "about_inherited_from": "Histoire reprise de {parent}",
     "about_empty": "Histoire bientôt disponible.",
-    "about_browse_cta": "Découvrir les produits {name} →"
+    "about_browse_cta": "Découvrir les produits {name} →",
+    "about_certifications": "Certifications",
+    "about_safety_note": "Précautions d’usage"
   },
   "nav": {
     "shop": "Boutique",

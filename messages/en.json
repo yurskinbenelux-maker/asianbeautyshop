@@ -24,7 +24,9 @@
     "about_eyebrow": "About the brand",
     "about_inherited_from": "About sourced from {parent}",
     "about_empty": "Story coming soon.",
-    "about_browse_cta": "Browse {name} products →"
+    "about_browse_cta": "Browse {name} products →",
+    "about_certifications": "Certifications",
+    "about_safety_note": "Safety Note"
   },
   "nav": {
     "shop": "Shop",

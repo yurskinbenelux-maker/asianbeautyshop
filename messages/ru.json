@@ -24,7 +24,9 @@
     "about_eyebrow": "О бренде",
     "about_inherited_from": "История заимствована у {parent}",
     "about_empty": "История скоро появится.",
-    "about_browse_cta": "Смотреть товары {name} →"
+    "about_browse_cta": "Смотреть товары {name} →",
+    "about_certifications": "Сертификаты",
+    "about_safety_note": "Меры предосторожности"
   },
   "nav": {
     "shop": "Магазин",
