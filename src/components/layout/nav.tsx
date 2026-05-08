@@ -172,19 +172,22 @@ export function Nav({
             room to read as a luxury mark rather than a tiny smudge. */}
         <Link
           href="/"
-          className="flex items-center"
+          // shrink-0 is critical — without it, the Link can be squeezed to
+          // zero width when long-translation languages (FR, RU) make the
+          // primary nav row overflow. The Logo's own flex-shrink:0 only
+          // protects the <img>, not its parent.
+          className="flex shrink-0 items-center"
           aria-label={t("brand.name")}
         >
-          {/* Lockup intentionally OVERFLOWS the nav bar — h-14 (56px) on
-              mobile inside h-16 (64px) keeps mobile clean, but desktop
-              h-28 (112px) inside h-20 (80px) lets the cherry-blossom
-              branch poke ~16px above and below the bar. Editorial pattern
-              borrowed from Glossier / Aesop / peonybeauty — the logo
-              anchors the page rather than living inside the strip.
+          {/* Lockup overflows the nav bar editorially. Height steps up
+              with viewport so smaller-desktop FR/RU don't lose room for
+              the primary links: h-14 (56px) mobile inside h-16 (64px) bar
+              · h-20 (80px) at md (1024px+) · h-24 (96px) at lg (1280px+) ·
+              h-28 (112px) at xl (1536px+) where there's plenty of width.
               Requires the parent <header> to allow visible overflow. */}
           <Logo
             variant="lockup"
-            heightClass="h-14 md:h-28"
+            heightClass="h-14 md:h-20 lg:h-24 xl:h-28"
             alt={t("brand.name")}
             className="md:relative md:z-10"
           />
