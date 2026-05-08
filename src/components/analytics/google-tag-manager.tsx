@@ -45,6 +45,19 @@ import type { ConsentPrefs } from "@/lib/consent/types";
 
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
 
+// Cloudflare Google Tag Gateway support: when this env var is set we load
+// gtm.js through a first-party path on our own domain (e.g. "/metrics")
+// instead of googletagmanager.com. Cloudflare's gateway then proxies the
+// request to Google AND rewrites the gtm.js response so subsequent GA4 /
+// Ads endpoints (google-analytics.com/g/collect, etc.) also resolve to
+// the same first-party path. Net effect: defeats most adblockers + Safari
+// ITP, restoring 15-30% of the analytics signal we'd otherwise lose.
+//
+// Falls back to googletagmanager.com when unset (local dev, or any
+// deployment without the gateway configured) so the loader still works.
+const GTM_GATEWAY_URL =
+  process.env.NEXT_PUBLIC_GTM_GATEWAY_URL || "https://www.googletagmanager.com";
+
 type Props = {
   /** Server-side read of the consent cookie. Passed in so we can write
    *  the initial state directly into the inline boot script — no flash
@@ -114,7 +127,7 @@ export function GoogleTagManager({ initialConsent }: Props) {
 
       {/* ── 2. GTM loader (Google's official snippet, just inlined) ── */}
       <Script id="yur-gtm-loader" strategy="afterInteractive">
-        {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM_ID}');`}
+        {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='${GTM_GATEWAY_URL}/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM_ID}');`}
       </Script>
     </>
   );
