@@ -26,6 +26,13 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* Clip any rogue horizontal overflow at the document root.
+       Locale-specific labels (RU especially) are wide enough to push
+       the layout slightly past viewport width on certain screens,
+       which surfaces as a cream strip on the right side and an
+       unwanted horizontal scrollbar. We never want horizontal scroll
+       on this site; vertical scroll continues to work normally. */
+    overflow-x: clip;
   }
 
   body {
@@ -33,6 +40,10 @@
     background-image: var(--hanji-grain);
     background-repeat: repeat;
     background-size: 160px 160px;
+    /* Belt-and-braces — `overflow-x: clip` on html is the modern way,
+       but body-level fallback covers older Safari versions where
+       `clip` falls back to `visible`. */
+    overflow-x: hidden;
   }
 
   /* Display type defaults — Fraunces with optical weight */
