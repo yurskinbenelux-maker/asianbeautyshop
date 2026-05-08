@@ -122,11 +122,12 @@ export default async function BrandsIndexPage({ params }: Props) {
                   <div className="font-display text-[18px] leading-[1.1] text-ink">
                     {b.name}
                   </div>
-                  {b.tagline && (
-                    <div className="mt-0.5 truncate text-[12px] text-ink-mid">
-                      {b.tagline}
-                    </div>
-                  )}
+                  {/* Tagline intentionally NOT rendered on the index tile —
+                      it lives on the dedicated /brands/[slug]/about page
+                      where it reads as an italic lede. Showing it here
+                      duplicates content and tends to look like awkward
+                      metadata when admins use it for line breakdowns
+                      (e.g. "YU.R Skin Solution (YU.R Pro / YU.R Me)"). */}
                 </div>
                 {b.hasAbout && (
                   <Link
