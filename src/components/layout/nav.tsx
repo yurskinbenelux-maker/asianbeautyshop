@@ -183,7 +183,7 @@ export function Nav({
           aria-expanded={mobileOpen}
           aria-controls="mobile-nav-drawer"
           onClick={() => setMobileOpen(true)}
-          className="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:text-vermilion md:hidden"
+          className="-ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:text-vermilion md:hidden"
         >
           <Menu className="h-5 w-5" />
         </button>

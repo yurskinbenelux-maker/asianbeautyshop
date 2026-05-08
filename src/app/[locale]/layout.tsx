@@ -4,7 +4,7 @@
 // next-intl; middleware.ts redirects bare URLs to the right locale).
 // ─────────────────────────────────────────────────────────────────────────
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
@@ -72,6 +72,19 @@ const inter = Inter({
   variable: "--font-body",
   display: "swap",
 });
+
+// ─── Viewport ─────────────────────────────────────────────────────────
+// Next 15 lets us declare viewport in a typed export instead of a raw
+// <meta> tag. `viewportFit: "cover"` is the iOS-specific bit: without
+// it, env(safe-area-inset-*) returns 0 and any UI we anchor to the
+// home indicator (concierge orb, sticky CTAs) sits behind it on a
+// notched / Dynamic-Island iPhone.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#FAF7F0",
+};
 
 // ─── SEO / metadata defaults ───────────────────────────────────────────
 // We generate metadata per-locale so every page ships with a correct
