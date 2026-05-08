@@ -267,7 +267,13 @@ export function Nav({
         </nav>
 
         {/* ── Utility ──────────────────────────────────────────────── */}
-        <div className="flex items-center gap-2 md:gap-3">
+        {/* Tighter gaps (gap-1 mobile / gap-2 tablet+) so the locale
+            pills + search + user + cart cluster doesn't push the
+            content area off the right edge in FR / RU where the rest
+            of the nav is widest. Each IconBtn already has internal
+            tap padding so visual density doesn't compromise touch
+            target size. */}
+        <div className="flex items-center gap-1 md:gap-2">
           {/* Mobile-only locale dropdown — sits before the icon row so
               the order on a phone reads: Instagram → EN ⌄ → Search →
               Account → Cart. Tapping the trigger opens a small menu
