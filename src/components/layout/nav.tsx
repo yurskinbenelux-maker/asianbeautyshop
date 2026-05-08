@@ -235,16 +235,19 @@ export function Nav({
         </a>
 
         {/* ── Primary navigation (desktop only) ────────────────────── */}
-        {/* Eight items now: Product types, Brands, Sale, New, Skin Quiz,
+        {/* Eight items: Product types, Brands, Sale, New, Skin Quiz,
             Ingredients, Journal, About. Both Product types and Brands
             are mega-menus (hover opens panel; click trigger goes to a
             full page). Sale, New, Ingredients, Journal, About are
             plain text anchors.
-            Gap dropped from 8 → 5 (lg+ breakpoints get 6) so all eight
-            items fit on a 1280px laptop. The lighter gap reads tight
-            but not crowded — luxury convention. */}
+            Responsive gap progression: gap-3 (md) → gap-4 (lg) →
+            gap-5 (xl). The tightest setting is needed on mid-desktop
+            widths (1024–1279px) when RU labels (ИНГРЕДИЕНТЫ etc.)
+            are wider than their FR/EN equivalents and were pushing
+            the cart icon past the viewport edge. xl+ gets a
+            comfortable gap once there's room to breathe. */}
         <nav
-          className="hidden items-center gap-5 lg:gap-6 md:flex"
+          className="hidden items-center gap-3 lg:gap-4 xl:gap-5 md:flex"
           aria-label="Primary"
         >
           <ShopMegaMenu tree={shopTree} />
