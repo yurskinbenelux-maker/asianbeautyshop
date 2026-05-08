@@ -136,6 +136,16 @@ export function Nav({
     });
   };
 
+  // Homepage is the only route designed to bleed through the nav (the
+  // cinematic hero photo extends to viewport top so a transparent nav
+  // reads as editorial). Every other route — /shop, /brands, listings,
+  // PDPs, account etc. — has solid content right up to the nav, where
+  // a transparent header looks broken: brand tabs / category strips /
+  // toolbars appear to mash into the nav with no visual separation.
+  // next/navigation's usePathname includes the locale prefix here, so
+  // homepage matches /en|/nl|/fr|/ru (no trailing path).
+  const isHome = /^\/[a-z]{2}$/.test(pathname);
+
   return (
     <header
       // z-[60] sits above the AI concierge orb (~z-50) and any cookie
@@ -145,7 +155,14 @@ export function Nav({
       // catches taps. Belt-and-braces.
       className={cn(
         "sticky top-0 z-[60] w-full transition-colors duration-300",
-        scrolled ? "glass border-b border-ink/5" : "bg-transparent",
+        // Transparent at scroll-top ONLY on the homepage hero. On every
+        // other route, the nav stays glass-opaque from the start so
+        // listing-page strips don't visually collide with it. Once the
+        // user has scrolled past the threshold (anywhere), the nav
+        // always glasses up regardless.
+        scrolled || !isHome
+          ? "glass border-b border-ink/5"
+          : "bg-transparent",
       )}
     >
       <div className="container flex h-16 items-center justify-between gap-3 md:h-20 md:gap-6">
