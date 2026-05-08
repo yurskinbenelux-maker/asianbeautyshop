@@ -1056,19 +1056,6 @@
     "error_consent_required": "Please tick the box to let us store your message.",
     "error_generic": "Something didn't go through. Please check the highlighted fields."
   },
-  "exit_intent": {
-    "eyebrow": "Before you go",
-    "title": "10% off your first skincare routine",
-    "body": "Drop your email and we'll send a single-use code, plus the occasional quiet note about Korean skincare. Unsubscribe anytime.",
-    "email_label": "Email address",
-    "email_placeholder": "you@example.com",
-    "cta": "Send my code",
-    "cta_loading": "Sending…",
-    "dismiss": "No thanks",
-    "close": "Close",
-    "fine_print": "We'll email a confirmation link before sending the code.",
-    "success": "Check your inbox for the confirmation link."
-  },
   "home": {},
   "gift_card": {
     "pdp": {

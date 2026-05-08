@@ -1056,19 +1056,6 @@
     "error_consent_required": "Vink het vakje aan zodat we je bericht mogen bewaren.",
     "error_generic": "Er ging iets mis. Controleer de gemarkeerde velden."
   },
-  "exit_intent": {
-    "eyebrow": "Voor je gaat",
-    "title": "10% korting op je eerste huidverzorgingsroutine",
-    "body": "Laat je e-mail achter en we sturen een eenmalige code, plus af en toe een rustige notitie over Koreaanse huidverzorging. Uitschrijven kan altijd.",
-    "email_label": "E-mailadres",
-    "email_placeholder": "jij@voorbeeld.com",
-    "cta": "Stuur mijn code",
-    "cta_loading": "Versturen…",
-    "dismiss": "Nee, bedankt",
-    "close": "Sluiten",
-    "fine_print": "We sturen eerst een bevestigingslink voordat de code wordt verstuurd.",
-    "success": "Bekijk je inbox voor de bevestigingslink."
-  },
   "home": {},
   "gift_card": {
     "pdp": {

@@ -13,13 +13,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateToken, hashToken } from "@/lib/newsletter/tokens";
-// Newsletter no longer carries a 10%-off coupon — that incentive moved
-// to account registration (see /lib/coupons/registration-welcome.ts +
-// the homepage RegisterWelcomePopup). The newsletter still works as a
-// double-opt-in subscriber list; we just don't hand out a coupon at
-// confirm-time anymore. mintWelcomeCoupon + sendNewsletterWelcomeEmail
-// stay in the codebase so an admin can wire up a separate welcome email
-// later (e.g. for journal teasers) without rebuilding the plumbing.
+// Newsletter does NOT carry a coupon. The single-use discount incentive
+// lives on account registration (see /lib/coupons/registration-welcome.ts
+// + the homepage RegisterWelcomePopup) and on quiz completion. The
+// newsletter is a pure subscriber list — we capture the email, confirm
+// it, and add the row. No follow-up email beyond confirmation; no
+// welcome coupon. The historical mintWelcomeCoupon helper and
+// sendNewsletterWelcomeEmail template were removed when this incentive
+// model was finalised.
 
 function localePath(locale: string | null | undefined, path: string): string {
   const l = (locale ?? "en").toLowerCase();
