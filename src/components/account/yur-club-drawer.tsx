@@ -89,7 +89,13 @@ export function YurClubDrawer({ data, open, onClose }: Props) {
         style={{ animation: "yur-club-slide 360ms cubic-bezier(0.2,0.8,0.2,1) both" }}
       >
         <DrawerHeader onClose={onClose} />
-        <div className="flex-1 overflow-y-auto">
+        <div
+          className="flex-1 overflow-y-auto"
+          // Reserve room at the bottom for the iPhone home indicator so
+          // the last block of the drawer (DrawerFooter) isn't clipped by
+          // the home bar on notched devices.
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        >
           <TierHeroCard data={data} />
           <ActionTiles activeCouponCount={data.activeCouponCount} />
           <ReferralBlock referralCode={data.account.referralCode} />

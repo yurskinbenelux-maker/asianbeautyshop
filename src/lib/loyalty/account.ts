@@ -31,17 +31,19 @@ function randomCode(length: number): string {
 
 /** Generate a unique referral code shaped like "FIRSTNAME-AB12" so the
  *  customer recognises it as theirs when they share it. Falls back to
- *  "YURSKIN-AB12" when the user hasn't provided a first name. Retries on
- *  collision (≈1 in 1M chance for a 6-char tail; collision still possible
- *  if someone picks a really common name and gets unlucky). */
+ *  "FRIEND-AB12" when the user hasn't provided a first name (was the
+ *  legacy "YURSKIN" pre-rebrand — kept brand-neutral on purpose so we
+ *  never have to migrate referral codes again on a future rename).
+ *  Retries on collision (≈1 in 1M chance for a 6-char tail; collision
+ *  still possible if someone picks a really common name and gets unlucky). */
 export async function generateReferralCode(opts: {
   firstName: string | null | undefined;
   attempt?: number;
 }): Promise<string> {
-  const seed = (opts.firstName ?? "YURSKIN")
+  const seed = (opts.firstName ?? "FRIEND")
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, "")
-    .slice(0, 8) || "YURSKIN";
+    .slice(0, 8) || "FRIEND";
   const tail = randomCode(4);
   const code = `${seed}-${tail}`;
 

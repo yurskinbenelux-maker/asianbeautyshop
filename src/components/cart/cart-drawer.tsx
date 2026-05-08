@@ -128,7 +128,16 @@ export function CartDrawer() {
 
         {/* ── Footer ───────────────────────────────────────────────── */}
         {cart.items.length > 0 && (
-          <footer className="space-y-4 border-t border-ink/10 px-6 py-5">
+          <footer
+            className="space-y-4 border-t border-ink/10 px-6 py-5"
+            // Lift the bottom padding above the iPhone home indicator
+            // so the "Continue shopping" link isn't half-eaten by the
+            // home bar. The base `py-5` provides 1.25rem on top + bottom;
+            // we extend the bottom side with safe-area when present.
+            style={{
+              paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))",
+            }}
+          >
             {lastError && (
               <div className="rounded-none border border-vermilion/30 bg-vermilion/5 px-3 py-2 text-[12px] text-vermilion">
                 {lastError}

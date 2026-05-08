@@ -48,7 +48,17 @@ export function SearchOverlay({ open, onClose }: Props) {
     document.body.style.overflow = "hidden";
     // Small delay so Framer Motion has already mounted the input before
     // we grab focus — otherwise the focus call is a no-op.
-    const id = window.setTimeout(() => inputRef.current?.focus(), 50);
+    const id = window.setTimeout(() => {
+      const el = inputRef.current;
+      if (!el) return;
+      el.focus();
+      // Mobile: scroll the input into view so the on-screen keyboard
+      // doesn't end up covering it after the focus event. iOS Safari
+      // normally pans for you, but if the panel sits at top and the
+      // keyboard pushes the layout up, the live-results list ends up
+      // below the fold; this nudges it back.
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
     return () => {
       document.body.style.overflow = prev;
       window.clearTimeout(id);
@@ -154,6 +164,12 @@ export function SearchOverlay({ open, onClose }: Props) {
                       placeholder={t("placeholder")}
                       autoComplete="off"
                       maxLength={120}
+                      // Mobile: get the search-tuned virtual keyboard with a
+                      // "search" enter-key label instead of the generic
+                      // "Go". `type=search` mostly handles this, but iOS
+                      // sometimes ignores it without the explicit hints.
+                      inputMode="search"
+                      enterKeyHint="search"
                       className="w-full bg-transparent font-display text-display-md leading-tight text-ink placeholder:text-ink-mid/60 focus:outline-none"
                     />
                   </div>

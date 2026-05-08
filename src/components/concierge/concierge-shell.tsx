@@ -123,6 +123,19 @@ export function ConciergeShell({
     }
   }, [open]);
 
+  // Lock body scroll while the panel is open. Without this, on mobile
+  // the page behind the floating panel still momentum-scrolls when the
+  // user swipes inside the chat — feels janky and you can lose your
+  // reading position. Pattern matches the other overlays in the app.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   return (
     <>
       {/* ── orb ─────────────────────────────────────────────────── */}
@@ -133,7 +146,10 @@ export function ConciergeShell({
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-50 grid h-14 w-14 place-items-center rounded-none bg-vermilion text-rice ink-drop transition-transform hover:scale-105 active:scale-95 md:bottom-8 md:right-8"
+        // Bottom offset uses max(static, safe-area-inset-bottom) so on
+        // notched iPhones the orb clears the home-indicator strip
+        // (~34px) instead of being half-eaten by it.
+        className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-6 z-50 grid h-14 w-14 place-items-center rounded-none bg-vermilion text-rice ink-drop transition-transform hover:scale-105 active:scale-95 md:bottom-[max(2rem,env(safe-area-inset-bottom))] md:right-8"
       >
         <span className="absolute inset-0 animate-pulse_ring bg-vermilion/40" aria-hidden />
         <span
@@ -161,7 +177,11 @@ export function ConciergeShell({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.98 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="glass fixed bottom-24 right-6 z-50 flex max-h-[min(640px,calc(100vh-8rem))] w-[min(92vw,420px)] flex-col shadow-card outline-none md:bottom-28 md:right-8"
+            // Panel sits well above the orb. Add safe-area into the
+            // bottom offset so on iPhones it lifts above the home bar
+            // (otherwise the panel's bottom edge collides with the orb's
+            // new safe-area lifted position).
+            className="glass fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] right-6 z-50 flex max-h-[min(640px,calc(100vh-8rem))] w-[min(92vw,420px)] flex-col shadow-card outline-none md:bottom-[calc(7rem+env(safe-area-inset-bottom))] md:right-8"
             role="dialog"
             aria-modal="true"
             aria-label={assistantName}
