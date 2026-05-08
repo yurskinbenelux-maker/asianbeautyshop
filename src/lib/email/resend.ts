@@ -61,7 +61,7 @@ export function fromTransactional(): string {
  * customers can write back even when we sent from donotreply@.
  */
 export function replyToAddress(): string | undefined {
-  return process.env.RESEND_REPLY_TO || "hello@asianbeautyshop.eu";
+  return process.env.RESEND_REPLY_TO || "info@kelmusgroup.eu";
 }
 
 /**

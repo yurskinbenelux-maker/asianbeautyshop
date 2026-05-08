@@ -36,7 +36,7 @@ export function StoreForm({ initial }: { initial: StoreSettings }) {
           type="email"
           defaultValue={initial.supportEmail}
           className="input"
-          placeholder="hello@asianbeautyshop.eu"
+          placeholder="info@kelmusgroup.eu"
         />
       </Field>
 

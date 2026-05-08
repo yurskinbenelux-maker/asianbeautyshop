@@ -69,7 +69,7 @@ export function organizationJsonLd() {
     contactPoint: [
       {
         "@type": "ContactPoint",
-        email: "hello@asianbeautyshop.eu",
+        email: "info@kelmusgroup.eu",
         contactType: "customer support",
         areaServed: ["BE", "NL", "FR", "LU"],
         availableLanguage: ["English", "Dutch", "French", "Russian"],

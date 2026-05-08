@@ -70,7 +70,7 @@ export type AiSettings = {
 const DEFAULTS = {
   store: {
     name: "Asian Beauty Shop",
-    supportEmail: "hello@asianbeautyshop.eu",
+    supportEmail: "info@kelmusgroup.eu",
     supportPhone: "",
     signOff: "Thank you for choosing Asian Beauty Shop.",
   } satisfies StoreSettings,
