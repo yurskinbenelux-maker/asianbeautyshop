@@ -754,6 +754,11 @@ export type BrandIndexCard = {
   logoUrl: string | null;
   tagline: string | null;
   productCount: number;
+  /** Whether the brand has its own about content (cover OR story OR tagline)
+   *  — when false the tile suppresses the "About" link affordance. We don't
+   *  resolve aboutFromBrandId here for performance; the about page itself
+   *  handles the inheritance. Tiles whose brand inherits get the link too. */
+  hasAbout: boolean;
 };
 
 export async function getBrandsForIndexPage(
@@ -768,9 +773,11 @@ export async function getBrandsForIndexPage(
       slug: true,
       name: true,
       logoUrl: true,
+      coverImageUrl: true,
+      aboutFromBrandId: true,
       translations: {
         where: { locale: { in: [loc, Locale.EN] } },
-        select: { locale: true, tagline: true },
+        select: { locale: true, tagline: true, story: true },
       },
       _count: {
         select: {
@@ -791,16 +798,118 @@ export async function getBrandsForIndexPage(
       const localeTr = b.translations.find((t) => t.locale === loc);
       const enTr = b.translations.find((t) => t.locale === Locale.EN);
       const tagline = localeTr?.tagline ?? enTr?.tagline ?? null;
+      // "Has about" is true when EITHER:
+      //   - the brand has its own cover/tagline/story locally, OR
+      //   - it inherits from another brand (aboutFromBrandId set).
+      // The about page handles whether the inherited brand actually has
+      // content — tiles just need a yes/no for the link.
+      const hasOwnContent =
+        b.coverImageUrl !== null ||
+        localeTr?.story != null ||
+        enTr?.story != null ||
+        tagline != null;
+      const hasAbout = hasOwnContent || b.aboutFromBrandId !== null;
       return {
         slug: b.slug,
         name: b.name,
         logoUrl: b.logoUrl,
         tagline,
         productCount: b._count.products,
+        hasAbout,
       };
     })
     // Drop dead brands — same rule as the mega-menu list.
     .filter((b) => b.productCount > 0);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// /brands/[slug]/about query — resolves the aboutFromBrandId chain so that
+// sub-brands inherit their canonical parent's content. Returns the SOURCE
+// brand's tagline + story + cover image, while keeping the requested
+// brand's name as the page heading. One DB roundtrip via include.
+// ─────────────────────────────────────────────────────────────────────────
+
+export type ShopBrandAbout = {
+  /** The slug used to reach this page (preserved even when content is inherited). */
+  slug: string;
+  /** Display name shown in the H1. Always the requested brand's own name. */
+  name: string;
+  /** Cover image URL — resolved from aboutFromBrand if set, else self. */
+  coverImageUrl: string | null;
+  /** Tagline — locale-first w/ EN fallback, resolved from inherited brand. */
+  tagline: string | null;
+  /** Story HTML — same resolution as tagline. */
+  story: string | null;
+  /** When true, this brand inherits from another (used to show a small
+   *  "About {parentName}" subhead on the page). */
+  inheritedFromName: string | null;
+};
+
+export async function getBrandAboutBySlug(
+  locale: string,
+  slug: string,
+): Promise<ShopBrandAbout | null> {
+  const loc = toPrismaLocale(locale);
+
+  const brand = await prisma.brand.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      isActive: true,
+      coverImageUrl: true,
+      aboutFromBrandId: true,
+      translations: {
+        where: { locale: { in: [loc, Locale.EN] } },
+        select: { locale: true, tagline: true, story: true },
+      },
+      // Pull the parent's content in the same query so we don't fan out a
+      // second roundtrip when sub-brands resolve to a parent. Null when
+      // aboutFromBrandId is unset.
+      aboutFromBrand: {
+        select: {
+          name: true,
+          coverImageUrl: true,
+          translations: {
+            where: { locale: { in: [loc, Locale.EN] } },
+            select: { locale: true, tagline: true, story: true },
+          },
+        },
+      },
+    },
+  });
+
+  if (!brand || !brand.isActive) return null;
+
+  // Pick the SOURCE for content — parent if set, otherwise self. The page
+  // heading still uses the REQUESTED brand's name (so visiting /brands/yur-pro
+  // still says "Yu.R Pro" at the top, just with Yu.R's story below).
+  const source = brand.aboutFromBrand ?? brand;
+  const localeTr = source.translations.find((t) => t.locale === loc);
+  const enTr = source.translations.find((t) => t.locale === Locale.EN);
+
+  return {
+    slug: brand.slug,
+    name: brand.name,
+    coverImageUrl: source.coverImageUrl,
+    tagline: localeTr?.tagline ?? enTr?.tagline ?? null,
+    story: localeTr?.story ?? enTr?.story ?? null,
+    inheritedFromName: brand.aboutFromBrand?.name ?? null,
+  };
+}
+
+/** Lightweight list for the admin's "Source about content from" picker.
+ *  Returns every active brand except the one being edited (a brand can't
+ *  inherit from itself). Keep cheap — name + slug only. */
+export async function getBrandsForAboutPicker(
+  excludeBrandId: string,
+): Promise<Array<{ id: string; name: string; slug: string }>> {
+  return prisma.brand.findMany({
+    where: { id: { not: excludeBrandId }, isActive: true },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, slug: true },
+  });
 }
 
 /**

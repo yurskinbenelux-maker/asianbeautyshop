@@ -6,11 +6,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, CheckCircle2, Trash2 } from "lucide-react";
 import { getAdminBrand } from "@/lib/queries/admin-taxonomies";
+import { getBrandsForAboutPicker } from "@/lib/queries/products";
 import {
   BrandForm,
   type BrandFormInitial,
 } from "@/components/admin/taxonomies/brand-form";
 import { BrandLogoForm } from "@/components/admin/taxonomies/brand-logo-form";
+import { BrandCoverForm } from "@/components/admin/taxonomies/brand-cover-form";
+import { BrandAboutSourceForm } from "@/components/admin/taxonomies/brand-about-source-form";
 import { BrandDangerZone } from "@/components/admin/taxonomies/brand-danger-zone";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +32,9 @@ export default async function EditBrandPage({
   const sp = await searchParams;
   const brand = await getAdminBrand(id);
   if (!brand) notFound();
+
+  // Other-brand list for the About-source picker — excludes self.
+  const aboutPickerOptions = await getBrandsForAboutPicker(brand.id);
 
   const initial: BrandFormInitial = {
     id: brand.id,
@@ -81,6 +87,46 @@ export default async function EditBrandPage({
         </p>
         <div className="mt-5">
           <BrandLogoForm brandId={brand.id} logoUrl={brand.logoUrl} />
+        </div>
+      </section>
+
+      <section className="mt-14 border-t border-ink/10 pt-10">
+        <div className="eyebrow">About cover</div>
+        <h2 className="mt-2 font-display text-[20px] text-ink">
+          Brand About cover photo
+        </h2>
+        <p className="mt-1 max-w-md text-[12px] text-ink-mid">
+          Full-bleed hero image at the top of /brands/{brand.slug}/about.
+          Editorial photography of the brand, product line, or atmosphere.
+          Skip if you prefer the typographic-only fallback.
+        </p>
+        <div className="mt-5">
+          <BrandCoverForm
+            brandId={brand.id}
+            coverImageUrl={brand.coverImageUrl ?? null}
+          />
+        </div>
+      </section>
+
+      <section className="mt-14 border-t border-ink/10 pt-10">
+        <div className="eyebrow">About source</div>
+        <h2 className="mt-2 font-display text-[20px] text-ink">
+          Inherit About from another brand
+        </h2>
+        <p className="mt-1 max-w-md text-[12px] text-ink-mid">
+          Optional. Use this when several brand entries (e.g. Yu.R / Yu.R Pro
+          / Yu.R Me) belong to the same house and should share one canonical
+          About page. Editing happens once on the chosen parent brand.
+        </p>
+        <div className="mt-5">
+          <BrandAboutSourceForm
+            brandId={brand.id}
+            brandName={brand.name}
+            brandSlug={brand.slug}
+            brandIsActive={brand.isActive}
+            currentAboutFromBrandId={brand.aboutFromBrandId ?? null}
+            options={aboutPickerOptions}
+          />
         </div>
       </section>
 

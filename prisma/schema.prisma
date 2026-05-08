@@ -138,7 +138,21 @@ model Brand {
   name       String
   isActive   Boolean            @default(true)
   logoUrl    String?
-  // Country the brand is based in. ISO-3166 alpha-2, e.g. "KR" for YU.R.
+  // Cover photo for the brand About page (full-bleed hero). Distinct from
+  // logoUrl — logo is a small mark for tiles + nav, cover is a wider
+  // editorial photograph telling the brand's visual story. Optional;
+  // page falls back to a typographic hero when not set.
+  coverImageUrl    String?
+  // Self-reference: when set, this brand's About page renders the LINKED
+  // brand's cover + tagline + story instead of its own. Use case: sub-
+  // brands of the same house (Yu.R / Yu.R Pro / Yu.R Me) point at the
+  // canonical Yu.R brand so editing once updates all three. Null = the
+  // brand has its own about content. onDelete:SetNull so deleting the
+  // parent doesn't cascade-delete the children.
+  aboutFromBrandId String?            @db.Uuid
+  aboutFromBrand   Brand?             @relation("BrandAboutFrom", fields: [aboutFromBrandId], references: [id], onDelete: SetNull)
+  aboutAlias       Brand[]            @relation("BrandAboutFrom")
+  // Country the brand is based in. ISO-3166 alpha-2, e.g. "KR" for an admin.
   // Mirrors the supplier sheet's "Brand country" column. Stored once per
   // brand instead of per product (where it would duplicate 35-200x with
   // no extra information). PDPs can render "Brand from {country}" by

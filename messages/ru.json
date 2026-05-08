@@ -18,7 +18,13 @@
   },
   "brand": {
     "name": "Asian Beauty Shop",
-    "tagline": "You Are the Skin Solution."
+    "tagline": "You Are the Skin Solution.",
+    "about_cta": "О бренде →",
+    "browse_brand": "Смотреть товары {name}",
+    "about_eyebrow": "О бренде",
+    "about_inherited_from": "История заимствована у {parent}",
+    "about_empty": "История скоро появится.",
+    "about_browse_cta": "Смотреть товары {name} →"
   },
   "nav": {
     "shop": "Магазин",

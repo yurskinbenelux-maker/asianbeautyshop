@@ -533,6 +533,21 @@ export async function updateBrandAction(
     }
   }
 
+  // aboutFromBrandId — empty string from the form means "use this brand's
+  // own about content" (clear the inheritance). UUID string = inherit. We
+  // skip the field entirely when not present in the form so legacy clients
+  // that don't render the picker don't accidentally clobber the relation.
+  const rawAboutFrom = formData.get("aboutFromBrandId");
+  let aboutFromBrandIdUpdate:
+    | { aboutFromBrandId: string | null }
+    | Record<string, never> = {};
+  if (rawAboutFrom !== null) {
+    const str = String(rawAboutFrom).trim();
+    aboutFromBrandIdUpdate = {
+      aboutFromBrandId: str === "" ? null : str,
+    };
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.brand.update({
       where: { id },
@@ -541,6 +556,7 @@ export async function updateBrandAction(
         name: basic.data.name,
         isActive: basic.data.isActive,
         logoUrl: basic.data.logoUrl ?? null,
+        ...aboutFromBrandIdUpdate,
       },
     });
     for (const l of ALL_LOCALES) {
@@ -660,6 +676,68 @@ export async function clearBrandLogoAction(
   await prisma.brand.update({ where: { id }, data: { logoUrl: null } });
   refresh();
   return { ok: true, message: "Logo removed." };
+}
+
+// ── Brand cover photo ──────────────────────────────────────────────────
+// Distinct from the logo — this is the wide editorial photograph shown as
+// the hero on /brands/[slug]/about. Bigger size cap (5 MB vs 2 MB for
+// logos) because cover photos are typically full-bleed JPGs. Otherwise
+// mirrors uploadBrandLogoAction / clearBrandLogoAction one-for-one.
+
+export async function uploadBrandCoverAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, message: "Missing brand id." };
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, message: "No file selected." };
+  }
+  // 5 MB ceiling — generous for full-bleed editorial photography but stops
+  // 30 MB raw camera files from killing the upload.
+  if (file.size > 5 * 1024 * 1024) {
+    return { ok: false, message: "File too large (max 5 MB for cover)." };
+  }
+  if (!["image/png", "image/webp", "image/jpeg"].includes(file.type)) {
+    return { ok: false, message: "Use PNG, WEBP, or JPG (no SVG for cover)." };
+  }
+
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  const objectPath = `brands/${id}/cover-${crypto.randomUUID()}.${ext}`;
+
+  const { error } = await supabaseAdmin()
+    .storage.from(PRODUCT_MEDIA_BUCKET)
+    .upload(objectPath, file, {
+      contentType: file.type,
+      cacheControl: "31536000, immutable",
+      upsert: false,
+    });
+  if (error) return { ok: false, message: `Upload failed: ${error.message}` };
+  const {
+    data: { publicUrl },
+  } = supabaseAdmin().storage.from(PRODUCT_MEDIA_BUCKET).getPublicUrl(objectPath);
+
+  await prisma.brand.update({
+    where: { id },
+    data: { coverImageUrl: publicUrl },
+  });
+  refresh();
+  return { ok: true, message: "Cover photo uploaded." };
+}
+
+export async function clearBrandCoverAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, message: "Missing id." };
+  await prisma.brand.update({ where: { id }, data: { coverImageUrl: null } });
+  refresh();
+  return { ok: true, message: "Cover photo removed." };
 }
 
 // ═══════════════════════════════════════════════════════════════════════

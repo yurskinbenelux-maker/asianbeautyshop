@@ -38,7 +38,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BrandsIndexPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("nav");
+  // Two namespaces — "nav" for the existing brands header eyebrow, "brand"
+  // for the new About-link strings on each tile. Loaded in parallel since
+  // they hit the same dictionary file.
+  const [t, tBrand] = await Promise.all([
+    getTranslations("nav"),
+    getTranslations("brand"),
+  ]);
 
   const brands = await getBrandsForIndexPage(locale);
 
@@ -62,17 +68,33 @@ export default async function BrandsIndexPage({ params }: Props) {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {brands.map((b) => (
-            <Link
+            // Each tile is now a relative container — the logo+name area
+            // is one Link (browse products), and the About link sits as
+            // a separate sibling Link. Two clickable targets means we
+            // can't nest <Link> inside <Link>; instead we use absolute
+            // positioning + z-index so the About tab visually overlaps
+            // the bottom-right corner of the tile without breaking the
+            // outer click area.
+            <div
               key={b.slug}
-              href={`/shop/brand/${b.slug}`}
-              className="group flex aspect-[4/3] flex-col overflow-hidden border border-ink/10 bg-rice transition-colors hover:border-ink/30"
+              className="group relative flex aspect-[4/3] flex-col overflow-hidden border border-ink/10 bg-rice transition-colors hover:border-ink/30"
             >
+              {/* Main click target — covers the whole tile and sends
+                  the visitor to the brand's filtered shop listing.
+                  The About link below uses a higher z-index so its
+                  click doesn't bubble through to this one. */}
+              <Link
+                href={`/shop/brand/${b.slug}`}
+                className="absolute inset-0 z-0"
+                aria-label={tBrand("browse_brand", { name: b.name })}
+              />
+
               {/* ── Logo region ────────────────────────────────────
                   Top 60% of the card. When a logoUrl is set we render
                   it object-contain on a soft cream surface so the
                   artwork breathes; without one we fall back to a
                   large typographic treatment. */}
-              <div className="relative flex flex-1 items-center justify-center bg-rice-dim/40 px-6 py-6 transition-colors group-hover:bg-white">
+              <div className="pointer-events-none relative flex flex-1 items-center justify-center bg-rice-dim/40 px-6 py-6 transition-colors group-hover:bg-white">
                 {b.logoUrl ? (
                   <Image
                     src={b.logoUrl}
@@ -89,11 +111,13 @@ export default async function BrandsIndexPage({ params }: Props) {
               </div>
 
               {/* ── Caption strip ──────────────────────────────────
-                  Brand name + tagline. Anchored to the bottom of the
-                  card so cards with logos still surface the metadata
-                  cleanly. (Product count was removed per an admin — felt
-                  too "inventory" for a luxury feel.) */}
-              <div className="flex items-end gap-3 border-t border-ink/10 bg-rice px-5 py-4">
+                  Two-cell layout now: brand metadata on the left,
+                  optional "About →" link on the right (separate click
+                  target, hoverable with its own underline). The strip
+                  itself remains pointer-events-none so the outer Link
+                  catches clicks — the About anchor opts back in via
+                  pointer-events-auto. */}
+              <div className="pointer-events-none relative z-10 flex items-end justify-between gap-3 border-t border-ink/10 bg-rice px-5 py-4">
                 <div className="min-w-0">
                   <div className="font-display text-[18px] leading-[1.1] text-ink">
                     {b.name}
@@ -104,8 +128,16 @@ export default async function BrandsIndexPage({ params }: Props) {
                     </div>
                   )}
                 </div>
+                {b.hasAbout && (
+                  <Link
+                    href={`/brands/${b.slug}/about`}
+                    className="pointer-events-auto shrink-0 text-[11px] uppercase tracking-label text-ink-mid underline decoration-vermilion underline-offset-4 transition-colors hover:text-vermilion"
+                  >
+                    {tBrand("about_cta")}
+                  </Link>
+                )}
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}
