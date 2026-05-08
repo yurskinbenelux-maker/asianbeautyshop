@@ -274,19 +274,15 @@ export function Nav({
             tap padding so visual density doesn't compromise touch
             target size. */}
         <div className="flex items-center gap-1 md:gap-2">
-          {/* Mobile-only locale dropdown — sits before the icon row so
-              the order on a phone reads: Instagram → EN ⌄ → Search →
-              Account → Cart. Tapping the trigger opens a small menu
-              with EN / NL / FR / RU. The desktop inline pills below
-              take over from sm: breakpoint up. */}
-          <div className="sm:hidden">
-            <LocaleDropdown />
-          </div>
-          {/* Desktop / tablet inline pills — EN · NL · FR · RU. Hidden
-              on mobile where LocaleDropdown above does the job. */}
-          <div className="hidden sm:block">
-            <LocaleSwitcher />
-          </div>
+          {/* Locale picker — single trigger showing the active locale
+              (EN / NL / FR / RU), opens a 4-item dropdown on click.
+              Used at every viewport now: the inline 4-pill switcher
+              took ~120px on desktop, which crowded FR / RU labels
+              against the right edge. The dropdown collapses that to
+              ~40px and only expands when needed. The mobile drawer
+              footer still uses the inline LocaleSwitcher because the
+              drawer has plenty of horizontal room. */}
+          <LocaleDropdown />
           <IconBtn
             label={t("nav.search")}
             onClick={() => setSearchOpen(true)}
