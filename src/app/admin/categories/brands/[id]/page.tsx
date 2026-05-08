@@ -14,10 +14,7 @@ import {
 import { BrandLogoForm } from "@/components/admin/taxonomies/brand-logo-form";
 import { BrandCoverForm } from "@/components/admin/taxonomies/brand-cover-form";
 import { BrandAboutSourceForm } from "@/components/admin/taxonomies/brand-about-source-form";
-import {
-  BrandTrustForm,
-  type BrandTrustLocaleInitial,
-} from "@/components/admin/taxonomies/brand-trust-form";
+import { BrandTrustForm } from "@/components/admin/taxonomies/brand-trust-form";
 import { BrandDangerZone } from "@/components/admin/taxonomies/brand-danger-zone";
 import { Locale } from "@prisma/client";
 
@@ -69,20 +66,16 @@ export default async function EditBrandPage({
     ),
   };
 
-  // Per-locale trust signals for the BrandTrustForm. The translations
-  // array is variable-length (only locales with at least one row);
-  // the form receives a Partial<Record<Locale, ...>> and falls back
-  // to empty for unset locales. Certifications JSONB is narrowed
-  // here so the form receives a typed array, not `unknown`.
-  const trustByLocale: Partial<Record<Locale, BrandTrustLocaleInitial>> =
+  // Trust-form initial data: certifications is GLOBAL (read once from
+  // Brand) and safetyNote is PER LOCALE (built from the translations
+  // array). Locales with no translation row fall through to empty in
+  // the form.
+  const initialCertifications = readCertificationsFromJson(
+    brand.certifications,
+  );
+  const initialSafetyByLocale: Partial<Record<Locale, string | null>> =
     Object.fromEntries(
-      brand.translations.map((t) => [
-        t.locale,
-        {
-          certifications: readCertificationsFromJson(t.certifications),
-          safetyNote: t.safetyNote ?? null,
-        },
-      ]),
+      brand.translations.map((t) => [t.locale, t.safetyNote ?? null]),
     );
 
   return (
@@ -183,7 +176,8 @@ export default async function EditBrandPage({
         <div className="mt-5">
           <BrandTrustForm
             brandId={brand.id}
-            initialByLocale={trustByLocale}
+            initialCertifications={initialCertifications}
+            initialSafetyByLocale={initialSafetyByLocale}
           />
         </div>
       </section>

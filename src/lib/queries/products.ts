@@ -913,17 +913,17 @@ export async function getBrandAboutBySlug(
       coverImageUrl: true,
       coverPosition: true,
       aboutFromBrandId: true,
-      // Trust signals (certifications + safetyNote) live on
-      // BrandTranslation now, picked up in the translations select
-      // below. The Brand-level shadow columns are deliberately
-      // ignored — see migration 20260509200000_brand_trust_per_locale.
+      // Certifications are GLOBAL (Brand-level) — codes like CPNP /
+      // ECAS / GMP are regulatory acronyms that don't translate, so
+      // there's no NL/FR/RU variant to maintain. Safety note IS
+      // per-locale on BrandTranslation so DeepL can fill it.
+      certifications: true,
       translations: {
         where: { locale: { in: [loc, Locale.EN] } },
         select: {
           locale: true,
           tagline: true,
           story: true,
-          certifications: true,
           safetyNote: true,
         },
       },
@@ -935,13 +935,13 @@ export async function getBrandAboutBySlug(
           name: true,
           coverImageUrl: true,
           coverPosition: true,
+          certifications: true,
           translations: {
             where: { locale: { in: [loc, Locale.EN] } },
             select: {
               locale: true,
               tagline: true,
               story: true,
-              certifications: true,
               safetyNote: true,
             },
           },
@@ -959,14 +959,9 @@ export async function getBrandAboutBySlug(
   const localeTr = source.translations.find((t) => t.locale === loc);
   const enTr = source.translations.find((t) => t.locale === Locale.EN);
 
-  // Locale-first fallback for trust signals: NL/FR/RU value if set,
-  // else EN. Mirrors the tagline/story resolution above. The
-  // certifications array is treated atomically — if the requested
-  // locale has any rows we use that locale's whole array, we don't
-  // mix-and-match with EN's. That avoids fragile partial fallbacks.
-  const localeCerts = parseCertifications(localeTr?.certifications);
-  const enCerts = parseCertifications(enTr?.certifications);
-  const certifications = localeCerts.length > 0 ? localeCerts : enCerts;
+  // Certifications are global on the source brand. Safety note still
+  // resolves locale-first with EN fallback (it's prose, gets DeepL'd).
+  const certifications = parseCertifications(source.certifications);
 
   return {
     slug: brand.slug,

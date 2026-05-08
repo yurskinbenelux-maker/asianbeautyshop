@@ -1,17 +1,21 @@
 // ─────────────────────────────────────────────────────────────────────────
-// BrandTrustForm — edits the brand About page's trust signals PER LOCALE
-// (EN / NL / FR / RU):
-//   · Certifications grid (CPNP, ECAS, GMP, etc.)
-//   · Safety / usage callout (pregnancy notes, sensitivity advice, etc.)
+// BrandTrustForm — edits the brand About page's trust signals.
 //
-// Mirrors the BrandForm tabs+DeepL pattern so an admin authors EN once
-// and clicks "Translate from English" to fill NL/FR/RU. The translate
-// helper preserves the `CODE | description` line format because DeepL
-// leaves all-caps acronyms (CPNP/ECAS/GMP) untouched and respects the
-// pipe separator.
+//   · Certifications  — GLOBAL (one textarea, no locale tabs). Codes
+//                       like CPNP / ECAS / GMP are universal regulatory
+//                       acronyms; their descriptions don't usefully
+//                       translate either. Same value renders across
+//                       EN/NL/FR/RU.
 //
-// Submits via setBrandTrustAction (narrow action) so an empty submit
-// can't accidentally clobber translations or other brand fields.
+//   · Safety / usage  — PER LOCALE (tabs + DeepL). Customer-facing
+//                       prose. The "Translate from English" button
+//                       fills NL/FR/RU from the EN source. Codes are
+//                       NOT mixed into this batch any more — earlier
+//                       versions sent both fields together and DeepL
+//                       sometimes choked on the pipe-delimited cert
+//                       lines, returning only one of the two fields.
+//
+// Submits via setBrandTrustAction (narrow action).
 // ─────────────────────────────────────────────────────────────────────────
 
 "use client";
@@ -37,15 +41,9 @@ export type BrandCertificationInitial = {
   description: string;
 };
 
-export type BrandTrustLocaleInitial = {
-  certifications: BrandCertificationInitial[];
-  safetyNote: string | null;
-};
-
-/** Convert the structured certifications array back to the textarea
- *  wire format so the editor sees what was saved. Round-trip stays
- *  lossless because the server parser accepts the same format it
- *  just produced. */
+/** Convert structured certifications back to the textarea wire format
+ *  so the editor sees what was saved. The server parser accepts the
+ *  same format it produces — round trip stays lossless. */
 function certsToText(certs: BrandCertificationInitial[]): string {
   return certs
     .map((c) =>
@@ -56,29 +54,27 @@ function certsToText(certs: BrandCertificationInitial[]): string {
 
 export function BrandTrustForm({
   brandId,
-  initialByLocale,
+  initialCertifications,
+  initialSafetyByLocale,
 }: {
   brandId: string;
-  initialByLocale: Partial<Record<Locale, BrandTrustLocaleInitial>>;
+  /** Single global value rendered in EN/NL/FR/RU identically. */
+  initialCertifications: BrandCertificationInitial[];
+  /** Per-locale safety notes; missing locales fall back to empty in the form. */
+  initialSafetyByLocale: Partial<Record<Locale, string | null>>;
 }) {
   const router = useRouter();
   const [state, action] = useActionState(setBrandTrustAction, INITIAL);
   const [, startRefresh] = useTransition();
   const [active, setActive] = useState<Locale>(Locale.EN);
 
-  // We track each per-locale textarea via a ref so the DeepL button
-  // can grab the freshest EN values without forcing the form to
-  // become controlled (controlled textareas + form action have
-  // historically had focus + selection bugs in this project).
-  const inputRefs = useRef<
-    Record<string, HTMLTextAreaElement | null>
-  >({});
+  // Refs for the per-locale safety note textareas so the DeepL button
+  // can grab the live EN value and write back to the target locale.
+  const safetyRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
 
   function getEnSource(): Record<string, string> {
     return {
-      certifications:
-        inputRefs.current[`EN.certifications`]?.value ?? "",
-      safetyNote: inputRefs.current[`EN.safetyNote`]?.value ?? "",
+      safetyNote: safetyRefs.current[`EN`]?.value ?? "",
     };
   }
 
@@ -86,8 +82,8 @@ export function BrandTrustForm({
     locale: Locale,
     translations: Record<string, string>,
   ) {
-    for (const [name, value] of Object.entries(translations)) {
-      setNativeInputValue(inputRefs.current[`${locale}.${name}`], value);
+    if (typeof translations.safetyNote === "string") {
+      setNativeInputValue(safetyRefs.current[locale], translations.safetyNote);
     }
   }
 
@@ -97,125 +93,109 @@ export function BrandTrustForm({
         action(fd);
         startRefresh(() => router.refresh());
       }}
-      className="space-y-6"
+      className="space-y-8"
     >
       <input type="hidden" name="id" value={brandId} />
 
-      {/* ── Locale tabs ─────────────────────────────────────────── */}
-      <div className="flex items-center gap-1 border-b border-ink/10">
-        {LOCALES.map((l) => (
-          <button
-            key={l}
-            type="button"
-            onClick={() => setActive(l)}
-            aria-pressed={active === l}
-            className={cn(
-              "border-b-2 px-3 py-2 text-[11px] uppercase tracking-label transition-colors",
-              active === l
-                ? "border-ink text-ink"
-                : "border-transparent text-ink-mid hover:text-ink",
-            )}
-          >
-            {l}
-          </button>
-        ))}
+      {/* ── Certifications (GLOBAL) ───────────────────────────── */}
+      <div>
+        <label
+          htmlFor={`certifications-${brandId}`}
+          className="block text-[11px] uppercase tracking-label text-ink-mid"
+        >
+          Certifications
+        </label>
+        <textarea
+          id={`certifications-${brandId}`}
+          name="certifications"
+          rows={6}
+          defaultValue={certsToText(initialCertifications)}
+          placeholder={`CPNP | EU Cosmetic Notification\nECAS | Emirates Conformity Assessment Scheme\nGMP | Good Manufacturing Practice`}
+          className="mt-2 w-full border border-ink/15 bg-white px-3 py-2 font-mono text-[13px] leading-relaxed text-ink placeholder:text-ink-mid/60 focus:border-ink focus:outline-none"
+        />
+        <p className="mt-2 max-w-md text-[12px] leading-relaxed text-ink-mid">
+          One per line. Format:{" "}
+          <code className="font-mono">CODE | description</code>. Shown
+          identically in every language — regulatory acronyms aren&rsquo;t
+          translated.
+        </p>
       </div>
 
-      {/* ── Locale panes ───────────────────────────────────────── */}
-      {LOCALES.map((l) => {
-        const initial = initialByLocale[l] ?? {
-          certifications: [],
-          safetyNote: null,
-        };
-        return (
-          <div
-            key={l}
-            className={cn("space-y-5 pt-4", active !== l && "hidden")}
-          >
-            {l !== Locale.EN && (
-              <TranslateFromEnglishButton
-                targetLocale={l}
-                fields={[
-                  {
-                    name: "certifications",
-                    isHtml: false,
-                    currentValue:
-                      inputRefs.current[`${l}.certifications`]?.value ??
-                      certsToText(initial.certifications),
-                  },
-                  {
-                    name: "safetyNote",
-                    isHtml: false,
-                    currentValue:
-                      inputRefs.current[`${l}.safetyNote`]?.value ??
-                      (initial.safetyNote ?? ""),
-                  },
-                ]}
-                getSource={getEnSource}
-                onTranslated={(tr) => applyTranslations(l, tr)}
-              />
-            )}
+      {/* ── Safety / usage note (PER LOCALE) ───────────────────── */}
+      <div>
+        <div className="text-[11px] uppercase tracking-label text-ink-mid">
+          Safety / usage note
+        </div>
+        <p className="mt-1 max-w-md text-[12px] leading-relaxed text-ink-mid">
+          Renders as a soft callout box on the brand About page. Author
+          in English first, then click <em>Translate from English</em> on
+          the NL / FR / RU tabs to auto-fill via DeepL.
+        </p>
 
-            {/* ── Certifications ──────────────────────────────── */}
-            <div>
-              <label
-                htmlFor={`certifications-${brandId}-${l}`}
-                className="block text-[11px] uppercase tracking-label text-ink-mid"
-              >
-                Certifications
-              </label>
+        {/* Locale tabs */}
+        <div className="mt-4 flex items-center gap-1 border-b border-ink/10">
+          {LOCALES.map((l) => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setActive(l)}
+              aria-pressed={active === l}
+              className={cn(
+                "border-b-2 px-3 py-2 text-[11px] uppercase tracking-label transition-colors",
+                active === l
+                  ? "border-ink text-ink"
+                  : "border-transparent text-ink-mid hover:text-ink",
+              )}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+
+        {/* Locale panes */}
+        {LOCALES.map((l) => {
+          const initial = initialSafetyByLocale[l] ?? "";
+          return (
+            <div
+              key={l}
+              className={cn("space-y-3 pt-4", active !== l && "hidden")}
+            >
+              {l !== Locale.EN && (
+                <TranslateFromEnglishButton
+                  targetLocale={l}
+                  fields={[
+                    {
+                      name: "safetyNote",
+                      isHtml: false,
+                      currentValue:
+                        safetyRefs.current[l]?.value ?? (initial ?? ""),
+                    },
+                  ]}
+                  getSource={getEnSource}
+                  onTranslated={(tr) => applyTranslations(l, tr)}
+                />
+              )}
+
               <textarea
                 ref={(el) => {
-                  inputRefs.current[`${l}.certifications`] = el;
+                  safetyRefs.current[l] = el;
                 }}
-                id={`certifications-${brandId}-${l}`}
-                name={`translations.${l}.certifications`}
-                rows={6}
-                defaultValue={certsToText(initial.certifications)}
-                placeholder={
-                  l === Locale.EN
-                    ? `CPNP | EU Cosmetic Notification\nECAS | Emirates Conformity Assessment Scheme\nGMP | Good Manufacturing Practice`
-                    : `Translate from English with the button above, or author manually.`
-                }
-                className="mt-2 w-full border border-ink/15 bg-white px-3 py-2 font-mono text-[13px] leading-relaxed text-ink placeholder:text-ink-mid/60 focus:border-ink focus:outline-none"
-              />
-              <p className="mt-2 max-w-md text-[12px] leading-relaxed text-ink-mid">
-                One per line. Format:{" "}
-                <code className="font-mono">CODE | description</code>.
-                Codes (CPNP, ECAS, GMP) stay the same across locales —
-                only the description gets translated.
-              </p>
-            </div>
-
-            {/* ── Safety note ────────────────────────────────── */}
-            <div>
-              <label
-                htmlFor={`safety-${brandId}-${l}`}
-                className="block text-[11px] uppercase tracking-label text-ink-mid"
-              >
-                Safety / usage note
-              </label>
-              <textarea
-                ref={(el) => {
-                  inputRefs.current[`${l}.safetyNote`] = el;
-                }}
-                id={`safety-${brandId}-${l}`}
                 name={`translations.${l}.safetyNote`}
                 rows={5}
-                defaultValue={initial.safetyNote ?? ""}
+                defaultValue={initial ?? ""}
                 placeholder={
                   l === Locale.EN
                     ? "e.g. During pregnancy and breastfeeding, skin can become more sensitive — we advise consulting a healthcare professional before introducing any new skincare into your routine."
                     : "Translate from English with the button above, or author manually."
                 }
-                className="mt-2 w-full border border-ink/15 bg-white px-3 py-2 text-[13px] leading-relaxed text-ink placeholder:text-ink-mid/60 focus:border-ink focus:outline-none"
+                className="w-full border border-ink/15 bg-white px-3 py-2 text-[13px] leading-relaxed text-ink placeholder:text-ink-mid/60 focus:border-ink focus:outline-none"
               />
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 border-t border-ink/10 pt-5">
         <SaveButton />
         {state.message && (
           <span

@@ -632,21 +632,22 @@ export async function setBrandAboutSourceAction(
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Narrow action — writes the brand's About-page trust signals
-// (certifications grid + safety/usage callout) PER LOCALE so DeepL can
-// translate them like tagline/story already do.
+// Narrow action — writes the brand's About-page trust signals.
 //
-// Certifications wire format: textarea per locale, each line is
-// `CODE | description` (e.g. `CPNP | EU Cosmetic Notification`).
-// Tolerates either `|` or `:` as the separator. Persisted as a JSONB
-// array of {code, description} on BrandTranslation per locale.
+// Split storage by translatability:
+//   · certifications — GLOBAL on Brand. Codes like CPNP/ECAS/GMP are
+//     regulatory acronyms that don't translate; admins should not have
+//     to maintain four locale variants of the same regulatory data.
+//   · safetyNote     — PER LOCALE on BrandTranslation. Customer-facing
+//     prose, gets DeepL'd from the EN source.
 //
-// Safety note: free text per locale. Empty input clears the field.
+// Certifications wire format: a single textarea where each line is
+// `CODE | description` (also accepts `CODE: …`). Persisted as a JSONB
+// array of {code, description} on Brand.
 //
-// Empty values across BOTH columns delete-or-skip-create the
-// translation row — but we DON'T deleteMany the row outright if it
-// already has tagline/story set (would clobber the rich-text content).
-// Instead we upsert with explicit nulls.
+// Safety note wire format: `translations.{locale}.safetyNote` per locale.
+// Empty values clear the field but don't deleteMany the translation
+// row (would clobber any tagline/story authored separately).
 // ─────────────────────────────────────────────────────────────────────────
 export async function setBrandTrustAction(
   _prev: ActionState,
@@ -656,35 +657,38 @@ export async function setBrandTrustAction(
   const id = String(formData.get("id") ?? "");
   if (!id) return { ok: false, message: "Missing brand id." };
 
-  // Per-locale field reads — matches the wire format used by
-  // BrandTrustForm: `translations.{locale}.certifications` and
-  // `translations.{locale}.safetyNote`.
-  const certs = readLocaleField(formData, "translations", "certifications");
+  const certificationsRaw = String(formData.get("certifications") ?? "");
+  const parsedCerts = parseCertificationsTextarea(certificationsRaw);
+
+  // Per-locale safety notes only.
   const safeties = readLocaleField(formData, "translations", "safetyNote");
 
   await prisma.$transaction(async (tx) => {
+    // Global: write certifications to the Brand row.
+    await tx.brand.update({
+      where: { id },
+      data: {
+        certifications:
+          parsedCerts.length === 0
+            ? Prisma.JsonNull
+            : (parsedCerts as unknown as Prisma.InputJsonValue),
+      },
+    });
+
+    // Per-locale: upsert safetyNote on each BrandTranslation row.
     for (const l of ALL_LOCALES) {
-      const parsedCerts = parseCertificationsTextarea(certs[l] ?? "");
       const safetyTrimmed = (safeties[l] ?? "").trim();
       const safetyValue: string | null =
         safetyTrimmed.length > 0 ? safetyTrimmed : null;
-      const certsJson: Prisma.InputJsonValue | typeof Prisma.JsonNull =
-        parsedCerts.length === 0
-          ? Prisma.JsonNull
-          : (parsedCerts as unknown as Prisma.InputJsonValue);
 
       await tx.brandTranslation.upsert({
         where: { brandId_locale: { brandId: id, locale: l } },
         create: {
           brandId: id,
           locale: l,
-          certifications: certsJson,
           safetyNote: safetyValue,
         },
-        update: {
-          certifications: certsJson,
-          safetyNote: safetyValue,
-        },
+        update: { safetyNote: safetyValue },
       });
     }
   });
