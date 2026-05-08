@@ -153,13 +153,22 @@ export function ShopMegaMenu({ tree }: Props) {
           }
         }}
         className={cn(
-          "relative inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] uppercase tracking-label transition-colors",
+          "relative inline-flex items-center gap-1.5 text-[13px] uppercase tracking-label transition-colors",
           // Active vermilion when the panel is open, regardless of
           // hover state — gives a visible "you're in this menu" cue.
           open ? "text-vermilion" : "text-ink hover:text-vermilion",
         )}
       >
-        <span className="whitespace-nowrap">{t("product_types")}</span>
+        {/* whitespace-pre-line lets the FR / RU values use an explicit
+            \n in their JSON to stack ("Types de" / "Produits") on two
+            lines, saving horizontal nav space when those locales are
+            active. EN / NL values have no newline, so they render as
+            a single line — the styling adapts per locale without any
+            conditional code. text-center + leading-[1.05] keep the
+            two stacked lines reading as one tight unit. */}
+        <span className="whitespace-pre-line text-center leading-[1.05]">
+          {t("product_types")}
+        </span>
         {/* Small chevron — same affordance as the mobile drawer.
             Rotates 180° when the panel is open so the trigger reads
             as a stateful disclosure rather than a plain link. */}
