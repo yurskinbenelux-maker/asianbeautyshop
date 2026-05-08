@@ -121,9 +121,6 @@ export default async function EditBrandPage({
         <div className="mt-5">
           <BrandAboutSourceForm
             brandId={brand.id}
-            brandName={brand.name}
-            brandSlug={brand.slug}
-            brandIsActive={brand.isActive}
             currentAboutFromBrandId={brand.aboutFromBrandId ?? null}
             options={aboutPickerOptions}
           />

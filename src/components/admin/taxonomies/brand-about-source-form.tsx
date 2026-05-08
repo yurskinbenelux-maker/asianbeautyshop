@@ -11,8 +11,11 @@
 //     knows the brand list. Native dropdown = zero JS overhead.
 //   · "— None (use this brand's own content)" is the first option, set as
 //     the default when aboutFromBrandId is null.
-//   · Submits via the existing updateBrandAction Server Action — we
-//     piggyback on the main form's id field.
+//   · Submits via the dedicated setBrandAboutSourceAction so it can't
+//     accidentally clobber translations, logo, or other brand fields.
+//     (An earlier version routed through updateBrandAction and that
+//      action's "no values found" branches wiped translations on every
+//      About-source save — fixed by switching to a narrow action.)
 // ─────────────────────────────────────────────────────────────────────────
 
 "use client";
@@ -22,7 +25,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import {
-  updateBrandAction,
+  setBrandAboutSourceAction,
   type ActionState,
 } from "@/app/admin/categories/actions";
 import { cn } from "@/lib/utils";
@@ -33,22 +36,16 @@ type Option = { id: string; name: string; slug: string };
 
 export function BrandAboutSourceForm({
   brandId,
-  brandName,
-  brandSlug,
-  brandIsActive,
   currentAboutFromBrandId,
   options,
 }: {
   brandId: string;
-  brandName: string;
-  brandSlug: string;
-  brandIsActive: boolean;
   currentAboutFromBrandId: string | null;
   /** Every other active brand (excluding self). */
   options: Option[];
 }) {
   const router = useRouter();
-  const [state, action] = useActionState(updateBrandAction, INITIAL);
+  const [state, action] = useActionState(setBrandAboutSourceAction, INITIAL);
   const [, startRefresh] = useTransition();
 
   return (
@@ -58,17 +55,16 @@ export function BrandAboutSourceForm({
         startRefresh(() => router.refresh());
       }}
       className="space-y-3"
+      // `key` re-mounts the form when the saved value changes, which
+      // resets the uncontrolled <select> to the new defaultValue —
+      // otherwise router.refresh() pulls fresh props but the dropdown
+      // keeps showing whatever the admin last picked.
+      key={currentAboutFromBrandId ?? "none"}
     >
-      {/* The Server Action expects the same shape as the main brand
-          form. We re-supply the existing values here so the action
-          doesn't blank them out — only aboutFromBrandId actually
-          changes. Hidden inputs keep the wire format identical. */}
+      {/* Only the brand id and the new aboutFromBrandId value travel
+          on the wire — the narrow action means no other brand fields
+          can be accidentally clobbered by an empty submission. */}
       <input type="hidden" name="id" value={brandId} />
-      <input type="hidden" name="name" value={brandName} />
-      <input type="hidden" name="slug" value={brandSlug} />
-      {brandIsActive && (
-        <input type="hidden" name="isActive" value="on" />
-      )}
 
       <label
         htmlFor={`about-from-${brandId}`}

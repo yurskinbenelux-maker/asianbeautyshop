@@ -533,21 +533,6 @@ export async function updateBrandAction(
     }
   }
 
-  // aboutFromBrandId — empty string from the form means "use this brand's
-  // own about content" (clear the inheritance). UUID string = inherit. We
-  // skip the field entirely when not present in the form so legacy clients
-  // that don't render the picker don't accidentally clobber the relation.
-  const rawAboutFrom = formData.get("aboutFromBrandId");
-  let aboutFromBrandIdUpdate:
-    | { aboutFromBrandId: string | null }
-    | Record<string, never> = {};
-  if (rawAboutFrom !== null) {
-    const str = String(rawAboutFrom).trim();
-    aboutFromBrandIdUpdate = {
-      aboutFromBrandId: str === "" ? null : str,
-    };
-  }
-
   await prisma.$transaction(async (tx) => {
     await tx.brand.update({
       where: { id },
@@ -556,7 +541,6 @@ export async function updateBrandAction(
         name: basic.data.name,
         isActive: basic.data.isActive,
         logoUrl: basic.data.logoUrl ?? null,
-        ...aboutFromBrandIdUpdate,
       },
     });
     for (const l of ALL_LOCALES) {
@@ -590,6 +574,58 @@ export async function updateBrandAction(
       "auto:brand-slug",
     );
   }
+
+  refresh();
+  return OK_SAVED;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Narrow action — only writes aboutFromBrandId. Lives separately from
+// updateBrandAction because the picker form doesn't carry a full brand
+// payload (no translations, no logo, no isActive), and routing it
+// through updateBrandAction caused that action's "no values found"
+// branches to wipe translations + logoUrl on every submit.
+//
+// Empty string in the form ⇒ clear inheritance (use this brand's own
+// content). UUID ⇒ inherit from that brand.
+// ─────────────────────────────────────────────────────────────────────────
+export async function setBrandAboutSourceAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, message: "Missing brand id." };
+
+  const raw = formData.get("aboutFromBrandId");
+  const str = raw === null ? "" : String(raw).trim();
+  const next: string | null = str === "" ? null : str;
+
+  // Guard against a brand pointing at itself — that would create a
+  // resolution cycle in getBrandAboutBySlug.
+  if (next === id) {
+    return {
+      ok: false,
+      message: "A brand can't inherit About content from itself.",
+    };
+  }
+
+  // Validate that the target brand exists when one is chosen — protects
+  // against stale form values pointing at a deleted brand.
+  if (next) {
+    const target = await prisma.brand.findUnique({
+      where: { id: next },
+      select: { id: true },
+    });
+    if (!target) {
+      return { ok: false, message: "Selected brand no longer exists." };
+    }
+  }
+
+  await prisma.brand.update({
+    where: { id },
+    data: { aboutFromBrandId: next },
+  });
 
   refresh();
   return OK_SAVED;
