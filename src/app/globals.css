@@ -98,6 +98,47 @@
     border: 1px solid rgba(18,17,16,0.06);
   }
 
+  /* Brand About story — opinionated typography for the per-brand
+     editorial page (/brands/[slug]/about). Solves the "everything reads
+     like one paragraph" problem by giving headings, lists, and bold
+     real visual weight even when the admin authors with mixed-quality
+     HTML out of Tiptap. */
+  .brand-story > * + * { @apply mt-5; }
+  .brand-story p { @apply leading-[1.8]; }
+  .brand-story h2 {
+    @apply mt-12 font-display text-[24px] leading-tight text-ink;
+  }
+  .brand-story h2:first-child { @apply mt-0; }
+  .brand-story h3 {
+    @apply mt-10 text-[11px] uppercase tracking-label text-vermilion;
+  }
+  .brand-story h4 {
+    @apply mt-8 text-[15px] font-medium text-ink;
+  }
+  .brand-story strong { @apply font-medium text-ink; }
+  .brand-story em { @apply italic; }
+  .brand-story ul {
+    @apply mt-4 space-y-2 pl-0 list-none;
+  }
+  .brand-story ul li {
+    @apply relative pl-6 leading-relaxed text-ink;
+  }
+  .brand-story ul li::before {
+    content: "";
+    @apply absolute left-0 top-[0.7em] h-[5px] w-[5px] bg-vermilion;
+  }
+  .brand-story ol {
+    @apply mt-4 list-decimal space-y-2 pl-6 marker:text-vermilion;
+  }
+  .brand-story ol li { @apply leading-relaxed text-ink; }
+  .brand-story blockquote {
+    @apply my-8 border-l-2 border-vermilion pl-5 italic text-ink;
+  }
+  .brand-story a {
+    @apply underline decoration-vermilion underline-offset-4 hover:text-vermilion;
+  }
+  .brand-story hr { @apply my-10 border-ink/10; }
+
   /* Editorial rich-text styling — for product descriptions, journal
      entries, and anything coming out of the Tiptap editor in admin.
      Deliberately plain (no framed cards, no bullets with accents) —

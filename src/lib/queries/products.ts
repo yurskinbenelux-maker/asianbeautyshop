@@ -913,6 +913,39 @@ export async function getBrandsForAboutPicker(
 }
 
 /**
+ * Given a brand slug, return the slugs of every brand in its "About
+ * family" — used by the brand About page CTA to deep-link back to /shop
+ * with a pre-applied multi-brand filter. The family is:
+ *
+ *   · the canonical brand (self if standalone, else aboutFromBrand parent)
+ *   · every other brand inheriting from that canonical (siblings + self)
+ *
+ * Example: for Yu.R Me (which inherits from Yu.R), the family is
+ * { Yu.R, Yu.R Pro, Yu.R Me }. For a standalone brand it's just itself.
+ *
+ * Inactive brands are excluded so the CTA never points at hidden inventory.
+ */
+export async function getBrandFamilySlugs(slug: string): Promise<string[]> {
+  const brand = await prisma.brand.findUnique({
+    where: { slug },
+    select: { id: true, isActive: true, aboutFromBrandId: true },
+  });
+  if (!brand || !brand.isActive) return [];
+
+  const canonicalId = brand.aboutFromBrandId ?? brand.id;
+
+  const family = await prisma.brand.findMany({
+    where: {
+      isActive: true,
+      OR: [{ id: canonicalId }, { aboutFromBrandId: canonicalId }],
+    },
+    select: { slug: true },
+    orderBy: { name: "asc" },
+  });
+  return family.map((b) => b.slug);
+}
+
+/**
  * Shape the /shop/category/[slug] landing page needs: category hero data
  * (name, description HTML, SEO fields, icon) resolved to the requested
  * locale with EN fallback. Returns null when the slug doesn't match an

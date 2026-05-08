@@ -17,7 +17,10 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
-import { getBrandAboutBySlug } from "@/lib/queries/products";
+import {
+  getBrandAboutBySlug,
+  getBrandFamilySlugs,
+} from "@/lib/queries/products";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 // ISR — 5 minutes matches /shop and category landings. About content
@@ -56,18 +59,36 @@ export default async function BrandAboutPage({ params }: Props) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
 
-  const brand = await getBrandAboutBySlug(locale, slug);
+  // Brand content + the family of brands sharing this About page run in
+  // parallel — the family slugs power the CTA so when Yu.R Me is the
+  // displayed brand, "Browse Yu.R Me products" actually lands on /shop
+  // with all three Yu.R-house brands pre-filtered.
+  const [brand, familySlugs] = await Promise.all([
+    getBrandAboutBySlug(locale, slug),
+    getBrandFamilySlugs(slug),
+  ]);
   if (!brand) notFound();
 
   const tBrand = await getTranslations("brand");
 
+  // Build the CTA destination. Multi-brand families deep-link to /shop
+  // with the multi-brand filter pre-applied; single-brand families fall
+  // through to the dedicated /shop/brand/[slug] landing page (which is
+  // editorially nicer than a /shop?brand=one URL).
+  const browseHref =
+    familySlugs.length > 1
+      ? `/shop?brand=${familySlugs.join(",")}`
+      : `/shop/brand/${brand.slug}`;
+
   return (
     <article className="pb-20">
       {/* ── Hero ──────────────────────────────────────────────────────
-          Full-bleed cover photo when uploaded; falls back to a typographic
-          hero on cream so brands without a cover still feel intentional. */}
+          Letterbox cover photo capped at ~50vh so the prose is reachable
+          in a single scroll. Earlier 21:9 ratio looked editorial on its
+          own but pushed the brand name + lede off the fold on most
+          desktop screens. */}
       {brand.coverImageUrl ? (
-        <div className="relative aspect-[16/9] w-full overflow-hidden bg-rice-dim/40 md:aspect-[21/9]">
+        <div className="relative aspect-[16/8] max-h-[55vh] w-full overflow-hidden bg-rice-dim/40 md:aspect-[12/5]">
           <Image
             src={brand.coverImageUrl}
             alt={`${brand.name} cover`}
@@ -85,12 +106,14 @@ export default async function BrandAboutPage({ params }: Props) {
         </div>
       )}
 
-      {/* ── Editorial body ──────────────────────────────────────── */}
-      <div className="container max-w-3xl">
+      {/* ── Editorial body ────────────────────────────────────────
+          max-w-2xl gives a comfortable measure (~65 chars) for long-form
+          reading. The earlier max-w-3xl pushed lines past 80 chars on
+          wide displays which felt like a print catalogue, not a brand
+          essay. */}
+      <div className="container max-w-2xl">
         <header
-          className={
-            brand.coverImageUrl ? "mt-12 md:mt-16" : "-mt-10"
-          }
+          className={brand.coverImageUrl ? "mt-12 md:mt-16" : "-mt-10"}
         >
           {brand.coverImageUrl && (
             <div className="text-[11px] uppercase tracking-label text-vermilion">
@@ -101,26 +124,27 @@ export default async function BrandAboutPage({ params }: Props) {
             {brand.name}
           </h1>
           {brand.tagline && (
-            <p className="mt-4 text-[17px] leading-relaxed text-ink">
+            <p className="mt-4 text-[18px] italic leading-relaxed text-ink">
               {brand.tagline}
             </p>
           )}
-          {/* When the content is inherited (Yu.R Pro showing Yu.R's
-              story), make that visible in small type so editors can
-              spot it on review. Customers see it but it's deliberately
-              quiet. */}
-          {brand.inheritedFromName && (
-            <p className="mt-3 text-[11px] uppercase tracking-label text-ink-mid">
-              {tBrand("about_inherited_from", {
-                parent: brand.inheritedFromName,
-              })}
-            </p>
-          )}
+          {/* Inheritance signal intentionally NOT rendered for customers
+              — admins see it in /admin/categories/brands/[id]; surfacing
+              "About sourced from Yu.R" on the public page exposed an
+              implementation detail and broke the editorial illusion. */}
         </header>
 
         {brand.story ? (
           <div
-            className="prose prose-ink mt-10 max-w-none text-[16px] leading-relaxed text-ink-mid"
+            // Custom prose styling on the .brand-story class (defined in
+            // globals.css) — opt out of the default `prose` plugin
+            // because its defaults clashed with the K-ink palette and
+            // produced the "everything looks like one paragraph" issue.
+            // Headings get vermilion small-caps treatment, lists get
+            // vermilion markers, paragraphs get generous spacing, so
+            // admin-authored Tiptap HTML renders cleanly without
+            // requiring perfect markup discipline.
+            className="brand-story mt-12 text-[16px] leading-[1.8] text-ink-mid"
             dangerouslySetInnerHTML={{ __html: brand.story }}
           />
         ) : (
@@ -131,7 +155,7 @@ export default async function BrandAboutPage({ params }: Props) {
 
         <div className="mt-16 border-t border-ink/10 pt-10">
           <Link
-            href={`/shop/brand/${brand.slug}`}
+            href={browseHref}
             className="inline-flex items-center gap-2 border border-ink bg-ink px-6 py-3 text-[12px] uppercase tracking-label text-rice transition-colors hover:bg-ink/90"
           >
             {tBrand("about_browse_cta", { name: brand.name })}
