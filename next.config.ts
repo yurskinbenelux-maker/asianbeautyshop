@@ -66,6 +66,23 @@ const nextConfig: NextConfig = {
     // normal instant navigation. See globals.css for the morph rules.
     viewTransition: true,
   },
+  // pdfkit (used by /api/webhooks/mollie → issueInvoiceForOrder →
+  // renderInvoicePdf) reads its standard-font metrics (Helvetica.afm,
+  // Helvetica-Bold.afm, etc.) from disk at runtime via __dirname.
+  // Next.js's automatic dependency tracing doesn't follow that pattern
+  // — the .afm files aren't picked up as imports — so they get left
+  // out of the Hostinger production bundle and PDF rendering throws
+  // ENOENT: no such file or directory ... Helvetica.afm.
+  //
+  // outputFileTracingIncludes pins those files into the deploy. The
+  // wildcard route key '*' applies to every API route + server file
+  // so we don't have to enumerate each consumer of pdfkit.
+  //
+  // If we ever switch off pdfkit (e.g. to puppeteer or react-pdf),
+  // this entry can be removed.
+  outputFileTracingIncludes: {
+    "*": ["./node_modules/pdfkit/js/data/**/*"],
+  },
   // Hostinger's Node runtime sits behind a proxy — trust it for correct IPs in GDPR logs
   async headers() {
     return [
