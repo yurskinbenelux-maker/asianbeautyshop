@@ -7,7 +7,8 @@
 // order confirmation email.
 //
 // Layout mirrors the visual mockup approved by Max:
-//   · Top: yu·r mark, "Skin Solution" eyebrow, right-side title + INV num
+//   · Top: Asian Beauty Shop wordmark lockup on the left, "Invoice"
+//     title + INV-2026-NNNNN number on the right
 //   · Vermilion hairline rule under the masthead
 //   · Two-column block: Issued by · Bill to
 //   · Two-column block: Issue date · Supply date / order ref
@@ -24,7 +25,41 @@
 // values below are tuned for that.
 // ─────────────────────────────────────────────────────────────────────────
 
+import fs from "node:fs";
+import path from "node:path";
 import PDFDocument from "pdfkit";
+
+// ────────── Brand assets ────────────────────────────────────────────────
+//
+// Read the wordmark once per Node process — module load runs once per
+// worker on Hostinger, so subsequent invoice renders pay zero IO. If the
+// file is missing on this deploy (theoretically possible if public/ gets
+// pruned by a misconfigured rsync), drawMasthead falls back to text
+// rather than crashing the invoice.
+//
+// 960x320 PNG → 3:1 — sized for the email header but reads beautifully
+// at ~130pt wide on A4. Lives in public/brand/exports/ alongside the
+// other exported brand renditions.
+
+const LOGO_PATH = path.join(
+  process.cwd(),
+  "public/brand/exports/email-logo-wordmark.png",
+);
+let _cachedLogo: Buffer | null = null;
+let _logoMissingLogged = false;
+function loadLogo(): Buffer | null {
+  if (_cachedLogo) return _cachedLogo;
+  try {
+    _cachedLogo = fs.readFileSync(LOGO_PATH);
+    return _cachedLogo;
+  } catch (err) {
+    if (!_logoMissingLogged) {
+      console.error("[invoice/pdf] logo file missing", LOGO_PATH, err);
+      _logoMissingLogged = true;
+    }
+    return null;
+  }
+}
 
 // ────────── Public types ────────────────────────────────────────────────
 
@@ -163,19 +198,28 @@ function drawMasthead(
   left: number,
   right: number,
 ): void {
-  // Wordmark — "yu·r" in serif, brand convention.
-  doc
-    .font(FONTS.serif)
-    .fontSize(22)
-    .fillColor(COLORS.ink)
-    .text("yu·r", left, 40);
-  doc
-    .font(FONTS.sans)
-    .fontSize(8)
-    .fillColor(COLORS.inkSofter)
-    .text("SKIN SOLUTION", left, 68, { characterSpacing: 2 });
+  // Brand wordmark — Asian Beauty Shop horizontal lockup (cherry blossom
+  // + ASIAN BEAUTY SHOP). Source PNG is 960x320 (3:1); we scale to
+  // ~140pt wide which renders the wordmark cleanly at print resolution
+  // without looking heavy against the right-side "Invoice" title.
+  //
+  // If the file is missing on this deploy (loadLogo logs once and
+  // returns null), we draw a serif text fallback so the invoice still
+  // renders — better than 500'ing the order confirmation email.
+  const logo = loadLogo();
+  if (logo) {
+    doc.image(logo, left, 38, { width: 140 });
+  } else {
+    doc
+      .font(FONTS.serifBold)
+      .fontSize(16)
+      .fillColor(COLORS.ink)
+      .text("Asian Beauty Shop", left, 46);
+  }
 
-  // Right-side title + invoice number.
+  // Right-side title + invoice number — unchanged. Vertical positions
+  // match the masthead's visual mid-line so the invoice number sits
+  // on the same baseline as the bottom of the wordmark.
   doc
     .font(FONTS.serif)
     .fontSize(20)
