@@ -69,20 +69,24 @@ const nextConfig: NextConfig = {
   // pdfkit (used by /api/webhooks/mollie → issueInvoiceForOrder →
   // renderInvoicePdf) reads its standard-font metrics (Helvetica.afm,
   // Helvetica-Bold.afm, etc.) from disk at runtime via __dirname.
-  // Next.js's automatic dependency tracing doesn't follow that pattern
-  // — the .afm files aren't picked up as imports — so they get left
-  // out of the Hostinger production bundle and PDF rendering throws
-  // ENOENT: no such file or directory ... Helvetica.afm.
   //
-  // outputFileTracingIncludes pins those files into the deploy. The
-  // wildcard route key '*' applies to every API route + server file
-  // so we don't have to enumerate each consumer of pdfkit.
+  // First attempt was outputFileTracingIncludes — that copies the .afm
+  // files into the deploy at node_modules/pdfkit/js/data/. But webpack
+  // bundles pdfkit's JS into the route chunk, so at runtime __dirname
+  // is .next/server/chunks/, NOT node_modules/pdfkit/js/. The trace
+  // include puts the files in the wrong place and the ENOENT continues.
+  //
+  // Correct fix is serverExternalPackages — tells webpack to leave
+  // pdfkit alone and keep it as a runtime require(). When the route
+  // executes, Node resolves pdfkit from node_modules/pdfkit/ and
+  // __dirname evaluates to node_modules/pdfkit/js/, where the data/
+  // folder with the .afm files actually lives. Same reasoning for
+  // fontkit (pdfkit's hard dep for OpenType subsetting — also has
+  // file-system reads relative to __dirname).
   //
   // If we ever switch off pdfkit (e.g. to puppeteer or react-pdf),
-  // this entry can be removed.
-  outputFileTracingIncludes: {
-    "*": ["./node_modules/pdfkit/js/data/**/*"],
-  },
+  // these entries can be removed.
+  serverExternalPackages: ["pdfkit", "fontkit"],
   // Hostinger's Node runtime sits behind a proxy — trust it for correct IPs in GDPR logs
   async headers() {
     return [
