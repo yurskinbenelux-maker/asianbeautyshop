@@ -265,16 +265,44 @@ export async function softDeleteCustomerAction(
   ]);
 
   // Best-effort: also remove the Supabase auth user so they can't log in
-  // with the old credentials. If the Supabase call fails we still keep the
-  // DB soft-delete — better for the admin to see the row vanish from the
-  // list than to be in a half-deleted state.
+  // with the old credentials. If the Supabase call fails we still keep
+  // the DB soft-delete — but unlike before, we DON'T silently swallow
+  // the error. We log it and (when it's a real failure, not an
+  // already-gone case) surface it to the admin. A half-deleted state
+  // where Prisma says gone but Supabase still has the auth row is
+  // exactly how we end up with orphan rows that 500 the next signup
+  // attempt under the same email.
+  let supabaseDeleteWarning: string | null = null;
   try {
-    await supabaseAdmin().auth.admin.deleteUser(user.id);
-  } catch {
-    // Swallow; the DB state is the source of truth.
+    const { error } = await supabaseAdmin().auth.admin.deleteUser(user.id);
+    if (error) {
+      // 404 / "not found" means the auth row was already removed (e.g.
+      // via the Supabase dashboard) — fine, the cascade trigger then
+      // keeps us in sync. Anything else is a real warning.
+      const isNotFound =
+        error.status === 404 ||
+        /not[\s_-]?found/i.test(error.message ?? "");
+      if (!isNotFound) {
+        console.error("[admin/customers] supabase deleteUser failed", error);
+        supabaseDeleteWarning = error.message ?? "Unknown error";
+      }
+    }
+  } catch (err) {
+    console.error("[admin/customers] supabase deleteUser threw", err);
+    supabaseDeleteWarning =
+      err instanceof Error ? err.message : "Network error";
   }
 
   revalidatePath("/admin/customers");
+  if (supabaseDeleteWarning) {
+    // Stay on the customer page so the admin sees the warning instead
+    // of being silently kicked back to the list with an orphaned auth
+    // row still able to log in.
+    return {
+      ok: true,
+      message: `Customer deleted from database, but Supabase auth row may still exist: ${supabaseDeleteWarning}. Delete manually in Supabase → Authentication → Users.`,
+    };
+  }
   redirect("/admin/customers");
 }
 
