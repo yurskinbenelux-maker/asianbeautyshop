@@ -2,7 +2,7 @@
 // /[locale]/account/returns/[number] — detail for one return.
 //
 // Shows:
-//   · public reference (YUR-1042-R1) + status pill
+//   · public reference (ABS-1042-R1) + status pill
 //   · the order it belongs to (linked)
 //   · line items being returned + the reason the customer gave
 //   · optional tracking number/url (set by an admin in admin)

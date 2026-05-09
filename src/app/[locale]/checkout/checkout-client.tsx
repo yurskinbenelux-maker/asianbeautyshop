@@ -10,7 +10,7 @@
 //      payment, and returns { checkoutUrl }.
 //   3. We window.location.replace(checkoutUrl) to hand the visitor over
 //      to Mollie's hosted pay page. Mollie then bounces them back to
-//      /checkout/success?order=YUR-… or /checkout/failure?…
+//      /checkout/success?order=ABS-… or /checkout/failure?…
 //
 // Why a plain <form action={...}> wasn't enough:
 //   · We want to redirect to an external URL (Mollie) on success. Next's

@@ -42,7 +42,7 @@ export async function getQuizRewardConfig(): Promise<{
  *  in /admin/coupons. */
 export function quizCouponCodeForUser(userId: string): string {
   const fragment = userId.replace(/-/g, "").slice(0, 8).toUpperCase();
-  return `YUR-QUIZ-${fragment}`;
+  return `ABS-QUIZ-${fragment}`;
 }
 
 /** Generate a fresh raw cart-restore token + its SHA-256 hash.

@@ -21,7 +21,7 @@ import type { LowStockReport } from "@/lib/queries/low-stock";
 export function fixtureOrder(locale: Locale): EmailOrder {
   return {
     id: "preview-order-id",
-    publicNumber: "YUR-2026-000123",
+    publicNumber: "ABS-2026-000123",
     email: "preview@example.com",
     locale,
     placedAt: new Date("2026-04-18T10:15:00Z"),

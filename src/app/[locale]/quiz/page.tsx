@@ -86,7 +86,7 @@ export default async function QuizPage({ params }: Props) {
 
         {/* Discount-eligibility notice — shown only to logged-out
             visitors. The recommended-routine discount is minted as a
-            user-keyed coupon (YUR-QUIZ-{userId}), so guests literally
+            user-keyed coupon (ABS-QUIZ-{userId}), so guests literally
             can't receive it without an account. Telling them upfront
             avoids the abandonment that happens when they hit the
             "claim" button and discover they need to register first.

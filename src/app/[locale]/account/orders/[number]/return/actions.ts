@@ -8,7 +8,7 @@
 //   3. Parse the FormData — each line-item ID carries a quantity; quantities
 //      cannot exceed the original order line.
 //   4. Validate the free-text reason maps to a ReturnReason enum value.
-//   5. Persist via createReturnRequest() — this mints the YUR-XXXX-R1 ref.
+//   5. Persist via createReturnRequest() — this mints the ABS-XXXX-R1 ref.
 //   6. Fire the customer and admin notification emails (non-blocking; Resend
 //      failure shouldn't block the flow).
 //   7. Redirect to /account/returns/{publicNumber}.

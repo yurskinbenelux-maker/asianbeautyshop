@@ -70,7 +70,7 @@ const PAGES: PageCopy[] = [
 <p>We share data only with processors we have contracts with: Supabase (hosting &amp; database, EU), Mollie (payments, EU), Sendcloud (shipping, EU), and our email provider. We do not sell your data.</p>
 
 <h2>Your rights</h2>
-<p>You can access, correct, export, or delete your personal data at any time. Email us at <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> and we will respond within 30 days. You also have the right to lodge a complaint with the Belgian Data Protection Authority (gegevensbeschermingsautoriteit.be).</p>
+<p>You can access, correct, export, or delete your personal data at any time. Email us at <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> and we will respond within 30 days. You also have the right to lodge a complaint with the Belgian Data Protection Authority (gegevensbeschermingsautoriteit.be).</p>
 
 <h2>Retention</h2>
 <p>Order records are kept for seven years (legal requirement for Belgian accounting). Account data is kept until you ask us to close your account. Marketing consent is kept until you unsubscribe.</p>
@@ -104,7 +104,7 @@ const PAGES: PageCopy[] = [
 <p>We delen gegevens enkel met verwerkers waarmee we een contract hebben: Supabase (hosting &amp; database, EU), Mollie (betalingen, EU), Sendcloud (verzending, EU) en onze e-mailprovider. Wij verkopen je gegevens niet.</p>
 
 <h2>Jouw rechten</h2>
-<p>Je kan je persoonsgegevens op elk moment inkijken, corrigeren, exporteren of laten verwijderen. Mail ons op <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> en we antwoorden binnen 30 dagen. Je hebt ook het recht om een klacht in te dienen bij de Gegevensbeschermingsautoriteit (gegevensbeschermingsautoriteit.be).</p>
+<p>Je kan je persoonsgegevens op elk moment inkijken, corrigeren, exporteren of laten verwijderen. Mail ons op <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> en we antwoorden binnen 30 dagen. Je hebt ook het recht om een klacht in te dienen bij de Gegevensbeschermingsautoriteit (gegevensbeschermingsautoriteit.be).</p>
 
 <h2>Bewaartermijn</h2>
 <p>Bestelgegevens worden zeven jaar bewaard (wettelijke verplichting voor Belgische boekhouding). Accountgegevens blijven bewaard tot je vraagt je account te sluiten. Marketingtoestemming blijft geldig tot je je uitschrijft.</p>
@@ -138,7 +138,7 @@ const PAGES: PageCopy[] = [
 <p>Nous ne partageons vos données qu'avec des sous-traitants contractualisés : Supabase (hébergement &amp; base de données, UE), Mollie (paiements, UE), Sendcloud (expédition, UE) et notre fournisseur d'e-mail. Nous ne vendons pas vos données.</p>
 
 <h2>Vos droits</h2>
-<p>Vous pouvez à tout moment accéder, corriger, exporter ou supprimer vos données. Écrivez-nous à <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a>, nous répondrons sous 30 jours. Vous pouvez également introduire une plainte auprès de l'Autorité de protection des données belge (autoriteprotectiondonnees.be).</p>
+<p>Vous pouvez à tout moment accéder, corriger, exporter ou supprimer vos données. Écrivez-nous à <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a>, nous répondrons sous 30 jours. Vous pouvez également introduire une plainte auprès de l'Autorité de protection des données belge (autoriteprotectiondonnees.be).</p>
 
 <h2>Durée de conservation</h2>
 <p>Les commandes sont conservées sept ans (obligation comptable belge). Les données de compte sont conservées jusqu'à fermeture du compte. Le consentement marketing reste valable jusqu'à votre désinscription.</p>
@@ -172,7 +172,7 @@ const PAGES: PageCopy[] = [
 <p>Мы передаём данные только проверенным обработчикам: Supabase (хостинг и база данных, ЕС), Mollie (платежи, ЕС), Sendcloud (доставка, ЕС) и нашему e-mail провайдеру. Мы не продаём ваши данные.</p>
 
 <h2>Ваши права</h2>
-<p>Вы можете в любой момент запросить доступ, исправление, экспорт или удаление данных. Напишите на <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a>, мы ответим в течение 30 дней. Также вы имеете право подать жалобу в бельгийский орган по защите данных (gegevensbeschermingsautoriteit.be).</p>
+<p>Вы можете в любой момент запросить доступ, исправление, экспорт или удаление данных. Напишите на <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a>, мы ответим в течение 30 дней. Также вы имеете право подать жалобу в бельгийский орган по защите данных (gegevensbeschermingsautoriteit.be).</p>
 
 <h2>Сроки хранения</h2>
 <p>Заказы хранятся семь лет (бельгийское бухгалтерское законодательство). Данные аккаунта — до запроса на его удаление. Согласие на маркетинг действует до вашей отписки.</p>
@@ -208,7 +208,7 @@ const PAGES: PageCopy[] = [
 <p>As a consumer in the EU you have 14 calendar days from the moment you receive your order to withdraw from the contract, without giving a reason. See our <a href="/legal/returns">returns &amp; refunds policy</a> for the full procedure and exceptions.</p>
 
 <h2>5. Warranty</h2>
-<p>All products are covered by the statutory two-year conformity warranty. If a product reaches you damaged or defective, contact us within 14 days at <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> with a photo and your order number.</p>
+<p>All products are covered by the statutory two-year conformity warranty. If a product reaches you damaged or defective, contact us within 14 days at <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> with a photo and your order number.</p>
 
 <h2>6. Limitation of liability</h2>
 <p>We are not liable for skin reactions caused by known allergens disclosed on the product ingredient list. Patch-test new products before full use; discontinue and seek medical advice if irritation occurs.</p>
@@ -240,7 +240,7 @@ const PAGES: PageCopy[] = [
 <p>Als consument binnen de EU heb je 14 kalenderdagen vanaf ontvangst van je bestelling om de overeenkomst zonder opgave van reden te ontbinden. Zie ons <a href="/legal/returns">retour- en terugbetalingsbeleid</a> voor de volledige procedure en uitzonderingen.</p>
 
 <h2>5. Garantie</h2>
-<p>Alle producten vallen onder de wettelijke conformiteitsgarantie van twee jaar. Komt een product beschadigd of defect aan, contacteer ons binnen 14 dagen via <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> met een foto en je bestelnummer.</p>
+<p>Alle producten vallen onder de wettelijke conformiteitsgarantie van twee jaar. Komt een product beschadigd of defect aan, contacteer ons binnen 14 dagen via <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> met een foto en je bestelnummer.</p>
 
 <h2>6. Aansprakelijkheid</h2>
 <p>We zijn niet aansprakelijk voor huidreacties veroorzaakt door op de ingrediëntenlijst vermelde allergenen. Test nieuwe producten met een kleine dosis voor gebruik; stop bij irritatie en raadpleeg een arts.</p>
@@ -272,7 +272,7 @@ const PAGES: PageCopy[] = [
 <p>En tant que consommateur dans l'UE, vous disposez de 14 jours calendrier à compter de la réception pour vous rétracter sans motif. Consultez notre <a href="/legal/returns">politique de retour</a> pour la procédure complète et les exceptions.</p>
 
 <h2>5. Garantie</h2>
-<p>Tous les produits bénéficient de la garantie légale de conformité de deux ans. En cas de produit endommagé ou défectueux, contactez-nous sous 14 jours à <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> avec photo et numéro de commande.</p>
+<p>Tous les produits bénéficient de la garantie légale de conformité de deux ans. En cas de produit endommagé ou défectueux, contactez-nous sous 14 jours à <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> avec photo et numéro de commande.</p>
 
 <h2>6. Responsabilité</h2>
 <p>Nous ne sommes pas responsables des réactions cutanées dues aux allergènes listés dans la composition. Faites un test de tolérance sur une petite zone avant usage ; arrêtez en cas d'irritation et consultez un médecin.</p>
@@ -304,7 +304,7 @@ const PAGES: PageCopy[] = [
 <p>Как потребитель в ЕС, у вас есть 14 календарных дней с момента получения, чтобы отказаться от договора без объяснения причин. Подробная процедура и исключения — в нашей <a href="/legal/returns">политике возврата</a>.</p>
 
 <h2>5. Гарантия</h2>
-<p>На все товары действует установленная законом двухлетняя гарантия соответствия. Если товар пришёл повреждённым или неисправным, свяжитесь с нами в течение 14 дней по адресу <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a>, приложив фото и номер заказа.</p>
+<p>На все товары действует установленная законом двухлетняя гарантия соответствия. Если товар пришёл повреждённым или неисправным, свяжитесь с нами в течение 14 дней по адресу <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a>, приложив фото и номер заказа.</p>
 
 <h2>6. Ограничение ответственности</h2>
 <p>Мы не несём ответственности за реакции кожи на аллергены, указанные в составе. Проведите тест на небольшом участке перед применением; при раздражении прекратите использование и обратитесь к врачу.</p>
@@ -455,8 +455,14 @@ const PAGES: PageCopy[] = [
 <p>You have <strong>14 calendar days</strong> from the day the parcel is delivered to tell us you wish to return it — no reason required. The 14-day clock starts the moment you (or someone you nominated) physically receive the last item in the order.</p>
 
 <h2>How to start a return</h2>
+<p>You can start a return two ways: from your account, or by email.</p>
+
+<h3>From your account (fastest)</h3>
+<p>Once your order's status changes to <strong>Delivered</strong>, the <strong>Return</strong> button unlocks on the order page in your account. Click it, pick the items you want to send back, and submit — we'll email you within one working day with the return reference and label.</p>
+
+<h3>By email</h3>
 <ol>
-  <li>Email <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> with your order number (e.g. <em>YUR-1042</em>) and which items you'd like to return. You can also copy-paste the model withdrawal form at the bottom of this page.</li>
+  <li>Email <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> with your order number (e.g. <em>ABS-1042</em>) and which items you'd like to return. You can also copy-paste the model withdrawal form at the bottom of this page.</li>
   <li>We'll reply within two working days with a return reference and — depending on your country — a prepaid return label or the return address.</li>
   <li>Pack the products in their original box where possible. Include a note with your order number so we can match the parcel quickly.</li>
   <li>Ship the parcel within <strong>14 days</strong> of notifying us.</li>
@@ -477,15 +483,15 @@ Belgium</p>
 <p>Outbound shipping is refunded on your first return per order; return shipping is at your expense unless the product arrived damaged, defective, or not as described.</p>
 
 <h2>Damaged, defective, or wrong products</h2>
-<p>If your parcel arrives damaged or you receive the wrong product, email <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> with a photo and your order number within 14 days. We'll send a replacement or issue a full refund — including return shipping — at no cost to you.</p>
+<p>If your parcel arrives damaged or you receive the wrong product, email <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> with a photo and your order number within 14 days. We'll send a replacement or issue a full refund — including return shipping — at no cost to you.</p>
 
 <h2>Questions?</h2>
-<p>Write to <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a>. We reply within one working day (Mon–Fri).</p>
+<p>Write to <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a>. We reply within one working day (Mon–Fri).</p>
 
 <h2>Model withdrawal form</h2>
 <p>You aren't required to use this form — any clear statement of your decision to withdraw is enough — but you can copy, fill in and send the lines below if you prefer.</p>
 <blockquote>
-<p><em>To: K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgium — hello@asianbeautyshop.eu</em></p>
+<p><em>To: K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgium — info@kelmusgroup.eu</em></p>
 <p>I/we hereby give notice that I/we withdraw from my/our contract of sale of the following goods:<br>
 Order number:<br>
 Ordered on / received on:<br>
@@ -511,8 +517,14 @@ Signature (only if this form is notified on paper):</p>
 <p>Je hebt <strong>14 kalenderdagen</strong> vanaf de dag dat het pakket is geleverd om ons te laten weten dat je wilt retourneren — zonder reden. De termijn begint op het moment dat jij (of iemand die je hebt aangewezen) het laatste artikel van de bestelling fysiek in handen krijgt.</p>
 
 <h2>Hoe start je een retour</h2>
+<p>Je kunt een retour op twee manieren starten: vanuit je account, of via e-mail.</p>
+
+<h3>Vanuit je account (snelst)</h3>
+<p>Zodra de status van je bestelling verandert naar <strong>Geleverd</strong>, wordt de knop <strong>Retourneren</strong> ontgrendeld op de bestelpagina in je account. Klik erop, kies de artikelen die je wilt terugsturen en verstuur — we mailen je binnen één werkdag met de retourreferentie en het label.</p>
+
+<h3>Via e-mail</h3>
 <ol>
-  <li>Mail <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> met je bestelnummer (bv. <em>YUR-1042</em>) en welke artikelen je wilt retourneren. Je kunt ook het modelformulier onderaan deze pagina kopiëren.</li>
+  <li>Mail <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> met je bestelnummer (bv. <em>ABS-1042</em>) en welke artikelen je wilt retourneren. Je kunt ook het modelformulier onderaan deze pagina kopiëren.</li>
   <li>We antwoorden binnen twee werkdagen met een retourreferentie en — afhankelijk van je land — een retourlabel of het retouradres.</li>
   <li>Verpak de producten indien mogelijk in hun oorspronkelijke doos. Voeg een briefje toe met je bestelnummer zodat we het pakket snel kunnen koppelen.</li>
   <li>Verstuur het pakket binnen <strong>14 dagen</strong> na je melding.</li>
@@ -533,15 +545,15 @@ België</p>
 <p>Uitgaande verzendkosten worden terugbetaald bij je eerste retour per bestelling; retourkosten zijn voor jouw rekening, tenzij het product beschadigd, defect of niet conform was.</p>
 
 <h2>Beschadigd, defect of verkeerd product</h2>
-<p>Is je pakket beschadigd aangekomen of heb je het verkeerde product ontvangen? Mail binnen 14 dagen naar <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> met een foto en je bestelnummer. We sturen een vervanging of betalen alles terug — inclusief retourkosten — kosteloos.</p>
+<p>Is je pakket beschadigd aangekomen of heb je het verkeerde product ontvangen? Mail binnen 14 dagen naar <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> met een foto en je bestelnummer. We sturen een vervanging of betalen alles terug — inclusief retourkosten — kosteloos.</p>
 
 <h2>Vragen?</h2>
-<p>Schrijf naar <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a>. We antwoorden binnen één werkdag (ma–vr).</p>
+<p>Schrijf naar <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a>. We antwoorden binnen één werkdag (ma–vr).</p>
 
 <h2>Modelformulier voor herroeping</h2>
 <p>Je bent niet verplicht dit formulier te gebruiken — elke duidelijke verklaring dat je de overeenkomst wilt herroepen volstaat — maar je mag onderstaande tekst kopiëren, invullen en opsturen als je dat prettig vindt.</p>
 <blockquote>
-<p><em>Aan: K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, België — hello@asianbeautyshop.eu</em></p>
+<p><em>Aan: K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, België — info@kelmusgroup.eu</em></p>
 <p>Ik/wij deel/delen u hierbij mede dat ik/wij onze overeenkomst betreffende de verkoop van de volgende goederen herroep/herroepen:<br>
 Bestelnummer:<br>
 Besteld op / ontvangen op:<br>
@@ -567,8 +579,14 @@ Handtekening (alleen wanneer dit formulier op papier wordt ingediend):</p>
 <p>Vous disposez de <strong>14 jours calendrier</strong> à compter du jour de la livraison pour nous informer de votre souhait de retour — sans avoir à fournir de motif. Le délai commence au moment où vous (ou une personne désignée par vous) recevez physiquement le dernier article de la commande.</p>
 
 <h2>Comment initier un retour</h2>
+<p>Vous pouvez initier un retour de deux façons : depuis votre compte, ou par e-mail.</p>
+
+<h3>Depuis votre compte (le plus rapide)</h3>
+<p>Dès que le statut de votre commande passe à <strong>Livrée</strong>, le bouton <strong>Retourner</strong> se débloque sur la page de la commande dans votre compte. Cliquez dessus, choisissez les articles à renvoyer et validez — nous vous envoyons un e-mail sous un jour ouvré avec la référence de retour et l'étiquette.</p>
+
+<h3>Par e-mail</h3>
 <ol>
-  <li>Écrivez à <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> avec votre numéro de commande (ex. <em>YUR-1042</em>) et les articles à retourner. Vous pouvez aussi copier-coller le formulaire type de rétractation en bas de cette page.</li>
+  <li>Écrivez à <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> avec votre numéro de commande (ex. <em>ABS-1042</em>) et les articles à retourner. Vous pouvez aussi copier-coller le formulaire type de rétractation en bas de cette page.</li>
   <li>Nous répondons sous deux jours ouvrés avec une référence de retour et — selon votre pays — une étiquette prépayée ou l'adresse de retour.</li>
   <li>Emballez les produits dans leur boîte d'origine si possible. Joignez un mot avec votre numéro de commande pour que nous puissions associer le colis rapidement.</li>
   <li>Expédiez le colis dans les <strong>14 jours</strong> suivant votre notification.</li>
@@ -589,15 +607,15 @@ Belgique</p>
 <p>Les frais d'expédition aller sont remboursés sur votre premier retour par commande ; les frais de retour restent à votre charge, sauf si le produit est arrivé endommagé, défectueux ou non conforme à la description.</p>
 
 <h2>Produit endommagé, défectueux ou incorrect</h2>
-<p>Si votre colis arrive endommagé ou que vous recevez un produit incorrect, écrivez-nous sous 14 jours à <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> avec une photo et votre numéro de commande. Nous envoyons un remplacement ou remboursons l'intégralité — frais de retour inclus — sans frais pour vous.</p>
+<p>Si votre colis arrive endommagé ou que vous recevez un produit incorrect, écrivez-nous sous 14 jours à <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> avec une photo et votre numéro de commande. Nous envoyons un remplacement ou remboursons l'intégralité — frais de retour inclus — sans frais pour vous.</p>
 
 <h2>Des questions ?</h2>
-<p>Écrivez à <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a>. Nous répondons sous un jour ouvré (lun–ven).</p>
+<p>Écrivez à <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a>. Nous répondons sous un jour ouvré (lun–ven).</p>
 
 <h2>Formulaire type de rétractation</h2>
 <p>Vous n'êtes pas tenu d'utiliser ce formulaire — toute déclaration claire de votre décision de vous rétracter suffit — mais vous pouvez copier, remplir et envoyer le texte ci-dessous si vous préférez.</p>
 <blockquote>
-<p><em>À : K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgique — hello@asianbeautyshop.eu</em></p>
+<p><em>À : K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, Belgique — info@kelmusgroup.eu</em></p>
 <p>Je/nous vous notifie/notifions par la présente ma/notre rétractation du contrat portant sur la vente des biens suivants :<br>
 Numéro de commande :<br>
 Commandé le / reçu le :<br>
@@ -623,8 +641,14 @@ Signature (uniquement en cas de notification du présent formulaire par papier) 
 <p>У вас есть <strong>14 календарных дней</strong> со дня доставки, чтобы сообщить нам о желании вернуть заказ — без объяснения причин. Отсчёт начинается с момента, когда вы (или указанное вами лицо) физически получили последний товар из заказа.</p>
 
 <h2>Как оформить возврат</h2>
+<p>Возврат можно оформить двумя способами: из личного кабинета или по электронной почте.</p>
+
+<h3>Из личного кабинета (самый быстрый способ)</h3>
+<p>Как только статус заказа изменится на <strong>Доставлен</strong>, кнопка <strong>Вернуть</strong> разблокируется на странице заказа в вашем аккаунте. Нажмите её, выберите товары для возврата и отправьте запрос — мы пришлём вам письмо в течение одного рабочего дня с номером возврата и этикеткой.</p>
+
+<h3>По электронной почте</h3>
 <ol>
-  <li>Напишите на <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> с номером заказа (например, <em>YUR-1042</em>) и списком товаров к возврату. Можно также скопировать типовую форму отказа в конце страницы.</li>
+  <li>Напишите на <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> с номером заказа (например, <em>ABS-1042</em>) и списком товаров к возврату. Можно также скопировать типовую форму отказа в конце страницы.</li>
   <li>Мы ответим в течение двух рабочих дней, пришлём номер возврата и — в зависимости от страны — предоплаченную этикетку либо адрес возврата.</li>
   <li>По возможности упакуйте товары в оригинальную коробку. Приложите записку с номером заказа, чтобы мы быстро сопоставили посылку.</li>
   <li>Отправьте посылку в течение <strong>14 дней</strong> после уведомления.</li>
@@ -645,15 +669,15 @@ Boomsesteenweg 41/4b<br>
 <p>Стоимость прямой доставки возмещается при первом возврате по заказу; обратная доставка оплачивается вами, если только товар не пришёл повреждённым, неисправным или не соответствующим описанию.</p>
 
 <h2>Повреждённый, неисправный или неверный товар</h2>
-<p>Если посылка пришла повреждённой или вы получили не тот товар — напишите в течение 14 дней на <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> с фотографией и номером заказа. Мы бесплатно отправим замену или вернём полную сумму, включая стоимость обратной доставки.</p>
+<p>Если посылка пришла повреждённой или вы получили не тот товар — напишите в течение 14 дней на <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> с фотографией и номером заказа. Мы бесплатно отправим замену или вернём полную сумму, включая стоимость обратной доставки.</p>
 
 <h2>Вопросы?</h2>
-<p>Пишите на <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a>. Мы отвечаем в течение одного рабочего дня (пн–пт).</p>
+<p>Пишите на <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a>. Мы отвечаем в течение одного рабочего дня (пн–пт).</p>
 
 <h2>Типовая форма отказа</h2>
 <p>Использовать эту форму не обязательно — достаточно любого ясного заявления о вашем намерении отказаться — но вы можете скопировать, заполнить и отправить приведённый ниже текст, если так удобнее.</p>
 <blockquote>
-<p><em>Кому: K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, Бельгия — hello@asianbeautyshop.eu</em></p>
+<p><em>Кому: K'Elmus Group BV, Boomsesteenweg 41/4b, 2630 Aartselaar, Бельгия — info@kelmusgroup.eu</em></p>
 <p>Настоящим я/мы уведомляю/уведомляем об отказе от заключённого мной/нами договора купли-продажи следующих товаров:<br>
 Номер заказа:<br>
 Дата заказа / дата получения:<br>
@@ -697,7 +721,7 @@ IBAN: <strong>BE96 0689 5761 0905</strong><br>
 BIC/SWIFT: GKCCBEBB</p>
 
 <h2>Contact</h2>
-<p>Email: <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a></p>
+<p>Email: <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a></p>
 
 <h2>Responsible for content</h2>
 
@@ -728,7 +752,7 @@ IBAN: <strong>BE96 0689 5761 0905</strong><br>
 BIC/SWIFT: GKCCBEBB</p>
 
 <h2>Contact</h2>
-<p>E-mail: <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a></p>
+<p>E-mail: <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a></p>
 
 <h2>Verantwoordelijk voor de inhoud</h2>
 
@@ -759,7 +783,7 @@ IBAN : <strong>BE96 0689 5761 0905</strong><br>
 BIC/SWIFT : GKCCBEBB</p>
 
 <h2>Contact</h2>
-<p>E-mail : <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a></p>
+<p>E-mail : <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a></p>
 
 <h2>Responsable du contenu</h2>
 
@@ -790,7 +814,7 @@ IBAN: <strong>BE96 0689 5761 0905</strong><br>
 BIC/SWIFT: GKCCBEBB</p>
 
 <h2>Контакты</h2>
-<p>E-mail: <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a></p>
+<p>E-mail: <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a></p>
 
 <h2>Ответственный за содержание</h2>
 
@@ -881,7 +905,7 @@ BIC/SWIFT: GKCCBEBB</p>
   <li><strong>Netherlands</strong> — 2–3 working days</li>
   <li><strong>France &amp; Germany</strong> — 3–5 working days</li>
 </ul>
-<p>Delivery times are indicative; they can stretch around public holidays and Belgian postal strike days. If a parcel takes longer than a week beyond the upper estimate, email <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> with your order number and we'll trace it together.</p>
+<p>Delivery times are indicative; they can stretch around public holidays and Belgian postal strike days. If a parcel takes longer than a week beyond the upper estimate, email <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> with your order number and we'll trace it together.</p>
 
 <h2>Tracking</h2>
 <p>Once your parcel ships you'll receive an email with a tracking link. You can also find it inside your <a href="/account/orders">account</a> under the order details.</p>
@@ -893,13 +917,13 @@ BIC/SWIFT: GKCCBEBB</p>
 <p>If your parcel is returned to us as undeliverable — wrong address, missed collection, refused delivery — we'll email you for the correct details. A re-shipment is covered by our flat-rate fee; we'll confirm the total before anything leaves the studio a second time.</p>
 
 <h2>Damaged in transit</h2>
-<p>If your parcel arrives damaged, email <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> with a photo and your order number within 14 days. We'll replace the affected items or issue a full refund at no cost to you — see our <a href="/legal/returns">returns policy</a> for full details.</p>
+<p>If your parcel arrives damaged, email <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> with a photo and your order number within 14 days. We'll replace the affected items or issue a full refund at no cost to you — see our <a href="/legal/returns">returns policy</a> for full details.</p>
 
 <h2>Packaging</h2>
 <p>Glass and ceramic go out in recycled moulded-pulp trays. The outer carton is FSC-certified cardboard, sealed with paper tape. No plastic void-fill. Everything we send is curb-side recyclable.</p>
 
 <h2>Questions</h2>
-<p>Anything we haven't covered? Write to <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> — we reply within one working day, Monday to Friday.</p>
+<p>Anything we haven't covered? Write to <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> — we reply within one working day, Monday to Friday.</p>
 `,
       },
     },
@@ -931,7 +955,7 @@ BIC/SWIFT: GKCCBEBB</p>
 <p>Bancontact, iDEAL, credit card (Visa, Mastercard, Amex), and SEPA bank transfer — all processed securely by Mollie. We don't see or store your card details.</p>
 
 <h3>Can I change or cancel an order after it's placed?</h3>
-<p>If your order hasn't shipped yet, email <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> with your order number and the change you need — we'll help where we can. Once the parcel is with the carrier, you'll need to use our <a href="/legal/returns">returns flow</a> when it arrives.</p>
+<p>If your order hasn't shipped yet, email <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> with your order number and the change you need — we'll help where we can. Once the parcel is with the carrier, you'll need to use our <a href="/legal/returns">returns flow</a> when it arrives.</p>
 
 <h2>Shipping &amp; delivery</h2>
 
@@ -977,7 +1001,7 @@ BIC/SWIFT: GKCCBEBB</p>
 <h2>Business &amp; wholesale</h2>
 
 <h3>Do you offer wholesale or professional accounts?</h3>
-<p>Yes — if you run a salon, spa, or retail space and want to stock Asian Beauty Shop, email <a href="mailto:hello@asianbeautyshop.eu">hello@asianbeautyshop.eu</a> with a brief description of your business. We'll come back with the wholesale terms and the onboarding steps.</p>
+<p>Yes — if you run a salon, spa, or retail space and want to stock Asian Beauty Shop, email <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> with a brief description of your business. We'll come back with the wholesale terms and the onboarding steps.</p>
 `,
       },
     },

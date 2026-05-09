@@ -7,7 +7,7 @@
 // the homepage CTA leads here through the standard signup flow.
 //
 // Idempotency:
-//   The coupon code is deterministic — `YUR-WELCOME-{first 8 chars of
+//   The coupon code is deterministic — `ABS-WELCOME-{first 8 chars of
 //   user.id, uppercase}`. If the same user re-clicks their confirmation
 //   email (or refreshes /auth/confirm) we look the row up, see it
 //   exists, and quietly skip. No double-issuance, no double-email,
@@ -43,7 +43,7 @@ export const REGISTRATION_COUPON_VALID_DAYS = 60;
  *  for a single brand's customer base. */
 function codeForUser(userId: string): string {
   const fragment = userId.replace(/-/g, "").slice(0, 8).toUpperCase();
-  return `YUR-WELCOME-${fragment}`;
+  return `ABS-WELCOME-${fragment}`;
 }
 
 export async function issueRegistrationWelcomeCoupon(args: {

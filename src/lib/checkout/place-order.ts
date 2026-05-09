@@ -176,7 +176,7 @@ export async function placeOrder(
 
   // Quiz reward anti-fraud — Max's rules A + B.
   //
-  //   A (per-account): the deterministic coupon code is `YUR-QUIZ-{userId}`,
+  //   A (per-account): the deterministic coupon code is `ABS-QUIZ-{userId}`,
   //      so the same logged-in account can never claim twice. Enforced by
   //      the unique Coupon row + the per-user QuizCompletion (set
   //      redeemedAt below once this order is committed).
@@ -211,8 +211,8 @@ export async function placeOrder(
           // cancelled attempts shouldn't burn a customer's address.
           paymentStatus: "PAID",
           // And specifically those that used a quiz reward (couponCode
-          // starts with the YUR-QUIZ- prefix).
-          couponCode: { startsWith: "YUR-QUIZ-" },
+          // starts with the ABS-QUIZ- prefix).
+          couponCode: { startsWith: "ABS-QUIZ-" },
           // Different user than this one — same user repeating is blocked
           // by rule A (the unique deterministic code), and we don't want
           // to spuriously trip on the same person re-buying.

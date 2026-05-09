@@ -675,7 +675,7 @@ enum PaymentStatus {
 
 model Order {
   id                String        @id @default(uuid()) @db.Uuid
-  publicNumber      String        @unique            // "YUR-1042" shown to customer
+  publicNumber      String        @unique            // "ABS-1042" shown to customer
   userId            String?       @db.Uuid          // null = guest checkout
   user              User?         @relation(fields: [userId], references: [id])
   email             String                            // always captured, even for guests
@@ -774,7 +774,7 @@ model QuizCompletion {
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // The 15%-off coupon code issued for this user. Same row in the
-  // Coupon table (`YUR-QUIZ-{userId8}`). NULL only briefly between
+  // Coupon table (`ABS-QUIZ-{userId8}`). NULL only briefly between
   // completion and coupon mint — should be filled in production.
   couponCode          String?  @unique
   // Coupon validity mirror — same as Coupon.endsAt but cached here for
@@ -947,7 +947,7 @@ enum ReturnReason {
 
 model ReturnRequest {
   id              String        @id @default(uuid()) @db.Uuid
-  /// Short code the customer sees, e.g. "YUR-1042-R1".
+  /// Short code the customer sees, e.g. "ABS-1042-R1".
   publicNumber    String        @unique
 
   orderId         String        @db.Uuid
@@ -1810,7 +1810,7 @@ model ContactMessage {
   email       String
   phone       String?
   subject     ContactSubject  @default(GENERAL)
-  orderNumber String?                         // free-text reference, e.g. "YUR-20260422-0001"
+  orderNumber String?                         // free-text reference, e.g. "ABS-20260422-0001"
   message     String          @db.Text
   status      ContactStatus   @default(NEW)
   ipHash      String?                          // GDPR-minimised

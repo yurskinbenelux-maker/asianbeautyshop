@@ -61,7 +61,7 @@ export type InvoicePdfInput = {
   number: string;            // "INV-2026-00042"
   issueDate: Date;
   supplyDate: Date | null;   // null for digital-only orders → render "—"
-  orderPublicNumber: string; // "YUR-O-1042"
+  orderPublicNumber: string; // "ABS-O-1042"
   issuer: InvoiceIssuerSnapshot;
   customer: InvoiceCustomerSnapshot;
   items: InvoiceLineItem[];

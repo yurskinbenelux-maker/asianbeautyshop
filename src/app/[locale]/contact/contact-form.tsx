@@ -143,7 +143,7 @@ export function ContactForm({
       <Field
         name="orderNumber"
         label={t("field_order_optional")}
-        placeholder="YUR-20260422-0001"
+        placeholder="ABS-7KQ9F2"
       />
 
       {/* Message textarea */}

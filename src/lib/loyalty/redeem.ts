@@ -146,7 +146,7 @@ export async function redeemReward(opts: {
 
   let couponCode: string | null = null;
   for (let attempt = 0; attempt < 5; attempt++) {
-    const candidate = `YUR-LOY-${randomSuffix(8)}`;
+    const candidate = `ABS-LOY-${randomSuffix(8)}`;
     try {
       await prisma.coupon.create({
         data: {

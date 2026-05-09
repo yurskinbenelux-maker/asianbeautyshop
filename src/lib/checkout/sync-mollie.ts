@@ -222,13 +222,13 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
   // If the API call fails, the order still flipped to PAID; an admin can
   // retry the parcel creation manually from the admin order page.
   if (willFlipToPaid) {
-    // Quiz reward redemption — if this order was placed with a YUR-QUIZ-…
+    // Quiz reward redemption — if this order was placed with an ABS-QUIZ-…
     // coupon, stamp redeemedAt on the user's QuizCompletion. That
     // permanently disables their cart-restore email link AND blocks any
     // future quiz-reward issuance for the account (rule A enforcement
     // at the application layer; the deterministic coupon code already
     // enforces it at the DB layer). Idempotent.
-    if (order.couponCode && order.couponCode.startsWith("YUR-QUIZ-")) {
+    if (order.couponCode && order.couponCode.startsWith("ABS-QUIZ-")) {
       try {
         const { markQuizRewardRedeemed } = await import("@/lib/quiz/reward");
         await markQuizRewardRedeemed(prisma, order.couponCode);

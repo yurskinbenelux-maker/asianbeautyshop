@@ -32,7 +32,7 @@ import {
 } from "@/app/[locale]/account/orders/[number]/review-actions";
 
 type Props = {
-  /** Order's public number (e.g. "YUR-1042"). */
+  /** Order's public number (e.g. "ABS-1042"). */
   orderNumber: string;
   /** UUID of the product being reviewed. */
   productId: string;

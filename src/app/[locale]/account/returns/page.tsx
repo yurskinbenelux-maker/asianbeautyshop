@@ -3,7 +3,7 @@
 //
 // Mirrors the /account/orders page in visual hierarchy so the two feel
 // like siblings.  Each row shows:
-//   · our return reference (YUR-1042-R1)
+//   · our return reference (ABS-1042-R1)
 //   · the order it belongs to
 //   · status pill
 //   · request date

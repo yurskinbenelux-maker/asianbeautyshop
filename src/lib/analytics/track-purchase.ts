@@ -9,7 +9,7 @@
 //
 // Idempotency:
 //   Both GA4 and Google Ads dedupe on `transaction_id`. We always pass
-//   the order's `publicNumber` (e.g. YUR-12345) — so a customer who
+//   the order's `publicNumber` (e.g. ABS-12345) — so a customer who
 //   refreshes /checkout/success or shares the URL with their accountant
 //   doesn't double-count.
 //

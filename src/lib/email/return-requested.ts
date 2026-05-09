@@ -32,7 +32,7 @@ import { getOrderForEmail, type EmailOrder } from "./order-query";
  * model so this module can be swapped into place behind the real flow.
  */
 export type RmaContext = {
-  /** Public reference the customer sees, e.g. "YUR-1042-R1". */
+  /** Public reference the customer sees, e.g. "ABS-1042-R1". */
   returnReference: string;
   /** Line items being returned. Subset of the order. */
   items: Array<{ productName: string; quantity: number }>;

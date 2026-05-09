@@ -118,7 +118,7 @@ function mapRow(raw: RawReturn): ReturnRow {
 /**
  * Mint a reference the customer will see — appends "-R<n>" to the order's
  * public number, incrementing per existing return against that order.
- * Example: YUR-1042 → YUR-1042-R1, YUR-1042-R2, …
+ * Example: ABS-1042 → ABS-1042-R1, ABS-1042-R2, …
  */
 async function mintReturnReference(orderPublicNumber: string): Promise<string> {
   const count = (await prisma.returnRequest.count({
@@ -337,7 +337,7 @@ export async function transitionReturnStatus(
     })) as RawReturn;
 
     // Restock — reason RETURN, orderId from the return's parent order so
-    // an admin can trace "why did stock go up on 14 Feb?" back to YUR-1042-R1.
+    // an admin can trace "why did stock go up on 14 Feb?" back to ABS-1042-R1.
     for (const pair of restockPairs) {
       await applyMovement(tx, {
         variantId: pair.variantId,
