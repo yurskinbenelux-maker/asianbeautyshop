@@ -80,19 +80,82 @@ function formatDate(d: Date): string {
   return DATE_FMT.format(new Date(d));
 }
 
-const REASON_LABEL: Record<string, string> = {
-  SALE: "Sale",
-  CANCEL: "Cancelled",
-  REFUND: "Refunded",
-  RETURN: "Return",
-  ADJUSTMENT: "Manual adjust",
-  CSV_IMPORT: "CSV import",
-  INITIAL: "Initial",
-  OTHER: "Other",
+// ──────── reason taxonomy ────────────────────────────────────────────────
+//
+// Each InventoryReason maps to a label + a Tailwind palette tuple. The
+// palette is tuned to communicate at a glance:
+//
+//   · SALE        — neutral. The dominant case; a coloured pill on every
+//                   line would just become noise. Plain ink ring.
+//   · RETURN      — sage (positive). RMAs landing back on the shelf; the
+//                   one Max wants to spot quickly when reviewing returns.
+//   · CANCEL      — ink-mid neutral. Order died before fulfilment, stock
+//                   came back without any customer action.
+//   · REFUND      — vermilion. Money out the door — the line where an
+//                   accountant double-checks the matching refund record.
+//   · ADJUSTMENT  — gold. Manual hand-edit; flag for attention because
+//                   it bypasses every automated path.
+//   · CSV_IMPORT  — ink-mid neutral. Bulk overwrite, expected/non-eventful.
+//   · INITIAL     — sage soft. Variant just created, opening stock booked.
+//   · OTHER       — ink-mid. Catch-all for anything outside the above.
+//
+// Keeping the palette muted across the board so multiple pills in a list
+// don't read as a Christmas tree. Vermilion + gold are the only "stop and
+// look" tones; sage is "all good"; ink is "expected".
+type ReasonStyle = {
+  label: string;
+  classes: string;
+};
+const REASON_STYLE: Record<string, ReasonStyle> = {
+  SALE: {
+    label: "Sale",
+    classes: "border-ink/20 bg-white text-ink-mid",
+  },
+  RETURN: {
+    label: "Return",
+    classes: "border-sage/40 bg-sage/10 text-sage",
+  },
+  CANCEL: {
+    label: "Cancelled",
+    classes: "border-ink/20 bg-white text-ink-mid",
+  },
+  REFUND: {
+    label: "Refunded",
+    classes: "border-vermilion/40 bg-vermilion/5 text-vermilion",
+  },
+  ADJUSTMENT: {
+    label: "Manual adjust",
+    classes: "border-gold/40 bg-gold/10 text-gold",
+  },
+  CSV_IMPORT: {
+    label: "CSV import",
+    classes: "border-ink/20 bg-white text-ink-mid",
+  },
+  INITIAL: {
+    label: "Initial",
+    classes: "border-sage/30 bg-sage/5 text-sage",
+  },
+  OTHER: {
+    label: "Other",
+    classes: "border-ink/20 bg-white text-ink-mid",
+  },
 };
 
-function reasonLabel(r: string): string {
-  return REASON_LABEL[r] ?? r;
+function ReasonPill({ reason }: { reason: string }) {
+  const style = REASON_STYLE[reason] ?? {
+    label: reason,
+    classes: "border-ink/20 bg-white text-ink-mid",
+  };
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center border px-2 py-0.5 text-[10px] uppercase tracking-label",
+        style.classes,
+      )}
+    >
+      {style.label}
+    </span>
+  );
 }
 
 // ──────── root ───────────────────────────────────────────────────────────
@@ -634,9 +697,7 @@ function MovementTimeline({ rows }: { rows: InventoryRow[] }) {
               {m.variantSku}{" "}
               <span className="text-ink-mid">— {m.variantLabel}</span>
             </span>
-            <span className="text-[11px] uppercase tracking-label text-ink-mid">
-              {reasonLabel(m.reason)}
-            </span>
+            <ReasonPill reason={m.reason} />
           </div>
           <div className="text-right text-[11px] text-ink-mid">
             <div>{formatDate(m.createdAt)}</div>
