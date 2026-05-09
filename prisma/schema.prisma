@@ -732,6 +732,9 @@ model Order {
   events            OrderEvent[]
   returns           ReturnRequest[]
   invoice           Invoice?
+  // Multiple partial refunds on one order each get their own CN-2026-NNNN
+  // line. See CreditNote model header for the full reasoning.
+  creditNotes       CreditNote[]
 
   @@index([userId])
   @@index([status])
@@ -849,9 +852,106 @@ model Invoice {
 
   createdAt         DateTime @default(now())
 
+  // Several credit notes can attach to one invoice (partial refund issued
+  // first, full refund later, or a goodwill correction on top). Cascade
+  // delete is intentional: if an invoice is removed (which only happens
+  // pre-launch during cleanup, never in production after retention starts),
+  // its credit notes go too — they're meaningless without their parent.
+  creditNotes       CreditNote[]
+
   @@index([year, sequence])
   @@index([destinationCountry, issuedAt])
   @@index([issuedAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// CreditNote — Belgian creditnota / note de crédit
+//
+// Issued whenever value flows back to the customer post-invoice: returns
+// (RMA), pre-fulfilment cancellations after the invoice was already
+// stamped, partial refunds, goodwill credits, or correcting a duplicate
+// invoice. The legal requirement (Code TVA Art. 53octies) is:
+//
+//   · Continuous, sequential numbering — same gap-free property as
+//     invoices. We use the same per-year format pattern: CN-2026-00042.
+//   · Explicit reference to the original invoice number (auditor must
+//     be able to trace the credit back to the sale).
+//   · All identity fields the original invoice carried (issuer, customer,
+//     VAT rates, destination country) — frozen at issue time, same as
+//     Invoice.
+//
+// One Invoice → many CreditNote (partial refunds + later top-ups).
+// One ReturnRequest → many CreditNote (rare in practice — most RMAs
+//   resolve in one credit — but a multi-stage return can issue one for
+//   the products received and another for the postage refund).
+// ─────────────────────────────────────────────────────────────────────────
+model CreditNote {
+  id                String   @id @default(uuid()) @db.Uuid
+
+  // Reference to the original invoice. NOT a one-to-one — see header.
+  invoiceId         String   @db.Uuid
+  invoice           Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  // Convenience back-pointer. One credit note belongs to exactly one
+  // order via its invoice; storing orderId directly avoids a join in
+  // /admin/orders/[id] views and the VAT YTD subtraction (#334 / A5).
+  orderId           String   @db.Uuid
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // Optional — most credit notes come from RMAs, but admin can issue
+  // one without an RMA (goodwill / correction / duplicate invoice).
+  returnId          String?  @db.Uuid
+  return            ReturnRequest? @relation(fields: [returnId], references: [id], onDelete: SetNull)
+
+  number            String   @unique                 // "CN-2026-00042"
+  year              Int                              // 2026
+  sequence          Int                              // 42 — gap detection in audits
+  issuedAt          DateTime @default(now())
+
+  // PDF gets uploaded to the same bucket as invoices, under a creditnotes/
+  // year subdirectory. Optional during the schema-only phase of G11 —
+  // PDF rendering arrives in A7. Once the renderer ships, every new row
+  // will populate this field.
+  pdfPath           String?
+
+  // Same frozen-at-issue identity as Invoice. JSON so a later legal-
+  // entity move doesn't rewrite history.
+  issuerSnapshot    Json
+  customerSnapshot  Json
+
+  // Amounts being credited (always positive numbers — sign is implicit
+  // from the model). Partial refund only credits the affected lines, so
+  // these can be smaller than the original invoice totals.
+  subtotalExclVat   Decimal  @db.Decimal(10, 2)
+  vatTotal          Decimal  @db.Decimal(10, 2)
+  shippingTotal     Decimal  @db.Decimal(10, 2)
+  grandTotal        Decimal  @db.Decimal(10, 2)
+
+  destinationCountry String                          // mirrors Invoice
+  vatRate           Decimal  @db.Decimal(5, 4)       // 0.2100 for BE 21%
+
+  // Why the credit was issued. RETURN is the dominant case; the others
+  // exist because Belgian law allows credit notes for any post-invoice
+  // value reversal, not only customer returns.
+  reason            CreditNoteReason
+  reasonNote        String?                          // optional admin free-text
+
+  createdAt         DateTime @default(now())
+
+  @@index([year, sequence])
+  @@index([invoiceId])
+  @@index([orderId])
+  @@index([returnId])
+  @@index([destinationCountry, issuedAt])
+  @@index([issuedAt])
+}
+
+enum CreditNoteReason {
+  RETURN            // RMA — customer returned goods
+  CANCELLATION      // order killed before/at fulfilment, invoice already stamped
+  PRICE_ADJUSTMENT  // post-sale discount or pricing correction
+  GOODWILL          // discretionary refund, no obligation
+  DUPLICATE         // invoice was issued in error, fully reversed
 }
 
 // Lightweight presence ping — every public page sends one heartbeat per
@@ -978,6 +1078,10 @@ model ReturnRequest {
   updatedAt       DateTime      @updatedAt
 
   items           ReturnItem[]
+  // 0..N credit notes per return — most resolve in a single CN, but
+  // multi-stage returns (goods refunded, postage refunded later) issue
+  // separate CN rows so the legal numbering stays clean.
+  creditNotes     CreditNote[]
 
   @@index([orderId])
   @@index([userId])
