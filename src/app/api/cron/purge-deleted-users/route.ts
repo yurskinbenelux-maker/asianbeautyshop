@@ -63,7 +63,7 @@ export async function GET(req: Request) {
       // because Order.userId (and Review.userId, ContactMessage.userId)
       // references it.  Email is rewritten to a stable tombstone so the
       // unique index still passes.
-      const tombstone = `deleted+${u.id}@yurskin.invalid`;
+      const tombstone = `deleted+${u.id}@asianbeautyshop.invalid`;
       await prisma.$transaction([
         prisma.wishlistItem.deleteMany({ where: { userId: u.id } }),
         prisma.address.deleteMany({ where: { userId: u.id } }),

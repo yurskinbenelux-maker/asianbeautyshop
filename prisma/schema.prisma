@@ -162,7 +162,7 @@ model Brand {
   // locale) for now to keep admin authoring simple — codes like CPNP /
   // ECAS / GMP are universal acronyms anyway, and the safety note is
   // typically supplied in English by the brand. Per-locale variants can
-  // be added later via BrandTranslation if Sofia ever asks.
+  // be added later via BrandTranslation if an admin ever asks.
   //
   //   certifications: Array<{ code: string; description: string }>
   //   safetyNote     : free text, rendered as a soft callout

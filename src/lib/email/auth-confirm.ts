@@ -30,7 +30,7 @@
 //        Port:     465
 //        Username: resend
 //        Password: <your Resend API key, the one in RESEND_API_KEY>
-//        Sender:   hello@asianbeautyshop.eu  (or noreply@)
+//        Sender:   do-not-reply@asianbeautyshop.eu
 //        Sender:   Asian Beauty Shop
 //
 //   B. The template itself:

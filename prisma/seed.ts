@@ -11,7 +11,7 @@ import { PrismaClient, Locale, ProductStatus } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱  Seeding YurSkin database …");
+  console.log("🌱  Seeding Asian Beauty Shop database …");
 
   // ─── Brand ──────────────────────────────────────────────────────────
   const yur = await prisma.brand.upsert({

@@ -1,4 +1,4 @@
-# YurSkin · Google Ads Roadmap
+# Asian Beauty Shop · Google Ads Roadmap
 
 **Goal:** maximum paid orders per euro spent on a small early-stage budget. Ramp deliberately as data accumulates rather than launching broad and burning cash.
 

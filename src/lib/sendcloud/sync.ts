@@ -99,9 +99,9 @@ function buildParcelPayload(order: {
   // later. We must include the empty box + packing tape + filler.
   //
   // an admin has 3 box sizes registered in her Sendcloud "Boxes" panel:
-  //   yurskinsolution 16 (16×16×10)   — small,  1 item
-  //   yurskinsolution 19 (19×14×10)   — medium, 2-3 items
-  //   yurskinsolution 30 (23.5×23.5×10) — large, 4+ items
+  //   small box  (16×16×10)   — 1 item
+  //   medium box (19×14×10)   — 2-3 items
+  //   large box  (23.5×23.5×10) — 4+ items
   //
   // The empty-weight numbers below are sensible defaults for single-wall
   // corrugated boxes of those dimensions plus tape and a small amount of
@@ -159,7 +159,7 @@ function buildParcelPayload(order: {
       city: "Aartselaar",
       postal_code: "2630",
       country_code: "BE",
-      email: "hello@asianbeautyshop.eu",
+      email: "info@kelmusgroup.eu",
       phone_number: "",
     },
 

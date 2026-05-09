@@ -70,7 +70,7 @@ const PAGES: PageCopy[] = [
 <p>We share data only with processors we have contracts with: Supabase (hosting &amp; database, EU), Mollie (payments, EU), Sendcloud (shipping, EU), and our email provider. We do not sell your data.</p>
 
 <h2>Your rights</h2>
-<p>You can access, correct, export, or delete your personal data at any time. Email us at <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> and we will respond within 30 days. You also have the right to lodge a complaint with the Belgian Data Protection Authority (gegevensbeschermingsautoriteit.be).</p>
+<p>You can access, correct, export, or delete your personal data at any time. Email us at <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> and we will respond within 30 days. You also have the right to lodge a complaint with the Belgian Data Protection Authority (gegevensbeschermingsautoriteit.be) or, if you reside in another EU country, with your national supervisory authority — for example the Dutch <em>Autoriteit Persoonsgegevens</em> (autoriteitpersoonsgegevens.nl) or the French <em>CNIL</em> (cnil.fr).</p>
 
 <h2>Retention</h2>
 <p>Order records are kept for seven years (legal requirement for Belgian accounting). Account data is kept until you ask us to close your account. Marketing consent is kept until you unsubscribe.</p>
@@ -104,7 +104,7 @@ const PAGES: PageCopy[] = [
 <p>We delen gegevens enkel met verwerkers waarmee we een contract hebben: Supabase (hosting &amp; database, EU), Mollie (betalingen, EU), Sendcloud (verzending, EU) en onze e-mailprovider. Wij verkopen je gegevens niet.</p>
 
 <h2>Jouw rechten</h2>
-<p>Je kan je persoonsgegevens op elk moment inkijken, corrigeren, exporteren of laten verwijderen. Mail ons op <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> en we antwoorden binnen 30 dagen. Je hebt ook het recht om een klacht in te dienen bij de Gegevensbeschermingsautoriteit (gegevensbeschermingsautoriteit.be).</p>
+<p>Je kan je persoonsgegevens op elk moment inkijken, corrigeren, exporteren of laten verwijderen. Mail ons op <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a> en we antwoorden binnen 30 dagen. Je hebt ook het recht om een klacht in te dienen bij de Belgische Gegevensbeschermingsautoriteit (gegevensbeschermingsautoriteit.be) of, als je in Nederland woont, bij de Autoriteit Persoonsgegevens (autoriteitpersoonsgegevens.nl).</p>
 
 <h2>Bewaartermijn</h2>
 <p>Bestelgegevens worden zeven jaar bewaard (wettelijke verplichting voor Belgische boekhouding). Accountgegevens blijven bewaard tot je vraagt je account te sluiten. Marketingtoestemming blijft geldig tot je je uitschrijft.</p>
@@ -138,7 +138,7 @@ const PAGES: PageCopy[] = [
 <p>Nous ne partageons vos données qu'avec des sous-traitants contractualisés : Supabase (hébergement &amp; base de données, UE), Mollie (paiements, UE), Sendcloud (expédition, UE) et notre fournisseur d'e-mail. Nous ne vendons pas vos données.</p>
 
 <h2>Vos droits</h2>
-<p>Vous pouvez à tout moment accéder, corriger, exporter ou supprimer vos données. Écrivez-nous à <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a>, nous répondrons sous 30 jours. Vous pouvez également introduire une plainte auprès de l'Autorité de protection des données belge (autoriteprotectiondonnees.be).</p>
+<p>Vous pouvez à tout moment accéder, corriger, exporter ou supprimer vos données. Écrivez-nous à <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a>, nous répondrons sous 30 jours. Vous pouvez également introduire une plainte auprès de l'Autorité belge de protection des données (autoriteprotectiondonnees.be) ou, si vous résidez en France, auprès de la CNIL (cnil.fr).</p>
 
 <h2>Durée de conservation</h2>
 <p>Les commandes sont conservées sept ans (obligation comptable belge). Les données de compte sont conservées jusqu'à fermeture du compte. Le consentement marketing reste valable jusqu'à votre désinscription.</p>
@@ -172,7 +172,7 @@ const PAGES: PageCopy[] = [
 <p>Мы передаём данные только проверенным обработчикам: Supabase (хостинг и база данных, ЕС), Mollie (платежи, ЕС), Sendcloud (доставка, ЕС) и нашему e-mail провайдеру. Мы не продаём ваши данные.</p>
 
 <h2>Ваши права</h2>
-<p>Вы можете в любой момент запросить доступ, исправление, экспорт или удаление данных. Напишите на <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a>, мы ответим в течение 30 дней. Также вы имеете право подать жалобу в бельгийский орган по защите данных (gegevensbeschermingsautoriteit.be).</p>
+<p>Вы можете в любой момент запросить доступ, исправление, экспорт или удаление данных. Напишите на <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a>, мы ответим в течение 30 дней. Также вы имеете право подать жалобу в бельгийский орган по защите данных (gegevensbeschermingsautoriteit.be) или, если вы проживаете в другой стране ЕС, в национальный орган по защите данных вашей страны — например, нидерландский Autoriteit Persoonsgegevens (autoriteitpersoonsgegevens.nl) или французский CNIL (cnil.fr).</p>
 
 <h2>Сроки хранения</h2>
 <p>Заказы хранятся семь лет (бельгийское бухгалтерское законодательство). Данные аккаунта — до запроса на его удаление. Согласие на маркетинг действует до вашей отписки.</p>
@@ -699,8 +699,8 @@ Boomsesteenweg 41/4b<br>
     key: "imprint",
     translations: {
       [Locale.EN]: {
-        title: "Imprint",
-        seoTitle: "Imprint — Asian Beauty Shop",
+        title: "Legal notice",
+        seoTitle: "Legal notice — Asian Beauty Shop",
         seoDescription:
           "Legal information about K'Elmus Group BV, the company behind Asian Beauty Shop.",
         body: `
@@ -724,6 +724,7 @@ BIC/SWIFT: GKCCBEBB</p>
 <p>Email: <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a></p>
 
 <h2>Responsible for content</h2>
+<p><strong>Elmuskhan Karaeva</strong>, Director, on behalf of K'Elmus Group BV.</p>
 
 <h2>Dispute resolution</h2>
 <p>The European Commission provides an online dispute resolution platform at <a href="https://ec.europa.eu/consumers/odr">ec.europa.eu/consumers/odr</a>. We are not obliged to participate in dispute resolution proceedings before a consumer arbitration board, but we are willing to do so.</p>
@@ -755,6 +756,7 @@ BIC/SWIFT: GKCCBEBB</p>
 <p>E-mail: <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a></p>
 
 <h2>Verantwoordelijk voor de inhoud</h2>
+<p><strong>Elmuskhan Karaeva</strong>, Bestuurder, namens K'Elmus Group BV.</p>
 
 <h2>Geschillenregeling</h2>
 <p>De Europese Commissie voorziet in een online geschillenplatform op <a href="https://ec.europa.eu/consumers/odr">ec.europa.eu/consumers/odr</a>. Wij zijn niet verplicht om deel te nemen aan een consumentenarbitrageprocedure, maar staan daarvoor open.</p>
@@ -786,6 +788,7 @@ BIC/SWIFT : GKCCBEBB</p>
 <p>E-mail : <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a></p>
 
 <h2>Responsable du contenu</h2>
+<p><strong>Elmuskhan Karaeva</strong>, Administratrice, au nom de K'Elmus Group BV.</p>
 
 <h2>Règlement des litiges</h2>
 <p>La Commission européenne met à disposition une plateforme de règlement en ligne des litiges : <a href="https://ec.europa.eu/consumers/odr">ec.europa.eu/consumers/odr</a>. Nous ne sommes pas tenus de participer à une procédure d'arbitrage de consommation, mais y sommes ouverts.</p>
@@ -817,6 +820,7 @@ BIC/SWIFT: GKCCBEBB</p>
 <p>E-mail: <a href="mailto:info@kelmusgroup.eu">info@kelmusgroup.eu</a></p>
 
 <h2>Ответственный за содержание</h2>
+<p><strong>Elmuskhan Karaeva</strong>, директор, от имени K'Elmus Group BV.</p>
 
 <h2>Разрешение споров</h2>
 <p>Еврокомиссия предоставляет онлайн-платформу для разрешения споров: <a href="https://ec.europa.eu/consumers/odr">ec.europa.eu/consumers/odr</a>. Мы не обязаны участвовать в процедуре потребительского арбитража, но готовы это делать.</p>

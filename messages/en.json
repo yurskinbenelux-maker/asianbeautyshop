@@ -554,7 +554,7 @@
     "privacy": "Privacy",
     "terms": "Terms",
     "cookies": "Cookies",
-    "imprint": "Imprint",
+    "imprint": "Legal notice",
     "returns": "Returns & refunds",
     "shipping": "Shipping",
     "contact": "Contact",
@@ -568,7 +568,7 @@
       "terms": "Terms",
       "cookies": "Cookies",
       "returns": "Returns",
-      "imprint": "Imprint"
+      "imprint": "Legal notice"
     }
   },
   "consent": {
@@ -879,7 +879,7 @@
     "delete_error_server": "We couldn't schedule the deletion. Please try again in a moment.",
     "delete_cta": "Delete my account",
     "more_heading": "Need something else?",
-    "more_body": "If you'd like us to correct data, stop processing it for a specific purpose, or you have any other privacy question, write to hello@asianbeautyshop.eu and we'll handle it within one business day."
+    "more_body": "If you'd like us to correct data, stop processing it for a specific purpose, or you have any other privacy question, write to info@kelmusgroup.eu and we'll handle it within one business day."
   },
   "returns": {
     "meta_title": "Returns — Asian Beauty Shop",
