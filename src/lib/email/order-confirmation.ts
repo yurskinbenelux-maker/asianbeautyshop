@@ -17,6 +17,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { Locale } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import {
   getResend,
   fromTransactional,
@@ -386,9 +387,60 @@ export async function sendOrderConfirmationEmail(
   orderId: string,
   options: { invoicePdf?: OrderConfirmationAttachment } = {},
 ): Promise<{ sent: boolean; reason?: string }> {
+  // ── Idempotency guard ────────────────────────────────────────────────
+  // Three call sites can fan in here for the same order:
+  //   1. sync-mollie.ts on the Mollie webhook into-PAID transition
+  //      (passes invoicePdf in `options`).
+  //   2. place-order.ts free-order shortcut (gift-card-only payment).
+  //   3. admin/orders/actions.ts notifyOrderPaid when an admin manually
+  //      flips status to PAID.
+  // Without dedup we'd send two emails — one with the PDF, one without —
+  // which is exactly what Max saw in his test inbox. We use OrderEvent
+  // as a permanent audit trail: if a row of kind email.confirmation.sent
+  // already exists for this order, skip.
+  const alreadySent = await prisma.orderEvent.findFirst({
+    where: { orderId, kind: "email.confirmation.sent" },
+    select: { id: true },
+  });
+  if (alreadySent) {
+    return { sent: false, reason: "already-sent" };
+  }
+
   const order = await getOrderForEmail(orderId);
   if (!order) {
     return { sent: false, reason: "order-not-found" };
+  }
+
+  // ── Auto-attach the invoice PDF ──────────────────────────────────────
+  // If the caller already produced one (sync-mollie.ts does, in-flight,
+  // because the buffer is fresh in memory there), use it. Otherwise,
+  // call issueInvoiceForOrder which is idempotent on (orderId): if the
+  // Invoice row already exists, it downloads the PDF from Supabase
+  // Storage; if not, it mints + uploads + returns the buffer. This
+  // means free-order and admin-paid paths get the same one-email-with-
+  // attachment outcome the Mollie path gets, with no per-call-site
+  // boilerplate.
+  //
+  // Wrapped in try/catch — a Storage / pdfkit hiccup must never block
+  // the confirmation email itself. If we can't load the PDF, we still
+  // send the email, just without the attachment, and log so admin can
+  // re-issue from /admin/invoices later.
+  let attachment: OrderConfirmationAttachment | undefined =
+    options.invoicePdf;
+  if (!attachment) {
+    try {
+      const { issueInvoiceForOrder } = await import("@/lib/invoices/issue");
+      const inv = await issueInvoiceForOrder(orderId);
+      attachment = {
+        filename: `${inv.number}.pdf`,
+        content: inv.pdfBuffer,
+      };
+    } catch (err) {
+      console.error(
+        `[email] could not load/issue invoice for order ${orderId} — sending without attachment`,
+        err,
+      );
+    }
   }
 
   // Pull any admin-edited copy overrides for this email + locale.
@@ -406,16 +458,8 @@ export async function sendOrderConfirmationEmail(
     return { sent: false, reason: "resend-not-configured" };
   }
 
-  // Resend accepts attachments as `{ filename, content }` where content
-  // is either a Buffer or a base64 string. Buffer is what our PDF
-  // pipeline produces, so we forward it directly.
-  const attachments = options.invoicePdf
-    ? [
-        {
-          filename: options.invoicePdf.filename,
-          content: options.invoicePdf.content,
-        },
-      ]
+  const attachments = attachment
+    ? [{ filename: attachment.filename, content: attachment.content }]
     : undefined;
 
   try {
@@ -434,6 +478,33 @@ export async function sendOrderConfirmationEmail(
         { name: "order", value: order.publicNumber },
       ],
     });
+
+    // Stamp the audit trail BEFORE returning success — the row is the
+    // dedup gate for any subsequent call. Wrapped in catch because a
+    // failure here is bookkeeping, not user-facing: the email did go
+    // out, so we don't want to claim "not sent". Worst case a duplicate
+    // sneaks through; the alreadySent check catches the next attempt.
+    await prisma.orderEvent
+      .create({
+        data: {
+          orderId,
+          kind: "email.confirmation.sent",
+          message: attachment
+            ? `Confirmation email sent with invoice ${attachment.filename}`
+            : "Confirmation email sent (no invoice attached)",
+          metadata: {
+            hasAttachment: Boolean(attachment),
+            invoiceFilename: attachment?.filename ?? null,
+          },
+        },
+      })
+      .catch((err) => {
+        console.error(
+          `[email] failed to write OrderEvent for confirmation send ${order.publicNumber}`,
+          err,
+        );
+      });
+
     return { sent: true };
   } catch (err) {
     console.error(
