@@ -267,7 +267,16 @@ export default async function OrderDetailPage({ params }: Props) {
                 {t("order_download_invoice")}
               </a>
             )}
-            {(order.status === "DELIVERED" || order.status === "SHIPPED") && (
+            {/* Returns/cancellation entry point. Visible from the moment
+                payment clears — pre-ship requests are handled as
+                cancellations on the admin side, post-ship as full RMAs.
+                Belgian/EU 14-day cooling-off clock still starts at
+                delivery; this just lets customers self-serve initiate
+                the request without waiting for a shipped/delivered
+                status. Set: PAID, FULFILLING, SHIPPED, DELIVERED. */}
+            {(["PAID", "FULFILLING", "SHIPPED", "DELIVERED"] as const).includes(
+              order.status as "PAID" | "FULFILLING" | "SHIPPED" | "DELIVERED",
+            ) && (
               <Link
                 href={`/account/orders/${order.publicNumber}/return`}
                 className="inline-block h-11 border border-ink/20 px-5 text-[12px] uppercase tracking-label text-ink transition-colors hover:border-ink hover:text-vermilion leading-[2.75rem]"
