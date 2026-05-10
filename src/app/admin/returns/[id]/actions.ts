@@ -6,11 +6,12 @@
 //   · transitionReturnStatus() inside lib/returns/db.ts enforces the
 //     ALLOWED_TRANSITIONS map, so we don't have to re-check here.
 //   · After a successful transition we fire the matching email:
-//       APPROVED → sendReturnApprovedEmail (mode: selfPostage by default —
-//                   admin can send a prepaid label later if needed)
-//       RECEIVED → sendReturnReceivedEmail
-//       REFUNDED → sendOrderRefundedEmail (existing template)
-//     REJECTED / CANCELLED don't auto-notify — an admin replies by hand.
+//       APPROVED  → sendReturnApprovedEmail (selfPostage default; A2
+//                    promotes to prepaidLabel mode on Sendcloud success)
+//       RECEIVED  → sendReturnReceivedEmail
+//       REFUNDED  → sendOrderRefundedEmail (existing template)
+//       REJECTED  → sendReturnRejectedEmail (A8 — surfaces adminNotes)
+//       CANCELLED → sendReturnCancelledEmail (A8 — admin- and self-cancel)
 // ─────────────────────────────────────────────────────────────────────────
 
 "use server";
@@ -27,6 +28,8 @@ import {
 import { RETURN_STATUS, type ReturnStatus } from "@/lib/returns/types";
 import { sendReturnApprovedEmail } from "@/lib/email/return-approved";
 import { sendReturnReceivedEmail } from "@/lib/email/return-received";
+import { sendReturnRejectedEmail } from "@/lib/email/return-rejected";
+import { sendReturnCancelledEmail } from "@/lib/email/return-cancelled";
 import { sendOrderRefundedEmail } from "@/lib/email/order-refunded";
 import {
   issueRefundAndCreditNote,
@@ -166,6 +169,28 @@ export async function transitionReturnAction(formData: FormData): Promise<void> 
       await sendOrderRefundedEmail(updated.orderId, {
         kind: "full",
         amount: updated.refundAmount ?? 0,
+      });
+    } else if (targetRaw === "REJECTED") {
+      // A8: rejection email surfaces adminNotes verbatim — Belgian
+      // consumer law (Code de droit économique VI.83) requires us to
+      // explain WHY the return was refused. The fallback copy is
+      // generic-but-not-empty in case admin clicked Reject without
+      // typing notes.
+      await sendReturnRejectedEmail(updated.orderId, {
+        returnReference: updated.publicNumber,
+        adminNotes: updated.adminNotes,
+      });
+    } else if (targetRaw === "CANCELLED") {
+      // A8: same email covers both admin- and customer-self-cancel
+      // paths (the customer-self-cancel goes through cancelReturnAction
+      // which calls cancelReturnAsCustomer → transitionReturnStatus,
+      // but doesn't fire emails itself; this branch covers admin-
+      // triggered cancellations). For self-cancel notifications we
+      // could also wire the customer action separately — for now the
+      // self-cancel customer is the actor and doesn't need an email
+      // to confirm what they just did.
+      await sendReturnCancelledEmail(updated.orderId, {
+        returnReference: updated.publicNumber,
       });
     }
   } catch (err) {
