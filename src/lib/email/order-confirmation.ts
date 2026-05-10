@@ -57,6 +57,13 @@ type Strings = {
   /** Used when the order has zero physical items — replaces `nextBody`. */
   nextBodyDigital: string;
   cta: string;
+  /** G12 — secondary "Download invoice (PDF)" link rendered below the
+   *  main CTA. The PDF is already attached to the email, but corporate
+   *  spam filters strip attachments and customers occasionally need
+   *  the file from a different device. The link points at
+   *  /[locale]/account/orders/[number]/invoice which auth-gates and
+   *  serves a signed Storage URL. */
+  ctaInvoice: string;
   signoff: string;
   footer: string;
 };
@@ -84,6 +91,7 @@ export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
     nextBodyDigital:
       "Your gift card code is in your inbox now. You can also see it any time in your account — codes apply at checkout, balances stack across orders.",
     cta: "View your order",
+    ctaInvoice: "Download invoice (PDF)",
     signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
@@ -109,6 +117,7 @@ export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
     nextBodyDigital:
       "Je cadeaubon-code staat nu in je inbox. Je kan hem ook altijd in je account bekijken — codes worden bij het afrekenen toegepast, en saldi blijven staan tussen bestellingen.",
     cta: "Bestelling bekijken",
+    ctaInvoice: "Factuur downloaden (PDF)",
     signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
@@ -134,6 +143,7 @@ export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
     nextBodyDigital:
       "Votre code carte cadeau est dans votre boîte mail. Vous pouvez aussi le retrouver à tout moment dans votre compte — les codes s'appliquent en caisse, et le solde se conserve d'une commande à l'autre.",
     cta: "Voir ma commande",
+    ctaInvoice: "Télécharger la facture (PDF)",
     signoff: "Avec soin,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
@@ -159,6 +169,7 @@ export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
     nextBodyDigital:
       "Код подарочной карты уже у вас в почте. Также вы всегда можете увидеть его в своём аккаунте — коды применяются при оформлении заказа, баланс сохраняется между покупками.",
     cta: "Посмотреть заказ",
+    ctaInvoice: "Скачать счёт-фактуру (PDF)",
     signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
@@ -182,6 +193,14 @@ function siteUrl(): string {
 function accountOrderUrl(order: EmailOrder): string {
   const locale = order.locale.toLowerCase();
   return `${siteUrl()}/${locale}/account/orders/${encodeURIComponent(order.publicNumber)}`;
+}
+
+/** G12 — customer-facing invoice download. Auth-gates and serves a
+ *  signed Storage URL via /[locale]/account/orders/[number]/invoice.
+ *  Works as a fallback when the email's PDF attachment was stripped
+ *  by spam filters or the customer is on a different device. */
+function accountInvoiceUrl(order: EmailOrder): string {
+  return `${accountOrderUrl(order)}/invoice`;
 }
 
 /**
@@ -314,6 +333,17 @@ export function buildOrderConfirmationEmail(
 
     ${renderCtaButton(accountOrderUrl(order), s.cta)}
 
+    <!-- G12 — secondary invoice download link below the main CTA.
+         Inline text-link styling (not a second big button) so the
+         primary action ("View your order") stays the visual anchor.
+         Useful when corporate spam filters strip the attached PDF. -->
+    <p style="margin:14px 0 0 0;font-size:13px;line-height:1.65;color:#5E5751;">
+      <a
+        href="${esc(accountInvoiceUrl(order))}"
+        style="color:#5E5751;text-decoration:underline;text-decoration-color:#C8102E;text-underline-offset:4px;"
+      >${esc(s.ctaInvoice)}</a>
+    </p>
+
     <p style="margin:20px 0 0 0;font-size:14px;line-height:1.65;color:#1A1A1A;white-space:pre-line;">
       ${esc(s.signoff)}
     </p>
@@ -357,6 +387,7 @@ export function buildOrderConfirmationEmail(
     `${s.nextLabel}: ${s.nextBody}`,
     "",
     `${s.cta}: ${accountOrderUrl(order)}`,
+    `${s.ctaInvoice}: ${accountInvoiceUrl(order)}`,
     "",
     s.signoff,
   ]
