@@ -12,9 +12,10 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
-import { Download, ExternalLink } from "lucide-react";
+import { Download, ExternalLink, ShieldAlert } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { DeleteInvoice } from "@/components/admin/invoices/delete-invoice";
 
 const EUR = new Intl.NumberFormat("en-IE", {
   style: "currency",
@@ -70,11 +71,29 @@ export default async function AdminInvoicesPage() {
           </h1>
           <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-ink-mid">
             Every paid order generates a sequential VAT invoice (Belgian
-            Royal Decree no. 1, art. 5). Stored 10 years per Belgian VAT
-            Code art. 60 — an admin, this is your bookkeeping pile.
+            Royal Decree no. 1, art. 5). Stored 10 years per Belgian Code
+            de droit économique III.86 — this is your bookkeeping pile.
           </p>
         </div>
       </header>
+
+      {/* Retention banner — explains the legal floor and the only
+       *  legitimate scenarios for deletion (test data pre-launch +
+       *  duplicate-invoice corrections). The Delete buttons below
+       *  themselves carry an additional confirmation step (typed
+       *  invoice number) so this is reinforcement, not the only
+       *  guard. */}
+      <div className="mb-8 flex items-start gap-3 border border-vermilion/30 bg-vermilion/5 p-4">
+        <ShieldAlert className="mt-0.5 h-4 w-4 flex-shrink-0 text-vermilion" aria-hidden />
+        <div className="text-[12px] leading-relaxed text-ink">
+          <strong className="text-ink">Belgian retention rules apply.</strong>{" "}
+          Issued invoices must be kept for 10 years (Code de droit
+          économique III.86) and 7 years for the VAT-side (Code TVA Art.
+          60). Use the per-row Delete only for pre-launch test data
+          cleanup or to correct a duplicate that slipped through. Each
+          delete is logged in the audit trail.
+        </div>
+      </div>
 
       {invoices.length === 0 ? (
         <p className="text-[13px] text-ink-mid">
@@ -138,15 +157,24 @@ export default async function AdminInvoicesPage() {
                     <td className="px-4 py-3 text-right text-ink tabular-nums">
                       {EUR.format(Number(inv.grandTotal))}
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        href={`/admin/invoices/${inv.id}/download`}
-                        className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-label text-ink-mid hover:text-vermilion"
-                      >
-                        <Download className="h-3.5 w-3.5" aria-hidden />
-                        PDF
-                        <ExternalLink className="h-3 w-3 opacity-60" aria-hidden />
-                      </Link>
+                    <td className="px-4 py-3 text-right align-top">
+                      {/* Stack PDF + Delete vertically — Delete unfurls
+                       *  inline into a small confirmation form, so a
+                       *  flex column keeps both states tidy. */}
+                      <div className="flex flex-col items-end gap-2">
+                        <Link
+                          href={`/admin/invoices/${inv.id}/download`}
+                          className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-label text-ink-mid hover:text-vermilion"
+                        >
+                          <Download className="h-3.5 w-3.5" aria-hidden />
+                          PDF
+                          <ExternalLink className="h-3 w-3 opacity-60" aria-hidden />
+                        </Link>
+                        <DeleteInvoice
+                          invoiceId={inv.id}
+                          invoiceNumber={inv.number}
+                        />
+                      </div>
                     </td>
                   </tr>
                 );
