@@ -62,6 +62,11 @@ export type ReturnRow = {
   adminNotes: string | null;
   refundAmount: number | null;
   refundedAt: Date | null;
+  /** Mollie refund id (re_xxxx) — set once A1's issueRefundAndCreditNote
+   *  fires payments_refunds.create and the gateway accepts. Acts as the
+   *  idempotency gate so a re-clicked "Mark received" button never
+   *  produces a double refund. */
+  mollieRefundId: string | null;
   trackingNumber: string | null;
   trackingUrl: string | null;
   receivedAt: Date | null;

@@ -45,6 +45,7 @@ type RawReturn = {
   adminNotes: string | null;
   refundAmount: unknown | null;
   refundedAt: Date | null;
+  mollieRefundId: string | null;
   trackingNumber: string | null;
   trackingUrl: string | null;
   receivedAt: Date | null;
@@ -104,6 +105,7 @@ function mapRow(raw: RawReturn): ReturnRow {
     adminNotes: raw.adminNotes,
     refundAmount: toNumberOrNull(raw.refundAmount),
     refundedAt: raw.refundedAt,
+    mollieRefundId: raw.mollieRefundId,
     trackingNumber: raw.trackingNumber,
     trackingUrl: raw.trackingUrl,
     receivedAt: raw.receivedAt,
