@@ -1068,6 +1068,11 @@ model ReturnRequest {
   /// Monetary side (populated after an admin reviews — not at request time).
   refundAmount    Decimal?      @db.Decimal(10, 2)
   refundedAt      DateTime?
+  /// Mollie's refund id (re_xxxx) — set once A1 fires payments.refund and
+  /// the gateway accepts. Acts as the idempotency key: a re-click on
+  /// "Mark received" with this field already set short-circuits the
+  /// Mollie call so we never double-refund. Null until refund issued.
+  mollieRefundId  String?       @unique
 
   /// Logistics
   trackingNumber  String?

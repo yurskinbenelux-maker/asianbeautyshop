@@ -28,6 +28,10 @@ import { RETURN_STATUS, type ReturnStatus } from "@/lib/returns/types";
 import { sendReturnApprovedEmail } from "@/lib/email/return-approved";
 import { sendReturnReceivedEmail } from "@/lib/email/return-received";
 import { sendOrderRefundedEmail } from "@/lib/email/order-refunded";
+import {
+  issueRefundAndCreditNote,
+  IssueRefundError,
+} from "@/lib/credit-notes/issue";
 
 function isReturnStatus(v: string): v is ReturnStatus {
   return (RETURN_STATUS as readonly string[]).includes(v);
@@ -39,6 +43,53 @@ export async function transitionReturnAction(formData: FormData): Promise<void> 
   const returnId = String(formData.get("returnId") ?? "");
   const targetRaw = String(formData.get("target") ?? "");
   if (!returnId || !isReturnStatus(targetRaw)) return;
+
+  // ── A1: refund + credit note on the RECEIVED transition ─────────────
+  // We fire the Mollie refund + CN-2026-NNNNN write BEFORE the status
+  // flip — if the refund fails (Mollie down, no Mollie payment, no
+  // invoice on the order), we want the admin to see the error and the
+  // status to stay where it was, not be left in RECEIVED with no money
+  // moved. issueRefundAndCreditNote is idempotent on
+  // ReturnRequest.mollieRefundId so a re-clicked button is safe.
+  if (targetRaw === "RECEIVED") {
+    const current = await getReturnByIdForAdmin(returnId);
+    if (!current) {
+      console.error("[admin-returns] RECEIVED: return not found", returnId);
+      return;
+    }
+    // Skip refund issuance only when the admin has no refund amount on
+    // file yet — that's the "received but I haven't decided the refund
+    // yet" workflow. Form should require this field, but we tolerate
+    // the legacy empty-value case (existing returns) gracefully.
+    const amount = Number(current.refundAmount ?? 0);
+    if (amount > 0 && !current.mollieRefundId) {
+      try {
+        const result = await issueRefundAndCreditNote({
+          returnId,
+          refundAmount: amount,
+          reason: "RETURN",
+          actorId: actor.id,
+          actorEmail: actor.email ?? null,
+        });
+        console.info(
+          `[admin-returns] refund issued · ${result.creditNoteNumber} · Mollie ${result.mollieRefundId}`,
+        );
+      } catch (err) {
+        if (err instanceof IssueRefundError) {
+          console.error(
+            `[admin-returns] refund failed (${err.code}): ${err.message}`,
+          );
+        } else {
+          console.error("[admin-returns] refund threw", err);
+        }
+        // Bail out — don't flip to RECEIVED with money still owed. Admin
+        // sees the un-flipped status and can read the error in the
+        // server log / next iteration of A8 will surface it as a banner
+        // on the return detail page.
+        return;
+      }
+    }
+  }
 
   let updated;
   try {
