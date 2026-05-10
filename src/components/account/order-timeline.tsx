@@ -23,15 +23,12 @@
 import { Truck } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-type OrderTimelineStatus =
-  | "PENDING"
-  | "PAID"
-  | "FULFILLING"
-  | "SHIPPED"
-  | "DELIVERED"
-  | "CANCELLED"
-  | "REFUNDED"
-  | "PARTIALLY_REFUNDED";
+// Accept `string` from the caller (the mapped query result types this
+// as plain string, not the Prisma enum) and narrow at runtime via the
+// switch in currentIndex below. Any status we don't recognise falls
+// through to -1 and renders the happy-path stepper greyed out — safer
+// than the build failing on a slightly-divergent upstream type.
+type OrderTimelineStatus = string;
 
 // Happy-path step keys — these map 1:1 to the visible stepper rows.
 // CANCELLED / REFUNDED / PARTIALLY_REFUNDED are off-path and short-
