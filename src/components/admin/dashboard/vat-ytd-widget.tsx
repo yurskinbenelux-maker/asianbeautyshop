@@ -31,8 +31,15 @@ const COUNTRY_LABEL: Record<string, string> = {
 };
 
 export function VatYtdWidget({ snapshot }: { snapshot: VatYtdSnapshot }) {
-  const { domesticEur, crossBorderEur, perCountry, thresholdEur, status, year } =
-    snapshot;
+  const {
+    domesticEur,
+    crossBorderEur,
+    perCountry,
+    creditsEur,
+    thresholdEur,
+    status,
+    year,
+  } = snapshot;
   const pct = Math.min(
     100,
     Math.round((crossBorderEur / thresholdEur) * 100),
@@ -136,6 +143,18 @@ export function VatYtdWidget({ snapshot }: { snapshot: VatYtdSnapshot }) {
             </div>
           ))}
         </div>
+      ) : null}
+
+      {/* Credits issued — audit-trail line so the figure above is
+       *  obviously net-of-refunds rather than gross. Only render when
+       *  there's something to show; a year with zero refunds doesn't
+       *  need this row cluttering the card. */}
+      {creditsEur > 0 ? (
+        <p className="mt-4 text-[11px] text-ink-mid">
+          Credits issued this year:{" "}
+          <span className="text-ink">{EUR.format(creditsEur)}</span>
+          {" "}— already subtracted from totals above.
+        </p>
       ) : null}
 
       {/* State copy */}
