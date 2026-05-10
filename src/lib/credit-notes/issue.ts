@@ -107,7 +107,10 @@ export class IssueRefundError extends Error {
 export async function issueRefundAndCreditNote(
   input: IssueRefundInput,
 ): Promise<IssueRefundResult> {
-  // ── 1. Load the return + parent order + invoice ────────────────────
+  // ── 1. Load the return + parent order + invoice + items ───────────
+  // ReturnItems come with us so step 6 can write a per-line CreditNote
+  // breakdown (G9) — see drawLinesTable comments for the legal
+  // requirement.
   const ret = await prisma.returnRequest.findUnique({
     where: { id: input.returnId },
     select: {
@@ -115,6 +118,15 @@ export async function issueRefundAndCreditNote(
       publicNumber: true,
       orderId: true,
       mollieRefundId: true,
+      items: {
+        select: {
+          nameSnapshot: true,
+          skuSnapshot: true,
+          quantity: true,
+          unitPrice: true, // Decimal — VAT-inclusive customer-facing
+          lineTotal: true, // Decimal — VAT-inclusive line total
+        },
+      },
       order: {
         select: {
           id: true,
@@ -227,6 +239,84 @@ export async function issueRefundAndCreditNote(
   const year = issueDate.getFullYear();
   const reserved = await reserveNextCreditNoteNumber(year);
 
+  // ── 6a. Build proportional per-line breakdown (G9) ─────────────────
+  // Sum the ReturnItems' VAT-inclusive line totals, then scale each
+  // line by (refundAmount / sumOfLines) so the per-line totals add up
+  // to the actual refund. Two scenarios this handles cleanly:
+  //   · Full refund (refundAmount === sumOfLines) → scale = 1.0,
+  //     items show their original prices.
+  //   · Partial refund (e.g. restocking fee) → each line scaled down
+  //     uniformly. The customer's PDF reads as "we credited 80% of
+  //     each line"; legally still adds up to the refunded amount.
+  // Last-line fix-up absorbs the rounding remainder so the line totals
+  // sum EXACTLY to (amount - 0) — no off-by-a-cent on the legal record.
+  const sumOfLines = ret.items.reduce(
+    (s, it) => s + Number(it.lineTotal),
+    0,
+  );
+  // Belt-and-braces: if the return has no items (shouldn't happen — we
+  // gate on items.length at request time) we fall back to a single
+  // synthetic line so the CN still has SOMETHING in its breakdown.
+  const hasLines = ret.items.length > 0 && sumOfLines > 0;
+  const scale = hasLines ? amount / sumOfLines : 1;
+
+  type CnLineDraft = {
+    nameSnapshot: string;
+    skuSnapshot: string;
+    quantity: number;
+    unitPriceExclVat: number;
+    vatRate: number;
+    lineTotalInclVat: number;
+  };
+  let cnLines: CnLineDraft[] = [];
+  if (hasLines) {
+    cnLines = ret.items.map((it) => {
+      const scaledLineTotal = round2(Number(it.lineTotal) * scale);
+      const lineExclVat = scaledLineTotal / (1 + vatRate);
+      const unitExcl = it.quantity > 0 ? lineExclVat / it.quantity : lineExclVat;
+      return {
+        nameSnapshot: it.nameSnapshot,
+        skuSnapshot: it.skuSnapshot,
+        quantity: it.quantity,
+        unitPriceExclVat: round2(unitExcl),
+        vatRate,
+        lineTotalInclVat: scaledLineTotal,
+      };
+    });
+    // Rounding fix-up — push any remainder into the last line so the
+    // sum equals exactly `amount`. Worst case the last line is off by
+    // a few cents from a strict pro-rata, which is invisible in the
+    // PDF and exactly what accountants expect.
+    const linesSum = cnLines.reduce(
+      (s, l) => s + l.lineTotalInclVat,
+      0,
+    );
+    const remainder = round2(amount - linesSum);
+    if (remainder !== 0 && cnLines.length > 0) {
+      const last = cnLines[cnLines.length - 1];
+      const fixedTotal = round2(last.lineTotalInclVat + remainder);
+      const fixedExcl = fixedTotal / (1 + vatRate);
+      cnLines[cnLines.length - 1] = {
+        ...last,
+        lineTotalInclVat: fixedTotal,
+        unitPriceExclVat: round2(
+          last.quantity > 0 ? fixedExcl / last.quantity : fixedExcl,
+        ),
+      };
+    }
+  } else {
+    cnLines = [
+      {
+        nameSnapshot: `Refund · return ${ret.publicNumber}`,
+        skuSnapshot: `RETURN-${ret.publicNumber}`,
+        quantity: 1,
+        unitPriceExclVat: round2(amount / (1 + vatRate)),
+        vatRate,
+        lineTotalInclVat: round2(amount),
+      },
+    ];
+  }
+
   let creditNoteId: string;
   try {
     creditNoteId = await prisma.$transaction(async (tx) => {
@@ -246,14 +336,29 @@ export async function issueRefundAndCreditNote(
           customerSnapshot: ret.order.invoice!.customerSnapshot as Prisma.InputJsonValue,
           subtotalExclVat: round2(subtotalExclVat),
           vatTotal: round2(vatTotal),
-          // Shipping refund handling lands with G9 (partial refunds);
-          // for now any refunded shipping is rolled into subtotalExclVat.
+          // Shipping refund handling stays at 0 for now — admin doesn't
+          // have a separate "refund shipping" toggle yet. When G9 v2
+          // adds it, the field will populate from the form.
           shippingTotal: 0,
           grandTotal: round2(amount),
           destinationCountry: ret.order.invoice!.destinationCountry,
           vatRate: ret.order.invoice!.vatRate,
           reason: input.reason ?? "RETURN",
           reasonNote: input.reasonNote ?? null,
+          // G9: write per-line breakdown atomically with the parent CN.
+          // CreditNoteItem rows can never exist without a parent, and a
+          // parent without items would render an awkward blank PDF —
+          // doing both in one createMany ties their fates together.
+          items: {
+            create: cnLines.map((l) => ({
+              nameSnapshot: l.nameSnapshot,
+              skuSnapshot: l.skuSnapshot,
+              quantity: l.quantity,
+              unitPriceExclVat: l.unitPriceExclVat,
+              vatRate: l.vatRate,
+              lineTotalInclVat: l.lineTotalInclVat,
+            })),
+          },
         },
       });
 
@@ -394,8 +499,11 @@ export async function mintCreditNotePdf(
 ): Promise<MintCreditNotePdfResult> {
   // Load CN with the relations we need to render the PDF. Joins
   // invoice (for the original invoice number + issued date), order
-  // (for publicNumber), return (for publicNumber), and the parent
-  // ReturnRequest's mollieRefundId for the footer reference.
+  // (for publicNumber), return (for publicNumber), the parent
+  // ReturnRequest's mollieRefundId for the footer reference, AND
+  // (G9) the per-line CreditNoteItems so the PDF table renders the
+  // actual products credited rather than the synthesised single line
+  // we used to produce.
   const cn = await prisma.creditNote.findUnique({
     where: { id: creditNoteId },
     include: {
@@ -407,6 +515,16 @@ export async function mintCreditNotePdf(
       },
       return: {
         select: { publicNumber: true, mollieRefundId: true },
+      },
+      items: {
+        select: {
+          nameSnapshot: true,
+          skuSnapshot: true,
+          quantity: true,
+          unitPriceExclVat: true,
+          vatRate: true,
+          lineTotalInclVat: true,
+        },
       },
     },
   });
@@ -440,25 +558,34 @@ export async function mintCreditNotePdf(
   const shippingTotal = Number(cn.shippingTotal);
   const vatRate = Number(cn.vatRate);
 
-  // A1 currently captures only the totals (no per-line breakdown). We
-  // synthesise a single line "Refund · return ABS-1042-R1" so the PDF
-  // table stays meaningful. When G9 lands, this becomes one row per
-  // refunded ProductVariant pulled from a future CreditNoteItem table.
-  const refundLineDescription =
-    cn.return?.publicNumber
-      ? `Refund · return ${cn.return.publicNumber}`
-      : "Refund";
-  const lineExclVat = subtotalExclVat;
-  const items: CreditNoteLineItem[] = [
-    {
-      description: refundLineDescription,
-      reference: `Order #${cn.order.publicNumber}`,
-      quantity: 1,
-      unitPriceExclVat: round2(lineExclVat),
-      vatRate,
-      lineTotalInclVat: round2(grandTotal - shippingTotal),
-    },
-  ];
+  // G9: render the real per-line breakdown from CreditNoteItem rows.
+  // The reference field shows the SKU under the product name, mirroring
+  // the invoice PDF's layout for visual symmetry. Falls back to the
+  // synthetic single-line shape only when no items rows exist (legacy
+  // pre-G9 credit notes that pre-date this table — none in production
+  // since A1 always wrote items, but defensive).
+  const items: CreditNoteLineItem[] =
+    cn.items.length > 0
+      ? cn.items.map((it) => ({
+          description: it.nameSnapshot,
+          reference: it.skuSnapshot,
+          quantity: it.quantity,
+          unitPriceExclVat: Number(it.unitPriceExclVat),
+          vatRate: Number(it.vatRate),
+          lineTotalInclVat: Number(it.lineTotalInclVat),
+        }))
+      : [
+          {
+            description: cn.return?.publicNumber
+              ? `Refund · return ${cn.return.publicNumber}`
+              : "Refund",
+            reference: `Order #${cn.order.publicNumber}`,
+            quantity: 1,
+            unitPriceExclVat: round2(subtotalExclVat),
+            vatRate,
+            lineTotalInclVat: round2(grandTotal - shippingTotal),
+          },
+        ];
 
   const pdfInput: CreditNotePdfInput = {
     number: cn.number,

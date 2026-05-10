@@ -938,12 +938,49 @@ model CreditNote {
 
   createdAt         DateTime @default(now())
 
+  // Per-line breakdown (G9). Populated at issuance from the originating
+  // ReturnItems; total of items.lineTotalInclVat equals the credit
+  // note's grandTotal (less shippingTotal). When admin refunds less
+  // than the full sum-of-lines, each line is pro-rated so the
+  // arithmetic still adds up. Belgian Royal Decree no. 1 art. 5
+  // requires this line-level breakdown on credit notes (auditor must
+  // be able to reconcile each refunded item against the original
+  // invoice line). Cascade delete with the parent CN — the items have
+  // no legal life of their own.
+  items             CreditNoteItem[]
+
   @@index([year, sequence])
   @@index([invoiceId])
   @@index([orderId])
   @@index([returnId])
   @@index([destinationCountry, issuedAt])
   @@index([issuedAt])
+}
+
+// Frozen-at-issue per-line snapshot — same shape as OrderItem for
+// rendering symmetry, but decoupled so a later product rename / sku
+// change doesn't rewrite the legal record. quantity + unitPriceExclVat
+// + vatRate + lineTotalInclVat all snapshotted.
+model CreditNoteItem {
+  id                String   @id @default(uuid()) @db.Uuid
+  creditNoteId      String   @db.Uuid
+  creditNote        CreditNote @relation(fields: [creditNoteId], references: [id], onDelete: Cascade)
+
+  // Snapshot mirrors the source ReturnItem so the PDF reads coherently.
+  nameSnapshot      String
+  skuSnapshot       String
+  quantity          Int
+
+  // Decimal columns frozen at issue. Per-line VAT split so the PDF
+  // table can render UNIT-EXCL-VAT, VAT %, LINE-TOTAL columns the same
+  // way the invoice renderer does.
+  unitPriceExclVat  Decimal  @db.Decimal(10, 2)
+  vatRate           Decimal  @db.Decimal(5, 4)
+  lineTotalInclVat  Decimal  @db.Decimal(10, 2)
+
+  createdAt         DateTime @default(now())
+
+  @@index([creditNoteId])
 }
 
 enum CreditNoteReason {
