@@ -23,6 +23,7 @@ import { requireCustomer } from "@/lib/auth";
 import { getReturnByPublicNumberForUser } from "@/lib/returns/db";
 import { formatEur, priceLocale } from "@/lib/utils";
 import { ReturnStatusPill } from "@/components/account/return-status-pill";
+import { ReturnTimeline } from "@/components/account/return-timeline";
 
 import { cancelReturnAction } from "./actions";
 
@@ -87,6 +88,21 @@ export default async function ReturnDetailPage({ params }: Props) {
 
       <div className="rule my-10" />
 
+      {/* timeline — primary visual anchor of the page (A3) */}
+      <ReturnTimeline
+        status={ret.status}
+        formatDate={(d) => dateFmt.format(d)}
+        formatEur={euro}
+        createdAt={ret.createdAt}
+        receivedAt={ret.receivedAt}
+        refundedAt={ret.refundedAt}
+        refundAmount={ret.refundAmount}
+        adminNotes={ret.adminNotes}
+        prepaidLabelUrl={ret.returnLabelUrl}
+      />
+
+      <div className="rule my-10" />
+
       {/* items */}
       <div>
         <h2 className="font-display text-[22px] leading-tight text-ink">
@@ -122,7 +138,12 @@ export default async function ReturnDetailPage({ params }: Props) {
         </ul>
       </div>
 
-      {/* reason */}
+      {/* reason — full-width now that the timeline replaces the
+       *  former right-column status/tracking block. The customer's
+       *  outbound tracking number (if any) still lives below for
+       *  reference; it doesn't deserve top-of-page prominence
+       *  because most customers will use the prepaid label
+       *  surfaced in the timeline instead. */}
       <div className="mt-10 grid gap-10 md:grid-cols-2">
         <div>
           <h2 className="font-display text-[18px] leading-tight text-ink">
@@ -138,59 +159,41 @@ export default async function ReturnDetailPage({ params }: Props) {
           )}
         </div>
 
-        {/* tracking + refund */}
-        <div>
-          <h2 className="font-display text-[18px] leading-tight text-ink">
-            {t("detail_status_heading")}
-          </h2>
-          <dl className="mt-4 space-y-3 text-[13px]">
-            {ret.trackingNumber && (
-              <div className="flex justify-between gap-4">
-                <dt className="uppercase tracking-label text-ink-mid">
-                  {t("detail_tracking_number")}
-                </dt>
-                <dd className="font-mono text-[12px] text-ink">
-                  {ret.trackingNumber}
-                </dd>
-              </div>
-            )}
-            {ret.receivedAt && (
-              <div className="flex justify-between gap-4">
-                <dt className="uppercase tracking-label text-ink-mid">
-                  {t("detail_received_on")}
-                </dt>
-                <dd className="text-ink">{dateFmt.format(ret.receivedAt)}</dd>
-              </div>
-            )}
-            {ret.refundAmount !== null && (
-              <div className="flex justify-between gap-4">
-                <dt className="uppercase tracking-label text-ink-mid">
-                  {t("detail_refund_amount")}
-                </dt>
-                <dd className="text-ink">{euro(ret.refundAmount)}</dd>
-              </div>
-            )}
-            {ret.refundedAt && (
-              <div className="flex justify-between gap-4">
-                <dt className="uppercase tracking-label text-ink-mid">
-                  {t("detail_refunded_on")}
-                </dt>
-                <dd className="text-ink">{dateFmt.format(ret.refundedAt)}</dd>
-              </div>
-            )}
-          </dl>
+        {/* customer's outbound tracking number — only shown when
+         *  the customer (or admin on their behalf) supplied one.
+         *  Distinct from the prepaid-label download in the timeline
+         *  above; this is for self-postage flows where the
+         *  customer chose their own carrier. */}
+        {(ret.trackingNumber || ret.trackingUrl) && (
+          <div>
+            <h2 className="font-display text-[18px] leading-tight text-ink">
+              {t("detail_status_heading")}
+            </h2>
+            <dl className="mt-4 space-y-3 text-[13px]">
+              {ret.trackingNumber && (
+                <div className="flex justify-between gap-4">
+                  <dt className="uppercase tracking-label text-ink-mid">
+                    {t("detail_tracking_number")}
+                  </dt>
+                  <dd className="font-mono text-[12px] text-ink">
+                    {ret.trackingNumber}
+                  </dd>
+                </div>
+              )}
+            </dl>
 
-          {ret.trackingUrl && (
-            <a
-              href={ret.trackingUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-5 inline-block h-11 bg-ink px-5 text-[12px] uppercase tracking-label text-rice transition-colors hover:bg-vermilion leading-[2.75rem]"
-            >
-              {t("detail_track_cta")}
-            </a>
-          )}
-        </div>
+            {ret.trackingUrl && (
+              <a
+                href={ret.trackingUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-5 inline-block h-11 bg-ink px-5 text-[12px] uppercase tracking-label text-rice transition-colors hover:bg-vermilion leading-[2.75rem]"
+              >
+                {t("detail_track_cta")}
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
       {/* cancel */}
