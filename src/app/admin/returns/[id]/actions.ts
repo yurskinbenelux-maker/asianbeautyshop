@@ -32,6 +32,7 @@ import {
   issueRefundAndCreditNote,
   IssueRefundError,
 } from "@/lib/credit-notes/issue";
+import { createSendcloudReturnLabel } from "@/lib/sendcloud/return-label";
 
 function isReturnStatus(v: string): v is ReturnStatus {
   return (RETURN_STATUS as readonly string[]).includes(v);
@@ -124,10 +125,36 @@ export async function transitionReturnAction(formData: FormData): Promise<void> 
 
   try {
     if (targetRaw === "APPROVED") {
+      // A2: try to mint a Sendcloud return label first. If it works,
+      // the email switches to prepaidLabel mode and includes the PDF
+      // CTA. If it fails (free plan, API rejection, no shipping
+      // address), we fall back to selfPostage so the customer still
+      // gets a clear next step instead of an error.
+      let labelUrl: string | null = null;
+      try {
+        const labelResult = await createSendcloudReturnLabel(returnId);
+        if (labelResult.ok) {
+          labelUrl = labelResult.labelUrl;
+          console.info(
+            `[admin-returns] return label created · ${updated.publicNumber} · parcel ${labelResult.parcelId}`,
+          );
+        } else {
+          console.warn(
+            `[admin-returns] return label not created (${labelResult.reason}) — falling back to selfPostage`,
+            "message" in labelResult ? labelResult.message : undefined,
+          );
+        }
+      } catch (err) {
+        // Defence-in-depth — createSendcloudReturnLabel doesn't throw,
+        // but if it ever does we still want the email to go out.
+        console.error("[admin-returns] return label call threw", err);
+      }
+
       await sendReturnApprovedEmail(updated.orderId, {
         returnReference: updated.publicNumber,
         items: emailItems,
-        mode: "selfPostage",
+        mode: labelUrl ? "prepaidLabel" : "selfPostage",
+        prepaidLabelUrl: labelUrl ?? null,
       });
     } else if (targetRaw === "RECEIVED") {
       await sendReturnReceivedEmail(updated.orderId, {

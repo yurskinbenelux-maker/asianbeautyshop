@@ -1074,10 +1074,22 @@ model ReturnRequest {
   /// Mollie call so we never double-refund. Null until refund issued.
   mollieRefundId  String?       @unique
 
-  /// Logistics
+  /// Logistics — these two are the CUSTOMER'S outbound shipment back to
+  /// us. Either typed in by the customer or set by admin from the
+  /// notes form when the customer emails their tracking code.
   trackingNumber  String?
   trackingUrl     String?
   receivedAt      DateTime?
+
+  /// Prepaid return label we generated for the customer (A2). Sendcloud
+  /// hosts the label PDF; the URL is what we attach in the
+  /// "Your return is approved" email. Set on first successful
+  /// createSendcloudReturnLabel call; null when the customer ships at
+  /// their own cost (free-plan fallback or admin opted out).
+  returnLabelUrl   String?
+  /// Sendcloud's parcel id for the return. Used to dedupe a re-clicked
+  /// "Approve" button — if it's set, we don't burn another label cost.
+  sendcloudReturnParcelId String? @unique
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt

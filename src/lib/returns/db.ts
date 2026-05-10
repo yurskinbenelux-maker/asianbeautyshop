@@ -48,6 +48,8 @@ type RawReturn = {
   mollieRefundId: string | null;
   trackingNumber: string | null;
   trackingUrl: string | null;
+  returnLabelUrl: string | null;
+  sendcloudReturnParcelId: string | null;
   receivedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -108,6 +110,8 @@ function mapRow(raw: RawReturn): ReturnRow {
     mollieRefundId: raw.mollieRefundId,
     trackingNumber: raw.trackingNumber,
     trackingUrl: raw.trackingUrl,
+    returnLabelUrl: raw.returnLabelUrl,
+    sendcloudReturnParcelId: raw.sendcloudReturnParcelId,
     receivedAt: raw.receivedAt,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,

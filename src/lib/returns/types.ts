@@ -69,6 +69,13 @@ export type ReturnRow = {
   mollieRefundId: string | null;
   trackingNumber: string | null;
   trackingUrl: string | null;
+  /** Prepaid return-label PDF URL (Sendcloud-hosted). Null when the
+   *  customer ships at their own cost — free-plan fallback or admin
+   *  opted out of auto-label. */
+  returnLabelUrl: string | null;
+  /** Sendcloud parcel id for the return — idempotency gate against
+   *  re-clicked Approve buttons. */
+  sendcloudReturnParcelId: string | null;
   receivedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
