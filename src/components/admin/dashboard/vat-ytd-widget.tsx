@@ -13,7 +13,8 @@
 // no fetching of its own.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { AlertTriangle, Globe, MapPin } from "lucide-react";
+import { AlertTriangle, Globe, MapPin, FileDown } from "lucide-react";
+import Link from "next/link";
 import type { VatYtdSnapshot } from "@/lib/queries/vat-ytd";
 
 const EUR = new Intl.NumberFormat("en-IE", {
@@ -156,6 +157,17 @@ export function VatYtdWidget({ snapshot }: { snapshot: VatYtdSnapshot }) {
           {" "}— already subtracted from totals above.
         </p>
       ) : null}
+
+      {/* Quarterly export CTA (G6) — accountant's "give me the BTW
+       *  filing data" entry point. Always visible (even pre-launch
+       *  when there's no data yet) so admins know it exists. */}
+      <Link
+        href="/admin/vat-export"
+        className="mt-5 inline-flex items-center gap-2 border border-ink/15 bg-white px-3 py-2 text-[11px] uppercase tracking-label text-ink-mid transition-colors hover:border-vermilion hover:text-vermilion"
+      >
+        <FileDown className="h-3.5 w-3.5" aria-hidden />
+        Quarterly BTW export
+      </Link>
 
       {/* State copy */}
       <div className="mt-6 border-t border-ink/10 pt-4 text-[12px] leading-relaxed">
