@@ -24,6 +24,7 @@ import { prisma } from "@/lib/prisma";
 import { formatEur, priceLocale } from "@/lib/utils";
 import { OrderReviewForm } from "@/components/account/order-review-form";
 import { ReorderButton } from "@/components/account/reorder-button";
+import { OrderTimeline } from "@/components/account/order-timeline";
 
 type Props = { params: Promise<{ locale: string; number: string }> };
 
@@ -104,6 +105,23 @@ export default async function OrderDetailPage({ params }: Props) {
           <ReorderButton orderNumber={order.publicNumber} urlLocale={locale} />
         </div>
       </div>
+
+      <div className="rule my-10" />
+
+      {/* ── timeline (G1) — primary "where is my parcel" answer.
+       *  Symmetric to the return timeline (A3) so the two pages
+       *  read as a coherent system. Surfaces tracking on SHIPPED
+       *  and collapses to a closure card for CANCELLED/REFUNDED. */}
+      <OrderTimeline
+        status={order.status}
+        formatDate={(d) => dateFmt.format(d)}
+        placedAt={order.placedAt}
+        paidAt={order.paidAt}
+        shippedAt={order.shippedAt}
+        deliveredAt={order.deliveredAt}
+        trackingUrl={order.trackingUrl}
+        trackingNumber={order.trackingNumber}
+      />
 
       <div className="rule my-10" />
 
