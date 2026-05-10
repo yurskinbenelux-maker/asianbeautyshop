@@ -27,11 +27,15 @@ import {
   updateReturnNotesAction,
 } from "./actions";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
+};
 
-export default async function AdminReturnDetail({ params }: Props) {
+export default async function AdminReturnDetail({ params, searchParams }: Props) {
   await requireAdmin();
   const { id } = await params;
+  const { error: errorCode } = await searchParams;
   const ret = await getReturnByIdForAdmin(id);
   if (!ret) notFound();
 
@@ -73,6 +77,21 @@ export default async function AdminReturnDetail({ params }: Props) {
           {ret.status.toLowerCase()}
         </span>
       </header>
+
+      {/* H1 hard-gate error banner. Set when the action redirected
+       *  here with ?error=refund_amount_required (admin clicked Mark
+       *  Received without saving the refund amount first). Vermilion-
+       *  tinted to match the rest of the danger palette. Auto-clears
+       *  the next time admin navigates away and back. */}
+      {errorCode === "refund_amount_required" ? (
+        <div className="mt-6 border border-vermilion/40 bg-vermilion/5 p-4 text-[13px] leading-relaxed text-ink">
+          <strong className="text-vermilion">Refund amount required.</strong>{" "}
+          Enter a refund amount in the &ldquo;Refund €&rdquo; field below and
+          click <strong>Save</strong> on that form FIRST. Then click{" "}
+          <strong>Mark received</strong> — that&apos;s when Mollie + credit
+          note + loyalty clawback all fire.
+        </div>
+      ) : null}
 
       <div className="rule my-8" />
 

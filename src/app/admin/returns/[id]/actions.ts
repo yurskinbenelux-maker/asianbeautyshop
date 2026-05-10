@@ -62,6 +62,23 @@ export async function transitionReturnAction(formData: FormData): Promise<void> 
       console.error("[admin-returns] RECEIVED: return not found", returnId);
       return;
     }
+
+    // H1 hard gate (Max's request): refuse to flip to RECEIVED without
+    // a refund amount on file. Previously the action would silently
+    // skip the refund pipeline and leave the customer un-refunded — a
+    // serious UX trap. With this gate, admin gets bounced back to the
+    // detail page and the form's status banner (H3) will explain that
+    // a refund amount is required first. Belt-and-braces against an
+    // unsaved form value (e.g. admin types the amount but forgets to
+    // click Save on the patch form before hitting Mark Received).
+    const checkAmount = Number(current.refundAmount ?? 0);
+    if (checkAmount <= 0) {
+      console.warn(
+        `[admin-returns] RECEIVED blocked — refundAmount missing for return ${returnId}. Admin must save the refund amount in the form FIRST, then click Mark Received.`,
+      );
+      revalidatePath(`/admin/returns/${returnId}`);
+      redirect(`/admin/returns/${returnId}?error=refund_amount_required`);
+    }
     // Skip refund issuance only when the admin has no refund amount on
     // file yet — that's the "received but I haven't decided the refund
     // yet" workflow. Form should require this field, but we tolerate
