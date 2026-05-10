@@ -24,6 +24,7 @@ import { logAudit } from "@/lib/audit/log";
 import {
   getReturnByIdForAdmin,
   transitionReturnStatus,
+  updateReturnAdminFields,
 } from "@/lib/returns/db";
 import { RETURN_STATUS, type ReturnStatus } from "@/lib/returns/types";
 import { sendReturnApprovedEmail } from "@/lib/email/return-approved";
@@ -65,7 +66,20 @@ export async function transitionReturnAction(formData: FormData): Promise<void> 
     // file yet — that's the "received but I haven't decided the refund
     // yet" workflow. Form should require this field, but we tolerate
     // the legacy empty-value case (existing returns) gracefully.
+    //
+    // H1: log the short-circuit branch explicitly so future silence is
+    // grep-able in Hostinger logs. Previously a silent skip looked
+    // identical to a successful run.
     const amount = Number(current.refundAmount ?? 0);
+    if (amount <= 0) {
+      console.warn(
+        `[admin-returns] RECEIVED: skipping refund — refundAmount is ${amount} for return ${returnId}. Set a refund amount in the form before marking received.`,
+      );
+    } else if (current.mollieRefundId) {
+      console.info(
+        `[admin-returns] RECEIVED: refund already issued (Mollie ${current.mollieRefundId}) for return ${returnId} — idempotent skip.`,
+      );
+    }
     if (amount > 0 && !current.mollieRefundId) {
       try {
         const result = await issueRefundAndCreditNote({
@@ -216,11 +230,17 @@ export async function updateReturnNotesAction(formData: FormData): Promise<void>
   const trackingUrl = normaliseText(formData.get("trackingUrl"));
   const refundAmount = parseAmount(formData.get("refundAmount"));
 
-  // The transitionReturnStatus helper is also our "patch" path — call it
-  // with `current.status` (a no-op transition) so we share the same
-  // DB code-path and revalidation.
+  // H1 fix: route through updateReturnAdminFields, NOT
+  // transitionReturnStatus. The old code passed `current.status` as
+  // the target (a self-transition) which the canTransition guard
+  // forbade for every status — so every save silently threw and the
+  // admin saw blank fields after refresh. This was the bug behind the
+  // entire refund pipeline being silent: with refundAmount never
+  // persisted, A1's "Mark received" short-circuit hit (amount === 0)
+  // and Mollie / credit note / loyalty clawback / VAT subtraction all
+  // skipped without warning.
   try {
-    await transitionReturnStatus(returnId, current.status, {
+    await updateReturnAdminFields(returnId, {
       adminNotes,
       trackingNumber,
       trackingUrl,
