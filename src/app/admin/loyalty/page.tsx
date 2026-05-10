@@ -29,6 +29,7 @@ const KIND_LABEL: Record<LoyaltyEventKind, string> = {
   REDEEMED_PRODUCT: "Redeemed product",
   REDEEMED_GIFT_CARD: "Redeemed gift card",
   ADJUSTED_ADMIN: "Adjusted",
+  REVERSED_REFUND: "Refund clawback",
   EXPIRED: "Expired",
 };
 

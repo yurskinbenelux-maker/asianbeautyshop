@@ -327,6 +327,35 @@ export async function issueRefundAndCreditNote(
     );
   }
 
+  // ── 8. Reverse loyalty points (A6) ─────────────────────────────────
+  // Best-effort, same posture as the PDF mint: a loyalty hiccup must
+  // never roll back the refund. Issued AFTER the CN write (vs inside
+  // it) so the CN exists even if the loyalty layer is down. Idempotent
+  // on (orderId, returnId, REVERSED_REFUND) — a re-clicked button is
+  // already gated by the mollieRefundId check at step 2, but the
+  // reversal helper has its own check for defence in depth.
+  try {
+    const { reverseLoyaltyOnRefund } = await import(
+      "@/lib/loyalty/reverse"
+    );
+    const result = await reverseLoyaltyOnRefund({
+      orderId: ret.order.id,
+      returnId: ret.id,
+      refundAmount: amount,
+      orderGrandTotal: grandTotal,
+    });
+    if (result.reversed > 0) {
+      console.info(
+        `[credit-notes/issue] loyalty clawback · ${result.reversed} pts on order ${ret.order.publicNumber}`,
+      );
+    }
+  } catch (err) {
+    console.error(
+      "[credit-notes/issue] loyalty reversal failed — admin can patch via /admin/customers/<id>/loyalty",
+      { orderId: ret.order.id, returnId: ret.id, err },
+    );
+  }
+
   return {
     mollieRefundId: mollieRefund.id,
     creditNoteNumber: reserved.number,

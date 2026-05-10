@@ -1266,6 +1266,8 @@ enum LoyaltyEventKind {
   REDEEMED_PRODUCT     // burned points → minted a 100%-off product coupon
   REDEEMED_GIFT_CARD   // burned points → minted a gift card
   ADJUSTED_ADMIN       // manual admin adjustment (gift / clawback) with a reason
+  REVERSED_REFUND      // automatic clawback when a paid order is refunded
+                        // (proportional to refundAmount / orderGrandTotal)
   EXPIRED              // points cleared by the annual expiry sweep
 }
 
@@ -1309,12 +1311,19 @@ model LoyaltyEvent {
   taskClaimId  String?          @db.Uuid
   rewardId     String?          @db.Uuid
   referralId   String?          @db.Uuid
+  /// Set on REVERSED_REFUND rows so we can match a reversal back to the
+  /// specific RMA that triggered it. One order can have multiple
+  /// returns; without returnId we couldn't tell whether a second return
+  /// has already had its loyalty clawback issued. The orderId column
+  /// alone is too coarse for that idempotency check.
+  returnId     String?          @db.Uuid
   createdAt    DateTime         @default(now())
 
   @@index([accountId])
   @@index([orderId])
   @@index([taskClaimId])
   @@index([rewardId])
+  @@index([returnId])
 }
 
 // ────────────────────────────────────────────────────────────────────────────

@@ -156,6 +156,11 @@ export async function applyLoyaltyEvent(opts: {
   taskClaimId?: string;
   rewardId?: string;
   referralId?: string;
+  /** Set on REVERSED_REFUND rows so the audit trail links back to the
+   *  specific RMA that triggered the clawback. One order can have
+   *  multiple returns; the orderId alone isn't enough to tell apart
+   *  separate refunds. */
+  returnId?: string;
   /** Optional override — when caller already has the account in hand,
    *  saves a SELECT inside the tx. */
   account?: Pick<LoyaltyAccount, "id" | "pointsBalance" | "pointsLifetime">;
@@ -194,6 +199,7 @@ export async function applyLoyaltyEvent(opts: {
         taskClaimId: opts.taskClaimId,
         rewardId: opts.rewardId,
         referralId: opts.referralId,
+        returnId: opts.returnId,
       },
     }),
   ]);
