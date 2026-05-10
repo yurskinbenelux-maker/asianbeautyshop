@@ -1,21 +1,30 @@
 // ─────────────────────────────────────────────────────────────────────────
-// /admin/invoices — listing of every issued VAT invoice.
+// /admin/invoices — listing of every issued VAT invoice + credit note.
 //
-// an admin opens this for two reasons:
-//   1. Quarterly bookkeeping — download a date range to send to the
-//      accountant.
-//   2. Re-send a specific invoice to a customer if they lost it.
+// An admin opens this page for two reasons:
+//   1. Quarterly bookkeeping — narrow to a quarter and hand a ZIP of
+//      PDFs to the accountant for the BTW-aangifte.
+//   2. Re-send a specific invoice or credit note to a customer.
 //
-// Phase 1 ships the listing + per-row download. ZIP export of a date
-// range is on the roadmap (#211 follow-up) — for now an admin clicks one
-// row at a time, which is fine while order volume is small.
+// G13 (this revision):
+//   · Quarter picker at the top — filters BOTH the invoices table and
+//     the credit notes table to the selected Belgian fiscal quarter.
+//     "All time" resets to the legacy latest-200 view.
+//   · Two "Download ZIP" buttons, one per type, that stream all PDFs
+//     in the current period. "What you see is what you get."
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
-import { Download, ExternalLink, ShieldAlert } from "lucide-react";
+import { Download, ExternalLink, FileArchive, ShieldAlert } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { DeleteInvoice } from "@/components/admin/invoices/delete-invoice";
+import { QuarterPicker } from "@/components/admin/invoices/quarter-picker";
+import {
+  parseQuarterParams,
+  quarterLabel,
+  quarterWindow,
+} from "@/lib/utils/quarter";
 
 const EUR = new Intl.NumberFormat("en-IE", {
   style: "currency",
@@ -37,11 +46,6 @@ const COUNTRY_FLAG: Record<string, string> = {
   DE: "Germany",
 };
 
-export const dynamic = "force-dynamic";
-
-// Credit-note reason → human label + badge tint. Keeps the table cell
-// from being a wall of UPPER_SNAKE_CASE and gives the auditor a visual
-// hint of which CN is RMA-driven vs. discretionary.
 const CN_REASON_LABEL: Record<string, string> = {
   RETURN: "Return",
   CANCELLATION: "Cancellation",
@@ -57,15 +61,31 @@ const CN_REASON_TINT: Record<string, string> = {
   DUPLICATE: "border-ink/20 bg-ink/5 text-ink-mid",
 };
 
-export default async function AdminInvoicesPage() {
-  await requireAdmin();
+export const dynamic = "force-dynamic";
 
-  // Fetch latest 200 — most accountants only ever look at the last
-  // quarter, and our annual volume won't push past this for a while.
-  // When it does, we'll add pagination.
+type Props = {
+  searchParams: Promise<{ year?: string; quarter?: string }>;
+};
+
+export default async function AdminInvoicesPage({ searchParams }: Props) {
+  await requireAdmin();
+  const { year, quarter } = await searchParams;
+
+  const scope = parseQuarterParams(year, quarter);
+  const window = quarterWindow(scope);
+
+  // Period-aware where-clause. When scope is "all" we keep the original
+  // "latest 200" behaviour (no period filter, no take cap difference).
+  // Once admin picks a quarter we drop the take cap entirely — a single
+  // quarter is realistically dozens of rows, not hundreds.
+  const periodWhere = window
+    ? { issuedAt: { gte: window.periodStart, lt: window.periodEnd } }
+    : undefined;
+
   const invoices = await prisma.invoice.findMany({
+    where: periodWhere,
     orderBy: { issuedAt: "desc" },
-    take: 200,
+    take: window ? undefined : 200,
     include: {
       order: {
         select: {
@@ -79,14 +99,10 @@ export default async function AdminInvoicesPage() {
     },
   });
 
-  // ── Credit notes — same retention/visibility discipline as invoices.
-  // An admin needs to be able to look up a CN by its number (when
-  // talking to a customer who's asking why their refund hasn't landed)
-  // and pull the PDF for the accountant. We surface the same 200-row
-  // window as invoices; pagination follows the same trigger.
   const creditNotes = await prisma.creditNote.findMany({
+    where: periodWhere,
     orderBy: { issuedAt: "desc" },
-    take: 200,
+    take: window ? undefined : 200,
     include: {
       invoice: { select: { id: true, number: true } },
       order: { select: { id: true, publicNumber: true } },
@@ -94,9 +110,39 @@ export default async function AdminInvoicesPage() {
     },
   });
 
+  // Pre-build the QS that the Download ZIP buttons need so they ALWAYS
+  // export exactly what's on screen. When admin is on "all time", the
+  // ZIP routes interpret the empty params as their own "all time"
+  // (capped at 500 — see /admin/invoices/zip route).
+  const zipQs = new URLSearchParams();
+  if (scope.kind !== "all") {
+    zipQs.set("year", String(scope.year));
+    zipQs.set("quarter", scope.kind === "quarter" ? String(scope.quarter) : "full");
+  }
+  const zipQsString = zipQs.toString();
+  const invoicesZipHref = zipQsString
+    ? `/admin/invoices/zip?${zipQsString}`
+    : "/admin/invoices/zip";
+  const creditNotesZipHref = zipQsString
+    ? `/admin/credit-notes/zip?${zipQsString}`
+    : "/admin/credit-notes/zip";
+
+  // Derive the QuarterPicker's initial values from the parsed scope so
+  // the picker reflects the URL on first paint (no flicker / state
+  // mismatch between SSR and the first hydration).
+  const initialYear = scope.kind === "all" ? null : scope.year;
+  const initialPeriod =
+    scope.kind === "all"
+      ? "all"
+      : scope.kind === "year"
+        ? "full"
+        : (String(scope.quarter) as "1" | "2" | "3" | "4");
+
+  const periodLabel = quarterLabel(scope);
+
   return (
     <div className="mx-auto max-w-6xl px-8 py-12">
-      <header className="mb-10 flex flex-wrap items-end justify-between gap-6">
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-6">
         <div>
           <div className="eyebrow">Admin · Bookkeeping</div>
           <h1 className="mt-2 font-display text-[38px] leading-tight text-ink">
@@ -108,14 +154,14 @@ export default async function AdminInvoicesPage() {
             de droit économique III.86 — this is your bookkeeping pile.
           </p>
         </div>
+        <QuarterPicker
+          initialYear={initialYear}
+          initialPeriod={initialPeriod}
+        />
       </header>
 
       {/* Retention banner — explains the legal floor and the only
-       *  legitimate scenarios for deletion (test data pre-launch +
-       *  duplicate-invoice corrections). The Delete buttons below
-       *  themselves carry an additional confirmation step (typed
-       *  invoice number) so this is reinforcement, not the only
-       *  guard. */}
+       *  legitimate scenarios for deletion. */}
       <div className="mb-8 flex items-start gap-3 border border-vermilion/30 bg-vermilion/5 p-4">
         <ShieldAlert className="mt-0.5 h-4 w-4 flex-shrink-0 text-vermilion" aria-hidden />
         <div className="text-[12px] leading-relaxed text-ink">
@@ -128,10 +174,30 @@ export default async function AdminInvoicesPage() {
         </div>
       </div>
 
+      {/* ── Invoices section header with Download ZIP CTA ─────────────
+       *  We keep the picker at the page top (governs both tables) and
+       *  put the Download ZIP button inline above each table so admin
+       *  knows exactly which set they're about to bundle. */}
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+        <div className="text-[11px] uppercase tracking-label text-ink-mid">
+          {periodLabel} · {invoices.length} invoice{invoices.length === 1 ? "" : "s"}
+        </div>
+        {invoices.length > 0 ? (
+          <a
+            href={invoicesZipHref}
+            className="inline-flex items-center gap-2 border border-ink bg-ink px-4 py-2 text-[11px] uppercase tracking-label text-white transition-colors hover:bg-vermilion hover:border-vermilion"
+          >
+            <FileArchive className="h-3.5 w-3.5" aria-hidden />
+            Download invoices ZIP
+          </a>
+        ) : null}
+      </div>
+
       {invoices.length === 0 ? (
         <p className="text-[13px] text-ink-mid">
-          No invoices yet — the first one will appear after the first
-          order is paid.
+          {scope.kind === "all"
+            ? "No invoices yet — the first one will appear after the first order is paid."
+            : `No invoices issued in ${periodLabel}.`}
         </p>
       ) : (
         <div className="border border-ink/10 bg-white/60">
@@ -191,9 +257,6 @@ export default async function AdminInvoicesPage() {
                       {EUR.format(Number(inv.grandTotal))}
                     </td>
                     <td className="px-4 py-3 text-right align-top">
-                      {/* Stack PDF + Delete vertically — Delete unfurls
-                       *  inline into a small confirmation form, so a
-                       *  flex column keeps both states tidy. */}
                       <div className="flex flex-col items-end gap-2">
                         <Link
                           href={`/admin/invoices/${inv.id}/download`}
@@ -219,14 +282,7 @@ export default async function AdminInvoicesPage() {
 
       {/* ── Credit notes ───────────────────────────────────────────────
        *  Lives on the same page as invoices because that's the page an
-       *  admin opens when they think "where's the paper trail." A CN is
-       *  a value-reversal of an invoice — separating them onto a
-       *  different screen would force the admin to context-switch
-       *  during a refund conversation with a customer.
-       *
-       *  Belgian Royal Decree no. 1 art. 5 requires credit notes to be
-       *  retained on the same 7/10-year clock as invoices, so the
-       *  retention banner above implicitly covers these too. */}
+       *  admin opens when they think "where's the paper trail." */}
       <section className="mt-16">
         <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -243,10 +299,26 @@ export default async function AdminInvoicesPage() {
           </div>
         </header>
 
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+          <div className="text-[11px] uppercase tracking-label text-ink-mid">
+            {periodLabel} · {creditNotes.length} credit note{creditNotes.length === 1 ? "" : "s"}
+          </div>
+          {creditNotes.length > 0 ? (
+            <a
+              href={creditNotesZipHref}
+              className="inline-flex items-center gap-2 border border-ink bg-ink px-4 py-2 text-[11px] uppercase tracking-label text-white transition-colors hover:bg-vermilion hover:border-vermilion"
+            >
+              <FileArchive className="h-3.5 w-3.5" aria-hidden />
+              Download credit notes ZIP
+            </a>
+          ) : null}
+        </div>
+
         {creditNotes.length === 0 ? (
           <p className="text-[13px] text-ink-mid">
-            No credit notes yet — they appear here automatically when a
-            return is marked Received with a refund amount.
+            {scope.kind === "all"
+              ? "No credit notes yet — they appear here automatically when a return is marked Received with a refund amount."
+              : `No credit notes issued in ${periodLabel}.`}
           </p>
         ) : (
           <div className="border border-ink/10 bg-white/60">
