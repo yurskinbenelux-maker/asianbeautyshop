@@ -54,7 +54,20 @@ export type PricingInput = {
 
 export type PricingResult = {
   subtotalEur: number; // sum of line totals
+  /**
+   * Sum of line totals for items that are ELIGIBLE for coupon discounts —
+   * i.e. excludes gift cards (gift cards are a payment instrument, not a
+   * product, and must never be discounted). Equals `subtotalEur` when the
+   * cart has no gift cards.
+   */
+  eligibleSubtotalEur: number;
   discountEur: number; // coupon value actually applied
+  /**
+   * Effective discount rate applied to eligible items, in PERCENT (0-100).
+   * 0 when no coupon is active. The cart summary uses this to render the
+   * per-line strikethrough next to each eligible product line.
+   */
+  discountRate: number;
   shippingEur: number; // final shipping charge after coupon + threshold
   taxEur: number; // VAT; derived if tax.includedInPrice, otherwise added
   /**
@@ -86,6 +99,22 @@ export function computeOrderTotals(input: PricingInput): PricingResult {
   // 1. Subtotal — trust the cart summary (already rounded to 2dp).
   const subtotalEur = round2(cart.subtotalEur);
 
+  // 1b. Eligible-subtotal — the portion of the cart on which a coupon can
+  //     apply. Gift cards (items with `requiresShipping === false` AND no
+  //     shippable counterpart — i.e. digital prepaid balance) are NEVER
+  //     discounted: they are a payment instrument, not a product. A 5%
+  //     coupon on a cart of [€45 cream + 2×€100 gift card] must discount
+  //     €2.25 (5% × €45), not €12.25 (5% × €245).
+  //
+  //     We use `requiresShipping` as the gift-card sentinel because that's
+  //     the same flag CartSummary uses to flip the shipping logic above —
+  //     keeps both pieces of business logic in sync.
+  const eligibleSubtotalEur = round2(
+    cart.items
+      .filter((i) => i.requiresShipping)
+      .reduce((sum, i) => sum + i.lineTotalEur, 0),
+  );
+
   // 2. Shippability — if we have an address country but it's not on the
   //    allow-list, return a marker the UI can show as "we don't ship there".
   //    If no country yet (pre-address), treat as shippable so the summary
@@ -104,7 +133,9 @@ export function computeOrderTotals(input: PricingInput): PricingResult {
   if (!shippable) {
     return {
       subtotalEur,
+      eligibleSubtotalEur,
       discountEur: 0,
+      discountRate: 0,
       shippingEur: 0,
       taxEur: 0,
       giftCardEur: 0,
@@ -162,21 +193,35 @@ export function computeOrderTotals(input: PricingInput): PricingResult {
   lineDiscountEur = round2(lineDiscountEur);
 
   // 4b. Coupon → discountEur + possibly override shippingEur.
-  //    minSubtotal gate: if the cart doesn't clear the threshold, the
-  //    coupon silently doesn't apply. The UI is expected to validate
-  //    this BEFORE calling us — but we defend anyway.
+  //    minSubtotal gate: uses the ELIGIBLE subtotal (excludes gift cards)
+  //    so somebody can't stack €100 of gift cards just to clear a "spend
+  //    €75 to apply" threshold.
   //
-  //    SKIP entirely if the cart already has any per-line discount.
+  //    The discount ALSO applies only to the eligible subtotal. A 5%
+  //    coupon on [€45 cream + 2×€100 gift card] takes €2.25 off, not
+  //    €12.25.
+  //
+  //    SKIP entirely if the cart already has any per-line discount —
+  //    coupons CANNOT stack with the quiz reward (Max's rule).
   let discountEur = lineDiscountEur;
+  let discountRate = 0; // percent (0-100), used by the UI to render strikethroughs
   if (
     lineDiscountEur === 0 &&
     coupon &&
-    (coupon.minSubtotal ?? 0) <= subtotalEur
+    eligibleSubtotalEur > 0 &&
+    (coupon.minSubtotal ?? 0) <= eligibleSubtotalEur
   ) {
     if (coupon.kind === "PERCENT") {
-      discountEur = round2((subtotalEur * coupon.value) / 100);
+      discountEur = round2((eligibleSubtotalEur * coupon.value) / 100);
+      discountRate = coupon.value;
     } else if (coupon.kind === "FIXED") {
-      discountEur = Math.min(subtotalEur, round2(coupon.value));
+      discountEur = Math.min(eligibleSubtotalEur, round2(coupon.value));
+      // Derive an effective rate so the UI can still render "−X%" markers
+      // on each eligible line. e.g. €10 off a €40 eligible base ⇒ 25%.
+      discountRate =
+        eligibleSubtotalEur > 0
+          ? round2((discountEur / eligibleSubtotalEur) * 100)
+          : 0;
     } else if (coupon.kind === "FREE_SHIPPING") {
       shippingEur = 0;
       shippingReason = "coupon_free_shipping";
@@ -222,7 +267,9 @@ export function computeOrderTotals(input: PricingInput): PricingResult {
 
   return {
     subtotalEur,
+    eligibleSubtotalEur,
     discountEur,
+    discountRate,
     shippingEur,
     taxEur,
     giftCardEur,

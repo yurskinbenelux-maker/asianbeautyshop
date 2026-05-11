@@ -376,44 +376,74 @@ export function CheckoutClient({
             <div className="border border-ink/10 bg-white/60 p-6 md:p-8">
               <div className="eyebrow">{t("summary_title")}</div>
 
-              {/* Line items */}
+              {/* Line items — when a coupon is active, show strike-through
+               *  on each eligible product line so the customer can see the
+               *  discount apply per-product. Gift cards never get the
+               *  strikethrough because they're a payment instrument, not a
+               *  discountable product. */}
               <ul className="mt-5 space-y-4">
-                {cart.items.map((item) => (
-                  <li key={item.id} className="flex gap-4">
-                    <div className="relative h-16 w-14 shrink-0 overflow-hidden bg-ink/5">
-                      {item.imageUrl ? (
-                        <Image
-                          src={item.imageUrl}
-                          alt={item.name}
-                          fill
-                          sizes="56px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-ink-mid">
-                          <ShoppingBag className="h-4 w-4" aria-hidden />
-                        </div>
-                      )}
-                      <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center bg-ink px-1 text-[10px] text-rice">
-                        {item.quantity}
-                      </span>
-                    </div>
-                    <div className="flex flex-1 flex-col justify-between gap-1">
-                      <div className="text-[13px] leading-tight text-ink">
-                        {item.name}
+                {cart.items.map((item) => {
+                  // Eligible for discount? Only physical products. Gift
+                  // cards (requiresShipping=false) are excluded.
+                  const eligibleForDiscount =
+                    totals.discountRate > 0 && item.requiresShipping;
+                  const discountedLineTotal = eligibleForDiscount
+                    ? Math.round(
+                        item.lineTotalEur *
+                          (1 - totals.discountRate / 100) *
+                          100,
+                      ) / 100
+                    : item.lineTotalEur;
+                  return (
+                    <li key={item.id} className="flex gap-4">
+                      <div className="relative h-16 w-14 shrink-0 overflow-hidden bg-ink/5">
+                        {item.imageUrl ? (
+                          <Image
+                            src={item.imageUrl}
+                            alt={item.name}
+                            fill
+                            sizes="56px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-ink-mid">
+                            <ShoppingBag className="h-4 w-4" aria-hidden />
+                          </div>
+                        )}
+                        <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center bg-ink px-1 text-[10px] text-rice">
+                          {item.quantity}
+                        </span>
                       </div>
-                      {item.variantLabel || item.volumeMl ? (
-                        <div className="text-[10px] uppercase tracking-label text-ink-mid">
-                          {item.variantLabel ??
-                            (item.volumeMl ? `${item.volumeMl} ml` : "")}
+                      <div className="flex flex-1 flex-col justify-between gap-1">
+                        <div className="text-[13px] leading-tight text-ink">
+                          {item.name}
                         </div>
-                      ) : null}
-                    </div>
-                    <div className="text-[13px] tabular-nums text-ink">
-                      {formatEur(item.lineTotalEur, currencyLocale)}
-                    </div>
-                  </li>
-                ))}
+                        {item.variantLabel || item.volumeMl ? (
+                          <div className="text-[10px] uppercase tracking-label text-ink-mid">
+                            {item.variantLabel ??
+                              (item.volumeMl ? `${item.volumeMl} ml` : "")}
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="flex flex-col items-end text-[13px] tabular-nums">
+                        {eligibleForDiscount ? (
+                          <>
+                            <span className="text-ink-mid line-through opacity-60">
+                              {formatEur(item.lineTotalEur, currencyLocale)}
+                            </span>
+                            <span className="text-vermilion">
+                              {formatEur(discountedLineTotal, currencyLocale)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-ink">
+                            {formatEur(item.lineTotalEur, currencyLocale)}
+                          </span>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
 
               <div className="mt-6 space-y-2.5 border-t border-ink/10 pt-5 text-[13px]">
