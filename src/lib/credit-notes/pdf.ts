@@ -56,6 +56,48 @@ function loadLogo(): Buffer | null {
   }
 }
 
+// Unicode font buffers — same setup as invoices/pdf.ts. Without these
+// the customer name (often Cyrillic for RU customers) and the U+2212
+// minus character render as gibberish in the credit-note PDF.
+const FONT_DIR = path.join(process.cwd(), "public/fonts");
+const FONT_REGULAR_PATH = path.join(FONT_DIR, "NotoSans-Regular.ttf");
+const FONT_BOLD_PATH = path.join(FONT_DIR, "NotoSans-Bold.ttf");
+let _cachedFontRegular: Buffer | null = null;
+let _cachedFontBold: Buffer | null = null;
+let _fontMissingLogged = false;
+function loadFonts(): { regular: Buffer | null; bold: Buffer | null } {
+  if (_cachedFontRegular && _cachedFontBold) {
+    return { regular: _cachedFontRegular, bold: _cachedFontBold };
+  }
+  try {
+    _cachedFontRegular = fs.readFileSync(FONT_REGULAR_PATH);
+    _cachedFontBold = fs.readFileSync(FONT_BOLD_PATH);
+    return { regular: _cachedFontRegular, bold: _cachedFontBold };
+  } catch (err) {
+    if (!_fontMissingLogged) {
+      console.error(
+        "[credit-notes/pdf] Noto Sans TTF missing — credit notes will fall back to Helvetica and may garble non-Latin text",
+        FONT_DIR,
+        err,
+      );
+      _fontMissingLogged = true;
+    }
+    return { regular: null, bold: null };
+  }
+}
+
+function registerBodyFonts(doc: InstanceType<typeof PDFDocument>): boolean {
+  const { regular, bold } = loadFonts();
+  if (regular && bold) {
+    doc.registerFont("sans", regular);
+    doc.registerFont("sansBold", bold);
+    return true;
+  }
+  doc.registerFont("sans", "Helvetica");
+  doc.registerFont("sansBold", "Helvetica-Bold");
+  return false;
+}
+
 // ────────── Public types ────────────────────────────────────────────────
 
 export type CreditNoteIssuerSnapshot = {
@@ -126,11 +168,13 @@ const COLORS = {
   sage: "#7A8B6F",
 };
 
+// Body sans is Noto Sans (registered per-doc → supports Cyrillic/U+2212).
+// Times/Courier stay as PDFKit built-ins — only used for ASCII content.
 const FONTS = {
   serif: "Times-Roman",
   serifBold: "Times-Bold",
-  sans: "Helvetica",
-  sansBold: "Helvetica-Bold",
+  sans: "sans",         // registered per-doc → Noto Sans Regular (Helvetica fallback)
+  sansBold: "sansBold", // registered per-doc → Noto Sans Bold    (Helvetica-Bold fallback)
   mono: "Courier",
 };
 
@@ -156,6 +200,9 @@ export async function renderCreditNotePdf(
       doc.on("data", (c: Buffer) => chunks.push(c));
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", reject);
+
+      // Register Unicode body fonts before any text is drawn.
+      registerBodyFonts(doc);
 
       drawDocument(doc, input);
       doc.end();

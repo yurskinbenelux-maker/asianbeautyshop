@@ -122,9 +122,17 @@ export async function issueInvoiceForOrder(
   };
 
   const items: InvoiceLineItem[] = order.items.map((it) => {
-    const lineInclVat = Number(it.lineTotal);
-    const rate = Number(it.taxRate ?? 0.21);
-    const lineExclVat = lineInclVat / (1 + rate);
+    const lineTotal = Number(it.lineTotal);
+    // Gift cards are Multi-Purpose Vouchers (EU Dir 2016/1065) — sold
+    // out-of-scope for VAT, taxed only at redemption. We detect them
+    // canonically via the OrderItem.giftCardConfig field (non-null for
+    // gift-card lines) rather than by SKU, so admin-renamed SKUs can
+    // never desync this critical accounting flag.
+    const isVoucher = it.giftCardConfig != null;
+    const rate = isVoucher ? 0 : Number(it.taxRate ?? 0.21);
+    // For vouchers the line is already at face value (no VAT inside);
+    // for everything else, back the VAT out of the gross line.
+    const lineExclVat = isVoucher ? lineTotal : lineTotal / (1 + rate);
     const unitExclVat = lineExclVat / Math.max(it.quantity, 1);
     return {
       name: it.nameSnapshot,
@@ -132,7 +140,7 @@ export async function issueInvoiceForOrder(
       quantity: it.quantity,
       unitPriceExclVat: round2(unitExclVat),
       vatRate: rate,
-      lineTotalInclVat: lineInclVat,
+      lineTotalInclVat: lineTotal,
     };
   });
 

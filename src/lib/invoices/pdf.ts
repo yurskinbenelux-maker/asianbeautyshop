@@ -61,6 +61,44 @@ function loadLogo(): Buffer | null {
   }
 }
 
+// Unicode font buffers — Noto Sans regular + bold. PDFKit's built-in
+// Helvetica only supports WinAnsi (Latin-1), which mangles Cyrillic
+// customer names, French accents, and the U+2212 minus sign in the
+// discount line. We register Noto Sans as the body font so any
+// language renders correctly and the discount minus shows as "−" not '"'.
+//
+// Fonts live in public/fonts/ and are committed to the repo (~330 KB
+// each, OFL-licensed). Cached at module load — Hostinger's worker
+// reads them once and reuses across invoice renders. If a TTF goes
+// missing on a deploy we fall back to Helvetica with a logged warning
+// so an invoice still renders rather than 500'ing the webhook.
+const FONT_DIR = path.join(process.cwd(), "public/fonts");
+const FONT_REGULAR_PATH = path.join(FONT_DIR, "NotoSans-Regular.ttf");
+const FONT_BOLD_PATH = path.join(FONT_DIR, "NotoSans-Bold.ttf");
+let _cachedFontRegular: Buffer | null = null;
+let _cachedFontBold: Buffer | null = null;
+let _fontMissingLogged = false;
+function loadFonts(): { regular: Buffer | null; bold: Buffer | null } {
+  if (_cachedFontRegular && _cachedFontBold) {
+    return { regular: _cachedFontRegular, bold: _cachedFontBold };
+  }
+  try {
+    _cachedFontRegular = fs.readFileSync(FONT_REGULAR_PATH);
+    _cachedFontBold = fs.readFileSync(FONT_BOLD_PATH);
+    return { regular: _cachedFontRegular, bold: _cachedFontBold };
+  } catch (err) {
+    if (!_fontMissingLogged) {
+      console.error(
+        "[invoice/pdf] Noto Sans TTF missing — invoices will fall back to Helvetica and may garble non-Latin text",
+        FONT_DIR,
+        err,
+      );
+      _fontMissingLogged = true;
+    }
+    return { regular: null, bold: null };
+  }
+}
+
 // ────────── Public types ────────────────────────────────────────────────
 
 export type InvoiceIssuerSnapshot = {
@@ -131,16 +169,41 @@ const COLORS = {
   rule: "#E8DFD0", // hairline cream
 };
 
-// pdfkit's default fonts cover what we need: Helvetica for sans, Times for
-// serif. Times-Roman maps cleanly to "Georgia-style" without bundling a
-// custom font (custom fonts are pain to ship in serverless).
+// Body sans is Noto Sans (registered per-doc in renderInvoicePdf so it
+// supports Cyrillic/Greek/diacritics/Unicode minus sign). Times-Roman
+// and Courier are PDFKit built-ins — only used for ASCII content
+// (masthead "Invoice" title and the invoice number), so Latin-1 is
+// fine for those.
+//
+// When the Noto TTFs are missing on disk, registerBodyFonts() falls
+// back to Helvetica + Helvetica-Bold so the invoice still renders.
 const FONTS = {
   serif: "Times-Roman",
   serifBold: "Times-Bold",
-  sans: "Helvetica",
-  sansBold: "Helvetica-Bold",
+  sans: "sans",         // registered per-doc → Noto Sans Regular (or Helvetica fallback)
+  sansBold: "sansBold", // registered per-doc → Noto Sans Bold    (or Helvetica-Bold fallback)
   mono: "Courier",
 };
+
+/**
+ * Register the body sans fonts on this doc. Returns whether the
+ * Unicode-capable Noto Sans was loaded — false means we registered
+ * Helvetica aliases instead, and non-Latin text will be garbled.
+ */
+function registerBodyFonts(doc: InstanceType<typeof PDFDocument>): boolean {
+  const { regular, bold } = loadFonts();
+  if (regular && bold) {
+    doc.registerFont("sans", regular);
+    doc.registerFont("sansBold", bold);
+    return true;
+  }
+  // Fallback path — alias the missing names to PDFKit built-ins so
+  // doc.font("sans") still resolves to something. Non-Latin text
+  // will mangle but the invoice will at least render.
+  doc.registerFont("sans", "Helvetica");
+  doc.registerFont("sansBold", "Helvetica-Bold");
+  return false;
+}
 
 // ────────── Public API ──────────────────────────────────────────────────
 
@@ -169,6 +232,9 @@ export async function renderInvoicePdf(
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", reject);
 
+      // Register Unicode body fonts before any text is drawn.
+      registerBodyFonts(doc);
+
       drawDocument(doc, input);
       doc.end();
     } catch (err) {
@@ -196,7 +262,11 @@ function drawDocument(doc: Doc, input: InvoicePdfInput): void {
   let y = 130;
   y = drawIssuerCustomer(doc, input, left, innerWidth, y);
   y = drawDates(doc, input, left, innerWidth, y);
+  const hasVouchers = input.items.some((it) => it.vatRate === 0);
   y = drawLinesTable(doc, input, left, right, y);
+  if (hasVouchers) {
+    y = drawVoucherFootnote(doc, left, right, y);
+  }
   y = drawTotals(doc, input, left, right, y);
 
   drawFooter(doc, input, left, right);
@@ -405,7 +475,16 @@ function drawLinesTable(
       .fillColor(COLORS.ink);
     doc.text(String(row.quantity), colQty - 30, y, { width: 40, align: "right" });
     doc.text(formatEur(row.unitPriceExclVat), colUnit - 50, y, { width: 70, align: "right" });
-    doc.text(formatPct(row.vatRate), colVat - 30, y, { width: 50, align: "right" });
+    // VAT % column — render an em-dash for out-of-scope lines (gift
+    // cards / Multi-Purpose Vouchers under EU Dir 2016/1065). Footnote
+    // explains why, added once below the table if any voucher row was
+    // rendered.
+    doc.text(
+      row.vatRate === 0 ? "—" : formatPct(row.vatRate),
+      colVat - 30,
+      y,
+      { width: 50, align: "right" },
+    );
     doc.text(formatEur(row.lineTotalInclVat), colLine - 70, y, { width: 70, align: "right" });
 
     y += row.sku ? 30 : 22;
@@ -415,6 +494,36 @@ function drawLinesTable(
   }
 
   return y + 12;
+}
+
+/**
+ * Footnote shown below the line items table when the order contains
+ * one or more gift cards (Multi-Purpose Vouchers). EU Dir 2016/1065
+ * + Belgian VAT code require disclosure that the voucher portion is
+ * out of scope for VAT at sale; tax is due at redemption against the
+ * actual goods supplied. Without this footnote, an auditor reading
+ * the invoice can't tell why the VAT base is lower than the line-item
+ * total suggests.
+ */
+function drawVoucherFootnote(
+  doc: Doc,
+  left: number,
+  right: number,
+  y: number,
+): number {
+  doc
+    .font(FONTS.sans)
+    .fontSize(7.5)
+    .fillColor(COLORS.inkSofter)
+    .text(
+      "— Gift cards are Multi-Purpose Vouchers (EU Dir 2016/1065). " +
+        "Out of scope for VAT at sale; tax is due at redemption " +
+        "against the goods then supplied.",
+      left,
+      y,
+      { width: right - left, lineGap: 1 },
+    );
+  return doc.y + 8;
 }
 
 function drawTotals(

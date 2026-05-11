@@ -236,8 +236,15 @@ export function computeOrderTotals(input: PricingInput): PricingResult {
   }
 
   // 5. Taxable base + VAT.
-  //    We apply the coupon discount to the product subtotal (not shipping)
-  //    before tax — this matches the EU "price you actually paid" rule.
+  //    Gift cards are Multi-Purpose Vouchers under EU Dir 2016/1065 —
+  //    VAT is due only at REDEMPTION, not at sale. So they sit OUT of
+  //    the VATable base entirely. Customer total is unchanged; the
+  //    accounting split is what shifts.
+  //
+  //    netVatableBase = (eligibleSubtotal − discount) + shipping
+  //    voucherTotal   = subtotal − eligibleSubtotal   (out of VAT scope)
+  //    grandTotal     = netVatableBase + voucherTotal (+ VAT if not incl)
+  //
   // NB: `shippingCountry && x` would widen to `string | number` when the
   // country is an empty string, which TS then refuses to divide. Split
   // it into a plain ternary so the result is always `number`.
@@ -247,20 +254,23 @@ export function computeOrderTotals(input: PricingInput): PricingResult {
   const ratePercent = overrideRate ?? tax.ratePercent;
   const rate = ratePercent / 100;
 
-  const netSubtotal = Math.max(0, subtotalEur - discountEur);
-  const netTaxable = netSubtotal + shippingEur;
+  const netVatableBase =
+    Math.max(0, eligibleSubtotalEur - discountEur) + shippingEur;
+  const voucherTotal = round2(subtotalEur - eligibleSubtotalEur);
 
   let taxEur: number;
   let grandTotalEur: number;
   if (tax.includedInPrice) {
-    // Prices INCLUDE VAT. Tax is a derived figure for the receipt.
-    // grandTotal = net prices as stored − no extra addition.
-    taxEur = round2(netTaxable - netTaxable / (1 + rate));
-    grandTotalEur = round2(netTaxable);
+    // Prices INCLUDE VAT. Tax is derived from the vatable base only.
+    // Vouchers are added on top of grandTotal at their face value
+    // (no VAT to back out — they were sold out-of-scope).
+    taxEur = round2(netVatableBase - netVatableBase / (1 + rate));
+    grandTotalEur = round2(netVatableBase + voucherTotal);
   } else {
-    // Prices EXCLUDE VAT. Tax is added on top.
-    taxEur = round2(netTaxable * rate);
-    grandTotalEur = round2(netTaxable + taxEur);
+    // Prices EXCLUDE VAT. VAT is added on top of the vatable base;
+    // vouchers are added on top of that at their face value.
+    taxEur = round2(netVatableBase * rate);
+    grandTotalEur = round2(netVatableBase + taxEur + voucherTotal);
   }
 
   // 6. Gift-card credit — applied AFTER tax + shipping because it's a
