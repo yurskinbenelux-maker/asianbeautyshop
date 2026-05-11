@@ -168,6 +168,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       where: { id: order.id },
       data: {
         ...updateData,
+        // Stamp shippedAt on the transition INTO SHIPPED so the customer
+        // order page shows "Shipped on X date" (the manual mark-shipped
+        // path does the same — without this, Sendcloud-driven orders end
+        // up SHIPPED with a blank ship date). Only set on the actual
+        // transition; webhook retries land with next===order.status →
+        // updateData.status is undefined → we skip the stamp.
+        ...(willFireShipped ? { shippedAt: new Date() } : {}),
         ...(next === OrderStatus.DELIVERED ? { deliveredAt: new Date() } : {}),
       },
     });
