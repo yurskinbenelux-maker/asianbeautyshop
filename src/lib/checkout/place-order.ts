@@ -131,7 +131,12 @@ export async function placeOrder(
   const [shipping, tax, coupon] = await Promise.all([
     readSetting("shipping"),
     readSetting("tax"),
-    input.couponCode ? loadCoupon(input.couponCode) : Promise.resolve(null),
+    input.couponCode
+      ? loadCoupon(input.couponCode, {
+          userId: input.userId,
+          email: input.email,
+        })
+      : Promise.resolve(null),
   ]);
 
   // 2b. Validate gift card codes server-side. The client previewed them
@@ -248,6 +253,34 @@ export async function placeOrder(
   }
 
   const order = await prisma.$transaction(async (tx) => {
+    // Atomic coupon redemption — the authoritative cap check. Conditional
+    // UPDATE: bump redemptionsUsed only if the row's still under cap. If
+    // zero rows match, the cap has just been hit by another concurrent
+    // checkout (or never existed), so we throw and the whole tx rolls
+    // back. Prisma's typed `update*()` can't compare two columns in WHERE,
+    // hence the $executeRaw. NULL maxRedemptions = unlimited.
+    //
+    // Why here (not on PAID flip): if two customers race against a
+    // maxRedemptions=1 code, BOTH would pass a pre-flight read of
+    // redemptionsUsed=0 and both would pay before the counter caught up.
+    // The atomic UPDATE serializes correctly under Postgres row locking.
+    // The trade-off is that a failed Mollie payment burns a slot — but
+    // that's acceptable for first-order welcome codes (admin can bump
+    // maxRedemptions or reissue if needed). The alternative — burning
+    // double-redemptions on real money — is much worse.
+    if (coupon) {
+      const updated = await tx.$executeRaw`
+        UPDATE "Coupon"
+        SET "redemptionsUsed" = "redemptionsUsed" + 1
+        WHERE "code" = ${coupon.code}
+          AND "isActive" = TRUE
+          AND ("maxRedemptions" IS NULL OR "redemptionsUsed" < "maxRedemptions")
+      `;
+      if (updated === 0) {
+        throw new Error("COUPON_EXHAUSTED");
+      }
+    }
+
     // Only create a shipping Address row when the cart actually needs
     // shipping. Digital-only carts leave Order.shippingAddressId null
     // (the column is nullable in schema). This keeps the admin UI clean
@@ -601,7 +634,26 @@ export async function placeOrder(
 
 // ────────── helpers ─────────────────────────────────────────────────────
 
-async function loadCoupon(code: string): Promise<PricingCoupon | null> {
+/**
+ * Pre-flight coupon resolution — returns null if the code is invalid,
+ * inactive, out-of-window, exhausted, or fails the firstOrderOnly gate.
+ *
+ * Note: the cap check here is a soft pre-flight only. The authoritative
+ * check is the atomic `UPDATE … WHERE redemptionsUsed < maxRedemptions`
+ * that happens inside the order-creation transaction below — that's
+ * what stops two concurrent checkouts from BOTH burning a maxRedemptions=1
+ * code. This function exists to fail fast with a sensible error before
+ * we've allocated a publicNumber or charged anything.
+ *
+ * firstOrderOnly: rejects the code if the calling customer (by user id
+ * for logged-in flow, by email for guests) already has a PAID order on
+ * record. This is what makes ABS-WELCOME-* codes "first-order only" in
+ * the way the admin form already advertises.
+ */
+async function loadCoupon(
+  code: string,
+  who: { userId: string | null; email: string },
+): Promise<PricingCoupon | null> {
   const row = await prisma.coupon.findUnique({
     where: { code: code.trim().toUpperCase() },
   });
@@ -615,6 +667,27 @@ async function loadCoupon(code: string): Promise<PricingCoupon | null> {
   ) {
     return null;
   }
+
+  // firstOrderOnly gate. Welcome popup codes set this true. We refuse the
+  // code if the same identity has a PAID order on record. Belt+braces:
+  // check by userId (strongest — auth-bound) AND by lower-cased email
+  // (catches the case where a customer signed up after first order, or
+  // checks out as guest with the same email they later used to register).
+  if (row.firstOrderOnly) {
+    const normalisedEmail = who.email.trim().toLowerCase();
+    const priorPaid = await prisma.order.findFirst({
+      where: {
+        paymentStatus: "PAID",
+        OR: [
+          who.userId ? { userId: who.userId } : { id: "__never__" },
+          { email: normalisedEmail },
+        ],
+      },
+      select: { id: true },
+    });
+    if (priorPaid) return null;
+  }
+
   return {
     code: row.code,
     kind: row.kind,

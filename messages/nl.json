@@ -368,6 +368,7 @@
       "error_not_yet_active": "Deze code is nog niet actief.",
       "error_expired": "Deze code is verlopen.",
       "error_exhausted": "Deze code heeft het gebruikslimiet bereikt.",
+      "error_first_order_only": "Deze code is alleen voor eerste bestellingen — je account heeft al een bestelling.",
       "error_invalid": "Ongeldige code."
     },
     "field_notes": "Opmerkingen bij bestelling (optioneel)",
@@ -393,6 +394,7 @@
       "COUNTRY_NOT_SHIPPABLE": "We verzenden nog niet naar dit land.",
       "CHECKOUT_UNAVAILABLE": "Afrekenen is nog niet geconfigureerd. Probeer het zo dadelijk opnieuw.",
       "GIFTCARD_INVALID": "Een van je cadeaubon-codes is niet meer geldig. Verwijder de code en probeer opnieuw.",
+      "COUPON_EXHAUSTED": "Deze kortingscode is al ingewisseld of niet geldig voor deze bestelling. Verwijder hem en probeer het opnieuw.",
       "PAYMENT_PROVIDER_ERROR": "We konden de betaalpagina niet openen. Probeer het opnieuw.",
       "UNKNOWN": "Er ging iets mis. Probeer het opnieuw."
     },

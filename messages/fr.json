@@ -368,6 +368,7 @@
       "error_not_yet_active": "Ce code n'est pas encore actif.",
       "error_expired": "Ce code a expiré.",
       "error_exhausted": "Ce code a atteint sa limite d'utilisation.",
+      "error_first_order_only": "Ce code est réservé à la première commande — votre compte en a déjà une.",
       "error_invalid": "Code invalide."
     },
     "field_notes": "Notes de commande (optionnel)",
@@ -393,6 +394,7 @@
       "COUNTRY_NOT_SHIPPABLE": "Nous n'expédions pas encore vers ce pays.",
       "CHECKOUT_UNAVAILABLE": "Le paiement n'est pas encore configuré. Réessayez dans un instant.",
       "GIFTCARD_INVALID": "Un de vos codes carte cadeau n'est plus valable. Retirez-le et réessayez.",
+      "COUPON_EXHAUSTED": "Ce code promo a déjà été utilisé ou n'est pas valable pour cette commande. Retirez-le et réessayez.",
       "PAYMENT_PROVIDER_ERROR": "Nous n'avons pas pu ouvrir la page de paiement. Réessayez.",
       "UNKNOWN": "Une erreur est survenue. Réessayez."
     },

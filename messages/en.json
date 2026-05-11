@@ -368,6 +368,7 @@
       "error_not_yet_active": "This code is not active yet.",
       "error_expired": "This code has expired.",
       "error_exhausted": "This code has reached its usage limit.",
+      "error_first_order_only": "This code is for first orders only — your account already has an order on file.",
       "error_invalid": "Invalid code."
     },
     "field_notes": "Order notes (optional)",
@@ -393,6 +394,7 @@
       "COUNTRY_NOT_SHIPPABLE": "We don't ship to this country yet.",
       "CHECKOUT_UNAVAILABLE": "Checkout isn't configured yet. Please try again shortly.",
       "GIFTCARD_INVALID": "One of your gift card codes is no longer valid. Remove it and try again.",
+      "COUPON_EXHAUSTED": "This coupon has already been redeemed or isn't available on this order. Remove it and try again.",
       "PAYMENT_PROVIDER_ERROR": "We couldn't open the payment page. Please try again.",
       "UNKNOWN": "Something went wrong. Please try again."
     },

@@ -142,7 +142,10 @@ export function CouponField({ onCouponChange }: Props) {
       {/* ── inline error ──────────────────────────────────────────── */}
       {errorReason ? (
         <p className="mt-2 text-[12px] text-vermilion">
-          {t(`error_${errorReason}`)}
+          {/* translation keys are underscore-style (error_not_yet_active),
+           *  but the action returns hyphen-cased reasons
+           *  ("not-yet-active") — normalize so the key lookup hits. */}
+          {t(`error_${errorReason.replace(/-/g, "_")}`)}
         </p>
       ) : null}
 

@@ -5,8 +5,11 @@
 //
 // Two-step: click "Delete coupon" to reveal the DELETE-type-to-confirm
 // prompt. We warn louder when the code has already been used because
-// deleting strips the FK from historic Orders (they keep Order.couponCode
-// as a string but lose the relation).
+// the FK is ON DELETE SET NULL — past orders' Order.couponCode column
+// becomes NULL, so the "which code did this order use" linkage is lost.
+// The discount amount (Order.discountTotal) survives, and the per-order
+// audit timeline keeps its `coupon.applied` event, but the code-text
+// itself is gone from the order row after deletion.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { useActionState, useState } from "react";
@@ -38,9 +41,12 @@ export function CouponDangerZone({
           <p className="mt-1 text-[12px] text-ink-mid">
             Removes the code from the catalogue. {redemptionsUsed > 0 ? (
               <span className="text-vermilion">
-                {" "}This code has been used {redemptionsUsed} time
-                {redemptionsUsed === 1 ? "" : "s"} — past orders will lose
-                their coupon link but keep the code text.
+                {" "}This code has been redeemed {redemptionsUsed} time
+                {redemptionsUsed === 1 ? "" : "s"}. Past orders keep their
+                discount amount + audit timeline, but the code reference
+                on those rows will be cleared. Best practice: set the
+                coupon to inactive (uncheck the box above) if you want to
+                preserve the link for reporting.
               </span>
             ) : (
               " Safe to remove — the code has never been redeemed."

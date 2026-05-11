@@ -24,6 +24,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 
 export type CouponLookupResult =
   | {
@@ -43,6 +44,7 @@ export type CouponLookupResult =
         | "not-yet-active"
         | "expired"
         | "exhausted"
+        | "first-order-only"
         | "invalid";
     };
 
@@ -74,6 +76,28 @@ export async function lookupCouponAction(
     row.redemptionsUsed >= row.maxRedemptions
   ) {
     return { ok: false, reason: "exhausted" };
+  }
+
+  // firstOrderOnly preview gate. Only fires if we can identify the
+  // shopper here — for logged-in users we have userId; for guests we'd
+  // need the email field, which isn't filled in yet at apply time.
+  // That's fine: the authoritative gate lives in place-order's
+  // loadCoupon() and re-runs with the full email. Worst case for a
+  // guest: the chip shows "applied" here, but the submit fails with
+  // COUPON_EXHAUSTED at checkout. Acceptable UX trade-off vs blocking
+  // email-less apply.
+  if (row.firstOrderOnly) {
+    const user = await getCurrentUser();
+    if (user) {
+      const priorPaid = await prisma.order.findFirst({
+        where: {
+          userId: user.id,
+          paymentStatus: "PAID",
+        },
+        select: { id: true },
+      });
+      if (priorPaid) return { ok: false, reason: "first-order-only" };
+    }
   }
 
   return {

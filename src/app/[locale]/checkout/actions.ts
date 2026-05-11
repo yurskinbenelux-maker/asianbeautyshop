@@ -112,6 +112,7 @@ export type CheckoutErrorCode =
   | "COUNTRY_NOT_SHIPPABLE"
   | "CHECKOUT_UNAVAILABLE"
   | "GIFTCARD_INVALID"
+  | "COUPON_EXHAUSTED"
   | "PAYMENT_PROVIDER_ERROR"
   | "UNKNOWN";
 
@@ -377,6 +378,9 @@ function mapError(err: unknown): CheckoutErrorCode {
     }
     if (err.message.startsWith("GIFTCARD_INVALID")) {
       return "GIFTCARD_INVALID";
+    }
+    if (err.message.startsWith("COUPON_EXHAUSTED")) {
+      return "COUPON_EXHAUSTED";
     }
     if (err.message.startsWith("CHECKOUT_UNAVAILABLE")) {
       return "CHECKOUT_UNAVAILABLE";
