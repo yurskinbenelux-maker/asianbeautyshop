@@ -233,10 +233,12 @@ export async function issueRefundAndCreditNote(
     );
   }
 
-  // ── 5. Back-calculate the VAT split ────────────────────────────────
-  const vatRate = Number(ret.order.invoice.vatRate); // 0.21 for BE 21%
-  const vatTotal = round2(amount * (vatRate / (1 + vatRate)));
-  const subtotalExclVat = round2(amount - vatTotal);
+  // ── 5. Resolve the VAT rate for the credit note ────────────────────
+  // Order-level rate from the original invoice (0.21 for BE 21%). The
+  // grand-total / VAT-total / subtotal-excl-VAT *figures* are NOT
+  // computed from input.refundAmount any more — they're derived from
+  // the per-line breakdown after Step 4. See section 6b below.
+  const vatRate = Number(ret.order.invoice.vatRate);
 
   // ── 6. Reserve CN number + persist row in one DB transaction ───────
   // We don't put the Mollie call inside this tx because Mollie is an
@@ -359,6 +361,27 @@ export async function issueRefundAndCreditNote(
     ];
   }
 
+  // ── 6b. Derive totals from the per-line breakdown (Step 5 of 6) ────
+  // The grand total + VAT split on the CreditNote row are now derived
+  // from the cnLines we just built, NOT from input.refundAmount. This
+  // guarantees the PDF totals block matches the per-line sum exactly,
+  // even when the last-line delta adjustment shifted one line by a few
+  // cents. Before Step 5 we wrote `round2(amount)` to grandTotal which
+  // could disagree with the per-line sum by the rounding delta — a
+  // legally awkward "the totals don't add up" PDF.
+  //
+  // The Mollie refund is already issued at this point for `amount`. If
+  // the per-line sum and `amount` differ, the legal CN reflects what
+  // was credited per-line (which sums to the same `amount` because
+  // last-line delta absorbs the difference) and the customer's bank
+  // sees `amount` come back. All three numbers — Mollie, CN grand
+  // total, CN per-line sum — line up to the cent.
+  const cnGrandTotal = round2(
+    cnLines.reduce((s, l) => s + l.lineTotalInclVat, 0),
+  );
+  const cnVatTotal = round2(cnGrandTotal * (vatRate / (1 + vatRate)));
+  const cnSubtotalExclVat = round2(cnGrandTotal - cnVatTotal);
+
   let creditNoteId: string;
   try {
     creditNoteId = await prisma.$transaction(async (tx) => {
@@ -376,13 +399,13 @@ export async function issueRefundAndCreditNote(
           pdfPath: null,
           issuerSnapshot: ret.order.invoice!.issuerSnapshot as Prisma.InputJsonValue,
           customerSnapshot: ret.order.invoice!.customerSnapshot as Prisma.InputJsonValue,
-          subtotalExclVat: round2(subtotalExclVat),
-          vatTotal: round2(vatTotal),
+          subtotalExclVat: cnSubtotalExclVat,
+          vatTotal: cnVatTotal,
           // Shipping refund handling stays at 0 for now — admin doesn't
-          // have a separate "refund shipping" toggle yet. When G9 v2
-          // adds it, the field will populate from the form.
+          // have a separate "refund shipping" toggle yet. When that
+          // ships, the field will populate from the form.
           shippingTotal: 0,
-          grandTotal: round2(amount),
+          grandTotal: cnGrandTotal,
           destinationCountry: ret.order.invoice!.destinationCountry,
           vatRate: ret.order.invoice!.vatRate,
           reason: input.reason ?? "RETURN",

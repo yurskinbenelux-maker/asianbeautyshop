@@ -9,10 +9,15 @@
 //   · A prominent "Refers to invoice INV-2026-NNNNN" callout under the
 //     dates row — Belgian Code TVA Art. 53octies requires the credit
 //     note to reference the original invoice number explicitly.
-//   · Items table: A1 captures only the totals (no per-line breakdown
-//     yet — that arrives with G9), so we show a single synthesised line
-//     "Refund · return ABS-1042-R1" with the refunded amount. When G9
-//     ships, this becomes one row per refunded ProductVariant.
+//   · Items table: one row per accepted ReturnItem (i.e. lines the
+//     admin marked Accept on /admin/returns/[id] with acceptedRefundEur
+//     > 0). Lines the admin Rejected don't appear here — the customer
+//     learns why those weren't refunded from the "return received"
+//     email. Gift-card lines are excluded server-side regardless of
+//     form input (EU Dir 2016/1065 MPV rules + own PDP policy). If a
+//     return reaches the CN stage with zero accepted lines we fall
+//     back to a single synthesised row "Refund · return ABS-1042-R1"
+//     so the PDF still satisfies the schema.
 //   · Totals label: "Total credited" (the value is shown as a positive
 //     number — Belgian credit-note convention has the sign implicit
 //     from the document type, not the figure itself).
@@ -121,7 +126,9 @@ export type CreditNoteCustomerSnapshot = {
 };
 
 export type CreditNoteLineItem = {
-  /** Display name, e.g. "Refund · return ABS-1042-R1" or product name on G9. */
+  /** Display name — product name for an accepted ReturnItem, or
+   *  the synthesised "Refund · return ABS-1042-R1" fallback when no
+   *  accepted lines exist on the return. */
   description: string;
   /** Optional reference (return number, SKU, etc.) shown small under name. */
   reference?: string | null;
@@ -434,8 +441,8 @@ function drawLinesTable(
   drawHairline(doc, left, right, y, COLORS.ink, 0.6);
   y += 8;
 
-  // A1 phase: typically a single synthesised line. G9 (per-line refunds)
-  // will populate `items` with one row per ProductVariant.
+  // One row per accepted line. Rejected lines never reach this list
+  // (filtered at issueRefundAndCreditNote, Step 4).
   for (const row of input.items) {
     doc
       .font(FONTS.sansBold)
