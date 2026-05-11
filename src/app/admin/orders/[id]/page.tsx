@@ -344,14 +344,26 @@ export default async function AdminOrderDetailPage({
                   <InfoRow
                     label="Invoice"
                     value={
-                      <a
-                        href={order.invoiceUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-ink hover:underline"
-                      >
-                        <FileText className="h-3 w-3" /> PDF
-                      </a>
+                      // H7: order.invoiceUrl is the raw Supabase Storage
+                      // path, not a clickable URL — clicking it 404'd.
+                      // The /admin/orders/[id] page doesn't pull the
+                      // Invoice relation (and Order has no invoiceId
+                      // column — the FK lives on Invoice.orderId), so
+                      // we can't easily mint a /admin/invoices/[id]
+                      // /download link from here. Surface the invoice
+                      // number as a plain label and direct admin to the
+                      // dedicated /admin/invoices page for the PDF —
+                      // which has Download + Delete + retention banner
+                      // all in one spot.
+                      <span className="inline-flex items-center gap-1 text-ink">
+                        <FileText className="h-3 w-3" /> PDF{" "}
+                        <Link
+                          href="/admin/invoices"
+                          className="text-vermilion underline decoration-vermilion/40 underline-offset-4 hover:decoration-vermilion"
+                        >
+                          (open list)
+                        </Link>
+                      </span>
                     }
                   />
                 )}

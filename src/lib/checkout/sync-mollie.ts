@@ -61,6 +61,26 @@ export async function syncByPublicNumber(
     select: orderSelect,
   });
   if (!order) return { ok: false, reason: "order-not-found" };
+
+  // H6 polish: the customer's browser hits /checkout/success, the
+  // Mollie webhook hits /api/webhooks/mollie. Both call into this
+  // syncer. If the webhook already won (paymentStatus is already PAID
+  // and the order has paidAt stamped), our DB is already the source of
+  // truth — we don't need to spend an HTTP round-trip asking Mollie.
+  // The webhook path doesn't take this shortcut: it MUST verify Mollie
+  // because the webhook body is untrusted.
+  if (order.paymentStatus === PaymentStatus.PAID && order.paidAt !== null) {
+    return {
+      ok: true,
+      orderId: order.id,
+      publicNumber: order.publicNumber,
+      mollieStatus: "paid",
+      paymentStatus: order.paymentStatus,
+      orderStatus: order.status,
+      changed: false,
+      paidTransition: false,
+    };
+  }
   return syncOrderWithMollie(order);
 }
 

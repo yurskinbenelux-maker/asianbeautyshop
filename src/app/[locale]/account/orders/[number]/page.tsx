@@ -276,8 +276,16 @@ export default async function OrderDetailPage({ params }: Props) {
               </a>
             )}
             {order.invoiceUrl && (
+              // H7 fix: `order.invoiceUrl` historically holds the raw
+              // Supabase Storage PATH (e.g. "2026/INV-2026-00014.pdf"),
+              // not a clickable URL. Using it as <a href> resolved
+              // relative to the current page → 404 ("Nothing here.").
+              // Route through the customer download endpoint which
+              // mints a 60-second signed URL and 302-redirects. The
+              // endpoint also re-checks order ownership, so this is
+              // safer than handing out a raw signed URL anyway.
               <a
-                href={order.invoiceUrl}
+                href={`/account/orders/${order.publicNumber}/invoice`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-block h-11 border border-ink/20 px-5 text-[12px] uppercase tracking-label text-ink transition-colors hover:border-ink hover:text-vermilion leading-[2.75rem]"
