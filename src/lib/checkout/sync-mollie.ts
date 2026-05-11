@@ -137,22 +137,26 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
   }
 
   const now = new Date();
-  const willFlipToPaid =
+  // `intendsToFlipToPaid` is what we INTEND based on the read we just
+  // did. It tells us whether to bother pre-fetching line items + entering
+  // the "winner-only" branch below. It is NOT the gate for the post-paid
+  // fan-out — that gate is `iAmTheWinner`, set atomically inside the tx.
+  // Two webhooks racing both compute intendsToFlipToPaid=true; only one
+  // wins the conditional UPDATE; only the winner does the fan-out.
+  const intendsToFlipToPaid =
     order.paymentStatus !== PaymentStatus.PAID &&
     nextPayment === PaymentStatus.PAID;
 
-  // On the into-PAID transition, pull the line items so we can decrement
-  // stock for each variant inside the same transaction. On any other
-  // transition we skip — stock already moved on the original paid event.
-  // We also pull product.kind so we can skip GIFT_CARD lines (they don't
-  // have real inventory; the synthetic 9_999 stock would just churn the
-  // movements log).
+  // Pre-fetch line items so the in-tx inventory move has them ready. We
+  // only need this when we INTEND to flip — for any other transition we
+  // skip the query. Product.kind comes along so GIFT_CARD lines are
+  // excluded from the stock churn.
   let paidItems: Array<{
     variantId: string | null;
     quantity: number;
     productKind: "STANDARD" | "GIFT_CARD";
   }> = [];
-  if (willFlipToPaid) {
+  if (intendsToFlipToPaid) {
     const rows = await prisma.orderItem.findMany({
       where: { orderId: order.id },
       select: {
@@ -168,21 +172,60 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
     }));
   }
 
+  // ── H6 atomic flip ─────────────────────────────────────────────────
+  // Set on every code path inside the transaction:
+  //   · intendsToFlipToPaid && winner → fan out below.
+  //   · intendsToFlipToPaid && lost   → another concurrent caller already
+  //     flipped this order; skip the fan-out. Their post-paid pipeline
+  //     handles invoice + Sendcloud + emails for us.
+  //   · !intendsToFlipToPaid          → no fan-out attempted regardless.
+  //
+  // Two production code paths race here every paid order:
+  //   1. /api/webhooks/mollie  — Mollie's POST when payment clears.
+  //   2. /checkout/success     — the customer's browser return URL.
+  // Pre-H6 both saw paymentStatus=PENDING (read before the tx), both
+  // computed willFlipToPaid=true, both ran the fan-out → duplicate
+  // confirmation emails AND duplicate Sendcloud parcels (Invoice
+  // creation survived only because of the orderId unique constraint).
+  //
+  // The fix: stamp `paidAt` with a conditional `updateMany WHERE paidAt
+  // IS NULL`. Only one row matches (Postgres serializes the writes), so
+  // only one caller gets count===1. That caller is "the winner" and
+  // owns the post-paid pipeline.
+  let iAmTheWinner = false;
   await prisma.$transaction(async (tx) => {
-    await tx.order.update({
-      where: { id: order.id },
-      data: {
-        paymentStatus: nextPayment,
-        status: nextOrder,
-        ...(willFlipToPaid && order.paidAt === null
-          ? { paidAt: now }
-          : {}),
-      },
-    });
+    if (intendsToFlipToPaid) {
+      const { count } = await tx.order.updateMany({
+        where: { id: order.id, paidAt: null },
+        data: {
+          paymentStatus: nextPayment,
+          status: nextOrder,
+          paidAt: now,
+        },
+      });
+      iAmTheWinner = count === 1;
+      if (!iAmTheWinner) {
+        // Lost the race. Don't write an OrderEvent — the winner already
+        // wrote `payment.paid`. Writing again would double-log and
+        // confuse the activity timeline in /admin/orders/[id].
+        return;
+      }
+    } else {
+      // Plain non-paid transition (FAILED, OPEN, etc). No race possible
+      // because only the into-PAID branch fans out side-effects.
+      await tx.order.update({
+        where: { id: order.id },
+        data: {
+          paymentStatus: nextPayment,
+          status: nextOrder,
+        },
+      });
+    }
+
     await tx.orderEvent.create({
       data: {
         orderId: order.id,
-        kind: willFlipToPaid
+        kind: intendsToFlipToPaid
           ? "payment.paid"
           : nextPayment === PaymentStatus.FAILED
             ? "payment.failed"
@@ -196,10 +239,12 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
       },
     });
 
-    // Inventory deduction — only on the real into-PAID transition. Runs
-    // inside the same tx so a variant FK miss rolls everything back rather
-    // than marking the order PAID with phantom stock.
-    if (willFlipToPaid) {
+    // Inventory deduction — only on the real into-PAID transition AND
+    // only when WE won the flip. A losing concurrent caller skipped past
+    // the OrderEvent above and bails before this block. Same tx as the
+    // updateMany so a variant FK miss rolls everything back rather than
+    // marking the order PAID with phantom stock.
+    if (intendsToFlipToPaid && iAmTheWinner) {
       for (const item of paidItems) {
         if (!item.variantId) continue; // products without variants: out of scope
         if (item.productKind === "GIFT_CARD") continue; // digital good, no stock to move
@@ -221,7 +266,11 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
   // Sendcloud parcel creation lives here too — same allSettled guarantee.
   // If the API call fails, the order still flipped to PAID; an admin can
   // retry the parcel creation manually from the admin order page.
-  if (willFlipToPaid) {
+  //
+  // H6: this gate is `iAmTheWinner` (NOT intendsToFlipToPaid) so a losing
+  // concurrent caller never reaches this block. Pre-H6 we'd get two
+  // confirmation emails and two Sendcloud parcels on every paid order.
+  if (iAmTheWinner) {
     // Quiz reward redemption — if this order was placed with an ABS-QUIZ-…
     // coupon, stamp redeemedAt on the user's QuizCompletion. That
     // permanently disables their cart-restore email link AND blocks any
@@ -397,7 +446,11 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
     paymentStatus: nextPayment,
     orderStatus: nextOrder,
     changed: !paymentUnchanged || !orderUnchanged,
-    paidTransition: willFlipToPaid,
+    // H6: paidTransition is true ONLY for the caller that won the
+    // atomic conditional update. Losing concurrent callers return
+    // paidTransition=false (their post-paid work was deduped to a
+    // no-op by the winner).
+    paidTransition: iAmTheWinner,
   };
 }
 
