@@ -178,6 +178,19 @@ async function submitCheckoutInner(
   // 1. Parse form data into a structured object — all nested fields are
   //    flat on FormData so we reach them by name convention ("shipping.line1").
   const rawMethod = formData.get("paymentMethod")?.toString();
+  // Digital-only carts have NO shipping section — the customer fills the
+  // billing block directly (it becomes the canonical address for invoice
+  // + Mollie risk). The "billing same as shipping" toggle doesn't make
+  // sense in that flow because there's no shipping address to mirror.
+  // Without this branch the form submits billingSame=yes (the default),
+  // the server then refuses to read billing.* from FormData, and the
+  // downstream digital-only check at line ~249 bails with "billing_required"
+  // — which surfaces as "Proceed to Mollie button does nothing."
+  const cartIsDigitalOnlyHint =
+    formData.get("cartIsDigitalOnly")?.toString() === "yes";
+  const shouldReadBilling =
+    cartIsDigitalOnlyHint ||
+    formData.get("billingSame")?.toString() === "no";
   const raw = {
     email: formData.get("email")?.toString() ?? "",
     locale: formData.get("locale")?.toString() ?? "en",
@@ -186,13 +199,18 @@ async function submitCheckoutInner(
     notes: formData.get("notes")?.toString() || undefined,
     marketingOptIn:
       formData.get("marketingOptIn")?.toString() === "yes" ? "yes" : "no",
-    billingSame:
-      formData.get("billingSame")?.toString() === "no" ? "no" : "yes",
+    // For digital-only carts we force billingSame="no" so downstream
+    // logic that mirrors shipping→billing doesn't fire (there's no
+    // shipping address to mirror from).
+    billingSame: cartIsDigitalOnlyHint
+      ? "no"
+      : formData.get("billingSame")?.toString() === "no"
+        ? "no"
+        : "yes",
     shipping: readAddress(formData, "shipping"),
-    billing:
-      formData.get("billingSame")?.toString() === "no"
-        ? readAddress(formData, "billing")
-        : undefined,
+    billing: shouldReadBilling
+      ? readAddress(formData, "billing")
+      : undefined,
     // Empty / unknown method strings stay undefined so Zod's enum doesn't
     // refuse the request — Mollie's full picker is the safe fallback.
     paymentMethod:
