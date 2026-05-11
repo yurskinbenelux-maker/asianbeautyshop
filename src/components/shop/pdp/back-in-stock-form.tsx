@@ -32,9 +32,16 @@ type Props = {
   /** Customer's locale (uppercase Prisma enum value). Used to localise the
    *  back-in-stock email when it eventually fires. */
   locale: Locale;
+  /**
+   * Signed-in customer's email. When present we hide the input field and
+   * render a one-tap "Notify me" button with a quiet disclaimer naming
+   * the email we'll send to. Mobile UX win — no fumbling with the
+   * keyboard when the form already knows who you are.
+   */
+  customerEmail?: string | null;
 };
 
-export function BackInStockForm({ variantId, locale }: Props) {
+export function BackInStockForm({ variantId, locale, customerEmail }: Props) {
   const t = useTranslations("product");
   const [state, formAction] = useActionState(
     subscribeBackInStockAction,
@@ -58,6 +65,29 @@ export function BackInStockForm({ variantId, locale }: Props) {
     );
   }
 
+  // Signed-in path: skip the email input entirely. The button is the
+  // only thing the customer needs to tap. Server reads the email from
+  // the hidden field below.
+  if (customerEmail) {
+    return (
+      <form action={formAction} className="space-y-2">
+        <input type="hidden" name="variantId" value={variantId} />
+        <input type="hidden" name="locale" value={locale} />
+        <input type="hidden" name="email" value={customerEmail} />
+        <SubmitButton fullWidth />
+        {state?.ok === false && (
+          <p className="text-[12px] text-vermilion" role="alert">
+            {state.message}
+          </p>
+        )}
+        <p className="text-[11px] leading-relaxed text-ink-mid">
+          {t("back_in_stock_helper_signed_in", { email: customerEmail })}
+        </p>
+      </form>
+    );
+  }
+
+  // Guest path: classic email + button row.
   return (
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="variantId" value={variantId} />
@@ -90,7 +120,7 @@ export function BackInStockForm({ variantId, locale }: Props) {
   );
 }
 
-function SubmitButton() {
+function SubmitButton({ fullWidth = false }: { fullWidth?: boolean } = {}) {
   const { pending } = useFormStatus();
   const t = useTranslations("product");
   return (
@@ -98,7 +128,8 @@ function SubmitButton() {
       type="submit"
       disabled={pending}
       className={cn(
-        "inline-flex h-14 items-center justify-center gap-2 px-6 text-[12px] uppercase tracking-label transition-colors disabled:opacity-50 sm:min-w-[200px]",
+        "inline-flex h-14 items-center justify-center gap-2 px-6 text-[12px] uppercase tracking-label transition-colors disabled:opacity-50",
+        fullWidth ? "w-full" : "sm:min-w-[200px]",
         "bg-ink text-rice hover:bg-vermilion",
       )}
     >

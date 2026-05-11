@@ -96,16 +96,21 @@ export function AccountSidebar({
         </div>
       </div>
 
-      {/* nav sections */}
+      {/* nav sections — 2-column tappable grid on mobile (iOS-style
+          settings cards), vertical list on desktop. The old horizontal
+          scroll required users to swipe sideways to discover Wishlist /
+          Gift cards / Profile / Privacy, which Max flagged as
+          unintuitive on the mobile mock-up. Grid surfaces all rows at
+          once without taking the full screen height. */}
       <nav className="px-3 py-4 md:py-6">
-        <ul className="flex gap-1 overflow-x-auto md:block md:space-y-1 md:overflow-visible">
+        <ul className="grid grid-cols-2 gap-1 md:block md:space-y-1">
           {SECTIONS_BEFORE_CLUB.map((s) => (
             <SidebarRow key={s.href} section={s} t={t} active={isActive(s.href)} />
           ))}
           {/* A-Beauty Club drawer trigger — sits between Gift cards and Profile
               per an admin's brief. Rendered as a button (not a Link) since
               clicking it opens a drawer rather than navigating. */}
-          <li className="shrink-0">
+          <li>
             <YurClubMenuItem data={yurClubData} />
           </li>
           {SECTIONS_AFTER_CLUB.map((s) => (
@@ -144,18 +149,22 @@ function SidebarRow({
 }) {
   const Icon = section.icon;
   return (
-    <li className="shrink-0">
+    <li>
       <Link
         href={section.href}
         className={cn(
-          "flex items-center gap-3 whitespace-nowrap px-3 py-2 text-[13px] transition-colors",
+          // Mobile: minimum 44pt tap target (iOS guideline), full grid
+          // cell, label below icon. Desktop: classic horizontal row with
+          // icon + label, smaller and tighter.
+          "flex flex-col items-start gap-2 border border-transparent px-3 py-3 text-[12px] transition-colors",
+          "md:flex-row md:items-center md:gap-3 md:border-0 md:py-2 md:text-[13px]",
           active
-            ? "bg-ink/5 text-ink"
+            ? "border-ink/10 bg-ink/5 text-ink md:border-transparent"
             : "text-ink-mid hover:bg-ink/5 hover:text-ink",
         )}
       >
         <Icon className="h-4 w-4" />
-        <span>{t(`nav_${section.key}`)}</span>
+        <span className="whitespace-nowrap">{t(`nav_${section.key}`)}</span>
       </Link>
     </li>
   );

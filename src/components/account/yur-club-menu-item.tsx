@@ -31,15 +31,20 @@ export function YurClubMenuItem({ data }: { data: DrawerData | null }) {
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "flex w-full items-center justify-between gap-3 whitespace-nowrap px-3 py-2 text-left text-[13px] transition-colors",
+          // Mobile: vertical grid-cell layout to match the SidebarRow
+          // siblings (icon top-left, label + points stacked below).
+          // Desktop: classic horizontal row with the points pill on the
+          // right side.
+          "flex w-full flex-col items-start gap-2 px-3 py-3 text-left text-[12px] transition-colors",
+          "md:flex-row md:items-center md:justify-between md:gap-3 md:py-2 md:text-[13px]",
           "text-ink-mid hover:bg-ink/5 hover:text-ink",
         )}
         aria-haspopup="dialog"
         aria-expanded={open}
       >
-        <span className="flex items-center gap-3">
+        <span className="flex items-center gap-3 md:gap-3">
           <Sparkles className="h-4 w-4 text-vermilion" />
-          <span>{t("nav_yur_club")}</span>
+          <span className="whitespace-nowrap">{t("nav_yur_club")}</span>
         </span>
         {/* Live points pill — concise hint that the program is active and
             theirs has a balance worth checking. */}

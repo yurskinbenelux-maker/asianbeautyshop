@@ -184,6 +184,7 @@
     "back_in_stock_email_label": "Your email",
     "back_in_stock_email_placeholder": "you@email.com",
     "back_in_stock_helper": "We'll email you once and never share your address.",
+    "back_in_stock_helper_signed_in": "We'll notify {email} once it's back in stock.",
     "back_in_stock_submitting": "Saving…",
     "back_in_stock_thanks": "Got it — we'll email you when it's back.",
     "back_in_stock_already_subscribed": "You're already on the list.",
