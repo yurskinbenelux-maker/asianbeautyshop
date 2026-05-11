@@ -496,9 +496,10 @@ function drawTotals(
     `VAT (${formatPct(input.shipping.vatRate)})`,
     formatEur(input.totals.vatTotal),
   );
-  if (input.shipping.inclVat > 0) {
-    row("Shipping", formatEur(input.shipping.inclVat));
-  }
+  // Shipping is intentionally NOT shown as a separate totals row — same
+  // reasoning as invoices/pdf.ts. Shipping already appears as a line item
+  // in the table above and its ex-VAT amount is inside subtotalExclVat.
+  // A separate row visually double-counts it.
 
   y += 4;
   doc

@@ -572,7 +572,13 @@ function drawTotals(
     y += 16;
   }
   row("VAT (21%)", formatEur(input.totals.vatTotal));
-  row("Shipping", formatEur(input.shipping.inclVat));
+  // Shipping is intentionally NOT shown as a separate totals row — it's
+  // already a line item in the table above AND its ex-VAT amount is
+  // already inside `subtotalExclVat` (see issue.ts line ~165). Showing
+  // it again would visually duplicate the charge: 78.09 + 5.90 + 9.99
+  // would read as 93.98 to a customer adding the rows, when the actual
+  // total paid is 83.98. Customers can see the shipping line in the
+  // items table; we just need it in ONE place on the page.
 
   // Hairline above the grand total.
   y += 4;
