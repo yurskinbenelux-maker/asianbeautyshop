@@ -16,6 +16,7 @@
 import { notFound } from "next/navigation";
 import { maybeRedirect } from "@/lib/redirects/maybe-redirect";
 import Image from "next/image";
+import { Link } from "@/i18n/routing";
 
 // Brand pages cache for 5 minutes — same shape as category landings.
 // Bumped from 60s to 300s to cut SSR work 5× on Hostinger Business.
@@ -164,11 +165,31 @@ export default async function BrandLandingPage({
               {brand.tagline}
             </p>
           )}
+          {/* Bug fix: previously rendered the full brand.story HTML
+           *  inline. When the story is long (e.g. YU.R Skin Solution's
+           *  multi-paragraph intro), the editorial block pushed the
+           *  product grid two screens down — the page read as an
+           *  about-page rather than a shop landing. Brands with short
+           *  / empty stories looked fine, so the divergence was
+           *  jarring.
+           *
+           *  Fix: keep this page product-focused. Tagline stays
+           *  (one-liner, sets the tone). The full story now lives
+           *  exclusively on /brands/[slug]/about (which has the right
+           *  layout for editorial — cover image, certifications,
+           *  longer reading rhythm). When a story exists, surface a
+           *  small link to it so the page still acknowledges the
+           *  editorial content without dominating the layout. */}
           {brand.story && (
-            <div
-              className="prose prose-ink mt-6 max-w-none text-[15px] leading-relaxed text-ink-mid"
-              dangerouslySetInnerHTML={{ __html: brand.story }}
-            />
+            <p className="mt-5">
+              <Link
+                href={`/brands/${brand.slug}/about`}
+                className="inline-flex items-center gap-1.5 border-b border-vermilion pb-0.5 text-[12px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
+              >
+                About {brand.name}
+                <span aria-hidden>→</span>
+              </Link>
+            </p>
           )}
         </div>
 
