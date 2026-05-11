@@ -120,11 +120,20 @@ export async function issueRefundAndCreditNote(
       mollieRefundId: true,
       items: {
         select: {
+          id: true,
           nameSnapshot: true,
           skuSnapshot: true,
           quantity: true,
           unitPrice: true, // Decimal — VAT-inclusive customer-facing
           lineTotal: true, // Decimal — VAT-inclusive line total
+          // Per-line adjudication (added 2026-05). Drives the credit-note
+          // breakdown: accepted lines (acceptedRefundEur > 0 AND not
+          // gift card) become CN lines; rejected lines are excluded. The
+          // old proportional split that divided the admin-typed refund
+          // across all lines regardless of which arrived is gone.
+          acceptedRefundEur: true,
+          rejectionReason: true,
+          productKindSnapshot: true,
         },
       },
       order: {
@@ -239,27 +248,25 @@ export async function issueRefundAndCreditNote(
   const year = issueDate.getFullYear();
   const reserved = await reserveNextCreditNoteNumber(year);
 
-  // ── 6a. Build proportional per-line breakdown (G9) ─────────────────
-  // Sum the ReturnItems' VAT-inclusive line totals, then scale each
-  // line by (refundAmount / sumOfLines) so the per-line totals add up
-  // to the actual refund. Two scenarios this handles cleanly:
-  //   · Full refund (refundAmount === sumOfLines) → scale = 1.0,
-  //     items show their original prices.
-  //   · Partial refund (e.g. restocking fee) → each line scaled down
-  //     uniformly. The customer's PDF reads as "we credited 80% of
-  //     each line"; legally still adds up to the refunded amount.
-  // Last-line fix-up absorbs the rounding remainder so the line totals
-  // sum EXACTLY to (amount - 0) — no off-by-a-cent on the legal record.
-  const sumOfLines = ret.items.reduce(
-    (s, it) => s + Number(it.lineTotal),
-    0,
-  );
-  // Belt-and-braces: if the return has no items (shouldn't happen — we
-  // gate on items.length at request time) we fall back to a single
-  // synthetic line so the CN still has SOMETHING in its breakdown.
-  const hasLines = ret.items.length > 0 && sumOfLines > 0;
-  const scale = hasLines ? amount / sumOfLines : 1;
-
+  // ── 6a. Build per-line breakdown from adjudication (Step 4 of 6) ───
+  // Replaces the old proportional split. Each ReturnItem now carries an
+  // admin decision in `acceptedRefundEur`:
+  //   · null   → not adjudicated (admin saved before deciding) — treat
+  //              as "accept at line total" so legacy returns from before
+  //              Step 3 shipped still produce a sensible CN.
+  //   · 0      → rejected (not refunded). Excluded from the CN. The
+  //              line stays on the return record for audit, but no row
+  //              appears on the credit note PDF and no €0 ghost shows
+  //              up in the customer's accounting.
+  //   · > 0    → accepted at this EUR amount. Becomes one CN line.
+  //
+  // Gift cards are force-excluded regardless of what the form posted —
+  // EU Dir 2016/1065 MPV rules + own PDP policy. The admin UI already
+  // disables those rows; this is the server-side belt-and-braces.
+  //
+  // VAT split per line: applies the order-level vatRate (Belgian 21%)
+  // to each accepted line. Gift-card lines never reach here so there's
+  // no out-of-scope mixed-rate case to handle inside a single CN.
   type CnLineDraft = {
     nameSnapshot: string;
     skuSnapshot: string;
@@ -268,33 +275,60 @@ export async function issueRefundAndCreditNote(
     vatRate: number;
     lineTotalInclVat: number;
   };
+
+  const acceptedItems = ret.items.filter((it) => {
+    if (it.productKindSnapshot === "GIFT_CARD") return false;
+    const eur = it.acceptedRefundEur === null ? null : Number(it.acceptedRefundEur);
+    // null (unadjudicated) falls through to "accept at line total" below
+    if (eur === null) return true;
+    return eur > 0;
+  });
+
   let cnLines: CnLineDraft[] = [];
-  if (hasLines) {
-    cnLines = ret.items.map((it) => {
-      const scaledLineTotal = round2(Number(it.lineTotal) * scale);
-      const lineExclVat = scaledLineTotal / (1 + vatRate);
-      const unitExcl = it.quantity > 0 ? lineExclVat / it.quantity : lineExclVat;
+  if (acceptedItems.length > 0) {
+    cnLines = acceptedItems.map((it) => {
+      // Resolve the accepted EUR for this line. Unadjudicated → line total.
+      const acceptedEur =
+        it.acceptedRefundEur === null
+          ? Number(it.lineTotal)
+          : Number(it.acceptedRefundEur);
+      const lineTotalInclVat = round2(acceptedEur);
+      const lineExclVat = lineTotalInclVat / (1 + vatRate);
+      const unitExcl =
+        it.quantity > 0 ? lineExclVat / it.quantity : lineExclVat;
       return {
         nameSnapshot: it.nameSnapshot,
         skuSnapshot: it.skuSnapshot,
         quantity: it.quantity,
         unitPriceExclVat: round2(unitExcl),
         vatRate,
-        lineTotalInclVat: scaledLineTotal,
+        lineTotalInclVat,
       };
     });
-    // Rounding fix-up — push any remainder into the last line so the
-    // sum equals exactly `amount`. Worst case the last line is off by
-    // a few cents from a strict pro-rata, which is invisible in the
-    // PDF and exactly what accountants expect.
-    const linesSum = cnLines.reduce(
-      (s, l) => s + l.lineTotalInclVat,
-      0,
-    );
-    const remainder = round2(amount - linesSum);
-    if (remainder !== 0 && cnLines.length > 0) {
+
+    // Sanity check: the sum of accepted EUR amounts SHOULD already equal
+    // the input.refundAmount that the form computed and passed through.
+    // If they diverge — e.g. someone hand-crafted the transition POST
+    // with a different number — we trust the per-line decisions (they're
+    // the legal record) and absorb the cent-level rounding into the
+    // last line. Anything > 1 EUR delta is logged loudly so an admin
+    // can investigate.
+    const linesSum = cnLines.reduce((s, l) => s + l.lineTotalInclVat, 0);
+    const delta = round2(amount - linesSum);
+    if (Math.abs(delta) > 1) {
+      console.warn(
+        "[credit-notes/issue] refund-amount vs per-line-sum diverged > €1 — using per-line totals as authoritative",
+        {
+          returnId: ret.id,
+          inputAmount: amount,
+          perLineSum: linesSum,
+          delta,
+        },
+      );
+    }
+    if (delta !== 0 && cnLines.length > 0) {
       const last = cnLines[cnLines.length - 1];
-      const fixedTotal = round2(last.lineTotalInclVat + remainder);
+      const fixedTotal = round2(last.lineTotalInclVat + delta);
       const fixedExcl = fixedTotal / (1 + vatRate);
       cnLines[cnLines.length - 1] = {
         ...last,
@@ -305,6 +339,14 @@ export async function issueRefundAndCreditNote(
       };
     }
   } else {
+    // No accepted items — every line was rejected or the return body is
+    // empty. The amount-invalid guard at step 3 already blocks amount=0
+    // so reaching here with amount > 0 means the admin pushed a number
+    // through without any accepted lines (shouldn't happen via the new
+    // form, which auto-totals from accepted lines, but possible via a
+    // hand-crafted POST). Fall back to one synthetic line so the CN row
+    // still satisfies the schema; admin will see "Refund · return ABS-…"
+    // on the PDF and can investigate the data inconsistency.
     cnLines = [
       {
         nameSnapshot: `Refund · return ${ret.publicNumber}`,
