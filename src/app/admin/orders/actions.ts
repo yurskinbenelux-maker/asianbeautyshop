@@ -556,164 +556,46 @@ export async function cancelOrderAction(
   return { ok: true, message: "Order cancelled." };
 }
 
-// ──────── refund (full / partial) ──────────────────────────────────────
+// ──────── refund (H2-removed) ─────────────────────────────────────────
+//
+// The order-page refund path was a broken duplicate of the canonical
+// return-page refund — it skipped Mollie, the credit note, the loyalty
+// clawback, and the VAT YTD subtraction. Customer received a refunded
+// email but no money moved. All refund logic now flows through
+// `issueRefundAndCreditNote` in /admin/returns/[id] on the RECEIVED
+// transition. The original RefundSchema + body lived here; both have
+// been deleted (recover from git history if needed). The deprecated
+// stub below stays so a stale client bundle that still posts to the
+// old endpoint sees a clear error.
 
-const RefundSchema = z
-  .object({
-    orderId: z.string().uuid(),
-    kind: z.enum(["full", "partial"]),
-    // Amount in the order's currency, e.g. "12.50". Required when kind=partial.
-    amount: z.string().trim().optional(),
-    reason: z
-      .string()
-      .trim()
-      .max(500)
-      .optional()
-      .transform((v) => (v ? v : undefined)),
-    // If checked, the admin is telling us the money moved elsewhere
-    // (e.g. manual bank transfer) — we just log it here.
-    external: z.coerce.boolean().optional(),
-  })
-  .superRefine((v, ctx) => {
-    if (v.kind === "partial") {
-      const raw = (v.amount ?? "").replace(",", ".").trim();
-      if (raw === "") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["amount"],
-          message: "Amount is required for partial refunds.",
-        });
-        return;
-      }
-      const n = Number(raw);
-      if (!Number.isFinite(n) || n <= 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["amount"],
-          message: "Enter a positive amount.",
-        });
-      }
-    }
-  });
-
+/**
+ * @deprecated H2: this was the order-page refund path. It only flipped
+ * Order.status to REFUNDED + fired the customer email — it did NOT
+ * call Mollie, did NOT mint a Credit Note, did NOT reverse loyalty
+ * points, did NOT subtract from VAT YTD. Customer received a
+ * "refunded" email but the money never moved.
+ *
+ * All refunds now go through `issueRefundAndCreditNote` (called from
+ * /admin/returns/[id] when marking a return RECEIVED with a refund
+ * amount). The full canonical pipeline fires there.
+ *
+ * Stub kept as an exported symbol so a stale client bundle hitting
+ * the old endpoint sees a clear "do not use" error instead of silently
+ * doing the wrong thing. Safe to delete after a release.
+ */
 export async function issueRefundAction(
   _prev: ActionState,
-  formData: FormData,
+  _formData: FormData,
 ): Promise<ActionState> {
-  const actor = await requireAdmin();
-
-  const parsed = RefundSchema.safeParse({
-    orderId: formData.get("orderId"),
-    kind: formData.get("kind"),
-    amount: formData.get("amount") ?? undefined,
-    reason: formData.get("reason") ?? undefined,
-    external: formData.get("external") === "on",
-  });
-  if (!parsed.success) {
-    return {
-      ok: false,
-      message: "Please fix the highlighted fields.",
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
-  }
-
-  const { orderId, kind, reason, external } = parsed.data;
-  const order = await loadOrderOrFail(orderId);
-  if (!order) return { ok: false, message: "Order not found." };
-
-  // Determine target payment + order statuses.
-  const grand = Number(order.grandTotal);
-  let amount: number;
-  if (kind === "full") {
-    amount = grand;
-  } else {
-    amount = Number(String(parsed.data.amount ?? "0").replace(",", "."));
-    if (amount > grand) {
-      return {
-        ok: false,
-        message: "Refund amount can't exceed the order total.",
-        fieldErrors: { amount: ["Amount exceeds order total"] },
-      };
-    }
-  }
-
-  const nextOrderStatus: OrderStatus =
-    kind === "full" ? "REFUNDED" : "PARTIALLY_REFUNDED";
-  const nextPaymentStatus: PaymentStatus =
-    kind === "full" ? "REFUNDED" : "PARTIALLY_REFUNDED";
-
-  // Stock return policy: only a *full* refund of a previously-PAID order
-  // implies the goods came back. Partial refunds are treated as monetary
-  // adjustments — an admin can restock via the return flow or an admin
-  // adjustment if the customer actually shipped items back.
-  const wasPaid = order.paymentStatus === "PAID";
-  const shouldRestock = wasPaid && kind === "full";
-  const itemsForRestock = shouldRestock
-    ? await prisma.orderItem.findMany({
-        where: { orderId: order.id },
-        select: { variantId: true, quantity: true },
-      })
-    : [];
-
-  await prisma.$transaction(async (tx) => {
-    await tx.order.update({
-      where: { id: order.id },
-      data: {
-        status: nextOrderStatus,
-        paymentStatus: nextPaymentStatus,
-      },
-    });
-    await tx.orderEvent.create({
-      data: {
-        orderId: order.id,
-        kind: "refund.issued",
-        message: reason ?? null,
-        metadata: {
-          kind,
-          amount: amount.toFixed(2),
-          currency: order.currency,
-          external: Boolean(external),
-          actor: actor.email ?? null,
-        },
-      },
-    });
-
-    for (const item of itemsForRestock) {
-      if (!item.variantId) continue;
-      await applyMovement(tx, {
-        variantId: item.variantId,
-        delta: item.quantity,
-        reason: "REFUND",
-        orderId: order.id,
-        actorId: actor.id,
-        actorEmail: actor.email ?? null,
-        note: `Restocked on full refund of ${order.publicNumber}`,
-      });
-    }
-  });
-
-  revalidateOrder(order.id);
-
-  await logAudit({
-    actor,
-    action: "order.refund",
-    entityType: "Order",
-    entityId: order.id,
-    summary: `Refunded ${amount.toFixed(2)} ${order.currency} on ${order.publicNumber} (${kind})`,
-    meta: {
-      kind,
-      amount: amount.toFixed(2),
-      currency: order.currency,
-      external: Boolean(external),
-      reason: reason ?? null,
-    },
-  });
-
-  // Notify customer after commit. Amount + kind come from the validated
-  // form — the email template formats the money using the order's locale.
-  await notifyOrderRefunded(order.id, amount, kind);
-
-  return { ok: true, message: `Refund recorded (${amount.toFixed(2)} ${order.currency}).` };
+  await requireAdmin();
+  console.error(
+    "[orders/actions] issueRefundAction was called but is deprecated (H2). Refunds must go through /admin/returns/[id] → Mark received with refund amount.",
+  );
+  return {
+    ok: false,
+    message:
+      "This refund button has been removed. Open the return for this order from /admin/returns and mark it Received with the refund amount.",
+  };
 }
 
 // ──────── admin notes (free-text, customer never sees) ─────────────────

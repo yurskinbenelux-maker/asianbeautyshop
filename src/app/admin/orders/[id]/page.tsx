@@ -32,7 +32,6 @@ import {
 } from "@/lib/orders/labels";
 import { StatusActions } from "@/components/admin/orders/status-actions";
 import { TrackingForm } from "@/components/admin/orders/tracking-form";
-import { RefundForm } from "@/components/admin/orders/refund-form";
 import { NotesForm } from "@/components/admin/orders/notes-form";
 import { SendcloudRetryButton } from "@/components/admin/orders/sendcloud-retry-button";
 import { InvoiceForm } from "@/components/admin/orders/invoice-form";
@@ -433,12 +432,35 @@ export default async function AdminOrderDetailPage({
             </Panel>
           )}
 
+          {/* H2: removed the per-order "Issue refund" button.
+           *
+           *  The old button called `issueRefundAction` which only
+           *  flipped Order.status to REFUNDED + fired the customer
+           *  email — it did NOT call Mollie, did NOT mint a CreditNote,
+           *  did NOT reverse loyalty points or subtract from VAT YTD.
+           *  Result: customer got a 'refunded' email but the money
+           *  never moved out of Mollie. Real foot-gun.
+           *
+           *  All refunds now go through the return-detail page, which
+           *  fires the full canonical pipeline (issueRefundAndCreditNote
+           *  → Mollie + CN-2026-NNNNN + clawback + VAT). To refund an
+           *  order, an admin creates a return for it from /admin/orders
+           *  or by clicking through the customer's return-request, then
+           *  marks it RECEIVED with a refund amount. */}
           <Panel title="Refund">
-            <RefundForm
-              orderId={order.id}
-              grandTotal={Number(order.grandTotal)}
-              currency={order.currency}
-            />
+            <p className="text-[12px] leading-relaxed text-ink-mid">
+              Refunds are issued via the return flow so Mollie, the
+              credit note, the loyalty clawback, and the VAT YTD all
+              update together. Open or create a return for this order
+              and mark it <strong className="text-ink">Received</strong>{" "}
+              with the refund amount filled in.
+            </p>
+            <Link
+              href="/admin/returns"
+              className="mt-3 inline-flex items-center gap-2 border border-ink/15 bg-white px-3 py-2 text-[11px] uppercase tracking-label text-ink transition-colors hover:border-ink hover:bg-ink hover:text-white"
+            >
+              Open returns
+            </Link>
           </Panel>
 
           <Panel title="Admin notes">
