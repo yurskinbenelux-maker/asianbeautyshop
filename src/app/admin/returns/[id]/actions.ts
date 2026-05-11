@@ -312,9 +312,26 @@ export async function transitionReturnAction(formData: FormData): Promise<void> 
         prepaidLabelUrl: null,
       });
     } else if (targetRaw === "RECEIVED") {
+      // Step 6 (2026-05): hand the email the per-item adjudication so it
+      // can render the accepted-with-EUR vs rejected-with-reason split
+      // the customer actually expects after Step 3's admin form. The
+      // generic {productName, quantity} shape used for the approval
+      // email isn't enough here — the customer needs the reason text
+      // and the per-line EUR to make sense of a partial refund.
+      const richItems = updated.items.map((it) => ({
+        productName: it.nameSnapshot,
+        quantity: it.quantity,
+        acceptedRefundEur: it.acceptedRefundEur,
+        rejectionReason: it.rejectionReason,
+      }));
+      const refundTotalEur = updated.items.reduce(
+        (s, it) => s + (it.acceptedRefundEur ?? 0),
+        0,
+      );
       await sendReturnReceivedEmail(updated.orderId, {
         returnReference: updated.publicNumber,
-        items: emailItems,
+        items: richItems,
+        refundTotalEur,
         receivedAt: updated.receivedAt ?? new Date(),
       });
     } else if (targetRaw === "REFUNDED") {
