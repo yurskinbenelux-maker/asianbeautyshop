@@ -6,14 +6,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { Plus, BookOpen } from "lucide-react";
 import { listAdminJournal } from "@/lib/queries/admin-journal";
+import { ADMIN_DATE_FMT } from "@/lib/utils/format-date";
 
 export const dynamic = "force-dynamic";
 
-const DATE = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-});
+const DATE = ADMIN_DATE_FMT;
 
 export default async function AdminJournalPage() {
   const rows = await listAdminJournal();

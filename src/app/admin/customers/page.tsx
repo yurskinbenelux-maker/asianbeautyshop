@@ -22,6 +22,7 @@ import {
   listAdminCustomers,
 } from "@/lib/queries/admin-customers";
 import { cn } from "@/lib/utils";
+import { formatAdminDate } from "@/lib/utils/format-date";
 import { requireCapability } from "@/lib/auth-roles";
 
 export const dynamic = "force-dynamic";
@@ -384,11 +385,7 @@ function formatMoney(n: number) {
   return `€ ${n.toFixed(2)}`;
 }
 function formatDate(d: Date) {
-  return d.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return formatAdminDate(d);
 }
 
 function buildFilterHref(

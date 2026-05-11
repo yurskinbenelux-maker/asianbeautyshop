@@ -10,14 +10,11 @@ import Link from "next/link";
 import { Plus, Quote, Eye, EyeOff } from "lucide-react";
 import { listAdminTestimonials } from "@/lib/queries/admin-testimonials";
 import { toggleTestimonialActiveAction } from "./actions";
+import { ADMIN_DATE_FMT } from "@/lib/utils/format-date";
 
 export const dynamic = "force-dynamic";
 
-const DATE = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-});
+const DATE = ADMIN_DATE_FMT;
 
 export default async function AdminTestimonialsPage() {
   const rows = await listAdminTestimonials();

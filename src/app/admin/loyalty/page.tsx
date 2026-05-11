@@ -18,6 +18,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { requireCapability } from "@/lib/auth-roles";
 import { getLoyaltySettings } from "@/lib/loyalty/settings";
+import { formatAdminDateTime } from "@/lib/utils/format-date";
 import {
   LoyaltyEventKind,
   LoyaltyTaskClaimStatus,
@@ -240,12 +241,7 @@ export default async function AdminLoyaltyHubPage() {
                   return (
                     <tr key={e.id} className="border-b border-ink/5 last:border-b-0">
                       <td className="whitespace-nowrap px-4 py-3 align-middle text-ink-mid">
-                        {e.createdAt.toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {formatAdminDateTime(e.createdAt)}
                       </td>
                       <td className="px-4 py-3 align-middle text-ink">
                         {e.account?.user?.email ?? "—"}
@@ -320,12 +316,7 @@ export default async function AdminLoyaltyHubPage() {
                       className="border-b border-ink/5 last:border-b-0"
                     >
                       <td className="whitespace-nowrap px-4 py-3 align-middle text-ink-mid">
-                        {r.createdAt.toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {formatAdminDateTime(r.createdAt)}
                       </td>
                       <td className="px-4 py-3 align-middle text-ink">
                         {r.account?.user?.email ?? "—"}

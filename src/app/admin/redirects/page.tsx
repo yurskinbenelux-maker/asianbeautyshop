@@ -8,14 +8,11 @@ import Link from "next/link";
 import { Plus, ArrowRight, Zap, Hand } from "lucide-react";
 import { listAdminRedirects } from "@/lib/redirects/db";
 import { requireCapability } from "@/lib/auth-roles";
+import { ADMIN_DATE_FMT } from "@/lib/utils/format-date";
 
 export const dynamic = "force-dynamic";
 
-const DATE = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-});
+const DATE = ADMIN_DATE_FMT;
 
 type SP = Promise<{ q?: string }>;
 

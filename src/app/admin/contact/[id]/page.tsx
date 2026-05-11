@@ -18,6 +18,7 @@ import { ContactStatus, ContactSubject } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
+import { formatAdminDateTime } from "@/lib/utils/format-date";
 import {
   markAsReadIfNew,
   openReplyInMailClient,
@@ -99,13 +100,7 @@ export default async function AdminContactDetailPage({ params }: Props) {
               {msg.email}
             </a>
             {" · "}
-            {msg.createdAt.toLocaleString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            {formatAdminDateTime(msg.createdAt)}
             {" · "}
             {msg.locale}
           </p>
@@ -177,7 +172,7 @@ export default async function AdminContactDetailPage({ params }: Props) {
               <Meta label="Locale">{msg.locale}</Meta>
               <Meta label="Notified">
                 {msg.notifiedAt
-                  ? msg.notifiedAt.toLocaleString("en-GB")
+                  ? formatAdminDateTime(msg.notifiedAt)
                   : "Not sent"}
               </Meta>
             </dl>

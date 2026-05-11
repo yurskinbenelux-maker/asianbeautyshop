@@ -16,6 +16,7 @@ import { ContactStatus, ContactSubject, Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
+import { formatAdminDate } from "@/lib/utils/format-date";
 
 export const dynamic = "force-dynamic";
 
@@ -213,11 +214,7 @@ export default async function AdminContactListPage({
                     <StatusBadge status={r.status} />
                   </Td>
                   <Td className="text-ink-mid">
-                    {r.createdAt.toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "2-digit",
-                    })}
+                    {formatAdminDate(r.createdAt)}
                   </Td>
                 </tr>
               ))}

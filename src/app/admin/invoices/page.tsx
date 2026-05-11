@@ -20,6 +20,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { DeleteInvoice } from "@/components/admin/invoices/delete-invoice";
 import { QuarterPicker } from "@/components/admin/invoices/quarter-picker";
+import { ADMIN_DATE_FMT } from "@/lib/utils/format-date";
 import {
   parseQuarterParams,
   quarterLabel,
@@ -32,11 +33,7 @@ const EUR = new Intl.NumberFormat("en-IE", {
   maximumFractionDigits: 2,
 });
 
-const DATE_FMT = new Intl.DateTimeFormat("en-IE", {
-  year: "numeric",
-  month: "short",
-  day: "2-digit",
-});
+const DATE_FMT = ADMIN_DATE_FMT;
 
 const COUNTRY_FLAG: Record<string, string> = {
   BE: "Belgium",

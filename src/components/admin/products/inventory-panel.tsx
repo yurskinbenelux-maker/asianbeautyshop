@@ -40,6 +40,7 @@ import {
   updateVariantAction,
   type ActionState,
 } from "@/app/admin/products/actions";
+import { ADMIN_DATETIME_FMT } from "@/lib/utils/format-date";
 import type { InventoryRow } from "@/lib/inventory/db";
 import { cn } from "@/lib/utils";
 
@@ -68,13 +69,7 @@ type Props = {
 
 // ──────── formatting helpers ─────────────────────────────────────────────
 
-const DATE_FMT = new Intl.DateTimeFormat("en-GB", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
+const DATE_FMT = ADMIN_DATETIME_FMT;
 
 function formatDate(d: Date): string {
   return DATE_FMT.format(new Date(d));

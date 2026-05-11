@@ -8,11 +8,9 @@ const EUR = new Intl.NumberFormat("en-IE", {
   currency: "EUR",
 });
 
-const DATE = new Intl.DateTimeFormat("en-IE", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
+import { ADMIN_DATE_FMT } from "@/lib/utils/format-date";
+
+const DATE = ADMIN_DATE_FMT;
 
 export function formatDiscount(c: {
   kind: "PERCENT" | "FIXED" | "FREE_SHIPPING";

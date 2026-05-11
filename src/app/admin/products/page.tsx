@@ -22,6 +22,7 @@ import {
 import { Prisma, ProductStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
+import { formatAdminDate } from "@/lib/utils/format-date";
 import {
   bulkPublishDraftsAction,
   createProduct,
@@ -335,10 +336,7 @@ export default async function ProductsListPage({
                       € {Number(p.price).toFixed(2)}
                     </Td>
                     <Td className="text-ink-mid">
-                      {p.updatedAt.toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                      })}
+                      {formatAdminDate(p.updatedAt)}
                     </Td>
                     <Td className="text-right">
                       {/*

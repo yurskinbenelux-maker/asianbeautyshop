@@ -33,6 +33,7 @@ import {
   PAYMENT_STATUS_LABELS,
 } from "@/lib/orders/labels";
 import { cn } from "@/lib/utils";
+import { formatAdminDate } from "@/lib/utils/format-date";
 
 export const dynamic = "force-dynamic";
 
@@ -433,9 +434,5 @@ function formatMoney(n: number, currency = "EUR") {
   return `${symbol} ${n.toFixed(2)}`;
 }
 function formatDate(d: Date) {
-  return d.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return formatAdminDate(d);
 }

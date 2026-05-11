@@ -17,6 +17,7 @@ import "../globals.css";
 
 import { requireAdminWithRole } from "@/lib/auth-roles";
 import { AdminSidebar } from "@/components/admin/sidebar";
+import { getAdminBadgeCounts } from "@/lib/admin/badge-counts";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -47,11 +48,22 @@ export default async function AdminLayout({
   // is just UX polish.
   const { user, role } = await requireAdminWithRole();
 
+  // Server-fetch the sidebar red-dot counts on every admin route load.
+  // The query is two indexed COUNTs in parallel — sub-ms at any sane
+  // shop volume. Recomputed on each navigation, which makes badges
+  // appear/disappear instantly after admin ships an order or marks a
+  // return refunded.
+  const badgeCounts = await getAdminBadgeCounts();
+
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
       <body className="min-h-screen bg-rice text-ink antialiased">
         <div className="flex min-h-screen">
-          <AdminSidebar userEmail={user.email ?? ""} role={role} />
+          <AdminSidebar
+            userEmail={user.email ?? ""}
+            role={role}
+            badgeCounts={badgeCounts}
+          />
           <main className="flex-1">{children}</main>
         </div>
       </body>
