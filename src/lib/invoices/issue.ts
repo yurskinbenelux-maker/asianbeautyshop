@@ -121,6 +121,24 @@ export async function issueInvoiceForOrder(
     country: billingAddress?.country ?? null,
   };
 
+  // English product names for the invoice — Belgian VAT accepts English
+  // invoices and we don't want a Russian-locale customer's invoice to
+  // carry Cyrillic product names (legal review, accountant readability,
+  // BTW administration audit clarity). Look up EN translations once per
+  // invoice for all products on the order; fall back to the locale
+  // snapshot if no EN translation exists, then to the base SKU.
+  //
+  // This runs at render time, so re-downloading an old order's invoice
+  // also picks up the English name (not just future orders).
+  const productIds = order.items.map((it) => it.productId);
+  const enTranslations = await prisma.productTranslation.findMany({
+    where: { productId: { in: productIds }, locale: "EN" },
+    select: { productId: true, name: true },
+  });
+  const enNameByProductId = new Map(
+    enTranslations.map((t) => [t.productId, t.name]),
+  );
+
   const items: InvoiceLineItem[] = order.items.map((it) => {
     const lineTotal = Number(it.lineTotal);
     // Gift cards are Multi-Purpose Vouchers (EU Dir 2016/1065) — sold
@@ -134,8 +152,16 @@ export async function issueInvoiceForOrder(
     // for everything else, back the VAT out of the gross line.
     const lineExclVat = isVoucher ? lineTotal : lineTotal / (1 + rate);
     const unitExclVat = lineExclVat / Math.max(it.quantity, 1);
+    // Prefer the English product name; fall back to whatever snapshot was
+    // captured at place-order time (may be Russian/French/etc) so the
+    // invoice never shows blank product names. Gift cards: use a fixed
+    // English label since "Подарочная карта YU•R" snapshots wouldn't fit
+    // here either.
+    const nameEn = isVoucher
+      ? "Gift card · YU•R"
+      : (enNameByProductId.get(it.productId) ?? it.nameSnapshot);
     return {
-      name: it.nameSnapshot,
+      name: nameEn,
       sku: it.skuSnapshot,
       quantity: it.quantity,
       unitPriceExclVat: round2(unitExclVat),

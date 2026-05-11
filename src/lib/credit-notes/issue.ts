@@ -558,6 +558,32 @@ export async function mintCreditNotePdf(
   const shippingTotal = Number(cn.shippingTotal);
   const vatRate = Number(cn.vatRate);
 
+  // English product names — same policy as invoices/issue.ts. Belgian VAT
+  // accepts English credit notes (Royal Decree no. 1 doesn't mandate a
+  // language); we default to it for accountant + BTW audit readability.
+  // CreditNoteItem doesn't store productId, so we match by SKU to find
+  // the Product → ProductTranslation(EN). Falls back to nameSnapshot when
+  // no matching product / no EN translation (e.g. synthesised refund
+  // lines, gift cards, deleted products).
+  const skus = cn.items.map((it) => it.skuSnapshot).filter(Boolean);
+  const enNameBySku = new Map<string, string>();
+  if (skus.length > 0) {
+    const productsBySku = await prisma.product.findMany({
+      where: { sku: { in: skus } },
+      select: {
+        sku: true,
+        translations: {
+          where: { locale: "EN" },
+          select: { name: true },
+        },
+      },
+    });
+    for (const p of productsBySku) {
+      const en = p.translations[0]?.name;
+      if (en) enNameBySku.set(p.sku, en);
+    }
+  }
+
   // G9: render the real per-line breakdown from CreditNoteItem rows.
   // The reference field shows the SKU under the product name, mirroring
   // the invoice PDF's layout for visual symmetry. Falls back to the
@@ -567,7 +593,9 @@ export async function mintCreditNotePdf(
   const items: CreditNoteLineItem[] =
     cn.items.length > 0
       ? cn.items.map((it) => ({
-          description: it.nameSnapshot,
+          // Prefer EN product name; fall back to the locale snapshot
+          // stamped on the CreditNoteItem at refund time.
+          description: enNameBySku.get(it.skuSnapshot) ?? it.nameSnapshot,
           reference: it.skuSnapshot,
           quantity: it.quantity,
           unitPriceExclVat: Number(it.unitPriceExclVat),
