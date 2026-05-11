@@ -413,16 +413,80 @@ export type RitualPick = {
   matchedIngredients: string[];
 };
 
-// The canonical 7-category mapping (post migration #166).
-// Note: "peeling" is folded into the "treat" step's candidate pool —
-// peeling-gel is a weekly treatment, not a separate ritual slot.
+// Category slugs each ritual step can match against. We list every
+// known synonym (old singular slugs from migration #166, new plural
+// top-level slugs from the post-rebrand reorganisation, AND the most
+// common subcategory slugs) so the quiz survives admin category
+// reshuffles without needing a code change.
+//
+// The OR is wide on purpose — products only need ONE matching category
+// link to be eligible, and over-including a subcategory slug here is
+// strictly better than missing a product that should have been
+// recommended. If a product genuinely belongs in two pools (e.g. a
+// peeling toner tagged with both `peeling` and `toners`), it'll appear
+// in both candidate lists; the per-step de-dup inside buildRitual via
+// the `usedIds` Set handles that so the same product never shows
+// twice in the same ritual.
+//
+// To add a new top-level or subcategory: open /admin/categories,
+// grab the slug, and append it to the appropriate step. No migration
+// needed.
 const STEP_TO_CATEGORIES: Record<RitualStep, string[]> = {
-  cleanse: ["cleanser"],
-  toner: ["toner"],
-  treat: ["essences-serums", "peeling"],
-  cream: ["cream"],
-  mask: ["mask"],
-  spf: ["spf"],
+  cleanse: [
+    "cleanser",
+    "cleansers",          // post-reorg top-level
+    "oil-cleansers",
+    "cleansing-balms",
+    "make-up-removers",
+    "micellar-waters",
+    "water-based-cleansers",
+  ],
+  toner: [
+    "toner",
+    "toners",             // post-reorg top-level
+    "exfoliating-toners",
+    "calming-toners",
+    "mist-toners",
+    "toner-pads",
+    "hydrating-toners",
+  ],
+  treat: [
+    "essences-serums",    // legacy umbrella slug
+    "peeling",            // legacy weekly-treatment slug
+    "treatments",         // post-reorg top-level
+    "exfoliators",        // adjacent step, products often overlap
+    "ampoules",
+    "essences",
+    "spot-treatments",
+    "serums",
+    "physical-exfoliators",
+    "chemical-exfoliators",
+  ],
+  cream: [
+    "cream",
+    "moisturisers",       // British spelling from early seed
+    "moisturizers",       // US spelling from post-reorg
+    "gel-moisturizers",
+    "facial-oils",
+    "emulsions",
+    "face-creams",
+    "lip-eye-care",       // hand-and-eye creams often live here
+    "eye-creams",
+    "lip-care",
+  ],
+  mask: [
+    "mask",
+    "masks",              // post-reorg top-level
+    "sheet-masks",
+    "sleeping-masks",
+    "peeling-masks",
+    "wash-off-masks",
+  ],
+  spf: [
+    "spf",                // legacy + post-reorg subcategory
+    "sunscreens",         // post-reorg top-level
+    "sun-care",           // very early seed slug
+  ],
 };
 
 // ──────── Scoring ───────────────────────────────────────────────────────
