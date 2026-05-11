@@ -24,6 +24,7 @@ import { syncByPublicNumber } from "@/lib/checkout/sync-mollie";
 import { Link } from "@/i18n/routing";
 import { Check, Clock } from "lucide-react";
 import { PurchaseTracker } from "@/components/analytics/purchase-tracker";
+import { RetryPaymentButton } from "@/components/account/retry-payment-button";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -210,14 +211,37 @@ export default async function CheckoutSuccessPage({
         >
           {t("success_cta_shop")}
         </Link>
-        {!paid && order.molliePaymentUrl && (
-          <a
-            href={order.molliePaymentUrl}
-            className="h-12 border border-ink px-6 text-[12px] uppercase tracking-label leading-[2.75rem] text-ink transition-colors hover:bg-ink hover:text-rice"
-          >
-            {t("success_cta_retry")}
-          </a>
-        )}
+        {/* G4 retry, now wired on success page too (2026-05).
+         *  The old `<a href={molliePaymentUrl}>` was the original Mollie
+         *  payment URL from order placement. Once Mollie marks that
+         *  payment terminally failed (canceled / expired / failed —
+         *  including via the test-mode selector picking "Failed"),
+         *  re-visiting the same URL no-ops back to the merchant's
+         *  redirectUrl — an infinite loop right back to this page.
+         *
+         *  RetryPaymentButton hits retryOrderPaymentAction which
+         *  payments.create()s a fresh Mollie payment with a new URL and
+         *  redirects there.
+         *
+         *  Gating mirrors the failure page so we never render a button
+         *  the server action would immediately reject: only PENDING
+         *  orders whose paymentStatus is one of the terminal-failure
+         *  states. For UNPAID / PENDING paymentStatus (webhook hasn't
+         *  fired yet) we keep just the "we're confirming" copy and
+         *  customer waits — premature retry would create a second
+         *  Mollie payment for an order that's still in flight. */}
+        {!paid &&
+          order.status === "PENDING" &&
+          (["FAILED", "EXPIRED", "CANCELED"] as PaymentStatus[]).includes(
+            order.paymentStatus,
+          ) && (
+            <RetryPaymentButton
+              orderId={order.id}
+              locale={locale}
+              label={t("success_cta_retry")}
+              variant="outline"
+            />
+          )}
       </div>
     </section>
   );
