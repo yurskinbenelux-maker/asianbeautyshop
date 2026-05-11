@@ -25,6 +25,13 @@ export type AdminOrderRow = {
    *  APPROVED / RECEIVED). Drives the per-row vermilion 'Return' pill
    *  on the admin orders list. 0 means no badge. */
   activeReturnCount: number;
+  /** G8: whether this order has a non-empty admin note attached.
+   *  Drives the small sage StickyNote icon next to publicNumber so
+   *  fulfilment can spot orders with internal instructions before
+   *  packing (e.g. "customer called — Tuesday delivery only"). The
+   *  note body itself is NOT loaded into the list — that'd bloat the
+   *  query — just a presence boolean. */
+  hasAdminNotes: boolean;
 };
 
 export type AdminOrdersListParams = {
@@ -93,6 +100,7 @@ export async function listAdminOrders(
         grandTotal: true,
         currency: true,
         userId: true,
+        adminNotes: true,
         user: { select: { firstName: true, lastName: true } },
         // H4: count active returns per order so the orders list can flag
         // rows that have an open return request without admin having to
@@ -135,6 +143,12 @@ export async function listAdminOrders(
         // H4: number of active (non-terminal) ReturnRequests on this
         // order. Drives the vermilion "Return" pill on the row.
         activeReturnCount: o._count.returns,
+        // G8: boolean only — list page just needs to render the icon
+        // (admin clicks through to see the body). Trimming whitespace
+        // here so an old empty string from a cleared note doesn't
+        // light up the indicator.
+        hasAdminNotes:
+          typeof o.adminNotes === "string" && o.adminNotes.trim().length > 0,
       };
     }),
     total,

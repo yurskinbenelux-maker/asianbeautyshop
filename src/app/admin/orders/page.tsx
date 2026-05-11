@@ -17,7 +17,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
-import { Download, Search } from "lucide-react";
+import { Download, Search, StickyNote } from "lucide-react";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import {
   adminOrderCounts,
@@ -309,6 +309,24 @@ export default async function AdminOrdersPage({
                           >
                             Return
                             {o.activeReturnCount > 1 ? ` · ${o.activeReturnCount}` : null}
+                          </Link>
+                        ) : null}
+                        {/* G8: sage StickyNote icon when this order has
+                         *  an admin note attached. Lets fulfilment scan
+                         *  the list and spot orders with internal
+                         *  instructions before packing (e.g. "customer
+                         *  called — Tuesday delivery only"). Icon-only
+                         *  to keep the row quiet; tooltip on hover and
+                         *  click jumps to the order detail where the
+                         *  full note is. */}
+                        {o.hasAdminNotes ? (
+                          <Link
+                            href={`/admin/orders/${o.id}#admin-notes`}
+                            className="inline-flex h-[18px] w-[18px] items-center justify-center border border-sage/40 bg-sage/5 text-sage transition-colors hover:bg-sage hover:text-white"
+                            title="Admin note attached — click to view"
+                            aria-label="Admin note attached"
+                          >
+                            <StickyNote className="h-2.5 w-2.5" />
                           </Link>
                         ) : null}
                       </div>

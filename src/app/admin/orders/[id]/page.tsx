@@ -81,6 +81,22 @@ export default async function AdminOrderDetailPage({
       .join(" ")
       .trim();
 
+  // G8: find the most recent note edit so the NotesForm can show
+  // "Last updated <time> by <email>". events are already ordered desc
+  // by createdAt in getAdminOrder, so the first match is the latest.
+  const latestNoteEvent = order.events.find(
+    (e) => e.kind === "admin.note.updated",
+  );
+  const noteUpdatedAt = latestNoteEvent?.createdAt ?? null;
+  const noteUpdatedBy =
+    latestNoteEvent &&
+    typeof latestNoteEvent.metadata === "object" &&
+    latestNoteEvent.metadata !== null &&
+    "actor" in latestNoteEvent.metadata &&
+    typeof (latestNoteEvent.metadata as { actor?: unknown }).actor === "string"
+      ? ((latestNoteEvent.metadata as { actor: string }).actor)
+      : null;
+
   return (
     <div className="mx-auto max-w-7xl px-8 py-12">
       {/* masthead */}
@@ -463,8 +479,13 @@ export default async function AdminOrderDetailPage({
             </Link>
           </Panel>
 
-          <Panel title="Admin notes">
-            <NotesForm orderId={order.id} defaultValue={order.adminNotes} />
+          <Panel title="Admin notes" id="admin-notes">
+            <NotesForm
+              orderId={order.id}
+              defaultValue={order.adminNotes}
+              lastUpdatedAt={noteUpdatedAt}
+              lastUpdatedBy={noteUpdatedBy}
+            />
           </Panel>
 
           <Panel title="Invoice URL">
@@ -485,13 +506,18 @@ function Panel({
   title,
   count,
   children,
+  id,
 }: {
   title: string;
   count?: number;
   children: React.ReactNode;
+  /** Optional anchor id so other pages can deep-link to a panel
+   *  (e.g. /admin/orders/[id]#admin-notes from the orders list
+   *  StickyNote indicator). */
+  id?: string;
 }) {
   return (
-    <section className="border border-ink/10 bg-white/60">
+    <section id={id} className="border border-ink/10 bg-white/60 scroll-mt-24">
       <header className="flex items-center justify-between border-b border-ink/10 px-5 py-3">
         <h2 className="text-[11px] uppercase tracking-label text-ink-mid">
           {title}
