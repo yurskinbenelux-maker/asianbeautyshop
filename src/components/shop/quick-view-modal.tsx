@@ -164,7 +164,39 @@ function QuickViewBody({
         </div>
 
         <div className="space-y-3">
-          <AddToRitualButton productId={product.id} sku={product.sku} />
+          {/*
+            Quick-view is deliberately minimal — no variant picker, no
+            gift-card recipient form, no stock-aware fallback. So we can
+            only safely offer one-tap "Add to cart" when the product is
+            (a) a regular product, (b) has zero or one variant, AND
+            (c) actually has stock. Anything else → bounce the customer
+            to the full PDP where the proper form lives, so we never
+            "succeed" a click that the cart silently rejects.
+          */}
+          {product.kind === "GIFT_CARD" ? (
+            <Link
+              href={`/shop/${product.slug}`}
+              className="flex h-12 w-full items-center justify-center bg-ink text-[12px] uppercase tracking-label text-rice transition-colors hover:bg-vermilion"
+            >
+              {t("quick_personalise_gift_card")}
+            </Link>
+          ) : !product.isInStock ? (
+            <Link
+              href={`/shop/${product.slug}`}
+              className="flex h-12 w-full items-center justify-center border border-ink/30 text-[12px] uppercase tracking-label text-ink transition-colors hover:border-ink hover:bg-ink/5"
+            >
+              {t("quick_notify_when_back")}
+            </Link>
+          ) : product.hasOptions ? (
+            <Link
+              href={`/shop/${product.slug}`}
+              className="flex h-12 w-full items-center justify-center bg-ink text-[12px] uppercase tracking-label text-rice transition-colors hover:bg-vermilion"
+            >
+              {t("quick_choose_options")}
+            </Link>
+          ) : (
+            <AddToRitualButton productId={product.id} sku={product.sku} />
+          )}
           <Link
             href={`/shop/${product.slug}`}
             className="flex h-12 w-full items-center justify-center border border-ink/20 text-[12px] uppercase tracking-label text-ink-mid transition-colors hover:border-ink hover:text-ink"

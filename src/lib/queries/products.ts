@@ -7,7 +7,7 @@
 //   · Easy to reuse from the shop page, admin, and AI concierge tools
 // ─────────────────────────────────────────────────────────────────────────
 
-import { Locale, ProductStatus, Prisma } from "@prisma/client";
+import { Locale, ProductKind, ProductStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 /** URL locale ("en") → Prisma enum (Locale.EN). */
@@ -87,7 +87,55 @@ export type ProductCardData = {
    *  rather than a misleading "0.0 stars". */
   reviewCount: number;
   reviewAvg: number | null;
+  /**
+   * Product kind — distinguishes physical products from gift cards.
+   * Surfaced on the card so the quick-view modal can decide whether
+   * one-tap "Add to cart" is safe: gift cards always need a per-line
+   * recipient config and must therefore route to the full PDP.
+   */
+  kind: ProductKind;
+  /**
+   * True when the product has more than one variant the customer can
+   * choose between (50ml vs 100ml, Travel vs Standard, etc). When true,
+   * quick-view should send the customer to the full PDP to pick the
+   * variant — there's no selector in quick-view. False for single-
+   * variant products and gift cards.
+   */
+  hasOptions: boolean;
+  /**
+   * True when at least one variant has positive stock — i.e. the product
+   * is actually purchasable right now. Gift cards short-circuit to true
+   * (digital, never out of stock). Products with no variants at all
+   * (legacy data) also short-circuit to true because they have no stock
+   * concept. Quick-view uses this to hide the "Add to cart" button on
+   * a fully out-of-stock product so we don't deceive shoppers with a
+   * silent no-op.
+   */
+  isInStock: boolean;
 };
+
+/**
+ * Derive the three "cart-ability" fields from a product + its variants.
+ * Single source of truth used by every ProductCardData builder so a
+ * change to the stock rule (e.g. "gift cards CAN go out of stock") only
+ * lands in one place.
+ */
+function cardCartFlags(p: {
+  kind: ProductKind;
+  variants: Array<{ stock: number }>;
+}): { kind: ProductKind; hasOptions: boolean; isInStock: boolean } {
+  // Gift cards: always in stock, never have option choice in quick view
+  // (the recipient form lives on the PDP, not on a variant selector).
+  if (p.kind === ProductKind.GIFT_CARD) {
+    return { kind: p.kind, hasOptions: false, isInStock: true };
+  }
+  const hasOptions = p.variants.length > 1;
+  const isInStock =
+    p.variants.length === 0
+      ? true // no variants = no stock concept, legacy products
+      : p.variants.some((v) => v.stock > 0);
+  return { kind: p.kind, hasOptions, isInStock };
+}
 
 /**
  * Aggregate published-review stats for a batch of products. One groupBy
@@ -142,6 +190,7 @@ export async function getBestsellers(
         orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
         take: 1,
       },
+      variants: { select: { stock: true } },
     },
   });
 
@@ -169,6 +218,7 @@ export async function getBestsellers(
       tagline: tr?.shortDescription ?? null,
       imageUrl: img?.url ?? null,
       imageAlt: img?.alt ?? tr?.name ?? null,
+      ...cardCartFlags(p),
       reviewCount: s?.count ?? 0,
       reviewAvg: s?.avg ?? null,
     };
@@ -419,6 +469,12 @@ export async function getShopProducts({
           orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
           take: 1,
         },
+        // Variants — only the fields cardCartFlags needs. Pulling all
+        // variants is cheap; the join is keyed and bounded by product
+        // and most products have ≤ 5 variants.
+        variants: {
+          select: { stock: true },
+        },
       },
     }),
     prisma.product.count({ where }),
@@ -448,6 +504,7 @@ export async function getShopProducts({
       imageAlt: img?.alt ?? tr?.name ?? null,
       reviewCount: s?.count ?? 0,
       reviewAvg: s?.avg ?? null,
+      ...cardCartFlags(p),
     };
   });
 
@@ -1507,6 +1564,7 @@ export async function getRelatedProducts({
             orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
             take: 1,
           },
+          variants: { select: { stock: true } },
         },
       },
     },
@@ -1537,6 +1595,7 @@ export async function getRelatedProducts({
           orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
           take: 1,
         },
+        variants: { select: { stock: true } },
       },
     });
   }
@@ -1563,6 +1622,7 @@ export async function getRelatedProducts({
       imageAlt: img?.alt ?? t?.name ?? null,
       reviewCount: s?.count ?? 0,
       reviewAvg: s?.avg ?? null,
+      ...cardCartFlags(p),
     };
   });
 }
@@ -1673,6 +1733,7 @@ export async function searchProducts({
           orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
           take: 1,
         },
+        variants: { select: { stock: true } },
       },
       orderBy,
       take,
@@ -1703,6 +1764,7 @@ export async function searchProducts({
       imageAlt: img?.alt ?? t?.name ?? null,
       reviewCount: s?.count ?? 0,
       reviewAvg: s?.avg ?? null,
+      ...cardCartFlags(p),
     };
   });
 
