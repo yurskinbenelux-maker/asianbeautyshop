@@ -147,9 +147,15 @@ export function CartDrawer() {
             {/* Free-shipping meter — surfaces just above the subtotal so
                 the "€X to go" cue lands right where the customer is
                 already looking at the price. Self-hides when the
-                threshold is 0 (an admin disabled it in admin). */}
+                threshold is 0 (an admin disabled it in admin).
+
+                We pass the ELIGIBLE subtotal (excludes gift cards) — a
+                customer can't unlock free shipping by stacking gift
+                cards. Threshold is for shippable products only. */}
             <FreeShippingMeter
-              subtotalEur={cart.subtotalEur}
+              subtotalEur={cart.items
+                .filter((i) => i.requiresShipping)
+                .reduce((sum, i) => sum + i.lineTotalEur, 0)}
               thresholdEur={freeShippingThresholdEur}
             />
 

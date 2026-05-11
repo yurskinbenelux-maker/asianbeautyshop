@@ -161,7 +161,14 @@ export function computeOrderTotals(input: PricingInput): PricingResult {
   if (cartIsDigitalOnly) {
     shippingEur = 0;
     shippingReason = "free_threshold";
-  } else if (freeThresholdEur > 0 && subtotalEur >= freeThresholdEur) {
+  } else if (
+    freeThresholdEur > 0 &&
+    // Free-shipping threshold compares against the ELIGIBLE subtotal
+    // (excludes gift cards). A customer can't pad their cart with €100
+    // gift cards to clip past the €80 free-shipping threshold — the
+    // threshold is a reward for spending on shippable products.
+    eligibleSubtotalEur >= freeThresholdEur
+  ) {
     shippingEur = 0;
     shippingReason = "free_threshold";
   } else {
