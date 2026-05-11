@@ -18,7 +18,6 @@
 // label" CTA is a plain anchor when present, hidden otherwise.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReturnStatus } from "@/lib/returns/types";
 
@@ -208,27 +207,13 @@ export function ReturnTimeline(props: ReturnTimelineProps) {
                   </p>
                 ) : null}
 
-                {/* Prepaid label CTA — appears on the APPROVED step
-                    when Sendcloud handed us a label URL. The actual
-                    download happens via Sendcloud-hosted PDF. */}
-                {step.key === "APPROVED" &&
-                isCurrent &&
-                props.prepaidLabelUrl ? (
-                  <div className="mt-4">
-                    <a
-                      href={props.prepaidLabelUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex h-11 items-center gap-2 bg-ink px-5 text-[12px] uppercase tracking-label text-rice transition-colors hover:bg-vermilion"
-                    >
-                      <Download className="h-4 w-4" aria-hidden />
-                      {t("timeline_label_cta")}
-                    </a>
-                    <p className="mt-2 text-[12px] text-ink-mid">
-                      {t("timeline_label_hint")}
-                    </p>
-                  </div>
-                ) : null}
+                {/* H8: Prepaid-label CTA intentionally removed. We're
+                    self-postage-only for now — customer ships at their
+                    own expense with a carrier of their choice and sends
+                    us the tracking number. The `prepaidLabelUrl` prop
+                    is kept on the component for the day we upgrade
+                    Sendcloud (task C1 / #340) and want to re-enable a
+                    label-hand-off UI here. */}
               </div>
             </li>
           );

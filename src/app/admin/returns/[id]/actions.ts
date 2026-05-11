@@ -36,7 +36,6 @@ import {
   issueRefundAndCreditNote,
   IssueRefundError,
 } from "@/lib/credit-notes/issue";
-import { createSendcloudReturnLabel } from "@/lib/sendcloud/return-label";
 
 function isReturnStatus(v: string): v is ReturnStatus {
   return (RETURN_STATUS as readonly string[]).includes(v);
@@ -159,36 +158,29 @@ export async function transitionReturnAction(formData: FormData): Promise<void> 
 
   try {
     if (targetRaw === "APPROVED") {
-      // A2: try to mint a Sendcloud return label first. If it works,
-      // the email switches to prepaidLabel mode and includes the PDF
-      // CTA. If it fails (free plan, API rejection, no shipping
-      // address), we fall back to selfPostage so the customer still
-      // gets a clear next step instead of an error.
-      let labelUrl: string | null = null;
-      try {
-        const labelResult = await createSendcloudReturnLabel(returnId);
-        if (labelResult.ok) {
-          labelUrl = labelResult.labelUrl;
-          console.info(
-            `[admin-returns] return label created · ${updated.publicNumber} · parcel ${labelResult.parcelId}`,
-          );
-        } else {
-          console.warn(
-            `[admin-returns] return label not created (${labelResult.reason}) — falling back to selfPostage`,
-            "message" in labelResult ? labelResult.message : undefined,
-          );
-        }
-      } catch (err) {
-        // Defence-in-depth — createSendcloudReturnLabel doesn't throw,
-        // but if it ever does we still want the email to go out.
-        console.error("[admin-returns] return label call threw", err);
-      }
-
+      // H8: self-postage is now the canonical path. Customer pays the
+      // return shipping with the carrier of their choice and sends us
+      // the tracking number. We deliberately do NOT call
+      // createSendcloudReturnLabel anymore because:
+      //   · Sendcloud's free plan blocks programmatic return creation;
+      //     the fallback was always firing in production.
+      //   · The customer-facing copy (return-requested + return-
+      //     approved) is now consistent on self-postage. Promising
+      //     "we'll send you a label" in email #1 and then falling
+      //     back to "ship at your own cost" in email #2 was a
+      //     confusing UX contradiction.
+      //   · Eliminates a wasted Sendcloud API call on every approve.
+      //
+      // If we ever upgrade Sendcloud to a plan that includes returns
+      // (task C1 / #340), this is the place to re-introduce the label
+      // attempt and switch the email mode dynamically based on the
+      // result. The email template still supports prepaidLabel +
+      // damagedReplace modes for that future path.
       await sendReturnApprovedEmail(updated.orderId, {
         returnReference: updated.publicNumber,
         items: emailItems,
-        mode: labelUrl ? "prepaidLabel" : "selfPostage",
-        prepaidLabelUrl: labelUrl ?? null,
+        mode: "selfPostage",
+        prepaidLabelUrl: null,
       });
     } else if (targetRaw === "RECEIVED") {
       await sendReturnReceivedEmail(updated.orderId, {
