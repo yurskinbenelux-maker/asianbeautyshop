@@ -53,6 +53,16 @@ type Section = {
   // filtered purely for UX — the real access-control happens at the page
   // level via `requireCapability(...)` in the server component.
   cap: AdminCapability;
+  // Optional: key for the badge counts map. When set, the sidebar
+  // looks up `props.badgeCounts[badgeKey]` and renders a red dot with
+  // the number if > 0. Decrements happen automatically because the
+  // count is recomputed server-side on every admin route change.
+  badgeKey?: "ordersAwaitingShipment" | "returnsAwaitingRefund";
+};
+
+export type AdminSidebarBadgeCounts = {
+  ordersAwaitingShipment: number;
+  returnsAwaitingRefund: number;
 };
 
 // NB: Each section is a route under /admin. Order matters — roughly mirrors
@@ -62,13 +72,13 @@ const SECTIONS: Section[] = [
   { href: "/admin/products",    label: "Products",    icon: Package,          cap: "products.view" },
   { href: "/admin/categories",  label: "Categories",  icon: Tag,              cap: "categories.edit" },
   { href: "/admin/ingredients", label: "Ingredients", icon: Beaker,           cap: "ingredients.edit" },
-  { href: "/admin/orders",     label: "Orders",     icon: ShoppingBag,      cap: "orders.view" },
+  { href: "/admin/orders",     label: "Orders",     icon: ShoppingBag,      cap: "orders.view", badgeKey: "ordersAwaitingShipment" },
   { href: "/admin/invoices",   label: "Invoices",   icon: FileSpreadsheet,  cap: "orders.view" },
-  { href: "/admin/returns",    label: "Returns",    icon: RotateCcw,        cap: "returns.view" },
+  { href: "/admin/returns",    label: "Returns",    icon: RotateCcw,        cap: "returns.view", badgeKey: "returnsAwaitingRefund" },
   { href: "/admin/customers",  label: "Customers",  icon: Users,            cap: "customers.view" },
   { href: "/admin/coupons",    label: "Coupons",    icon: BadgePercent,     cap: "coupons.edit" },
   { href: "/admin/gift-cards", label: "Gift cards", icon: Gift,             cap: "giftcards.view" },
-  { href: "/admin/loyalty",    label: "YU.R Club",  icon: Sparkles,         cap: "loyalty.edit" },
+  { href: "/admin/loyalty",    label: "A-Beauty Club",  icon: Sparkles,         cap: "loyalty.edit" },
   { href: "/admin/reviews",      label: "Reviews",      icon: MessageSquare, cap: "reviews.moderate" },
   { href: "/admin/contact",      label: "Messages",     icon: Mail,          cap: "contact.view" },
   { href: "/admin/testimonials", label: "Testimonials", icon: Quote,         cap: "testimonials.edit" },
@@ -93,12 +103,21 @@ const ROLE_LABEL: Record<AdminRole, string> = {
 export function AdminSidebar({
   userEmail,
   role,
+  badgeCounts,
 }: {
   userEmail: string;
   role: AdminRole;
+  /** Server-fetched counts for the red-dot badges on Orders + Returns.
+   *  Defaults to all-zero so the sidebar still renders if the layout
+   *  hasn't wired the prop yet. */
+  badgeCounts?: AdminSidebarBadgeCounts;
 }) {
   const pathname = usePathname();
   const visible = SECTIONS.filter((s) => hasCapability(role, s.cap));
+  const counts: AdminSidebarBadgeCounts = badgeCounts ?? {
+    ordersAwaitingShipment: 0,
+    returnsAwaitingRefund: 0,
+  };
 
   // Active when the pathname is exactly the href, OR starts with href + "/"
   // (so /admin/products/123 still highlights the Products link).
@@ -109,12 +128,11 @@ export function AdminSidebar({
 
   return (
     <aside className="hidden w-64 flex-shrink-0 border-r border-ink/10 bg-white/40 md:flex md:flex-col">
-      {/* masthead — real brand logo (wordmark variant, no tagline at this
-          size) + "Admin" chip pushed to the right. The 유 CJK seal that
-          used to sit beside the wordmark has been retired along with the
-          .seal class; the vector logo carries the brand alone now. */}
+      {/* masthead — wordmark variant fits the tight 28px slot here; the
+          full lockup would crush at this size. + "Admin" chip pushed
+          to the right. */}
       <div className="flex h-16 items-center gap-3 border-b border-ink/10 px-6">
-        <Logo variant="wordmark" height={28} alt="YU.R" />
+        <Logo variant="wordmark" height={28} alt="Asian Beauty Shop" />
         <span className="ml-auto text-[10px] uppercase tracking-label text-ink-mid">
           Admin
         </span>
@@ -126,6 +144,14 @@ export function AdminSidebar({
           {visible.map((s) => {
             const Icon = s.icon;
             const active = isActive(s.href);
+            // Look up the badge count for this section. Only renders
+            // when > 0 so the sidebar stays calm when there's no
+            // pending work. The number shrinks to "9+" past 9 to keep
+            // the dot a fixed circle even when admin's been on
+            // vacation for a week.
+            const badgeValue = s.badgeKey ? counts[s.badgeKey] : 0;
+            const badgeLabel =
+              badgeValue > 9 ? "9+" : badgeValue > 0 ? String(badgeValue) : null;
             return (
               <li key={s.href}>
                 <Link
@@ -139,6 +165,14 @@ export function AdminSidebar({
                 >
                   <Icon className="h-4 w-4" />
                   <span>{s.label}</span>
+                  {badgeLabel ? (
+                    <span
+                      className="ml-auto inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-vermilion px-1.5 text-[10px] font-medium leading-none text-white tabular-nums"
+                      aria-label={`${badgeValue} pending`}
+                    >
+                      {badgeLabel}
+                    </span>
+                  ) : null}
                 </Link>
               </li>
             );

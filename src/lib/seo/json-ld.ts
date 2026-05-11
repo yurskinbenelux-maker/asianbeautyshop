@@ -7,7 +7,7 @@
 //
 // Why these three types:
 //   · Organization — identifies K'Elmus Group BV on the site as a whole,
-//     so Google can link the YU.R brand to the legal entity.
+//     so Google can link the Asian Beauty Shop brand to the legal entity.
 //   · WebSite      — enables the Sitelinks search box (future: when we
 //     ship the global search, the `potentialAction` below points at it).
 //   · Product      — makes PDPs eligible for rich results (price, rating,
@@ -21,7 +21,7 @@
 
 import { routing } from "@/i18n/routing";
 
-/** Site origin — e.g. https://yurskinsolution.eu. Normalised without
+/** Site origin — e.g. https://asianbeautyshop.eu. Normalised without
  *  trailing slash so callers can safely concatenate "/foo". */
 export function siteOrigin(): string {
   const raw = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -30,14 +30,14 @@ export function siteOrigin(): string {
 
 /** Human site name — override via env for white-label deploys. */
 export function siteName(): string {
-  return process.env.NEXT_PUBLIC_SITE_NAME ?? "YU.R Skin Solution";
+  return process.env.NEXT_PUBLIC_SITE_NAME ?? "Asian Beauty Shop";
 }
 
 // ─── Organization ────────────────────────────────────────────────────
-// A single source of truth for the legal entity behind YU.R. If Sofia
-// ever moves countries, updates the VAT number, or changes support email,
-// this is the one place to edit — and Google's Knowledge Graph will pick
-// up the change on the next crawl.
+// A single source of truth for the legal entity behind Asian Beauty Shop.
+// If we ever move countries, update the VAT number, or change support
+// email, this is the one place to edit — Google's Knowledge Graph will
+// pick up the change on the next crawl.
 export function organizationJsonLd() {
   const origin = siteOrigin();
   return {
@@ -49,14 +49,14 @@ export function organizationJsonLd() {
     url: origin,
     logo: `${origin}/brand/logo-lockup.svg`,
     // schema.org recognises vatID + taxID for business identity. Feeding
-    // these in helps Google's Knowledge Graph match the YU.R brand to
-    // the actual legal entity — useful for B2B trust + rich results.
+    // these in helps Google's Knowledge Graph match the Asian Beauty Shop
+    // brand to the actual legal entity — useful for B2B trust + rich results.
     vatID: "BE1031312116",
     taxID: "BE1031312116",
     sameAs: [
-      // Populate as Sofia hands us the profile URLs.
-      // "https://www.instagram.com/yurskinsolution",
-      // "https://www.tiktok.com/@yurskinsolution",
+      // Populate when the social handles are live.
+      // "https://www.instagram.com/asianbeautyshop",
+      // "https://www.tiktok.com/@asianbeautyshop",
     ],
     address: {
       "@type": "PostalAddress",
@@ -69,7 +69,7 @@ export function organizationJsonLd() {
     contactPoint: [
       {
         "@type": "ContactPoint",
-        email: "hello@yurskinsolution.eu",
+        email: "info@kelmusgroup.eu",
         contactType: "customer support",
         areaServed: ["BE", "NL", "FR", "LU"],
         availableLanguage: ["English", "Dutch", "French", "Russian"],
@@ -81,7 +81,7 @@ export function organizationJsonLd() {
 // ─── WebSite ─────────────────────────────────────────────────────────
 // Declares the site + hints at the sitelinks search box. Once the global
 // /search endpoint ships (task #61), Google will surface a search input
-// directly inside the YU.R result card.
+// directly inside the Asian Beauty Shop result card.
 export function websiteJsonLd() {
   const origin = siteOrigin();
   return {

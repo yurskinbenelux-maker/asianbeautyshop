@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // "Mark as shipped" / update tracking form.
 //
-// Sofia fills in the carrier + tracking number (and optionally the public
+// an admin fills in the carrier + tracking number (and optionally the public
 // tracking URL) and submits. The server action flips the order to SHIPPED
 // if it isn't already and logs an OrderEvent either way.
 // ─────────────────────────────────────────────────────────────────────────

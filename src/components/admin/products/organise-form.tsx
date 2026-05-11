@@ -4,7 +4,7 @@
 // Shape: five sections (Categories · Skin types · Concerns · Benefits ·
 // Ingredients). Each section is a wrapped row of toggle pills — clicking
 // a pill flips it between selected / unselected. Below each section is a
-// tiny "+ Add new" inline form so Sofia can seed a missing taxonomy
+// tiny "+ Add new" inline form so an admin can seed a missing taxonomy
 // without leaving the product editor.
 //
 // State model:
@@ -67,7 +67,7 @@ type Props = {
     /**
      * Currently-selected brand ID (single-select, optional). null when
      * the product has no brand attached — typical for legacy rows
-     * before the YU.R seed ran. Drives the Brand picker at the top of
+     * before the Asian Beauty Shop seed ran. Drives the Brand picker at the top of
      * the form, which writes back to Product.brandId. Server derives
      * Product.productLine from the chosen brand's slug on save.
      */
@@ -81,7 +81,7 @@ type Props = {
   options: {
     /**
      * Brands available in the picker. Server filters to active brands
-     * plus the currently-attached brand (even if archived) so Sofia
+     * plus the currently-attached brand (even if archived) so an admin
      * can untag.
      */
     brands: BrandOption[];
@@ -172,7 +172,7 @@ export function OrganiseForm({ productId, initial, options }: Props) {
   // Lookup tables — slug → label — for the AI diff modal. Built once
   // at render time from the taxonomy options the form already has, so
   // the diff renders human-readable chip text instead of slugs. Brand
-  // is excluded — the AI doesn't pick brand, Sofia does.
+  // is excluded — the AI doesn't pick brand, an admin does.
   const aiLabels = useMemo(
     () => ({
       categories: Object.fromEntries(
@@ -201,7 +201,7 @@ export function OrganiseForm({ productId, initial, options }: Props) {
       {/* ── AI helper banner ───────────────────────────────────────────
           One-click categorisation — fills Brand + Category + Subcategory
           + Skin Types + Concerns + Benefits in one Groq call. Renders a
-          diff modal so Sofia approves before anything is written. */}
+          diff modal so an admin approves before anything is written. */}
       <section className="border border-vermilion/20 bg-vermilion/5 p-5">
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -220,8 +220,8 @@ export function OrganiseForm({ productId, initial, options }: Props) {
 
       {/* ── Brand ──────────────────────────────────────────────────────
           Single-select. Drives the right column of the customer-facing
-          mega-menu. Initially we seed YU.R / YU.R Pro / YU.R Me here so
-          Sofia just picks one; when K-beauty brands arrive she'll add
+          mega-menu. Initially we seed Yu.R / Yu.R Pro / Yu.R Me here so
+          an admin just picks one; when K-beauty brands arrive she'll add
           AHC / iUNIK / etc. via /admin/brands and they'll appear in
           this dropdown automatically. Hidden input "brandId" feeds the
           server action — empty string means "no brand", which writes
@@ -236,7 +236,7 @@ export function OrganiseForm({ productId, initial, options }: Props) {
       {/* Two visually-distinct rows: top-level categories (the parent
           "shelves" — Cleansers, Toners, …) and subcategories (specific
           shelves under each parent — Hydrating Toners, Calming Toners,
-          …). Sofia picks the most specific shelf the product belongs to;
+          …). an admin picks the most specific shelf the product belongs to;
           a product can sit on the parent OR on one or more subs, or both. */}
       <CategoriesSection
         fieldName="categoryIds"
@@ -296,7 +296,7 @@ export function OrganiseForm({ productId, initial, options }: Props) {
       />
 
       {/* ── Quick-add from INCI list ────────────────────────────────
-          Companion to the pill picker above. Sofia pastes a comma- or
+          Companion to the pill picker above. an admin pastes a comma- or
           semicolon-separated INCI declaration and on Save the server
           action upserts each name into the master Ingredient library
           (creating an English stub translation), then links them to
@@ -592,9 +592,9 @@ function slugifyForDisplay(input: string) {
 // the Lines + Categories sections) so the entire Organise tab reads as
 // one consistent control style. Why pills instead of a <select>? With
 // 3-10 brands it's easier to scan and one-click tag than a dropdown,
-// and it matches Sofia's mental model of "click the brand badge".
+// and it matches an admin's mental model of "click the brand badge".
 //
-// "(no brand)" is intentionally NOT a chip \u2014 Sofia clears the brand by
+// "(no brand)" is intentionally NOT a chip \u2014 an admin clears the brand by
 // clicking the currently-active chip a second time (toggle off). This
 // avoids accidentally showing "no brand" as a sticky selection on
 // fresh products. The picker is optional: products with NULL brandId
@@ -617,7 +617,7 @@ function BrandSection({ options, value, onChange }: BrandSectionProps) {
           <h3 className="font-display text-[18px] text-ink">Brand</h3>
           <p className="mt-1 max-w-prose text-[13px] leading-relaxed text-ink-mid">
             Who makes this product. One brand per product. New brands
-            appear here automatically once Sofia adds them in
+            appear here automatically once an admin adds them in
             /admin/brands.
           </p>
         </div>
@@ -634,7 +634,7 @@ function BrandSection({ options, value, onChange }: BrandSectionProps) {
       <div className="mt-5 flex flex-wrap gap-2">
         {active.length === 0 ? (
           <span className="text-[13px] italic text-ink-mid">
-            No brands yet \u2014 seed via the YU.R brands script or add via
+            No brands yet \u2014 seed via the Asian Beauty Shop brands script or add via
             /admin/brands.
           </span>
         ) : (
@@ -661,7 +661,7 @@ function BrandSection({ options, value, onChange }: BrandSectionProps) {
       </div>
 
       {/* Archived brands \u2014 only rendered if the current product is
-          tagged with one. Lets Sofia see + clear stale assignments
+          tagged with one. Lets an admin see + clear stale assignments
           without polluting the main row. */}
       {inactive.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2 border-t border-dashed border-ink/15 pt-3">
@@ -712,7 +712,7 @@ function BrandSection({ options, value, onChange }: BrandSectionProps) {
 //
 //   3. ARCHIVED      \u2014 only rendered if this product is currently tagged
 //                     with a category that has been archived
-//                     (isActive=false). Shown muted so Sofia can untag
+//                     (isActive=false). Shown muted so an admin can untag
 //                     them without crowding the main picker.
 //
 // Inline create stays at the bottom: it always adds top-level. For

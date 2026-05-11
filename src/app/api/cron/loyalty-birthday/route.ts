@@ -1,11 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Cron: YU.R Club birthday points award.
+// Cron: A-Beauty Club birthday points award.
 //
 // Wire on cron-job.org — daily, 00:15 Europe/Brussels (offset slightly
 // after the existing /api/cron/birthday so the EMAIL goes first, points
 // follow):
 //   15 0 * * *  curl -fsS -H "Authorization: Bearer $CRON_SECRET" \
-//                 https://yurskinsolution.eu/api/cron/loyalty-birthday
+//                 https://asianbeautyshop.eu/api/cron/loyalty-birthday
 //
 // Walks every customer whose birthday matches today's month/day and
 // hasn't been awarded yet this calendar year, fires `accrueBirthday()`
@@ -14,7 +14,7 @@
 //
 // Why a separate cron from the email cron:
 //   The email cron (#114) was already shipped + tested — touching it
-//   risks a regression. A new endpoint also lets Sofia disable the
+//   risks a regression. A new endpoint also lets an admin disable the
 //   loyalty award without disabling the email by simply removing this
 //   schedule from cron-job.org.
 // ─────────────────────────────────────────────────────────────────────────

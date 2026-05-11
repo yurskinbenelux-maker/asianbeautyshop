@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // /admin/customers/export — CSV download of the filtered customer list.
 //
-// Mirrors the filter semantics of /admin/customers so Sofia gets "what
+// Mirrors the filter semantics of /admin/customers so an admin gets "what
 // you see is what you export". Joins lifetime paid-order stats per row
 // via a single groupBy, same approach as the list view.
 //

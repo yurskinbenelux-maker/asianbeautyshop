@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // /admin/audit — append-only log of admin mutations.
 //
-// Read-only: Sofia can't edit entries from the UI (audit integrity). She can
+// Read-only: an admin can't edit entries from the UI (audit integrity). She can
 // search and filter by action/date. Entries are capped at 200 per query —
 // we'll add pagination later if the list outgrows that.
 // ─────────────────────────────────────────────────────────────────────────
@@ -9,6 +9,7 @@
 import { requireCapability } from "@/lib/auth-roles";
 import { listAuditLog, listAuditActions } from "@/lib/audit/db";
 import { History, Search } from "lucide-react";
+import { ADMIN_DATETIME_FMT } from "@/lib/utils/format-date";
 
 type AuditRow = {
   id: string;
@@ -23,13 +24,7 @@ type AuditRow = {
 
 export const dynamic = "force-dynamic";
 
-const DATE = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
+const DATE = ADMIN_DATETIME_FMT;
 
 type SearchParams = Promise<{
   q?: string;

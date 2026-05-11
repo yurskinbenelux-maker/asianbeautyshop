@@ -4,7 +4,7 @@
 // Each card is a section (hero, bestsellers, ritual, newsletter, footer…).
 // Click in → edit every field for that section × 4 locales. Rows in the DB
 // override the messages/{locale}.json catalogue; leaving a field blank falls
-// back to the default so Sofia doesn't have to fill in all four languages
+// back to the default so an admin doesn't have to fill in all four languages
 // before anything ships.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -27,7 +27,7 @@ type SectionRow = {
 };
 
 async function loadOverrideCounts(): Promise<Map<string, number>> {
-  // Group by section → count how many (field, locale) cells Sofia has set.
+  // Group by section → count how many (field, locale) cells an admin has set.
   const rows = await prisma.siteCopy.groupBy({
     by: ["section"],
     _count: { _all: true },

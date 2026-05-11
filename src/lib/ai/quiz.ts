@@ -15,7 +15,7 @@
 //
 // Why we dropped budget: the catalogue is small enough that the cheapest
 // vs most expensive cleanser are €15 apart — filtering by budget mostly
-// hides products instead of helping. Sofia preferred to surface the right
+// hides products instead of helping. an admin preferred to surface the right
 // products and let the customer decide.
 //
 // Scoring is ingredient-driven (see catalog.ts) because none of the

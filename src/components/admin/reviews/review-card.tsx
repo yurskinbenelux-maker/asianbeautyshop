@@ -11,12 +11,9 @@ import {
   deleteReviewAction,
 } from "@/app/admin/reviews/actions";
 import type { ReviewRow } from "@/lib/queries/admin-reviews";
+import { ADMIN_DATE_FMT } from "@/lib/utils/format-date";
 
-const DATE = new Intl.DateTimeFormat("en-IE", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
+const DATE = ADMIN_DATE_FMT;
 
 export function ReviewCard({ review }: { review: ReviewRow }) {
   return (

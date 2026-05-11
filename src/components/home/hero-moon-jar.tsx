@@ -38,7 +38,7 @@ const PETALS = Array.from({ length: 14 }, (_, i) => ({
 // Copy shape — every string is already resolved on the server (either from
 // the SiteCopy admin overrides or the messages/{locale}.json fallback).
 // We stopped calling useTranslations here so the hero renders exactly what
-// Sofia saved without going back through the translator pipeline.
+// an admin saved without going back through the translator pipeline.
 export type HeroCopy = {
   eyebrow: string;
   title_pre: string;

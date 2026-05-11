@@ -17,7 +17,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
   return {
     locale,
     messages: (await import(`../../messages/${locale}.json`)).default,
-    // Europe/Brussels — Sofia is in Aartselaar, BE. Keep times consistent.
+    // Europe/Brussels — an admin is in Aartselaar, BE. Keep times consistent.
     timeZone: "Europe/Brussels",
   };
 });

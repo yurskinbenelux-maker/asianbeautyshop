@@ -22,7 +22,7 @@ import { MaehwaBranch } from "./maehwa-branch";
 
 // Section heading comes from the admin-editable SiteCopy pipeline; the step
 // labels (Cleanse/Treat/…) stay in messages/{locale}.json because they're
-// tightly coupled to the skincare routine namespace and not in Sofia's editing scope.
+// tightly coupled to the skincare routine namespace and not in an admin's editing scope.
 export type RitualCopy = {
   eyebrow: string;
   lede: string;

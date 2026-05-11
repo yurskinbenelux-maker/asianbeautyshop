@@ -131,7 +131,7 @@ export default async function AdminOrdersPage({
           Two exports, both filter-aware.
            · Export CSV        — one row per order (operations / fulfilment)
            · Export line items — one row per OrderItem, with ex-tax + VAT
-                                 columns. This is the shape Sofia's
+                                 columns. This is the shape an admin's
                                  accountant asked for.
         */}
         <div className="flex flex-wrap items-center gap-2">
@@ -258,7 +258,7 @@ export default async function AdminOrdersPage({
                   <Th className="w-[42px] text-center">
                     {/* select-all is best-effort client-side; SSR table can't
                         own checkbox state, so we skip a master checkbox for
-                        MVP and let Sofia click each row. */}
+                        MVP and let an admin click each row. */}
                     <span className="sr-only">Select</span>
                   </Th>
                   <Th className="w-[14%]">Order</Th>
@@ -285,12 +285,33 @@ export default async function AdminOrdersPage({
                       />
                     </Td>
                     <Td>
-                      <Link
-                        href={`/admin/orders/${o.id}`}
-                        className="font-mono text-[12px] text-ink hover:underline"
-                      >
-                        {o.publicNumber}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/admin/orders/${o.id}`}
+                          className="font-mono text-[12px] text-ink hover:underline"
+                        >
+                          {o.publicNumber}
+                        </Link>
+                        {/* H4: active-return pill — surfaces orders
+                         *  that have a non-terminal ReturnRequest so
+                         *  admin can spot them while scanning the list
+                         *  without opening each one. The number is the
+                         *  count of active returns on this order
+                         *  (almost always 1, but Belgian law lets a
+                         *  customer file multiple partial RMAs). Click
+                         *  goes to /admin/returns filtered to this
+                         *  order. */}
+                        {o.activeReturnCount > 0 ? (
+                          <Link
+                            href={`/admin/returns?q=${encodeURIComponent(o.publicNumber)}`}
+                            className="inline-flex items-center gap-1 border border-vermilion/40 bg-vermilion/5 px-1.5 py-0.5 text-[9px] uppercase tracking-label text-vermilion transition-colors hover:bg-vermilion hover:text-white"
+                            title={`${o.activeReturnCount} active return${o.activeReturnCount === 1 ? "" : "s"} — click to open`}
+                          >
+                            Return
+                            {o.activeReturnCount > 1 ? ` · ${o.activeReturnCount}` : null}
+                          </Link>
+                        ) : null}
+                      </div>
                       {o.isGuest && (
                         <div className="mt-0.5 text-[10px] uppercase tracking-label text-ink-mid/70">
                           Guest
@@ -427,7 +448,7 @@ function buildFilterHref(
 /**
  * Build the export URL, carrying forward every filter except paging.
  * The optional `format` arg switches between the order-summary CSV (default)
- * and the line-items CSV that Sofia's accountant uses for VAT filings.
+ * and the line-items CSV that an admin's accountant uses for VAT filings.
  */
 function buildExportHref(
   sp: Record<string, string | undefined>,

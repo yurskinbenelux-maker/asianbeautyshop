@@ -2,7 +2,7 @@
 // TranslationsForm — one panel per locale (EN · NL · FR · RU).
 //
 // Each locale is its own <form> posting to updateTranslation. That means
-// Sofia can save EN without having filled in RU yet, errors in one locale
+// an admin can save EN without having filled in RU yet, errors in one locale
 // don't roll back the others, and the diff stays small.
 //
 // On non-EN tabs we surface an "Auto-translate from English" button
@@ -52,7 +52,7 @@ const LOCALE_LABEL: Record<Locale, string> = {
 };
 
 /** Field keys we feed through DeepL. `slug` is excluded — slugs are
- *  url-shaped and we'd rather Sofia derives them from the translated
+ *  url-shaped and we'd rather an admin derives them from the translated
  *  name herself than have DeepL guess. */
 const TRANSLATABLE_FIELDS: ReadonlyArray<{
   name: keyof TranslationData;
@@ -157,7 +157,7 @@ function LocalePanel({
     }
   }
 
-  // Auto-translate button gets the SAVED English values. If Sofia just
+  // Auto-translate button gets the SAVED English values. If an admin just
   // typed into the EN tab without saving, those edits are NOT here yet
   // — the helper text below the button tells her to save EN first.
   function getEnSource(): Record<string, string> {
@@ -199,8 +199,8 @@ function LocalePanel({
           1. Auto-translate (DeepL): non-EN only. Fills empty fields
              with literal translations of the EN copy. Already wired.
           2. Polish with AI (Groq): every locale. Improves grammar,
-             matches YU.R voice, fixes awkward translation phrasing.
-             Diff modal so Sofia approves field-by-field.
+             matches Asian Beauty Shop voice, fixes awkward translation phrasing.
+             Diff modal so an admin approves field-by-field.
           Polish doesn't touch slug, warnings, or SEO fields. */}
       <div className="flex flex-wrap items-start gap-3">
         {showTranslateButton && enValues && (
@@ -219,7 +219,7 @@ function LocalePanel({
           productId={productId}
           locale={initial.locale}
           onApply={(picked) => {
-            // Inject only the fields Sofia ticked. Sofia clicks Save
+            // Inject only the fields an admin ticked. an admin clicks Save
             // translation below to commit.
             const asMap: Record<string, string> = {};
             for (const [key, value] of Object.entries(picked)) {
@@ -310,7 +310,7 @@ function LocalePanel({
             label="SEO title"
             name="seoTitle"
             defaultValue={initial.seoTitle}
-            placeholder="e.g. Centella Calming Essence · YU.R"
+            placeholder="e.g. Centella Calming Essence · Asian Beauty Shop"
             inputRef={(el) => {
               inputRefs.current.seoTitle = el;
             }}

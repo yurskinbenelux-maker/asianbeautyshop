@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// "Welcome to YU.R Club" — fires once, on the first LoyaltyAccount
+// "Welcome to A-Beauty Club" — fires once, on the first LoyaltyAccount
 // creation. Distinct from the registration welcome (10% coupon email):
 // this one introduces the points programme itself + their referral code.
 //
@@ -29,11 +29,11 @@ type Strings = {
 
 const STRINGS: Record<Locale, Strings> = {
   EN: {
-    subject: "Welcome to the YU.R Club",
+    subject: "Welcome to the A-Beauty Club",
     preheader: "A small thank-you for being here.",
     heading: (f) => (f ? `Welcome, ${f}.` : "Welcome."),
     intro:
-      "You're now part of the YU.R Club — our quiet way of saying thank you, in points you can spend on the products that suit your skin.",
+      "You're now part of the A-Beauty Club — our quiet way of saying thank you, in points you can spend on the products that suit your skin.",
     bullets: [
       "5 points for every €1 you spend on an order",
       "150 points on your birthday, every year",
@@ -42,16 +42,16 @@ const STRINGS: Record<Locale, Strings> = {
     referralLabel: "Your referral code",
     referralBody: (c) =>
       `Share this code with a friend. They'll get a 5% welcome on top of theirs, you'll get the bonus when they order. Your code: ${c}`,
-    cta: "Open the YU.R Club",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    cta: "Open the A-Beauty Club",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
-    subject: "Welkom bij de YU.R Club",
+    subject: "Welkom bij de A-Beauty Club",
     preheader: "Een klein bedankje dat je hier bent.",
     heading: (f) => (f ? `Welkom, ${f}.` : "Welkom."),
     intro:
-      "Je maakt nu deel uit van de YU.R Club — onze stille manier van bedanken, in punten die je kunt uitgeven aan producten die bij je huid passen.",
+      "Je maakt nu deel uit van de A-Beauty Club — onze stille manier van bedanken, in punten die je kunt uitgeven aan producten die bij je huid passen.",
     bullets: [
       "5 punten voor elke €1 die je aan een bestelling besteedt",
       "150 punten op je verjaardag, elk jaar",
@@ -60,16 +60,16 @@ const STRINGS: Record<Locale, Strings> = {
     referralLabel: "Jouw doorverwijzingscode",
     referralBody: (c) =>
       `Deel deze code met een vriend. Zij krijgen 5% bovenop hun welkom, jij krijgt de bonus zodra ze bestellen. Jouw code: ${c}`,
-    cta: "Open de YU.R Club",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    cta: "Open de A-Beauty Club",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
-    subject: "Bienvenue dans le YU.R Club",
+    subject: "Bienvenue dans le A-Beauty Club",
     preheader: "Un petit merci d'être ici.",
     heading: (f) => (f ? `Bienvenue, ${f}.` : "Bienvenue."),
     intro:
-      "Vous faites désormais partie du YU.R Club — notre manière discrète de dire merci, en points à dépenser sur les produits qui correspondent à votre peau.",
+      "Vous faites désormais partie du A-Beauty Club — notre manière discrète de dire merci, en points à dépenser sur les produits qui correspondent à votre peau.",
     bullets: [
       "5 points pour chaque 1 € dépensé sur une commande",
       "150 points pour votre anniversaire, chaque année",
@@ -78,16 +78,16 @@ const STRINGS: Record<Locale, Strings> = {
     referralLabel: "Votre code de parrainage",
     referralBody: (c) =>
       `Partagez ce code avec un·e ami·e. Iel reçoit 5% en plus de son bonus de bienvenue, vous gagnez les points à sa première commande. Votre code : ${c}`,
-    cta: "Ouvrir le YU.R Club",
-    signoff: "Avec attention,\nSofia · YU.R Skin Solution",
+    cta: "Ouvrir le A-Beauty Club",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
-    subject: "Добро пожаловать в YU.R Club",
+    subject: "Добро пожаловать в A-Beauty Club",
     preheader: "Маленькое спасибо за то, что вы с нами.",
     heading: (f) => (f ? `Добро пожаловать, ${f}.` : "Добро пожаловать."),
     intro:
-      "Теперь вы — часть YU.R Club. Это наш тихий способ сказать «спасибо» — в виде баллов, которые можно тратить на средства, подходящие вашей коже.",
+      "Теперь вы — часть A-Beauty Club. Это наш тихий способ сказать «спасибо» — в виде баллов, которые можно тратить на средства, подходящие вашей коже.",
     bullets: [
       "5 баллов за каждый €1, потраченный на заказ",
       "150 баллов в день рождения каждый год",
@@ -96,8 +96,8 @@ const STRINGS: Record<Locale, Strings> = {
     referralLabel: "Ваш реферальный код",
     referralBody: (c) =>
       `Поделитесь этим кодом с другом. Он получит +5% к приветственной скидке, вы — бонус, как только он сделает заказ. Ваш код: ${c}`,
-    cta: "Открыть YU.R Club",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    cta: "Открыть A-Beauty Club",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -122,7 +122,7 @@ export async function sendLoyaltyClubWelcomeEmail(
   const s = STRINGS[payload.locale];
   const siteOrigin =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu";
+    "https://asianbeautyshop.eu";
   const accountUrl = `${siteOrigin}/${payload.locale.toLowerCase()}/account`;
 
   const bullets = s.bullets

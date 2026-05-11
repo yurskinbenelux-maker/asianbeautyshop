@@ -4,16 +4,11 @@ import { ArrowLeft, Trash2, ExternalLink } from "lucide-react";
 import { getAdminRedirect } from "@/lib/redirects/db";
 import { RedirectForm } from "@/components/admin/redirects/redirect-form";
 import { updateRedirectAction, deleteRedirectAction } from "../actions";
+import { ADMIN_DATETIME_FMT } from "@/lib/utils/format-date";
 
 export const dynamic = "force-dynamic";
 
-const DATE = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
+const DATE = ADMIN_DATETIME_FMT;
 
 type Props = { params: Promise<{ id: string }> };
 

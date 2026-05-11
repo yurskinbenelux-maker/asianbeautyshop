@@ -47,7 +47,7 @@ const ISSUER: InvoiceIssuerSnapshot = {
   cityZip: "2630 Aartselaar",
   country: "Belgium",
   vatNumber: "BE 1031.312.116",
-  email: "hello@yurskinsolution.eu",
+  email: "info@kelmusgroup.eu",
   iban: "BE96 0689 5761 0905",
   bic: "GKCCBEBB",
   rpm: "RPM/RPR Antwerp 1.031.312.116",
@@ -121,18 +121,51 @@ export async function issueInvoiceForOrder(
     country: billingAddress?.country ?? null,
   };
 
+  // English product names for the invoice — Belgian VAT accepts English
+  // invoices and we don't want a Russian-locale customer's invoice to
+  // carry Cyrillic product names (legal review, accountant readability,
+  // BTW administration audit clarity). Look up EN translations once per
+  // invoice for all products on the order; fall back to the locale
+  // snapshot if no EN translation exists, then to the base SKU.
+  //
+  // This runs at render time, so re-downloading an old order's invoice
+  // also picks up the English name (not just future orders).
+  const productIds = order.items.map((it) => it.productId);
+  const enTranslations = await prisma.productTranslation.findMany({
+    where: { productId: { in: productIds }, locale: "EN" },
+    select: { productId: true, name: true },
+  });
+  const enNameByProductId = new Map(
+    enTranslations.map((t) => [t.productId, t.name]),
+  );
+
   const items: InvoiceLineItem[] = order.items.map((it) => {
-    const lineInclVat = Number(it.lineTotal);
-    const rate = Number(it.taxRate ?? 0.21);
-    const lineExclVat = lineInclVat / (1 + rate);
+    const lineTotal = Number(it.lineTotal);
+    // Gift cards are Multi-Purpose Vouchers (EU Dir 2016/1065) — sold
+    // out-of-scope for VAT, taxed only at redemption. We detect them
+    // canonically via the OrderItem.giftCardConfig field (non-null for
+    // gift-card lines) rather than by SKU, so admin-renamed SKUs can
+    // never desync this critical accounting flag.
+    const isVoucher = it.giftCardConfig != null;
+    const rate = isVoucher ? 0 : Number(it.taxRate ?? 0.21);
+    // For vouchers the line is already at face value (no VAT inside);
+    // for everything else, back the VAT out of the gross line.
+    const lineExclVat = isVoucher ? lineTotal : lineTotal / (1 + rate);
     const unitExclVat = lineExclVat / Math.max(it.quantity, 1);
+    // Prefer the English product name; fall back to whatever snapshot was
+    // captured at place-order time (may be Russian/French/etc) so the
+    // invoice never shows blank product names. Same treatment for gift
+    // cards as for physical products — if the admin renames the gift
+    // card (e.g. "YU•R Gift Card" → "Asian Beauty Club card"), the
+    // invoice picks up the new EN name on the next download.
+    const nameEn = enNameByProductId.get(it.productId) ?? it.nameSnapshot;
     return {
-      name: it.nameSnapshot,
+      name: nameEn,
       sku: it.skuSnapshot,
       quantity: it.quantity,
       unitPriceExclVat: round2(unitExclVat),
       vatRate: rate,
-      lineTotalInclVat: lineInclVat,
+      lineTotalInclVat: lineTotal,
     };
   });
 
@@ -143,17 +176,37 @@ export async function issueInvoiceForOrder(
   const shippingRate = 0.21;
   const shippingExclVat = shippingInclVat / (1 + shippingRate);
 
-  // Totals — recompute from the line snapshots so the PDF and the
-  // database stay in lockstep down to the cent. The numbers are the
-  // same as Order.subtotal / Order.taxTotal / Order.grandTotal, but
-  // we deliberately re-derive so a future Order schema change doesn't
-  // silently break the invoice.
-  const subtotalExclVat = items.reduce(
+  // Totals — products + shipping ex-VAT for the displayed subtotal,
+  // discount + tax + grand pulled straight from Order so the invoice
+  // can NEVER drift from what hit the books at order placement.
+  //
+  // Why we don't re-derive vatTotal from grandTotal − subtotalExclVat
+  // anymore: with a coupon discount in the picture, the old formula
+  // computed vatTotal against an un-discounted base, leaving the math
+  // visibly wrong on every discounted invoice. Trusting Order.taxTotal
+  // (computed by pricing.ts at place-order time, the same code path
+  // Mollie was charged from) keeps the invoice arithmetically
+  // consistent with the actual payment.
+  const productsExclVat = items.reduce(
     (sum, it) => sum + it.unitPriceExclVat * it.quantity,
-    shippingExclVat,
+    0,
   );
+  const subtotalExclVat = productsExclVat + shippingExclVat;
   const grandTotal = Number(order.grandTotal);
-  const vatTotal = grandTotal - subtotalExclVat;
+  const vatTotal = Number(order.taxTotal);
+  // Coupon discount line. discountTotal is stored VAT-INCLUSIVE (the
+  // amount the customer saw subtracted in the checkout preview).
+  // Renders as a separate line on the invoice per Belgian Royal Decree
+  // no. 1 art. 5 — keeps the line-item table at retail prices and
+  // shows the deduction explicitly in the totals box.
+  const discountInclVat = Number(order.discountTotal ?? 0);
+  const discountForInvoice =
+    discountInclVat > 0
+      ? {
+          label: order.couponCode ?? "Discount",
+          amount: round2(discountInclVat),
+        }
+      : undefined;
 
   // Phase 1: single-rate BE 21% so destinationCountry on the row is
   // recorded purely for the OSS €10k tracking widget — it doesn't change
@@ -188,6 +241,7 @@ export async function issueInvoiceForOrder(
       subtotalExclVat: round2(subtotalExclVat),
       vatTotal: round2(vatTotal),
       grandTotal,
+      discount: discountForInvoice,
     },
     paymentMethod,
     molliePaymentReference: order.mollieId ?? null,

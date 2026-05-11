@@ -3,12 +3,12 @@
 //
 // Server shell: guards the route, renders the client UI. The actual
 // upload/preview/commit flow is driven by the client component so we
-// can give Sofia rich feedback (preview tables, warnings, per-row
+// can give an admin rich feedback (preview tables, warnings, per-row
 // errors) without full-page reloads between each step.
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
-import { ArrowLeft, DownloadCloud } from "lucide-react";
+import { ArrowLeft, DownloadCloud, FileDown } from "lucide-react";
 
 import { requireAdmin } from "@/lib/auth";
 import { ProductImportClient } from "./import-client";
@@ -43,18 +43,34 @@ export default async function ProductImportPage() {
           <p className="mt-2 max-w-xl text-[13px] text-ink-mid">
             Upload a catalogue spreadsheet to create or update many products
             at once. The SKU column is the unique key — rows with a new SKU
-            are created, existing SKUs are updated. Images stay managed in
-            the per-product editor.
+            are created, existing SKUs are updated. Images and product
+            variants stay managed in the per-product editor.
           </p>
         </div>
 
-        <a
-          href="/admin/products/import/template"
-          className="inline-flex items-center gap-2 border border-ink/15 bg-white/60 px-4 py-2 text-[12px] uppercase tracking-label text-ink transition-colors hover:border-ink hover:bg-white"
-        >
-          <DownloadCloud className="h-4 w-4" aria-hidden />
-          Download template
-        </a>
+        {/* Two download options:
+            · Blank template — empty CSV with headers + one example row,
+              for adding net-new products from scratch.
+            · Current catalogue — every existing product as a CSV in the
+              same format, ready to edit and re-import. Use this when
+              bulk-correcting categorisation / pricing / flags without
+              losing the multi-language descriptive copy. */}
+        <div className="flex flex-wrap gap-2">
+          <a
+            href="/admin/products/export"
+            className="inline-flex items-center gap-2 border border-ink bg-ink px-4 py-2 text-[12px] uppercase tracking-label text-rice transition-colors hover:bg-vermilion hover:border-vermilion"
+          >
+            <FileDown className="h-4 w-4" aria-hidden />
+            Export catalogue
+          </a>
+          <a
+            href="/admin/products/import/template"
+            className="inline-flex items-center gap-2 border border-ink/15 bg-white/60 px-4 py-2 text-[12px] uppercase tracking-label text-ink transition-colors hover:border-ink hover:bg-white"
+          >
+            <DownloadCloud className="h-4 w-4" aria-hidden />
+            Blank template
+          </a>
+        </div>
       </header>
 
       {/* import flow */}
@@ -85,7 +101,11 @@ export default async function ProductImportPage() {
           </Row>
           <Row term="category_slugs · ingredient_slugs · …">
             Semicolon-separated slugs of existing taxonomy rows.
-            Unknown slugs are skipped with a warning.
+            Unknown slugs are skipped with a warning. <strong>An empty
+            cell clears all values</strong> — leaving category_slugs blank
+            removes every category from that product. Use “Export
+            catalogue” to start from current state if you want to keep
+            existing relations.
           </Row>
         </dl>
       </aside>

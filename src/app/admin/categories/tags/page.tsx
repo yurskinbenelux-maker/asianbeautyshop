@@ -4,7 +4,7 @@
 //
 // Simple = slug + per-locale label (Benefit adds one lucide icon name).
 // No routing per-item: every row is inline-editable and the "add new"
-// form sits at the top. Much faster for Sofia than a full page per tag.
+// form sits at the top. Much faster for an admin than a full page per tag.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { listSimpleTaxonomy, type SimpleTaxonomyKind } from "@/lib/queries/admin-taxonomies";

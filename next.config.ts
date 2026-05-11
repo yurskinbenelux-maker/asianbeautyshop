@@ -50,7 +50,7 @@ const nextConfig: NextConfig = {
       // Setting NEXT_SERVER_ACTIONS_ENCRYPTION_KEY (a base64-encoded
       // 32-byte secret) on the Hostinger env panel makes the hashes
       // deterministic — old tabs still 404 after a deploy (the action
-      // signature genuinely changed if Sofia edited the form), but
+      // signature genuinely changed if an admin edited the form), but
       // workers stay in lockstep and routine redeploys stop breaking
       // open tabs unless the action body actually changed.
       //
@@ -66,6 +66,27 @@ const nextConfig: NextConfig = {
     // normal instant navigation. See globals.css for the morph rules.
     viewTransition: true,
   },
+  // pdfkit (used by /api/webhooks/mollie → issueInvoiceForOrder →
+  // renderInvoicePdf) reads its standard-font metrics (Helvetica.afm,
+  // Helvetica-Bold.afm, etc.) from disk at runtime via __dirname.
+  //
+  // First attempt was outputFileTracingIncludes — that copies the .afm
+  // files into the deploy at node_modules/pdfkit/js/data/. But webpack
+  // bundles pdfkit's JS into the route chunk, so at runtime __dirname
+  // is .next/server/chunks/, NOT node_modules/pdfkit/js/. The trace
+  // include puts the files in the wrong place and the ENOENT continues.
+  //
+  // Correct fix is serverExternalPackages — tells webpack to leave
+  // pdfkit alone and keep it as a runtime require(). When the route
+  // executes, Node resolves pdfkit from node_modules/pdfkit/ and
+  // __dirname evaluates to node_modules/pdfkit/js/, where the data/
+  // folder with the .afm files actually lives. Same reasoning for
+  // fontkit (pdfkit's hard dep for OpenType subsetting — also has
+  // file-system reads relative to __dirname).
+  //
+  // If we ever switch off pdfkit (e.g. to puppeteer or react-pdf),
+  // these entries can be removed.
+  serverExternalPackages: ["pdfkit", "fontkit"],
   // Hostinger's Node runtime sits behind a proxy — trust it for correct IPs in GDPR logs
   async headers() {
     return [

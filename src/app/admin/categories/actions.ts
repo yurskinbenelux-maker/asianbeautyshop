@@ -139,7 +139,7 @@ export async function createCategoryAction(
   const seoTitles = readLocaleField(formData, "translations", "seoTitle");
   const seoDescs = readLocaleField(formData, "translations", "seoDescription");
 
-  // Auto-slug from the English name if Sofia left it blank.
+  // Auto-slug from the English name if an admin left it blank.
   const desiredSlug = slugify(basic.data.slug || enName);
   const taken = new Set(
     (await prisma.category.findMany({ select: { slug: true } })).map((c) => c.slug),
@@ -579,6 +579,199 @@ export async function updateBrandAction(
   return OK_SAVED;
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Narrow action — only writes aboutFromBrandId. Lives separately from
+// updateBrandAction because the picker form doesn't carry a full brand
+// payload (no translations, no logo, no isActive), and routing it
+// through updateBrandAction caused that action's "no values found"
+// branches to wipe translations + logoUrl on every submit.
+//
+// Empty string in the form ⇒ clear inheritance (use this brand's own
+// content). UUID ⇒ inherit from that brand.
+// ─────────────────────────────────────────────────────────────────────────
+export async function setBrandAboutSourceAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, message: "Missing brand id." };
+
+  const raw = formData.get("aboutFromBrandId");
+  const str = raw === null ? "" : String(raw).trim();
+  const next: string | null = str === "" ? null : str;
+
+  // Guard against a brand pointing at itself — that would create a
+  // resolution cycle in getBrandAboutBySlug.
+  if (next === id) {
+    return {
+      ok: false,
+      message: "A brand can't inherit About content from itself.",
+    };
+  }
+
+  // Validate that the target brand exists when one is chosen — protects
+  // against stale form values pointing at a deleted brand.
+  if (next) {
+    const target = await prisma.brand.findUnique({
+      where: { id: next },
+      select: { id: true },
+    });
+    if (!target) {
+      return { ok: false, message: "Selected brand no longer exists." };
+    }
+  }
+
+  await prisma.brand.update({
+    where: { id },
+    data: { aboutFromBrandId: next },
+  });
+
+  refresh();
+  return OK_SAVED;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Narrow action — writes the brand's About-page trust signals.
+//
+// Split storage by translatability:
+//   · certifications — GLOBAL on Brand. Codes like CPNP/ECAS/GMP are
+//     regulatory acronyms that don't translate; admins should not have
+//     to maintain four locale variants of the same regulatory data.
+//   · safetyNote     — PER LOCALE on BrandTranslation. Customer-facing
+//     prose, gets DeepL'd from the EN source.
+//
+// Certifications wire format: a single textarea where each line is
+// `CODE | description` (also accepts `CODE: …`). Persisted as a JSONB
+// array of {code, description} on Brand.
+//
+// Safety note wire format: `translations.{locale}.safetyNote` per locale.
+// Empty values clear the field but don't deleteMany the translation
+// row (would clobber any tagline/story authored separately).
+// ─────────────────────────────────────────────────────────────────────────
+export async function setBrandTrustAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, message: "Missing brand id." };
+
+  const certificationsRaw = String(formData.get("certifications") ?? "");
+  const parsedCerts = parseCertificationsTextarea(certificationsRaw);
+
+  // Per-locale safety notes only.
+  const safeties = readLocaleField(formData, "translations", "safetyNote");
+
+  await prisma.$transaction(async (tx) => {
+    // Global: write certifications to the Brand row.
+    await tx.brand.update({
+      where: { id },
+      data: {
+        certifications:
+          parsedCerts.length === 0
+            ? Prisma.JsonNull
+            : (parsedCerts as unknown as Prisma.InputJsonValue),
+      },
+    });
+
+    // Per-locale: upsert safetyNote on each BrandTranslation row.
+    for (const l of ALL_LOCALES) {
+      const safetyTrimmed = (safeties[l] ?? "").trim();
+      const safetyValue: string | null =
+        safetyTrimmed.length > 0 ? safetyTrimmed : null;
+
+      await tx.brandTranslation.upsert({
+        where: { brandId_locale: { brandId: id, locale: l } },
+        create: {
+          brandId: id,
+          locale: l,
+          safetyNote: safetyValue,
+        },
+        update: { safetyNote: safetyValue },
+      });
+    }
+  });
+
+  refresh();
+  return OK_SAVED;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Narrow action — sets the cover photo's focal point. Lives alongside
+// uploadBrandCoverAction / clearBrandCoverAction so the position can be
+// tweaked without re-uploading the photo.
+//
+// Stored format: "X% Y%" where X and Y are 0-100. Centred (50% 50%) is
+// stored as null so the column reflects "no admin override" cleanly.
+// Anything outside that format is rejected so a hand-crafted form
+// can't smuggle arbitrary CSS into the public page's inline style.
+// ─────────────────────────────────────────────────────────────────────────
+const COVER_POSITION_RE = /^(\d{1,3})% (\d{1,3})%$/;
+
+export async function setBrandCoverPositionAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, message: "Missing brand id." };
+
+  const raw = String(formData.get("coverPosition") ?? "").trim();
+
+  // Empty input or centred = clear the override.
+  if (raw === "" || raw === "50% 50%") {
+    await prisma.brand.update({
+      where: { id },
+      data: { coverPosition: null },
+    });
+    refresh();
+    return OK_SAVED;
+  }
+
+  const match = raw.match(COVER_POSITION_RE);
+  if (!match) {
+    return { ok: false, message: "Invalid focal point format." };
+  }
+  const x = Number.parseInt(match[1], 10);
+  const y = Number.parseInt(match[2], 10);
+  if (x < 0 || x > 100 || y < 0 || y > 100) {
+    return { ok: false, message: "Focal point must be between 0 and 100%." };
+  }
+
+  await prisma.brand.update({
+    where: { id },
+    data: { coverPosition: `${x}% ${y}%` },
+  });
+
+  refresh();
+  return OK_SAVED;
+}
+
+/** Parse the certifications textarea into structured rows. Tolerates
+ *  blank lines, mixed `|` / `:` separators, and trims aggressively. */
+function parseCertificationsTextarea(
+  text: string,
+): Array<{ code: string; description: string }> {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => {
+      // Prefer `|` (less likely to appear in descriptions) then fall
+      // back to the first `:` so admins can author either form.
+      const sepIdx =
+        line.indexOf("|") !== -1 ? line.indexOf("|") : line.indexOf(":");
+      if (sepIdx === -1) {
+        return { code: line.trim(), description: "" };
+      }
+      const code = line.slice(0, sepIdx).trim();
+      const description = line.slice(sepIdx + 1).trim();
+      return { code, description };
+    })
+    .filter((row) => row.code.length > 0 || row.description.length > 0);
+}
+
 export async function deleteBrandAction(
   _prev: ActionState,
   formData: FormData,
@@ -660,6 +853,68 @@ export async function clearBrandLogoAction(
   await prisma.brand.update({ where: { id }, data: { logoUrl: null } });
   refresh();
   return { ok: true, message: "Logo removed." };
+}
+
+// ── Brand cover photo ──────────────────────────────────────────────────
+// Distinct from the logo — this is the wide editorial photograph shown as
+// the hero on /brands/[slug]/about. Bigger size cap (5 MB vs 2 MB for
+// logos) because cover photos are typically full-bleed JPGs. Otherwise
+// mirrors uploadBrandLogoAction / clearBrandLogoAction one-for-one.
+
+export async function uploadBrandCoverAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, message: "Missing brand id." };
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, message: "No file selected." };
+  }
+  // 5 MB ceiling — generous for full-bleed editorial photography but stops
+  // 30 MB raw camera files from killing the upload.
+  if (file.size > 5 * 1024 * 1024) {
+    return { ok: false, message: "File too large (max 5 MB for cover)." };
+  }
+  if (!["image/png", "image/webp", "image/jpeg"].includes(file.type)) {
+    return { ok: false, message: "Use PNG, WEBP, or JPG (no SVG for cover)." };
+  }
+
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  const objectPath = `brands/${id}/cover-${crypto.randomUUID()}.${ext}`;
+
+  const { error } = await supabaseAdmin()
+    .storage.from(PRODUCT_MEDIA_BUCKET)
+    .upload(objectPath, file, {
+      contentType: file.type,
+      cacheControl: "31536000, immutable",
+      upsert: false,
+    });
+  if (error) return { ok: false, message: `Upload failed: ${error.message}` };
+  const {
+    data: { publicUrl },
+  } = supabaseAdmin().storage.from(PRODUCT_MEDIA_BUCKET).getPublicUrl(objectPath);
+
+  await prisma.brand.update({
+    where: { id },
+    data: { coverImageUrl: publicUrl },
+  });
+  refresh();
+  return { ok: true, message: "Cover photo uploaded." };
+}
+
+export async function clearBrandCoverAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, message: "Missing id." };
+  await prisma.brand.update({ where: { id }, data: { coverImageUrl: null } });
+  refresh();
+  return { ok: true, message: "Cover photo removed." };
 }
 
 // ═══════════════════════════════════════════════════════════════════════

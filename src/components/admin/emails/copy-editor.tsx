@@ -19,7 +19,7 @@
 //
 // Polish button is always visible (when not dynamic). If the field is
 // empty, polish runs against the default text and saves the result as
-// the override — Sofia gets variants of the built-in copy without
+// the override — an admin gets variants of the built-in copy without
 // having to type a starting point.
 //
 // Dynamic fields (subject, heading) render read-only with an orange
@@ -77,7 +77,7 @@ export function EmailCopyEditor({
   // some browsers don't reliably re-paint iframe content when only
   // `srcDoc` changes on the same DOM node (the existing read-only
   // preview page got away with it because srcDoc was set ONCE during
-  // server render; here we update it client-side as Sofia types).
+  // server render; here we update it client-side as an admin types).
   const [previewHtml, setPreviewHtml] = useState<string>("");
   const [previewSubject, setPreviewSubject] = useState<string>("");
   const [previewLoading, setPreviewLoading] = useState<boolean>(false);
@@ -332,7 +332,7 @@ function FieldCard({
   const isDynamic = field.kind === "dynamic";
   const hasOverride = value.trim().length > 0;
   // For polish: use override text if any, otherwise the default text.
-  // The button is always visible (when not dynamic) so Sofia can
+  // The button is always visible (when not dynamic) so an admin can
   // generate variants from the default copy without typing first.
   const polishSourceText = value.trim().length > 0 ? value : defaultValue;
 
@@ -340,7 +340,7 @@ function FieldCard({
   // onSuccess callback so callers can merge action-specific data
   // (translations, polished text) into local state — without that
   // hook the textareas / locale tabs would still show the pre-action
-  // values until a full reload, which is exactly the bug Sofia hit.
+  // values until a full reload, which is exactly the bug an admin hit.
   const run = async <T extends { ok: boolean; message?: string }>(
     kind: "save" | "reset" | "translate" | "polish",
     formData: FormData,
@@ -530,7 +530,7 @@ function FieldCard({
                 fd.set("value", polishSourceText);
                 run("polish", fd, polishEmailFieldAction, (result) => {
                   // Drop the polished text straight into the textarea
-                  // so Sofia sees the variant without flipping pages.
+                  // so an admin sees the variant without flipping pages.
                   // The action already saved it to the DB.
                   if (result.polishedValue) {
                     onChange(result.polishedValue);

@@ -4,7 +4,7 @@
 // The list is always reverse-chronological. We keep filters minimal on
 // purpose — free-text search across action/summary/entityId, plus a
 // date-range filter. No pagination control yet: we cap at 200 rows which
-// covers ~2 weeks of activity for Sofia's scale.
+// covers ~2 weeks of activity for an admin's scale.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { prisma } from "@/lib/prisma";

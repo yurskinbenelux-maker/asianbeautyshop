@@ -28,7 +28,11 @@ import { Locale } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getResend, fromNewsletter, replyToAddress } from "@/lib/email/resend";
 import { getEmailOverrides } from "@/lib/email/copy-overrides";
-import { generateToken, hashToken } from "./tokens";
+import {
+  generateToken,
+  hashToken,
+  newsletterListUnsubscribeHeaders,
+} from "./tokens";
 import { buildConfirmationEmail } from "./confirmation-email";
 
 export type NewsletterState = {
@@ -162,6 +166,15 @@ export async function subscribeToNewsletterAction(
       html,
       text,
       replyTo: replyToAddress(),
+      // RFC2369 + RFC8058 one-click unsubscribe. Gmail since Feb 2024
+      // requires this on bulk-classified mail; without it our newsletter
+      // domain reputation tanks. The token here is the SAME raw token
+      // that's in the confirm link — once the user confirms it gets
+      // rotated by the confirm route, but the unsubscribe endpoint
+      // accepts the latest tokenHash so this stays valid until that
+      // point. (For future newsletter blasts we'd pass the rotated
+      // post-confirm token.)
+      headers: newsletterListUnsubscribeHeaders(rawToken),
     });
   } catch (err) {
     console.error("[newsletter] Resend send failed", err);

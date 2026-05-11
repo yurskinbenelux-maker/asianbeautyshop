@@ -142,7 +142,7 @@ export function BestsellerCard({
                   fontSize="14"
                   letterSpacing="2"
                 >
-                  YU.R
+                  Asian Beauty Shop
                 </text>
               </svg>
             </div>
@@ -186,7 +186,7 @@ export function BestsellerCard({
                 originalPriceEur (set when the product is on sale via
                 Product.isOnSale + salePercent); fall back to the legacy
                 comparePriceEur when the product isn't currently on
-                sale but Sofia keyed a "was" price into the comparePrice
+                sale but an admin keyed a "was" price into the comparePrice
                 column manually. */}
             {(product.originalPriceEur ??
               (product.comparePriceEur &&

@@ -1,11 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Return requested email — sent to the customer the moment they submit a
-// return via the (future) /account/orders/[id]/return form or after Sofia
+// return via the (future) /account/orders/[id]/return form or after an admin
 // creates a return on their behalf from the admin.
 //
 // This is the "we've got your request — here's what's next" acknowledgement.
 // The real logistics (label, address) come in `return-approved.ts` once
-// Sofia has reviewed. We keep the two separate because:
+// an admin has reviewed. We keep the two separate because:
 //   · EU consumer law gives the customer 14 days to notify us — we want
 //     to confirm that timer has been stopped the moment they write in.
 //   · Labels often need a manual check (oversize parcels, cross-border,
@@ -32,7 +32,7 @@ import { getOrderForEmail, type EmailOrder } from "./order-query";
  * model so this module can be swapped into place behind the real flow.
  */
 export type RmaContext = {
-  /** Public reference the customer sees, e.g. "YUR-1042-R1". */
+  /** Public reference the customer sees, e.g. "ABS-1042-R1". */
   returnReference: string;
   /** Line items being returned. Subset of the order. */
   items: Array<{ productName: string; quantity: number }>;
@@ -67,11 +67,11 @@ const STRINGS: Record<Locale, Strings> = {
     itemsLabel: "Items to return",
     whatNextTitle: "What happens next",
     whatNextBody:
-      "Sofia reviews each return personally. Within two working days you'll receive a follow-up with your return reference, either a prepaid label or the return address, and packing instructions.",
+      "an admin reviews each return personally. Within two working days you'll receive a follow-up with your return reference, the return address, and packing instructions. Return postage is at your expense — pick any carrier you prefer (a tracked service is recommended) and send us the tracking number so we can watch for delivery.",
     slaNote:
       "If you'd like to add a reason, a photo of a damaged product, or another item to the return, just reply to this email.",
     cta: "View my order",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
@@ -84,11 +84,11 @@ const STRINGS: Record<Locale, Strings> = {
     itemsLabel: "Te retourneren artikelen",
     whatNextTitle: "Wat gebeurt er nu",
     whatNextBody:
-      "Sofia bekijkt elke retour persoonlijk. Binnen twee werkdagen ontvang je een vervolgmail met je retourreferentie, een retourlabel of adres, en inpakinstructies.",
+      "an admin bekijkt elke retour persoonlijk. Binnen twee werkdagen ontvang je een vervolgmail met je retourreferentie, het retouradres en inpakinstructies. De retourkosten zijn voor jouw rekening — gebruik een vervoerder naar keuze (een verzending met track-en-trace wordt aanbevolen) en stuur ons het trackingnummer zodat we de levering kunnen volgen.",
     slaNote:
       "Wil je een reden, een foto van een beschadigd product of een extra artikel toevoegen? Antwoord gewoon op deze mail.",
     cta: "Bestelling bekijken",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
@@ -103,11 +103,11 @@ const STRINGS: Record<Locale, Strings> = {
     itemsLabel: "Articles à retourner",
     whatNextTitle: "La suite",
     whatNextBody:
-      "Sofia examine chaque retour personnellement. Sous deux jours ouvrés, vous recevrez un suivi avec votre référence de retour, une étiquette prépayée ou l'adresse de retour, et les instructions d'emballage.",
+      "an admin examine chaque retour personnellement. Sous deux jours ouvrés, vous recevrez un suivi avec votre référence de retour, l'adresse de retour et les instructions d'emballage. Les frais de retour sont à votre charge — choisissez le transporteur de votre choix (un service suivi est recommandé) et envoyez-nous le numéro de suivi pour que nous puissions surveiller la livraison.",
     slaNote:
       "Souhaitez-vous ajouter un motif, la photo d'un produit endommagé ou un autre article à la demande ? Répondez simplement à cet e-mail.",
     cta: "Voir ma commande",
-    signoff: "Avec attention,\nSofia · YU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
@@ -122,11 +122,11 @@ const STRINGS: Record<Locale, Strings> = {
     itemsLabel: "Товары к возврату",
     whatNextTitle: "Что дальше",
     whatNextBody:
-      "София рассматривает каждый возврат лично. В течение двух рабочих дней вы получите письмо с номером возврата, предоплаченной этикеткой или адресом, а также инструкциями по упаковке.",
+      "админ рассматривает каждый возврат лично. В течение двух рабочих дней вы получите письмо с номером возврата, адресом возврата и инструкциями по упаковке. Стоимость обратной отправки оплачивается вами — выберите любого перевозчика на ваш выбор (рекомендуем сервис с отслеживанием) и пришлите нам трек-номер, чтобы мы могли проследить за доставкой.",
     slaNote:
       "Хотите добавить причину, фото повреждённого товара или ещё один товар к возврату? Просто ответьте на это письмо.",
     cta: "Посмотреть заказ",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -142,7 +142,7 @@ export type ReturnRequestedEmail = {
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 

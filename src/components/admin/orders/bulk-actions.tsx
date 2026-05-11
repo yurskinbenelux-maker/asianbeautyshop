@@ -47,7 +47,7 @@ export function BulkFulfillingForm({ children }: { children: React.ReactNode }) 
     return () => form.removeEventListener("change", update);
   }, []);
 
-  // Clear checkboxes after a successful bulk action so Sofia doesn't
+  // Clear checkboxes after a successful bulk action so an admin doesn't
   // accidentally re-apply the same operation.
   useEffect(() => {
     if (state.ok) {

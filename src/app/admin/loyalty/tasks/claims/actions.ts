@@ -5,7 +5,7 @@
 //
 // Both approve + reject also fire the localised decision email to the
 // customer. Email failures don't undo the DB write — points are real
-// either way; a stuck email is a follow-up Sofia can resend manually.
+// either way; a stuck email is a follow-up an admin can resend manually.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { revalidatePath } from "next/cache";

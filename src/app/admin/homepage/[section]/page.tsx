@@ -79,7 +79,7 @@ export default async function EditSectionPage({
     // EN alone is enough to render the right state in the form.
     const voided = valueByLocale.EN === SITE_COPY_VOID;
     // When voided, blank out the per-locale text values in the form so
-    // Sofia doesn't see "__SITE_COPY_VOID__" in the inputs.
+    // an admin doesn't see "__SITE_COPY_VOID__" in the inputs.
     const visibleValueByLocale: Record<Locale, string> = voided
       ? { EN: "", NL: "", FR: "", RU: "" }
       : valueByLocale;

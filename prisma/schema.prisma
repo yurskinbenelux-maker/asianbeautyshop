@@ -1,7 +1,7 @@
-// YU.R Skin Solution — Prisma schema
+// Asian Beauty Shop — Prisma schema
 // Database: PostgreSQL (Supabase)
 // Strategy: core scalar fields on the main models; localised fields live in
-// *Translation child tables keyed by (parentId, locale) so Sofia can translate
+// *Translation child tables keyed by (parentId, locale) so an admin can translate
 // EN/NL/FR/RU side-by-side in the admin without schema changes.
 
 generator client {
@@ -56,9 +56,9 @@ model User {
   birthday      DateTime?
   // Calendar year of the most recent birthday email we sent, used as a
   // sentinel to prevent the daily cron from re-sending if it runs twice
-  // on the same day or if Sofia hand-fires it for testing.
+  // on the same day or if an admin hand-fires it for testing.
   lastBirthdayEmailedYear Int?
-  // Independent sentinel for the YU.R Club birthday points award. Kept
+  // Independent sentinel for the A-Beauty Club birthday points award. Kept
   // separate from the email sentinel so an admin can disable / re-enable
   // either pathway without affecting the other.
   lastBirthdayLoyaltyYear Int?
@@ -138,12 +138,44 @@ model Brand {
   name       String
   isActive   Boolean            @default(true)
   logoUrl    String?
-  // Country the brand is based in. ISO-3166 alpha-2, e.g. "KR" for YU.R.
+  // Cover photo for the brand About page (full-bleed hero). Distinct from
+  // logoUrl — logo is a small mark for tiles + nav, cover is a wider
+  // editorial photograph telling the brand's visual story. Optional;
+  // page falls back to a typographic hero when not set.
+  coverImageUrl    String?
+  // Self-reference: when set, this brand's About page renders the LINKED
+  // brand's cover + tagline + story instead of its own. Use case: sub-
+  // brands of the same house (Yu.R / Yu.R Pro / Yu.R Me) point at the
+  // canonical Yu.R brand so editing once updates all three. Null = the
+  // brand has its own about content. onDelete:SetNull so deleting the
+  // parent doesn't cascade-delete the children.
+  aboutFromBrandId String?            @db.Uuid
+  aboutFromBrand   Brand?             @relation("BrandAboutFrom", fields: [aboutFromBrandId], references: [id], onDelete: SetNull)
+  aboutAlias       Brand[]            @relation("BrandAboutFrom")
+  // Country the brand is based in. ISO-3166 alpha-2, e.g. "KR" for an admin.
   // Mirrors the supplier sheet's "Brand country" column. Stored once per
   // brand instead of per product (where it would duplicate 35-200x with
   // no extra information). PDPs can render "Brand from {country}" by
   // joining through Product.brand.country.
   country    String?
+  // Trust signals on the brand About page. Both are GLOBAL (not per-
+  // locale) for now to keep admin authoring simple — codes like CPNP /
+  // ECAS / GMP are universal acronyms anyway, and the safety note is
+  // typically supplied in English by the brand. Per-locale variants can
+  // be added later via BrandTranslation if an admin ever asks.
+  //
+  //   certifications: Array<{ code: string; description: string }>
+  //   safetyNote     : free text, rendered as a soft callout
+  certifications Json?
+  safetyNote     String?
+  // Cover photo focal-point keyword for the About page hero. Lets an
+  // admin anchor the letterbox crop so faces / product hero shots
+  // don't get sliced. Stored as one of: top-left | top | top-right |
+  // left | center | right | bottom-left | bottom | bottom-right.
+  // Null = "center" (the CSS default). Translated to CSS
+  // object-position at render time so the storage value stays human-
+  // readable in the DB.
+  coverPosition  String?
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
   translations BrandTranslation[]
@@ -157,6 +189,12 @@ model BrandTranslation {
   locale    Locale
   tagline   String?
   story     String? // rich HTML
+  // Trust signals authored per locale so DeepL can populate NL/FR/RU
+  // from the EN source. Replaces the old Brand-level globals (which
+  // remain in the schema as unread shadow columns until a future
+  // cleanup migration drops them).
+  certifications Json?
+  safetyNote     String?
   @@unique([brandId, locale])
 }
 
@@ -242,7 +280,7 @@ model Product {
   isOnSale        Boolean         @default(false)
   salePercent     Int?                               // 1-90; ignored when isOnSale=false
   // Manual "New arrival" flag, drives /new page membership. Deliberately
-  // NOT createdAt-based — Sofia decides which products feel like newness
+  // NOT createdAt-based — an admin decides which products feel like newness
   // worth highlighting (could be a long-existing item that just got a
   // glossy hero shoot). Toggled in admin Basics form alongside isOnSale.
   isNew           Boolean         @default(false)
@@ -251,7 +289,7 @@ model Product {
   launchedAt      DateTime?
 
   // ── Supplier-spec fields ─────────────────────────────────────────────
-  // These mirror the columns on Sofia's master-data xlsx so a CSV round
+  // These mirror the columns on an admin's master-data xlsx so a CSV round
   // trip is lossless. They are language-agnostic (numbers, codes, ISO
   // country) — translatable copy lives on ProductTranslation instead.
 
@@ -312,7 +350,7 @@ model ProductTranslation {
   description      String   // rich HTML from Tiptap
   howToUse         String?  // rich HTML
   // Per-locale safety / regulatory copy. Lives here (not on Product) so
-  // Sofia can localise warnings — the legal phrasing differs across NL/FR
+  // an admin can localise warnings — the legal phrasing differs across NL/FR
   // jurisdictions even though the underlying caution is the same.
   warnings         String?  // plain text or simple HTML
   seoTitle         String?
@@ -637,7 +675,7 @@ enum PaymentStatus {
 
 model Order {
   id                String        @id @default(uuid()) @db.Uuid
-  publicNumber      String        @unique            // "YUR-1042" shown to customer
+  publicNumber      String        @unique            // "ABS-1042" shown to customer
   userId            String?       @db.Uuid          // null = guest checkout
   user              User?         @relation(fields: [userId], references: [id])
   email             String                            // always captured, even for guests
@@ -694,6 +732,9 @@ model Order {
   events            OrderEvent[]
   returns           ReturnRequest[]
   invoice           Invoice?
+  // Multiple partial refunds on one order each get their own CN-2026-NNNN
+  // line. See CreditNote model header for the full reasoning.
+  creditNotes       CreditNote[]
 
   @@index([userId])
   @@index([status])
@@ -736,7 +777,7 @@ model QuizCompletion {
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // The 15%-off coupon code issued for this user. Same row in the
-  // Coupon table (`YUR-QUIZ-{userId8}`). NULL only briefly between
+  // Coupon table (`ABS-QUIZ-{userId8}`). NULL only briefly between
   // completion and coupon mint — should be filled in production.
   couponCode          String?  @unique
   // Coupon validity mirror — same as Coupon.endsAt but cached here for
@@ -776,7 +817,7 @@ model QuizCompletion {
 //
 // The PDF itself lives in Supabase Storage at
 //   invoices/{year}/{number}.pdf
-// in a private bucket — Sofia downloads via a signed URL from the
+// in a private bucket — an admin downloads via a signed URL from the
 // admin invoices page. The customer receives the PDF as an email
 // attachment on the order confirmation email; we don't expose a
 // public URL.
@@ -811,15 +852,149 @@ model Invoice {
 
   createdAt         DateTime @default(now())
 
+  // Several credit notes can attach to one invoice (partial refund issued
+  // first, full refund later, or a goodwill correction on top). Cascade
+  // delete is intentional: if an invoice is removed (which only happens
+  // pre-launch during cleanup, never in production after retention starts),
+  // its credit notes go too — they're meaningless without their parent.
+  creditNotes       CreditNote[]
+
   @@index([year, sequence])
   @@index([destinationCountry, issuedAt])
   @@index([issuedAt])
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// CreditNote — Belgian creditnota / note de crédit
+//
+// Issued whenever value flows back to the customer post-invoice: returns
+// (RMA), pre-fulfilment cancellations after the invoice was already
+// stamped, partial refunds, goodwill credits, or correcting a duplicate
+// invoice. The legal requirement (Code TVA Art. 53octies) is:
+//
+//   · Continuous, sequential numbering — same gap-free property as
+//     invoices. We use the same per-year format pattern: CN-2026-00042.
+//   · Explicit reference to the original invoice number (auditor must
+//     be able to trace the credit back to the sale).
+//   · All identity fields the original invoice carried (issuer, customer,
+//     VAT rates, destination country) — frozen at issue time, same as
+//     Invoice.
+//
+// One Invoice → many CreditNote (partial refunds + later top-ups).
+// One ReturnRequest → many CreditNote (rare in practice — most RMAs
+//   resolve in one credit — but a multi-stage return can issue one for
+//   the products received and another for the postage refund).
+// ─────────────────────────────────────────────────────────────────────────
+model CreditNote {
+  id                String   @id @default(uuid()) @db.Uuid
+
+  // Reference to the original invoice. NOT a one-to-one — see header.
+  invoiceId         String   @db.Uuid
+  invoice           Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  // Convenience back-pointer. One credit note belongs to exactly one
+  // order via its invoice; storing orderId directly avoids a join in
+  // /admin/orders/[id] views and the VAT YTD subtraction (#334 / A5).
+  orderId           String   @db.Uuid
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // Optional — most credit notes come from RMAs, but admin can issue
+  // one without an RMA (goodwill / correction / duplicate invoice).
+  returnId          String?  @db.Uuid
+  return            ReturnRequest? @relation(fields: [returnId], references: [id], onDelete: SetNull)
+
+  number            String   @unique                 // "CN-2026-00042"
+  year              Int                              // 2026
+  sequence          Int                              // 42 — gap detection in audits
+  issuedAt          DateTime @default(now())
+
+  // PDF gets uploaded to the same bucket as invoices, under a creditnotes/
+  // year subdirectory. Optional during the schema-only phase of G11 —
+  // PDF rendering arrives in A7. Once the renderer ships, every new row
+  // will populate this field.
+  pdfPath           String?
+
+  // Same frozen-at-issue identity as Invoice. JSON so a later legal-
+  // entity move doesn't rewrite history.
+  issuerSnapshot    Json
+  customerSnapshot  Json
+
+  // Amounts being credited (always positive numbers — sign is implicit
+  // from the model). Partial refund only credits the affected lines, so
+  // these can be smaller than the original invoice totals.
+  subtotalExclVat   Decimal  @db.Decimal(10, 2)
+  vatTotal          Decimal  @db.Decimal(10, 2)
+  shippingTotal     Decimal  @db.Decimal(10, 2)
+  grandTotal        Decimal  @db.Decimal(10, 2)
+
+  destinationCountry String                          // mirrors Invoice
+  vatRate           Decimal  @db.Decimal(5, 4)       // 0.2100 for BE 21%
+
+  // Why the credit was issued. RETURN is the dominant case; the others
+  // exist because Belgian law allows credit notes for any post-invoice
+  // value reversal, not only customer returns.
+  reason            CreditNoteReason
+  reasonNote        String?                          // optional admin free-text
+
+  createdAt         DateTime @default(now())
+
+  // Per-line breakdown (G9). Populated at issuance from the originating
+  // ReturnItems; total of items.lineTotalInclVat equals the credit
+  // note's grandTotal (less shippingTotal). When admin refunds less
+  // than the full sum-of-lines, each line is pro-rated so the
+  // arithmetic still adds up. Belgian Royal Decree no. 1 art. 5
+  // requires this line-level breakdown on credit notes (auditor must
+  // be able to reconcile each refunded item against the original
+  // invoice line). Cascade delete with the parent CN — the items have
+  // no legal life of their own.
+  items             CreditNoteItem[]
+
+  @@index([year, sequence])
+  @@index([invoiceId])
+  @@index([orderId])
+  @@index([returnId])
+  @@index([destinationCountry, issuedAt])
+  @@index([issuedAt])
+}
+
+// Frozen-at-issue per-line snapshot — same shape as OrderItem for
+// rendering symmetry, but decoupled so a later product rename / sku
+// change doesn't rewrite the legal record. quantity + unitPriceExclVat
+// + vatRate + lineTotalInclVat all snapshotted.
+model CreditNoteItem {
+  id                String   @id @default(uuid()) @db.Uuid
+  creditNoteId      String   @db.Uuid
+  creditNote        CreditNote @relation(fields: [creditNoteId], references: [id], onDelete: Cascade)
+
+  // Snapshot mirrors the source ReturnItem so the PDF reads coherently.
+  nameSnapshot      String
+  skuSnapshot       String
+  quantity          Int
+
+  // Decimal columns frozen at issue. Per-line VAT split so the PDF
+  // table can render UNIT-EXCL-VAT, VAT %, LINE-TOTAL columns the same
+  // way the invoice renderer does.
+  unitPriceExclVat  Decimal  @db.Decimal(10, 2)
+  vatRate           Decimal  @db.Decimal(5, 4)
+  lineTotalInclVat  Decimal  @db.Decimal(10, 2)
+
+  createdAt         DateTime @default(now())
+
+  @@index([creditNoteId])
+}
+
+enum CreditNoteReason {
+  RETURN            // RMA — customer returned goods
+  CANCELLATION      // order killed before/at fulfilment, invoice already stamped
+  PRICE_ADJUSTMENT  // post-sale discount or pricing correction
+  GOODWILL          // discretionary refund, no obligation
+  DUPLICATE         // invoice was issued in error, fully reversed
+}
+
 // Lightweight presence ping — every public page sends one heartbeat per
 // minute via /api/track. The admin dashboard's "visitors online" widget
 // counts unique sessionIds with a lastSeenAt in the last 2 minutes, so
-// Sofia sees when traffic is climbing toward Hostinger's Max Processes
+// an admin sees when traffic is climbing toward Hostinger's Max Processes
 // ceiling (120 on the Business plan).
 //
 // sessionId is an opaque random UUID stored in a `yur_session` cookie —
@@ -833,7 +1008,7 @@ model VisitorPing {
   path        String                       // last URL path the user was on
   userAgent   String?                      // raw UA — used by bot filter
   isBot       Boolean  @default(false)     // pre-classified at insert time
-  isAdmin     Boolean  @default(false)     // exclude Sofia/Max from count
+  isAdmin     Boolean  @default(false)     // exclude an admin/Max from count
   lastSeenAt  DateTime @default(now())
 
   @@index([lastSeenAt])
@@ -883,14 +1058,14 @@ model OrderEvent {
 //
 //  The customer-facing return flow.  One ReturnRequest belongs to exactly
 //  one Order but may cover a subset of its lines (ReturnItem rows).
-//  Sofia reviews each request and can move it through the status enum —
+//  an admin reviews each request and can move it through the status enum —
 //  the email templates in src/lib/email/return-*.ts are triggered by
 //  those transitions.
 // ────────────────────────────────────────────────────────────────────────────
 
 enum ReturnStatus {
-  REQUESTED     // customer just submitted — awaiting Sofia
-  APPROVED      // Sofia accepted, label/address issued to customer
+  REQUESTED     // customer just submitted — awaiting an admin
+  APPROVED      // an admin accepted, label/address issued to customer
   RECEIVED      // parcel arrived at warehouse
   REFUNDED      // money returned to customer
   REJECTED      // outside window / damaged beyond policy
@@ -909,7 +1084,7 @@ enum ReturnReason {
 
 model ReturnRequest {
   id              String        @id @default(uuid()) @db.Uuid
-  /// Short code the customer sees, e.g. "YUR-1042-R1".
+  /// Short code the customer sees, e.g. "ABS-1042-R1".
   publicNumber    String        @unique
 
   orderId         String        @db.Uuid
@@ -924,22 +1099,43 @@ model ReturnRequest {
   reason          ReturnReason  @default(OTHER)
   /// Customer's free-text explanation (optional).
   details         String?
-  /// Internal notes from Sofia / admins — never shown to customer.
+  /// Internal notes from an admin / admins — never shown to customer.
   adminNotes      String?
 
-  /// Monetary side (populated after Sofia reviews — not at request time).
+  /// Monetary side (populated after an admin reviews — not at request time).
   refundAmount    Decimal?      @db.Decimal(10, 2)
   refundedAt      DateTime?
+  /// Mollie's refund id (re_xxxx) — set once A1 fires payments.refund and
+  /// the gateway accepts. Acts as the idempotency key: a re-click on
+  /// "Mark received" with this field already set short-circuits the
+  /// Mollie call so we never double-refund. Null until refund issued.
+  mollieRefundId  String?       @unique
 
-  /// Logistics
+  /// Logistics — these two are the CUSTOMER'S outbound shipment back to
+  /// us. Either typed in by the customer or set by admin from the
+  /// notes form when the customer emails their tracking code.
   trackingNumber  String?
   trackingUrl     String?
   receivedAt      DateTime?
+
+  /// Prepaid return label we generated for the customer (A2). Sendcloud
+  /// hosts the label PDF; the URL is what we attach in the
+  /// "Your return is approved" email. Set on first successful
+  /// createSendcloudReturnLabel call; null when the customer ships at
+  /// their own cost (free-plan fallback or admin opted out).
+  returnLabelUrl   String?
+  /// Sendcloud's parcel id for the return. Used to dedupe a re-clicked
+  /// "Approve" button — if it's set, we don't burn another label cost.
+  sendcloudReturnParcelId String? @unique
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   items           ReturnItem[]
+  // 0..N credit notes per return — most resolve in a single CN, but
+  // multi-stage returns (goods refunded, postage refunded later) issue
+  // separate CN rows so the legal numbering stays clean.
+  creditNotes     CreditNote[]
 
   @@index([orderId])
   @@index([userId])
@@ -1014,7 +1210,7 @@ model Coupon {
 // ────────────────────────────────────────────────────────────────────────────
 //  USER-GENERATED CONTENT
 //  Manually curated photos of customers using a product. Surfaced on the
-//  PDP under "How customers use this". Sofia uploads via /admin/ugc and
+//  PDP under "How customers use this". an admin uploads via /admin/ugc and
 //  taps each photo to a single product. Soft-deleteable.
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -1112,13 +1308,15 @@ enum LoyaltyEventKind {
   EARNED_ORDER         // accrued from a paid order (pointsPerEur × subtotal)
   EARNED_BIRTHDAY      // birthday gift, awarded by daily cron on DoB anniversary
   EARNED_TASK          // approved manual-review task (Instagram repost etc.)
-  EARNED_MILESTONE     // every Nth order milestone (Sofia-tweakable)
+  EARNED_MILESTONE     // every Nth order milestone (an admin-tweakable)
   EARNED_REFERRAL      // referee placed first paid order → referrer gets bonus
   REFERRAL_BONUS       // legacy alias kept so older rows decode (not emitted by new code)
   REDEEMED_COUPON      // burned points → minted a % or fixed coupon
   REDEEMED_PRODUCT     // burned points → minted a 100%-off product coupon
   REDEEMED_GIFT_CARD   // burned points → minted a gift card
   ADJUSTED_ADMIN       // manual admin adjustment (gift / clawback) with a reason
+  REVERSED_REFUND      // automatic clawback when a paid order is refunded
+                        // (proportional to refundAmount / orderGrandTotal)
   EXPIRED              // points cleared by the annual expiry sweep
 }
 
@@ -1162,18 +1360,25 @@ model LoyaltyEvent {
   taskClaimId  String?          @db.Uuid
   rewardId     String?          @db.Uuid
   referralId   String?          @db.Uuid
+  /// Set on REVERSED_REFUND rows so we can match a reversal back to the
+  /// specific RMA that triggered it. One order can have multiple
+  /// returns; without returnId we couldn't tell whether a second return
+  /// has already had its loyalty clawback issued. The orderId column
+  /// alone is too coarse for that idempotency check.
+  returnId     String?          @db.Uuid
   createdAt    DateTime         @default(now())
 
   @@index([accountId])
   @@index([orderId])
   @@index([taskClaimId])
   @@index([rewardId])
+  @@index([returnId])
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-//  YU.R Club — admin-tweakable loyalty configuration.
+//  A-Beauty Club — admin-tweakable loyalty configuration.
 //
-//  Sofia owns these tables. Every economic lever — points-per-euro, birthday
+//  an admin owns these tables. Every economic lever — points-per-euro, birthday
 //  bonus, referral bonus, milestone cadence, tier thresholds, redemption
 //  costs, manual-task points — is editable from /admin/loyalty/* without
 //  touching code. Defaults live in the migration so a fresh install boots
@@ -1212,14 +1417,14 @@ model LoyaltySettings {
 model LoyaltyTier {
   id              String   @id @default(uuid()) @db.Uuid
   // Customer-facing name. Defaults seeded as Bud / Bloom / Aurora / Atelier;
-  // Sofia can rename.
+  // an admin can rename.
   name            String
   // Lifetime points needed to reach this tier. Customers move up monotonically.
   pointsThreshold Int
   // Optional icon key from the design system (matches LoyaltyTask.iconKey).
   iconKey         String?
   // For drawer rendering — tiers ordered ascending by threshold by default
-  // but Sofia can override with sortOrder if she wants a different display.
+  // but an admin can override with sortOrder if she wants a different display.
   sortOrder       Int      @default(0)
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
@@ -1237,7 +1442,7 @@ enum LoyaltyTaskKind {
 model LoyaltyTask {
   id               String          @id @default(uuid()) @db.Uuid
   // Stable handle — used by AUTO tasks the code references directly,
-  // e.g. "place-order" / "celebrate-birthday". Sofia can also create new
+  // e.g. "place-order" / "celebrate-birthday". an admin can also create new
   // MANUAL_REVIEW tasks with arbitrary slugs.
   slug             String          @unique
   title            String          // "Repost on Instagram"
@@ -1424,7 +1629,7 @@ model Review {
   // name the shopper typed into the public form.
   authorName  String?
   // Optional contact for guest reviews — never displayed publicly,
-  // used by Sofia in moderation if a review needs follow-up
+  // used by an admin in moderation if a review needs follow-up
   // (clarification, suspected-fake check, abuse).
   authorEmail String?
   rating     Int      // 1-5
@@ -1550,7 +1755,7 @@ model BannerTranslation {
 //  allowed (section, field) pairs lives in code as SITE_COPY_SCHEMA so the
 //  admin UI can render the right form without introspecting the table.
 //
-//  Empty DB = defaults from messages/{locale}.json. Sofia can fill rows
+//  Empty DB = defaults from messages/{locale}.json. an admin can fill rows
 //  locale-by-locale without blowing away fallbacks.
 
 model SiteCopy {
@@ -1569,7 +1774,7 @@ model SiteCopy {
 // ────────────────────────────────────────────────────────────────────────────
 //  TESTIMONIALS — homepage "Voices" strip, admin-editable
 // ────────────────────────────────────────────────────────────────────────────
-//  Independent of product Reviews — these are editorial quotes Sofia curates
+//  Independent of product Reviews — these are editorial quotes an admin curates
 //  for the homepage. Translations are per-locale so the same testimonial can
 //  be rewritten idiomatically in EN/NL/FR/RU.
 
@@ -1604,7 +1809,7 @@ model TestimonialTranslation {
 // ────────────────────────────────────────────────────────────────────────────
 //
 // Curated grid of Instagram posts surfaced on the homepage under the
-// journal section ("Join us on Instagram"). Sofia enters the post's
+// journal section ("Join us on Instagram"). an admin enters the post's
 // public URL + image URL from /admin/marketing/instagram. Clicking a
 // tile opens the actual IG post in a new tab. We deliberately don't
 // auto-pull from Meta — keeps the surface luxury-curated and avoids
@@ -1612,7 +1817,7 @@ model TestimonialTranslation {
 
 // ────────────────────────────────────────────────────────────────────────────
 //  INSTAGRAM — cache table populated by the Graph API sync (cron-driven).
-//  Manual CRUD has been retired — Sofia configures the access token in
+//  Manual CRUD has been retired — an admin configures the access token in
 //  /admin/marketing/instagram and a cron job pulls posts from her account
 //  every few hours. See src/lib/instagram/sync.ts for the sync logic.
 // ────────────────────────────────────────────────────────────────────────────
@@ -1645,7 +1850,7 @@ model InstagramPost {
   /// When the post was published on Instagram.
   postedAt      DateTime
 
-  /// Operational fields (Sofia tweakable in admin).
+  /// Operational fields (an admin tweakable in admin).
   isVisible     Boolean  @default(true)
   sortOrder     Int      @default(0)
 
@@ -1719,7 +1924,7 @@ model AiMessage {
 // ────────────────────────────────────────────────────────────────────────────
 //  CONTACT — inbound messages from the public contact form
 // ────────────────────────────────────────────────────────────────────────────
-//  Saved for audit even if Resend delivery fails.  Sofia reads/archives in
+//  Saved for audit even if Resend delivery fails.  an admin reads/archives in
 //  /admin/contact; replies happen out-of-band in her normal email client.
 
 enum ContactSubject {
@@ -1739,7 +1944,7 @@ enum ContactStatus {
 
 // ────────────────────────────────────────────────────────────────────────────
 //  EMAIL — per-locale copy overrides for the transactional layer
-//  Sofia edits in /admin/emails/[key]/edit; rows here win over the
+//  an admin edits in /admin/emails/[key]/edit; rows here win over the
 //  hardcoded STRINGS objects in src/lib/email/*.ts at send time. One
 //  row per (emailKey, locale, fieldKey) so a single field can be tweaked
 //  in NL only and the other 3 locales keep their defaults.
@@ -1772,7 +1977,7 @@ model ContactMessage {
   email       String
   phone       String?
   subject     ContactSubject  @default(GENERAL)
-  orderNumber String?                         // free-text reference, e.g. "YUR-20260422-0001"
+  orderNumber String?                         // free-text reference, e.g. "ABS-20260422-0001"
   message     String          @db.Text
   status      ContactStatus   @default(NEW)
   ipHash      String?                          // GDPR-minimised
@@ -1817,15 +2022,15 @@ model ConsentLog {
 
 // ────────────────────────────────────────────────────────────────────────────
 //  REDIRECTS — admin-editable URL aliases, keeps bookmarks + SEO alive when
-//  Sofia renames a product, category, or brand slug.
+//  an admin renames a product, category, or brand slug.
 // ────────────────────────────────────────────────────────────────────────────
 //  fromPath  → the OLD path the visitor hit (locale-prefixed, e.g. "/en/shop/old-serum")
 //  toPath    → the NEW path to send them to ("/en/shop/new-serum")
 //  code      → PERMANENT (301, SEO-transferring) or TEMPORARY (302)
 //  source    → "auto:product-slug" | "auto:category-slug" | "manual" — lets us
-//              distinguish redirects Sofia typed vs. auto-inserted ones she can
+//              distinguish redirects an admin typed vs. auto-inserted ones she can
 //              prune later.
-//  hits / lastHitAt — so Sofia can see which ones are still earning their keep.
+//  hits / lastHitAt — so an admin can see which ones are still earning their keep.
 
 enum RedirectCode {
   PERMANENT // HTTP 301 — permanent move, search engines transfer rank
@@ -1838,7 +2043,7 @@ model Redirect {
   toPath     String                            // starts with "/"
   code       RedirectCode @default(PERMANENT)
   source     String?                           // "auto:product-slug" | "manual" | …
-  note       String?                           // Sofia's own reminder to herself
+  note       String?                           // an admin's own reminder to herself
   hits       Int          @default(0)
   lastHitAt  DateTime?
   createdAt  DateTime     @default(now())
@@ -1851,7 +2056,7 @@ model Redirect {
 // ────────────────────────────────────────────────────────────────────────────
 //  AUDIT LOG
 // ────────────────────────────────────────────────────────────────────────────
-//  A linear trail of admin mutations so Sofia can see who changed what and
+//  A linear trail of admin mutations so an admin can see who changed what and
 //  roll back if something goes wrong. Entries are append-only (never edited)
 //  and NOT FK'd to User — we store an `actorEmail` snapshot so the row remains
 //  legible after the User row is tombstoned by GDPR erasure.
@@ -1886,7 +2091,7 @@ model AuditLog {
 // ────────────────────────────────────────────────────────────────────────────
 //  INVENTORY MOVEMENTS
 // ────────────────────────────────────────────────────────────────────────────
-//  Every time a variant's stock changes, append a row here. Lets Sofia see
+//  Every time a variant's stock changes, append a row here. Lets an admin see
 //  exactly where stock went — sold, returned, adjusted, imported — so she
 //  can reconcile when the warehouse count disagrees with the system count.
 //

@@ -53,11 +53,11 @@ export const BUSINESS_LEGAL_LINE =
   "VAT BE 1031.312.116 · IBAN BE96 0689 5761 0905 · BIC GKCCBEBB";
 
 /**
- * Wrap an inner HTML string in the standard YU.R email shell.
+ * Wrap an inner HTML string in the standard Asian Beauty Shop email shell.
  * Outer page background is rice (#F3EDE3); inner card is ivory (#FBF7EF).
  *
  * Header: a small hosted PNG logo (apple-touch-icon, 56×56) sits above a
- * thin "YU.R Skin Solution" wordmark eyebrow. If the recipient's client
+ * thin "Asian Beauty Shop" wordmark eyebrow. If the recipient's client
  * blocks images by default (Gmail, Outlook), the wordmark text alone still
  * brands the email. The Hangul seal "유알" was retired in the 2026-04
  * brand sweep — emails now match the site's wordmark-only treatment.
@@ -72,7 +72,7 @@ export function renderEmailShell(input: EmailShellInput): string {
   // and rely on the brand PNG icon set living at /brand/.
   const siteOrigin =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu";
+    "https://asianbeautyshop.eu";
   const logoUrl = `${siteOrigin}/brand/apple-touch-icon.png`;
 
   return /* html */ `<!doctype html>
@@ -99,12 +99,12 @@ export function renderEmailShell(input: EmailShellInput): string {
                 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 4px 0;">
                   <tr>
                     <td style="padding:0;">
-                      <img src="${logoUrl}" alt="YU.R" width="48" height="48" style="display:block;width:48px;height:48px;border:0;outline:none;text-decoration:none;background:#F3EDE3;" />
+                      <img src="${logoUrl}" alt="Asian Beauty Shop" width="48" height="48" style="display:block;width:48px;height:48px;border:0;outline:none;text-decoration:none;background:#F3EDE3;" />
                     </td>
                   </tr>
                 </table>
                 <div style="margin:0 0 4px 0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8A8A8A;">
-                  YU.R Skin Solution
+                  Asian Beauty Shop
                 </div>
 
                 ${input.body}

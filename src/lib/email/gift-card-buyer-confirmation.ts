@@ -25,7 +25,7 @@ type Strings = {
 
 const STRINGS: Record<Locale, Strings> = {
   EN: {
-    subject: "Your YU•R gift card has been sent",
+    subject: "Your Asian Beauty Shop gift card has been sent",
     preheader: "We've delivered the code on your behalf.",
     heading: "Your gift is on its way.",
     lede: (recipient, amount) =>
@@ -33,11 +33,11 @@ const STRINGS: Record<Locale, Strings> = {
     codeLabel: "A copy for your records",
     codeNote:
       "Keep this code in case the recipient needs you to forward it again.",
-    signoff: "Thank you,\nSofia · YU•R Skin Solution",
+    signoff: "Thank you,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
-    subject: "Je YU•R cadeaubon is verzonden",
+    subject: "Je Asian Beauty Shop cadeaubon is verzonden",
     preheader: "We hebben de code namens jou bezorgd.",
     heading: "Je cadeau is onderweg.",
     lede: (recipient, amount) =>
@@ -45,11 +45,11 @@ const STRINGS: Record<Locale, Strings> = {
     codeLabel: "Een kopie voor je administratie",
     codeNote:
       "Bewaar deze code voor het geval je de ontvanger opnieuw moet helpen.",
-    signoff: "Dank je,\nSofia · YU•R Skin Solution",
+    signoff: "Dank je,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
-    subject: "Votre carte cadeau YU•R a été envoyée",
+    subject: "Votre carte cadeau Asian Beauty Shop a été envoyée",
     preheader: "Nous avons remis le code en votre nom.",
     heading: "Votre cadeau est en route.",
     lede: (recipient, amount) =>
@@ -57,11 +57,11 @@ const STRINGS: Record<Locale, Strings> = {
     codeLabel: "Une copie pour vos archives",
     codeNote:
       "Gardez ce code au cas où vous auriez besoin de le renvoyer au destinataire.",
-    signoff: "Merci,\nSofia · YU•R Skin Solution",
+    signoff: "Merci,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
-    subject: "Подарочная карта YU•R отправлена",
+    subject: "Подарочная карта Asian Beauty Shop отправлена",
     preheader: "Мы передали код от вашего имени.",
     heading: "Подарок в пути.",
     lede: (recipient, amount) =>
@@ -69,7 +69,7 @@ const STRINGS: Record<Locale, Strings> = {
     codeLabel: "Копия для вашего архива",
     codeNote:
       "Сохраните этот код, если потребуется переслать его повторно.",
-    signoff: "Спасибо,\nСофия · YU•R Skin Solution",
+    signoff: "Спасибо,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };

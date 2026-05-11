@@ -7,7 +7,7 @@
 // Quiet by default — text-style typography, no neon green or sparkles.
 // We want the customer to register the carrot and act, not feel sold to.
 //
-// Hidden when the threshold is 0 (Sofia disabled the perk in admin) or
+// Hidden when the threshold is 0 (an admin disabled the perk in admin) or
 // when the cart is empty (the surrounding components also gate that).
 // ─────────────────────────────────────────────────────────────────────────
 

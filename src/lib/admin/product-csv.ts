@@ -17,7 +17,7 @@
 //   • Column keys are snake_case ASCII. Headers are case-insensitive.
 //   • Semicolons separate multi-value pivot slugs (e.g. "cleanser;toner").
 //     Commas would collide with CSV field separators.
-//   • Images are intentionally OUT OF SCOPE. Sofia uploads images through
+//   • Images are intentionally OUT OF SCOPE. an admin uploads images through
 //     the existing admin image editor — keeping the CSV data-only lets the
 //     pure parser stay offline-testable, and avoids having to fetch remote
 //     URLs from the request handler.
@@ -28,7 +28,7 @@ import { AudienceCategory, Locale, ProductStatus } from "@prisma/client";
 // ────────── public types ────────────────────────────────────────────────
 
 /** All columns the importer understands. Extra columns on the CSV are
- *  tolerated (ignored) so Sofia can round-trip an export without trimming.
+ *  tolerated (ignored) so an admin can round-trip an export without trimming.
  *  Bumping this list is the only change needed to add a new field. */
 export const CSV_COLUMNS = [
   // identity / status
@@ -583,7 +583,7 @@ export function validateRow(
 }
 
 // Minimal country-name → ISO-3166-α2 map for the supplier sheets we see.
-// Sofia almost always sources from Korea; the rest are common K-beauty
+// an admin almost always sources from Korea; the rest are common K-beauty
 // adjacent. Not exhaustive — anything we miss falls through as a row error
 // so it gets fixed at upload time rather than landing as bad data.
 const COUNTRY_NAME_TO_ISO: Record<string, string> = {
@@ -728,8 +728,8 @@ const CSV_EXAMPLE: Record<string, string> = {
   how_to_use_en:
     "<p>Apply 2–3 drops to damp skin after toning, morning and evening.</p>",
   warnings_en: "Avoid contact with eyes. Discontinue use if irritation occurs.",
-  seo_title_en: "Hyaluron Glow Serum — YU.R",
-  seo_description_en: "Hydrating hyaluronic serum from YU.R.",
+  seo_title_en: "Hyaluron Glow Serum — Asian Beauty Shop",
+  seo_description_en: "Hydrating hyaluronic serum from Asian Beauty Shop.",
   name_nl: "Hyaluron Glow Serum",
   slug_nl: "hyaluron-glow-serum",
   short_description_nl: "",

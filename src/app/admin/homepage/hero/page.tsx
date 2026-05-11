@@ -256,7 +256,7 @@ function VariantCard({
 
 // ─────────────────────────────────────────────────────────────────────────
 // One row of the carousel-product editor — three side-by-side fields
-// (Label / Image / Link) plus a slot index pill on the left so Sofia
+// (Label / Image / Link) plus a slot index pill on the left so an admin
 // can match the form to the carousel order.
 // ─────────────────────────────────────────────────────────────────────────
 

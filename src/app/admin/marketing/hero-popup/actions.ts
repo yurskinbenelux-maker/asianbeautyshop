@@ -7,7 +7,7 @@
 //
 // Storage shape lives in src/lib/queries/hero-popup.ts. Field validation
 // is via Zod with generous max lengths (eyebrow 80, headline 160, etc.) —
-// the public popup truncates with ellipsis if Sofia goes wild, but the
+// the public popup truncates with ellipsis if an admin goes wild, but the
 // schema accepts it.
 //
 // All actions require the `homepage.edit` capability so only the
@@ -113,7 +113,7 @@ export async function saveHeroPopupAction(formData: FormData): Promise<void> {
 
   await writeHeroPopupSettings(next);
 
-  // Public layout caches the popup config — bust it so Sofia sees her
+  // Public layout caches the popup config — bust it so an admin sees her
   // change without a hard refresh.
   revalidatePath("/", "layout");
   redirect("/admin/marketing/hero-popup?saved=1");
@@ -158,7 +158,7 @@ export async function translateHeroPopupAction(
       }),
     );
 
-    // Persist each translation into the saved settings so Sofia sees
+    // Persist each translation into the saved settings so an admin sees
     // them on next page load AND if she navigates away. Read-modify-
     // write — admin traffic is low enough that the race is fine.
     const current = await readHeroPopupSettings();

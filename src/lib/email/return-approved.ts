@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Return approved email — sent once Sofia reviews a return request and is
+// Return approved email — sent once an admin reviews a return request and is
 // ready for the parcel to ship back.  This is the one that carries the
 // prepaid label (if any), the return address, and the 14-day "please ship
 // within" window required by EU law.
@@ -104,7 +104,7 @@ const STRINGS: Record<Locale, Strings> = {
       "We refund to the original payment method once the parcel is received and inspected. You'll get a confirmation email the moment the refund is issued.",
     ctaLabel: "Download return label",
     ctaAccount: "View my order",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
@@ -144,7 +144,7 @@ const STRINGS: Record<Locale, Strings> = {
       "We betalen terug via de oorspronkelijke betaalmethode zodra het pakket is ontvangen en gecontroleerd. Je krijgt een bevestigingsmail zodra de terugbetaling is uitgevoerd.",
     ctaLabel: "Retourlabel downloaden",
     ctaAccount: "Bestelling bekijken",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
@@ -184,7 +184,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Nous remboursons sur le moyen de paiement initial dès que le colis est reçu et contrôlé. Vous recevrez un e-mail de confirmation au moment où le remboursement est émis.",
     ctaLabel: "Télécharger l'étiquette",
     ctaAccount: "Voir ma commande",
-    signoff: "Avec attention,\nSofia · YU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
@@ -224,7 +224,7 @@ const STRINGS: Record<Locale, Strings> = {
       "Мы вернём деньги на исходный способ оплаты после получения и проверки посылки. Вы получите подтверждающее письмо в момент оформления возврата.",
     ctaLabel: "Скачать этикетку",
     ctaAccount: "Посмотреть заказ",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -240,7 +240,7 @@ export type ReturnApprovedEmail = {
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 

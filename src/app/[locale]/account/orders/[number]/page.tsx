@@ -24,6 +24,7 @@ import { prisma } from "@/lib/prisma";
 import { formatEur, priceLocale } from "@/lib/utils";
 import { OrderReviewForm } from "@/components/account/order-review-form";
 import { ReorderButton } from "@/components/account/reorder-button";
+import { OrderTimeline } from "@/components/account/order-timeline";
 
 type Props = { params: Promise<{ locale: string; number: string }> };
 
@@ -104,6 +105,23 @@ export default async function OrderDetailPage({ params }: Props) {
           <ReorderButton orderNumber={order.publicNumber} urlLocale={locale} />
         </div>
       </div>
+
+      <div className="rule my-10" />
+
+      {/* ── timeline (G1) — primary "where is my parcel" answer.
+       *  Symmetric to the return timeline (A3) so the two pages
+       *  read as a coherent system. Surfaces tracking on SHIPPED
+       *  and collapses to a closure card for CANCELLED/REFUNDED. */}
+      <OrderTimeline
+        status={order.status}
+        formatDate={(d) => dateFmt.format(d)}
+        placedAt={order.placedAt}
+        paidAt={order.paidAt}
+        shippedAt={order.shippedAt}
+        deliveredAt={order.deliveredAt}
+        trackingUrl={order.trackingUrl}
+        trackingNumber={order.trackingNumber}
+      />
 
       <div className="rule my-10" />
 
@@ -258,8 +276,16 @@ export default async function OrderDetailPage({ params }: Props) {
               </a>
             )}
             {order.invoiceUrl && (
+              // H7 fix: `order.invoiceUrl` historically holds the raw
+              // Supabase Storage PATH (e.g. "2026/INV-2026-00014.pdf"),
+              // not a clickable URL. Using it as <a href> resolved
+              // relative to the current page → 404 ("Nothing here.").
+              // Route through the customer download endpoint which
+              // mints a 60-second signed URL and 302-redirects. The
+              // endpoint also re-checks order ownership, so this is
+              // safer than handing out a raw signed URL anyway.
               <a
-                href={order.invoiceUrl}
+                href={`/account/orders/${order.publicNumber}/invoice`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-block h-11 border border-ink/20 px-5 text-[12px] uppercase tracking-label text-ink transition-colors hover:border-ink hover:text-vermilion leading-[2.75rem]"
@@ -267,7 +293,16 @@ export default async function OrderDetailPage({ params }: Props) {
                 {t("order_download_invoice")}
               </a>
             )}
-            {(order.status === "DELIVERED" || order.status === "SHIPPED") && (
+            {/* Returns/cancellation entry point. Visible from the moment
+                payment clears — pre-ship requests are handled as
+                cancellations on the admin side, post-ship as full RMAs.
+                Belgian/EU 14-day cooling-off clock still starts at
+                delivery; this just lets customers self-serve initiate
+                the request without waiting for a shipped/delivered
+                status. Set: PAID, FULFILLING, SHIPPED, DELIVERED. */}
+            {(["PAID", "FULFILLING", "SHIPPED", "DELIVERED"] as const).includes(
+              order.status as "PAID" | "FULFILLING" | "SHIPPED" | "DELIVERED",
+            ) && (
               <Link
                 href={`/account/orders/${order.publicNumber}/return`}
                 className="inline-block h-11 border border-ink/20 px-5 text-[12px] uppercase tracking-label text-ink transition-colors hover:border-ink hover:text-vermilion leading-[2.75rem]"

@@ -3,7 +3,7 @@
 // /admin overview.
 //
 // Doesn't drive any decisions on its own — it's a reassurance + early-
-// warning signal. Sofia checks this when she's wondering "are we busy?"
+// warning signal. an admin checks this when she's wondering "are we busy?"
 // or when the site feels slow and she wants to know if it's traffic.
 //
 // Visual states match the VAT widget pattern: calm cream when comfy,
@@ -102,7 +102,7 @@ export function VisitorCountWidget({ data }: { data: VisitorCount }) {
         )}
       </div>
 
-      {/* Top paths — gives Sofia a sense of what visitors are looking at */}
+      {/* Top paths — gives an admin a sense of what visitors are looking at */}
       {topPaths.length > 0 ? (
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-ink-mid">
           <span className="uppercase tracking-label">Top paths:</span>

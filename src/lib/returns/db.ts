@@ -45,8 +45,11 @@ type RawReturn = {
   adminNotes: string | null;
   refundAmount: unknown | null;
   refundedAt: Date | null;
+  mollieRefundId: string | null;
   trackingNumber: string | null;
   trackingUrl: string | null;
+  returnLabelUrl: string | null;
+  sendcloudReturnParcelId: string | null;
   receivedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -104,8 +107,11 @@ function mapRow(raw: RawReturn): ReturnRow {
     adminNotes: raw.adminNotes,
     refundAmount: toNumberOrNull(raw.refundAmount),
     refundedAt: raw.refundedAt,
+    mollieRefundId: raw.mollieRefundId,
     trackingNumber: raw.trackingNumber,
     trackingUrl: raw.trackingUrl,
+    returnLabelUrl: raw.returnLabelUrl,
+    sendcloudReturnParcelId: raw.sendcloudReturnParcelId,
     receivedAt: raw.receivedAt,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
@@ -118,7 +124,7 @@ function mapRow(raw: RawReturn): ReturnRow {
 /**
  * Mint a reference the customer will see — appends "-R<n>" to the order's
  * public number, incrementing per existing return against that order.
- * Example: YUR-1042 → YUR-1042-R1, YUR-1042-R2, …
+ * Example: ABS-1042 → ABS-1042-R1, ABS-1042-R2, …
  */
 async function mintReturnReference(orderPublicNumber: string): Promise<string> {
   const count = (await prisma.returnRequest.count({
@@ -262,6 +268,69 @@ export async function createReturnRequest(
   return mapRow(created);
 }
 
+// ────────── admin field patch (H1 fix) ───────────────────────────────────
+//
+// Why this exists separately from transitionReturnStatus:
+//
+// The admin notes/refund/tracking form previously routed through
+// transitionReturnStatus(returnId, current.status, { ... }) as a
+// "no-op transition" — but ALLOWED_TRANSITIONS doesn't include self-
+// transitions (APPROVED→APPROVED, RECEIVED→RECEIVED, etc.), so the
+// canTransition guard inside the helper threw `transition_forbidden`,
+// the action swallowed the error, and the form looked like it saved
+// but nothing persisted.
+//
+// Symptom Max saw: enter refundAmount → click save → field blank
+// after refresh. Cascading consequence: A1's "Mark received"
+// short-circuited because refundAmount was 0, no Mollie refund fired,
+// no credit note generated, no loyalty clawback, VAT YTD widget
+// didn't subtract. Single bug masking the entire refund pipeline.
+//
+// This helper bypasses the transition guard (there's nothing to
+// validate — the status isn't changing) and just writes the patch
+// fields. Refund amount, admin notes, and tracking info can all be
+// edited at any status without policy concerns.
+export async function updateReturnAdminFields(
+  returnId: string,
+  patch: {
+    adminNotes?: string | null;
+    refundAmount?: number | null;
+    trackingNumber?: string | null;
+    trackingUrl?: string | null;
+  },
+): Promise<ReturnRow> {
+  const current = await getReturnByIdForAdmin(returnId);
+  if (!current) throw new Error("return_not_found");
+
+  // Only write fields that were explicitly provided. `undefined` means
+  // "form didn't include this field, leave it alone"; `null` means
+  // "user cleared it, write null to the DB". The same convention
+  // transitionReturnStatus uses, just without the transition guard.
+  const data: Record<string, unknown> = {};
+  if (patch.adminNotes !== undefined) data.adminNotes = patch.adminNotes;
+  if (patch.refundAmount !== undefined) data.refundAmount = patch.refundAmount;
+  if (patch.trackingNumber !== undefined)
+    data.trackingNumber = patch.trackingNumber;
+  if (patch.trackingUrl !== undefined) data.trackingUrl = patch.trackingUrl;
+
+  if (Object.keys(data).length === 0) {
+    // No-op — nothing to update. Return current row unchanged.
+    return current;
+  }
+
+  const updated = (await prisma.returnRequest.update({
+    where: { id: returnId },
+    data,
+    include: {
+      items: true,
+      order: { select: { publicNumber: true, email: true } },
+      user: { select: { firstName: true, lastName: true } },
+    },
+  })) as RawReturn;
+
+  return mapRow(updated);
+}
+
 // ────────── status transitions (admin) ───────────────────────────────────
 
 export async function transitionReturnStatus(
@@ -337,7 +406,7 @@ export async function transitionReturnStatus(
     })) as RawReturn;
 
     // Restock — reason RETURN, orderId from the return's parent order so
-    // Sofia can trace "why did stock go up on 14 Feb?" back to YUR-1042-R1.
+    // an admin can trace "why did stock go up on 14 Feb?" back to ABS-1042-R1.
     for (const pair of restockPairs) {
       await applyMovement(tx, {
         variantId: pair.variantId,

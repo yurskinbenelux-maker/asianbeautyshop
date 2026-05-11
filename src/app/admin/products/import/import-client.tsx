@@ -10,7 +10,7 @@
 //
 //   2. Preview — the server returns a parsed preview (NEW / UPDATE /
 //      ERROR for each row + warnings). We render a table with expandable
-//      error/warning details so Sofia can fix the CSV offline and re-
+//      error/warning details so an admin can fix the CSV offline and re-
 //      upload without guessing.
 //
 //   3. Commit — we re-send the CSV text to commitProductImport, which
@@ -346,7 +346,7 @@ function Stat({
 // ────────── preview table ──────────────────────────────────────────────
 
 function PreviewTable({ rows }: { rows: PreviewRow[] }) {
-  // Sort errors first so Sofia can scan them without scrolling. Inside each
+  // Sort errors first so an admin can scan them without scrolling. Inside each
   // group, keep CSV order for easy cross-reference with the source file.
   const sorted = useMemo(() => {
     return [...rows].sort((a, b) => {

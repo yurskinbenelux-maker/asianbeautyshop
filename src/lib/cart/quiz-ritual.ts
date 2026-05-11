@@ -63,7 +63,7 @@ export async function loadQuizRitualIntoCart(args: {
 
   // Read live quiz discount % at the moment we materialise the cart
   // lines — the value is frozen onto each CartItem.discountPercent, so
-  // a customer mid-checkout doesn't get a surprise rate change if Sofia
+  // a customer mid-checkout doesn't get a surprise rate change if an admin
   // edits /admin/marketing/promotions during their session.
   const { percentOff: quizPercent } = await getQuizRewardConfig();
 

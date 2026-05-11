@@ -2,7 +2,7 @@
 // Admin contact-inquiry notification — sent to ADMIN_NOTIFICATION_EMAIL
 // whenever a customer submits /[locale]/contact.
 //
-// English-only (internal). The goal is that Sofia can reply straight from
+// English-only (internal). The goal is that an admin can reply straight from
 // her normal inbox: we set Reply-To to the customer's address so "Reply"
 // in Gmail/Outlook does the right thing without her opening the admin.
 //
@@ -20,7 +20,7 @@ import { prisma } from "@/lib/prisma";
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 
@@ -33,7 +33,7 @@ const SUBJECT_LABEL: Record<string, string> = {
 };
 
 /**
- * Fetch the contact row and render an internal summary to Sofia.
+ * Fetch the contact row and render an internal summary to an admin.
  * Returns { sent, reason? }.
  */
 export async function sendContactInquiryEmail(
@@ -56,7 +56,7 @@ export async function sendContactInquiryEmail(
   const subject = `[Contact] ${subjectLabel} — ${msg.name}`;
   const adminUrl = `${siteUrl()}/admin/contact/${encodeURIComponent(msg.id)}`;
 
-  // The meta block lists the known identifiers so Sofia doesn't have to
+  // The meta block lists the known identifiers so an admin doesn't have to
   // open the admin for the common case (read the message, reply straight
   // away via Gmail).
   const meta = /* html */ `
@@ -160,7 +160,7 @@ export async function sendContactInquiryEmail(
       subject,
       html,
       text,
-      // Critical: Reply-To points at the customer so Sofia's "Reply" works.
+      // Critical: Reply-To points at the customer so an admin's "Reply" works.
       replyTo: msg.email,
       tags: [
         { name: "type", value: "contact_inquiry" },

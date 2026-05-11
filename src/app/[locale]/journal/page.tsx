@@ -3,7 +3,7 @@
 //
 // Every PUBLISHED post in the user's locale (with EN fallback) in a calm
 // editorial grid. When the admin hasn't published anything yet, we render
-// a gentle "something is coming" state rather than an empty page — Sofia
+// a gentle "something is coming" state rather than an empty page — an admin
 // has been told by me that posts will ship in the first week of August,
 // so an empty state is possible up until then.
 //
@@ -48,7 +48,7 @@ export default async function JournalIndexPage({ params }: Props) {
 
   // Header trio is admin-editable. Empty-state, meta titles and the
   // by-line fallback stay in the messages catalogue. siteCopyOr() honours
-  // the SITE_COPY_VOID sentinel — if Sofia hides a field, this returns ""
+  // the SITE_COPY_VOID sentinel — if an admin hides a field, this returns ""
   // and the page conditionally drops the wrapper below.
   const header = {
     eyebrow: siteCopyOr(copy, "journal.index", "eyebrow", t("eyebrow")),

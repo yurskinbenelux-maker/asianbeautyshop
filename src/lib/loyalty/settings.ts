@@ -1,13 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────
 // LoyaltySettings — read/write the singleton config row.
 //
-// All economic levers Sofia can change live here:
+// All economic levers an admin can change live here:
 //   pointsPerEur, birthdayPoints, milestone cadence, referrer/referee
 //   bonuses, expiry windows, master on/off switch.
 //
 // First-touch: if no settings row exists, the defaults below are used and
 // the row is lazily created on the first read so /admin/loyalty/settings
-// has something to edit when Sofia opens it.
+// has something to edit when an admin opens it.
 // ─────────────────────────────────────────────────────────────────────────
 
 import "server-only";
@@ -32,7 +32,7 @@ export const LOYALTY_DEFAULTS = {
 } as const;
 
 /** Read the singleton settings row. Lazily creates it on first call so
- *  Sofia's admin form always has a row to update. Idempotent under race —
+ *  an admin's admin form always has a row to update. Idempotent under race —
  *  if two requests both miss, the unique constraint on `singleton` makes
  *  one of the inserts fall back to a read. */
 export async function getLoyaltySettings(): Promise<LoyaltySettings> {

@@ -3,12 +3,12 @@
 //
 // Reuses the same filter semantics as the list page so "what you see is
 // what you export".  We cap the export at 10,000 rows per request; if
-// Sofia ever needs more than that, she can narrow the date range.
+// an admin ever needs more than that, she can narrow the date range.
 //
 // Two formats:
 //   ?format=summary   (default) one row per order — for quick inventory
 //                      reviews and customer-level reporting
-//   ?format=items               one row per OrderItem — the shape Sofia's
+//   ?format=items               one row per OrderItem — the shape an admin's
 //                      accountant wants for VAT filings (per-line tax rate
 //                      + tax amount + SKU).
 //

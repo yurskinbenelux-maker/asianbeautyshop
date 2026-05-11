@@ -6,7 +6,7 @@
 // UX:
 //   • One card per field
 //   • Four inputs per card, stacked (EN, NL, FR, RU)
-//   • Each input shows the JSON fallback as its placeholder so Sofia can
+//   • Each input shows the JSON fallback as its placeholder so an admin can
 //     see what will render if she leaves the box blank
 //   • Long fields (lede, body) get a textarea, short fields get an input
 //   • A "Hide on the site" checkbox per field. Tick it → the public site
@@ -178,7 +178,7 @@ function FieldFieldset({
         aria-hidden={voided}
       >
         {/* Translate from EN button — sits above the locale stack, fills
-            NL / FR / RU at once. Field-level (not section-level) so Sofia
+            NL / FR / RU at once. Field-level (not section-level) so an admin
             can translate one card without touching others. */}
         {!voided && (
           <TranslateAllNonEnButton

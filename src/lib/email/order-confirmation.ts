@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Order confirmation email — sent the moment paymentStatus flips to PAID.
 //
-// Customer-facing. Written in Sofia's voice: warm, understated, editorial.
+// Customer-facing. Written in an admin's voice: warm, understated, editorial.
 // All copy localised (EN / NL / FR / RU) based on the order's locale.
 //
 // Exported helpers:
@@ -17,6 +17,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { Locale } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import {
   getResend,
   fromTransactional,
@@ -56,13 +57,20 @@ type Strings = {
   /** Used when the order has zero physical items — replaces `nextBody`. */
   nextBodyDigital: string;
   cta: string;
+  /** G12 — secondary "Download invoice (PDF)" link rendered below the
+   *  main CTA. The PDF is already attached to the email, but corporate
+   *  spam filters strip attachments and customers occasionally need
+   *  the file from a different device. The link points at
+   *  /[locale]/account/orders/[number]/invoice which auth-gates and
+   *  serves a signed Storage URL. */
+  ctaInvoice: string;
   signoff: string;
   footer: string;
 };
 
 export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
   EN: {
-    subject: (n) => `Your order ${n} is confirmed — YU.R Skin Solution`,
+    subject: (n) => `Your order ${n} is confirmed — Asian Beauty Shop`,
     preheader: "Thank you for your order. A skincare routine is on its way to you.",
     heading: (f) => (f ? `Thank you, ${f}.` : "Thank you."),
     lede:
@@ -83,11 +91,12 @@ export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
     nextBodyDigital:
       "Your gift card code is in your inbox now. You can also see it any time in your account — codes apply at checkout, balances stack across orders.",
     cta: "View your order",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    ctaInvoice: "Download invoice (PDF)",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
-    subject: (n) => `Je bestelling ${n} is bevestigd — YU.R Skin Solution`,
+    subject: (n) => `Je bestelling ${n} is bevestigd — Asian Beauty Shop`,
     preheader: "Bedankt voor je bestelling. Je huidverzorgingsroutine is onderweg.",
     heading: (f) => (f ? `Bedankt, ${f}.` : "Bedankt."),
     lede:
@@ -108,11 +117,12 @@ export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
     nextBodyDigital:
       "Je cadeaubon-code staat nu in je inbox. Je kan hem ook altijd in je account bekijken — codes worden bij het afrekenen toegepast, en saldi blijven staan tussen bestellingen.",
     cta: "Bestelling bekijken",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    ctaInvoice: "Factuur downloaden (PDF)",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
-    subject: (n) => `Votre commande ${n} est confirmée — YU.R Skin Solution`,
+    subject: (n) => `Votre commande ${n} est confirmée — Asian Beauty Shop`,
     preheader: "Merci pour votre commande. Un routine de soin est en route.",
     heading: (f) => (f ? `Merci, ${f}.` : "Merci."),
     lede:
@@ -133,11 +143,12 @@ export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
     nextBodyDigital:
       "Votre code carte cadeau est dans votre boîte mail. Vous pouvez aussi le retrouver à tout moment dans votre compte — les codes s'appliquent en caisse, et le solde se conserve d'une commande à l'autre.",
     cta: "Voir ma commande",
-    signoff: "Avec soin,\nSofia · YU.R Skin Solution",
+    ctaInvoice: "Télécharger la facture (PDF)",
+    signoff: "Avec soin,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
-    subject: (n) => `Ваш заказ ${n} подтверждён — YU.R Skin Solution`,
+    subject: (n) => `Ваш заказ ${n} подтверждён — Asian Beauty Shop`,
     preheader: "Спасибо за заказ. Ваш рутина уже в пути.",
     heading: (f) => (f ? `Спасибо, ${f}.` : "Спасибо."),
     lede:
@@ -158,7 +169,8 @@ export const ORDER_CONFIRMATION_STRINGS: Record<Locale, Strings> = {
     nextBodyDigital:
       "Код подарочной карты уже у вас в почте. Также вы всегда можете увидеть его в своём аккаунте — коды применяются при оформлении заказа, баланс сохраняется между покупками.",
     cta: "Посмотреть заказ",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    ctaInvoice: "Скачать счёт-фактуру (PDF)",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -174,13 +186,21 @@ export type OrderConfirmationEmail = {
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 
 function accountOrderUrl(order: EmailOrder): string {
   const locale = order.locale.toLowerCase();
   return `${siteUrl()}/${locale}/account/orders/${encodeURIComponent(order.publicNumber)}`;
+}
+
+/** G12 — customer-facing invoice download. Auth-gates and serves a
+ *  signed Storage URL via /[locale]/account/orders/[number]/invoice.
+ *  Works as a fallback when the email's PDF attachment was stripped
+ *  by spam filters or the customer is on a different device. */
+function accountInvoiceUrl(order: EmailOrder): string {
+  return `${accountOrderUrl(order)}/invoice`;
 }
 
 /**
@@ -313,6 +333,17 @@ export function buildOrderConfirmationEmail(
 
     ${renderCtaButton(accountOrderUrl(order), s.cta)}
 
+    <!-- G12 — secondary invoice download link below the main CTA.
+         Inline text-link styling (not a second big button) so the
+         primary action ("View your order") stays the visual anchor.
+         Useful when corporate spam filters strip the attached PDF. -->
+    <p style="margin:14px 0 0 0;font-size:13px;line-height:1.65;color:#5E5751;">
+      <a
+        href="${esc(accountInvoiceUrl(order))}"
+        style="color:#5E5751;text-decoration:underline;text-decoration-color:#C8102E;text-underline-offset:4px;"
+      >${esc(s.ctaInvoice)}</a>
+    </p>
+
     <p style="margin:20px 0 0 0;font-size:14px;line-height:1.65;color:#1A1A1A;white-space:pre-line;">
       ${esc(s.signoff)}
     </p>
@@ -356,6 +387,7 @@ export function buildOrderConfirmationEmail(
     `${s.nextLabel}: ${s.nextBody}`,
     "",
     `${s.cta}: ${accountOrderUrl(order)}`,
+    `${s.ctaInvoice}: ${accountInvoiceUrl(order)}`,
     "",
     s.signoff,
   ]
@@ -386,13 +418,64 @@ export async function sendOrderConfirmationEmail(
   orderId: string,
   options: { invoicePdf?: OrderConfirmationAttachment } = {},
 ): Promise<{ sent: boolean; reason?: string }> {
+  // ── Idempotency guard ────────────────────────────────────────────────
+  // Three call sites can fan in here for the same order:
+  //   1. sync-mollie.ts on the Mollie webhook into-PAID transition
+  //      (passes invoicePdf in `options`).
+  //   2. place-order.ts free-order shortcut (gift-card-only payment).
+  //   3. admin/orders/actions.ts notifyOrderPaid when an admin manually
+  //      flips status to PAID.
+  // Without dedup we'd send two emails — one with the PDF, one without —
+  // which is exactly what Max saw in his test inbox. We use OrderEvent
+  // as a permanent audit trail: if a row of kind email.confirmation.sent
+  // already exists for this order, skip.
+  const alreadySent = await prisma.orderEvent.findFirst({
+    where: { orderId, kind: "email.confirmation.sent" },
+    select: { id: true },
+  });
+  if (alreadySent) {
+    return { sent: false, reason: "already-sent" };
+  }
+
   const order = await getOrderForEmail(orderId);
   if (!order) {
     return { sent: false, reason: "order-not-found" };
   }
 
+  // ── Auto-attach the invoice PDF ──────────────────────────────────────
+  // If the caller already produced one (sync-mollie.ts does, in-flight,
+  // because the buffer is fresh in memory there), use it. Otherwise,
+  // call issueInvoiceForOrder which is idempotent on (orderId): if the
+  // Invoice row already exists, it downloads the PDF from Supabase
+  // Storage; if not, it mints + uploads + returns the buffer. This
+  // means free-order and admin-paid paths get the same one-email-with-
+  // attachment outcome the Mollie path gets, with no per-call-site
+  // boilerplate.
+  //
+  // Wrapped in try/catch — a Storage / pdfkit hiccup must never block
+  // the confirmation email itself. If we can't load the PDF, we still
+  // send the email, just without the attachment, and log so admin can
+  // re-issue from /admin/invoices later.
+  let attachment: OrderConfirmationAttachment | undefined =
+    options.invoicePdf;
+  if (!attachment) {
+    try {
+      const { issueInvoiceForOrder } = await import("@/lib/invoices/issue");
+      const inv = await issueInvoiceForOrder(orderId);
+      attachment = {
+        filename: `${inv.number}.pdf`,
+        content: inv.pdfBuffer,
+      };
+    } catch (err) {
+      console.error(
+        `[email] could not load/issue invoice for order ${orderId} — sending without attachment`,
+        err,
+      );
+    }
+  }
+
   // Pull any admin-edited copy overrides for this email + locale.
-  // Empty Map when Sofia hasn't tweaked anything → builder uses defaults.
+  // Empty Map when an admin hasn't tweaked anything → builder uses defaults.
   const overrides = await getEmailOverrides("order-confirmation", order.locale);
   const { subject, html, text } = buildOrderConfirmationEmail(order, { overrides });
 
@@ -406,16 +489,8 @@ export async function sendOrderConfirmationEmail(
     return { sent: false, reason: "resend-not-configured" };
   }
 
-  // Resend accepts attachments as `{ filename, content }` where content
-  // is either a Buffer or a base64 string. Buffer is what our PDF
-  // pipeline produces, so we forward it directly.
-  const attachments = options.invoicePdf
-    ? [
-        {
-          filename: options.invoicePdf.filename,
-          content: options.invoicePdf.content,
-        },
-      ]
+  const attachments = attachment
+    ? [{ filename: attachment.filename, content: attachment.content }]
     : undefined;
 
   try {
@@ -434,6 +509,33 @@ export async function sendOrderConfirmationEmail(
         { name: "order", value: order.publicNumber },
       ],
     });
+
+    // Stamp the audit trail BEFORE returning success — the row is the
+    // dedup gate for any subsequent call. Wrapped in catch because a
+    // failure here is bookkeeping, not user-facing: the email did go
+    // out, so we don't want to claim "not sent". Worst case a duplicate
+    // sneaks through; the alreadySent check catches the next attempt.
+    await prisma.orderEvent
+      .create({
+        data: {
+          orderId,
+          kind: "email.confirmation.sent",
+          message: attachment
+            ? `Confirmation email sent with invoice ${attachment.filename}`
+            : "Confirmation email sent (no invoice attached)",
+          metadata: {
+            hasAttachment: Boolean(attachment),
+            invoiceFilename: attachment?.filename ?? null,
+          },
+        },
+      })
+      .catch((err) => {
+        console.error(
+          `[email] failed to write OrderEvent for confirmation send ${order.publicNumber}`,
+          err,
+        );
+      });
+
     return { sent: true };
   } catch (err) {
     console.error(

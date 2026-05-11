@@ -2,7 +2,7 @@
 // /admin/testimonials — list page for the homepage "voices" strip.
 //
 // Server component: reads every testimonial (regardless of isActive) so
-// Sofia can see hidden ones too, then renders a compact table with the
+// an admin can see hidden ones too, then renders a compact table with the
 // EN-preview quote, language count, rating, and active toggle.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -10,14 +10,11 @@ import Link from "next/link";
 import { Plus, Quote, Eye, EyeOff } from "lucide-react";
 import { listAdminTestimonials } from "@/lib/queries/admin-testimonials";
 import { toggleTestimonialActiveAction } from "./actions";
+import { ADMIN_DATE_FMT } from "@/lib/utils/format-date";
 
 export const dynamic = "force-dynamic";
 
-const DATE = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-});
+const DATE = ADMIN_DATE_FMT;
 
 export default async function AdminTestimonialsPage() {
   const rows = await listAdminTestimonials();

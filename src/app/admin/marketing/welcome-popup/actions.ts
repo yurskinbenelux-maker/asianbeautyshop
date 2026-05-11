@@ -3,10 +3,10 @@
 //
 // All fields go through Zod for length caps; unknown fields are dropped.
 // On success we redirect with ?saved=1 so the page renders a success
-// toast and Sofia can immediately verify her change on the homepage.
+// toast and an admin can immediately verify her change on the homepage.
 //
 // Bust the public layout cache so the popup picks up the new copy/image
-// without Sofia having to hard-refresh.
+// without an admin having to hard-refresh.
 // ─────────────────────────────────────────────────────────────────────────
 
 "use server";

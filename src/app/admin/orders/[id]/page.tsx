@@ -6,7 +6,7 @@
 //   • RIGHT — status actions, tracking form, refund form, admin notes,
 //             invoice URL, event timeline
 //
-// Everything mutation-y is a small focused sub-form so Sofia can edit
+// Everything mutation-y is a small focused sub-form so an admin can edit
 // one thing without touching the rest. The event timeline is populated
 // by every server action — making corrections traceable is the whole
 // point of /admin/orders.
@@ -32,7 +32,6 @@ import {
 } from "@/lib/orders/labels";
 import { StatusActions } from "@/components/admin/orders/status-actions";
 import { TrackingForm } from "@/components/admin/orders/tracking-form";
-import { RefundForm } from "@/components/admin/orders/refund-form";
 import { NotesForm } from "@/components/admin/orders/notes-form";
 import { SendcloudRetryButton } from "@/components/admin/orders/sendcloud-retry-button";
 import { InvoiceForm } from "@/components/admin/orders/invoice-form";
@@ -306,7 +305,7 @@ export default async function AdminOrderDetailPage({
                     ) : order.status === "PAID" ||
                       order.status === "FULFILLING" ? (
                       // Auto-sync didn't land — surface a manual retry
-                      // button so Sofia can re-fire without leaving the page.
+                      // button so an admin can re-fire without leaving the page.
                       <SendcloudRetryButton orderId={order.id} />
                     ) : (
                       "—"
@@ -344,14 +343,26 @@ export default async function AdminOrderDetailPage({
                   <InfoRow
                     label="Invoice"
                     value={
-                      <a
-                        href={order.invoiceUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-ink hover:underline"
-                      >
-                        <FileText className="h-3 w-3" /> PDF
-                      </a>
+                      // H7: order.invoiceUrl is the raw Supabase Storage
+                      // path, not a clickable URL — clicking it 404'd.
+                      // The /admin/orders/[id] page doesn't pull the
+                      // Invoice relation (and Order has no invoiceId
+                      // column — the FK lives on Invoice.orderId), so
+                      // we can't easily mint a /admin/invoices/[id]
+                      // /download link from here. Surface the invoice
+                      // number as a plain label and direct admin to the
+                      // dedicated /admin/invoices page for the PDF —
+                      // which has Download + Delete + retention banner
+                      // all in one spot.
+                      <span className="inline-flex items-center gap-1 text-ink">
+                        <FileText className="h-3 w-3" /> PDF{" "}
+                        <Link
+                          href="/admin/invoices"
+                          className="text-vermilion underline decoration-vermilion/40 underline-offset-4 hover:decoration-vermilion"
+                        >
+                          (open list)
+                        </Link>
+                      </span>
                     }
                   />
                 )}
@@ -421,12 +432,35 @@ export default async function AdminOrderDetailPage({
             </Panel>
           )}
 
+          {/* H2: removed the per-order "Issue refund" button.
+           *
+           *  The old button called `issueRefundAction` which only
+           *  flipped Order.status to REFUNDED + fired the customer
+           *  email — it did NOT call Mollie, did NOT mint a CreditNote,
+           *  did NOT reverse loyalty points or subtract from VAT YTD.
+           *  Result: customer got a 'refunded' email but the money
+           *  never moved out of Mollie. Real foot-gun.
+           *
+           *  All refunds now go through the return-detail page, which
+           *  fires the full canonical pipeline (issueRefundAndCreditNote
+           *  → Mollie + CN-2026-NNNNN + clawback + VAT). To refund an
+           *  order, an admin creates a return for it from /admin/orders
+           *  or by clicking through the customer's return-request, then
+           *  marks it RECEIVED with a refund amount. */}
           <Panel title="Refund">
-            <RefundForm
-              orderId={order.id}
-              grandTotal={Number(order.grandTotal)}
-              currency={order.currency}
-            />
+            <p className="text-[12px] leading-relaxed text-ink-mid">
+              Refunds are issued via the return flow so Mollie, the
+              credit note, the loyalty clawback, and the VAT YTD all
+              update together. Open or create a return for this order
+              and mark it <strong className="text-ink">Received</strong>{" "}
+              with the refund amount filled in.
+            </p>
+            <Link
+              href="/admin/returns"
+              className="mt-3 inline-flex items-center gap-2 border border-ink/15 bg-white px-3 py-2 text-[11px] uppercase tracking-label text-ink transition-colors hover:border-ink hover:bg-ink hover:text-white"
+            >
+              Open returns
+            </Link>
           </Panel>
 
           <Panel title="Admin notes">

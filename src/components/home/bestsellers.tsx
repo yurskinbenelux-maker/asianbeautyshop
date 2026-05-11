@@ -5,7 +5,7 @@
 // hands each one to <BestsellerCard /> (a client component that animates).
 //
 // We fetch up to 4 so the desktop row can pack 4 products without
-// scrolling. The query returns whatever Sofia has flagged — fewer than
+// scrolling. The query returns whatever an admin has flagged — fewer than
 // 4 is fine, the grid just renders what's there. Mobile shows 2-up
 // regardless (see grid classes below).
 // ─────────────────────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ export async function Bestsellers({
           <h2 className="mt-3 max-w-[22ch] text-display-md">{copy.lede}</h2>
         ) : null}
         <p className="mt-8 text-ink-mid">
-          {/* Intentionally plain — Sofia never sees this in production. */}
+          {/* Intentionally plain — an admin never sees this in production. */}
           No bestsellers yet.
         </p>
       </section>

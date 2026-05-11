@@ -119,7 +119,8 @@ export async function ensureUserProfile(
   const lastName =
     hints.lastName ?? meta?.last_name ?? null;
 
-  const profile = await prisma.user.upsert({
+  // Shared upsert payload — extracted so the retry path below can reuse it.
+  const upsertArgs = {
     where: { id: supabaseUser.id },
     update: {
       email,
@@ -151,9 +152,51 @@ export async function ensureUserProfile(
       // timestamp whenever the profile is first created.
       acceptsTermsAt: new Date(),
     },
-  });
+  };
 
-  // YU.R Club: auto-create a LoyaltyAccount on first sight so the
+  let profile: DbUser;
+  try {
+    profile = await prisma.user.upsert(upsertArgs);
+  } catch (err) {
+    // P2002 (unique constraint on email) is expected when an old
+    // soft-deleted row still holds this email — i.e. a customer who
+    // was deleted via /admin/customers BEFORE we added email-shadowing
+    // to the soft-delete path tries to sign up again.
+    //
+    // Recover automatically by shadowing the orphaned row's email out
+    // of the way, then re-running the upsert. This is safe because we
+    // only steal the email from rows that are already deletedAt-flagged
+    // (i.e. legally erased per GDPR — they aren't a "real" user any more).
+    //
+    // If the conflicting row isn't soft-deleted, we re-throw — that
+    // would be a genuine collision we shouldn't paper over.
+    const isP2002 =
+      err && typeof err === "object" && "code" in err && err.code === "P2002";
+    if (!isP2002) throw err;
+
+    const orphan = await prisma.user.findFirst({
+      where: { email, NOT: { id: supabaseUser.id } },
+      select: { id: true, deletedAt: true },
+    });
+    if (!orphan || !orphan.deletedAt) {
+      // Live row owns this email — bail. (Shouldn't happen because
+      // Supabase already rejects duplicate-email signups, but we don't
+      // want to silently overwrite a live customer's data.)
+      throw err;
+    }
+
+    await prisma.user.update({
+      where: { id: orphan.id },
+      data: { email: `orphan+${orphan.id}@asianbeautyshop.local` },
+    });
+    console.warn(
+      "[auth] shadowed orphaned soft-deleted user to free email",
+      { orphanedRow: orphan.id, email },
+    );
+    profile = await prisma.user.upsert(upsertArgs);
+  }
+
+  // A-Beauty Club: auto-create a LoyaltyAccount on first sight so the
   // customer's referral code exists the moment they hit /account. The
   // helper is idempotent — fast path (single SELECT) on subsequent
   // logins, and never throws into auth flow if it fails.

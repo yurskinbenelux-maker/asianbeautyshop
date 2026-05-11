@@ -4,7 +4,7 @@
 // The media library reads from the Media table (the canonical source —
 // Supabase Storage is just the file bytes). Each row is either linked to
 // a product via Media.productId, or orphan (productId null + no banner
-// attachment). Orphan rows are what Sofia will want to clean up.
+// attachment). Orphan rows are what an admin will want to clean up.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { Locale, MediaKind, Prisma } from "@prisma/client";
@@ -43,7 +43,7 @@ export async function listAdminMedia(
   page: number = 1,
 ): Promise<AdminMediaPage> {
   // Quick totals for the filter chips — always the same numbers regardless
-  // of the current filter (so Sofia can see where the noise is).
+  // of the current filter (so an admin can see where the noise is).
   const [allCount, linkedCount, orphanCount] = await Promise.all([
     prisma.media.count(),
     prisma.media.count({ where: { productId: { not: null } } }),
@@ -162,7 +162,7 @@ export type MediaPickerJournalPost = {
   id: string;
   title: string;
   /** Indicates whether each slot already has an image — admin UI can show
-   *  "(replace)" hints so Sofia knows what she's overwriting. */
+   *  "(replace)" hints so an admin knows what she's overwriting. */
   hasCover: boolean;
   hasHero: boolean;
 };
@@ -196,7 +196,7 @@ export async function listJournalPostsForMediaPicker(): Promise<
 
 /**
  * For a given URL, who references it? Used by the drawer to surface
- * "this image is linked to N products" so Sofia can see reuse at a
+ * "this image is linked to N products" so an admin can see reuse at a
  * glance. Each reference is its own Media row (one per product).
  */
 export type MediaUsage = {

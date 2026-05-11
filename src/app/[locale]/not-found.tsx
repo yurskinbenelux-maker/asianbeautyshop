@@ -19,7 +19,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 
 export const metadata: Metadata = {
-  title: "Page not found · YU.R",
+  title: "Page not found · Asian Beauty Shop",
   robots: { index: false, follow: false },
 };
 

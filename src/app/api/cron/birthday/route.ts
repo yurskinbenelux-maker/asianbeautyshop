@@ -3,7 +3,7 @@
 //
 // Wire on cron-job.org — daily, 00:05 Europe/Brussels:
 //   5 0 * * *   curl -fsS -H "Authorization: Bearer $CRON_SECRET" \
-//                 https://yurskinsolution.eu/api/cron/birthday
+//                 https://asianbeautyshop.eu/api/cron/birthday
 //
 // Walks every customer whose birthday matches today's month/day, mints
 // a single-use 15% coupon, sends the localised email, and stamps
@@ -14,7 +14,7 @@
 //   the operation runs at most once per customer per calendar year and
 //   the data is purely informational — a single Int column saves us
 //   a join + write per send. Resetting the field manually clears the
-//   guard if Sofia ever wants to re-test.
+//   guard if an admin ever wants to re-test.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { NextResponse } from "next/server";

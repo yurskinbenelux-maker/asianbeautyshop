@@ -8,7 +8,7 @@ import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 
 export const metadata: Metadata = {
-  title: "Link expired — YU.R Skin Solution",
+  title: "Link expired — Asian Beauty Shop",
   robots: { index: false, follow: false },
 };
 
@@ -47,7 +47,7 @@ export default async function NewsletterInvalidPage({
   return (
     <main className="container flex min-h-[60vh] items-center justify-center py-24">
       <div className="mx-auto max-w-[48ch] text-center">
-        <div className="eyebrow">YU.R · Newsletter</div>
+        <div className="eyebrow">Asian Beauty Shop · Newsletter</div>
         <h1 className="mt-4 font-display text-[36px] leading-tight text-ink md:text-[44px]">
           {copy.title}
         </h1>

@@ -80,7 +80,7 @@ export function Newsletter({
               className="mx-auto mt-10 flex max-w-md items-center gap-0 border-b border-ink"
             >
               {/* The action needs locale to localise the confirmation
-                  email and source to help Sofia attribute signups. */}
+                  email and source to help an admin attribute signups. */}
               <input type="hidden" name="locale" value={locale} />
               <input type="hidden" name="source" value="homepage" />
 

@@ -4,7 +4,7 @@
 // How to wire on Hostinger:
 //   hPanel → Advanced → Cron Jobs → Add new (daily, any time):
 //     0 10 * * *   curl -fsS -H "Authorization: Bearer $CRON_SECRET" \
-//                    https://yurskinsolution.eu/api/cron/review-requests
+//                    https://asianbeautyshop.eu/api/cron/review-requests
 //
 // What it does:
 //   • Finds orders delivered ≥ 14 days ago that haven't had a

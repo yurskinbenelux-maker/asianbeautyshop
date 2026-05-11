@@ -161,7 +161,7 @@ export async function createCouponAction(
   });
 
   refresh(code);
-  // After creating we send Sofia to the edit page for this coupon.
+  // After creating we send an admin to the edit page for this coupon.
   redirect(`/admin/coupons/${encodeURIComponent(code)}`);
 }
 

@@ -8,7 +8,7 @@
 // slug) and PageTranslation [postId, locale]. Re-runs are safe; existing
 // posts are updated with the latest body.
 //
-// We seed EN only — Sofia can translate to NL/FR/RU through the admin
+// We seed EN only — an admin can translate to NL/FR/RU through the admin
 // rich-text editor as the brand grows. The infrastructure for translated
 // posts is already there; this seed just gives the launch a starting
 // point that doesn't read as "1 post, December 2025".
@@ -16,7 +16,7 @@
 // Voice notes (so future articles match):
 //   • Quiet, considered, editorial. Never marketing-y.
 //   • Sentences are short but unhurried. No exclamation marks.
-//   • First-person plural ("we", "our") — Sofia + the brand together.
+//   • First-person plural ("we", "our") — an admin + the brand together.
 //   • Each piece links to 2-3 products in-line via /shop/<slug>. The
 //     links don't shout "BUY NOW" — they're embedded the way a serious
 //     magazine threads them.
@@ -62,9 +62,9 @@ const NIACINAMIDE: Article = {
   excerpt:
     "Few ingredients earn their place on a label as consistently as niacinamide. Here's what it actually does — and what it can't.",
   coverUrl: null,
-  authorName: "Sofia · YU.R Skin Solution",
+  authorName: "The Asian Beauty Shop team",
   publishedAt: new Date("2026-04-15T09:00:00Z"),
-  seoTitle: "What does niacinamide do? — YU.R Journal",
+  seoTitle: "What does niacinamide do? — Asian Beauty Shop Journal",
   seoDescription:
     "A clear, evidence-led look at niacinamide (vitamin B3): what it does for sebum, redness, and barrier function — and the realistic limits of what one ingredient can deliver.",
   body: `
@@ -85,13 +85,13 @@ const NIACINAMIDE: Article = {
 <h2>What it can't do</h2>
 <p>Niacinamide is not a substitute for sunscreen, an exfoliant, or a retinoid. It will not undo years of UV damage in six weeks. It will not make a dehydrated skin look plump if the routine is missing humectants and occlusives further down the layering order. We mention this because the ingredient is sometimes marketed as a one-shot answer, and it isn't — even very good actives are part of a system.</p>
 
-<h2>Where you'll find it in the YU.R catalogue</h2>
+<h2>Where you'll find it in the Asian Beauty Shop catalogue</h2>
 <p>We use niacinamide across most of the Yu.R Pro line at concentrations between 2% and 4%. Two pieces stand out for first-time users: the <a href="/shop/24k-gold-ampoule">24K Gold Ampoule</a>, which leans on niacinamide alongside copper tripeptide-1 for a slow-build glow, and the <a href="/shop/dd-cream">DD Cream</a>, which uses it as a barrier-repair backbone underneath the daytime tint.</p>
 
 <h2>How to introduce it</h2>
 <p>Most skin tolerates niacinamide on day one, but a small minority of barrier-disrupted skin (often the kind already overusing acids or retinol) flushes briefly. If that's you, skip the toner and apply on bare clean skin every other evening for the first week, then build up. Reactions that don't resolve in a few days usually point to a sensitivity to a co-formulant — fragrance is the usual culprit — not niacinamide itself.</p>
 
-<p class="signoff">— Sofia</p>
+<p class="signoff">— The team</p>
 `.trim(),
 };
 
@@ -102,9 +102,9 @@ const EVENING_RITUAL: Article = {
   excerpt:
     "The 10-step Korean routine made the rounds, then quietly receded. Here's the version we actually use.",
   coverUrl: null,
-  authorName: "Sofia · YU.R Skin Solution",
+  authorName: "The Asian Beauty Shop team",
   publishedAt: new Date("2026-03-28T09:00:00Z"),
-  seoTitle: "Korean evening skincare routine, simplified — YU.R Journal",
+  seoTitle: "Korean evening skincare routine, simplified — Asian Beauty Shop Journal",
   seoDescription:
     "The Korean evening routine condensed to five honest steps: cleanse, tone, treat, moisturise, occlude. What each step does and what to skip.",
   body: `
@@ -128,7 +128,7 @@ const EVENING_RITUAL: Article = {
 <h2>Cadence, not perfection</h2>
 <p>Five steps, four times a week, is better than ten steps three times a year. Skincare is one of the few wellness disciplines where consistency genuinely outperforms intensity. We'd rather you hit the basics nightly than chase the perfect routine on Sundays.</p>
 
-<p class="signoff">— Sofia</p>
+<p class="signoff">— The team</p>
 `.trim(),
 };
 
@@ -139,9 +139,9 @@ const HYDRATION_VS_MOISTURE: Article = {
   excerpt:
     "These two words get used interchangeably and they shouldn't. Knowing the difference reorganises a routine.",
   coverUrl: null,
-  authorName: "Sofia · YU.R Skin Solution",
+  authorName: "The Asian Beauty Shop team",
   publishedAt: new Date("2026-02-19T09:00:00Z"),
-  seoTitle: "Hydration vs moisture in skincare — YU.R Journal",
+  seoTitle: "Hydration vs moisture in skincare — Asian Beauty Shop Journal",
   seoDescription:
     "Dehydrated skin needs water; dry skin needs lipids. Why the routines for each are different, and how to tell which one you actually have.",
   body: `
@@ -169,7 +169,7 @@ const HYDRATION_VS_MOISTURE: Article = {
 <h2>The mistake to avoid</h2>
 <p>Don't reach for the richest cream you can find when your skin feels tight. If the underlying problem is dehydration, sealing dry, water-poor skin under occlusives can make the surface feel softer for an hour and look duller for a week. Add water before you add fats. Always.</p>
 
-<p class="signoff">— Sofia</p>
+<p class="signoff">— The team</p>
 `.trim(),
 };
 

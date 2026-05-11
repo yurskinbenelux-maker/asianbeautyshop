@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Birthday email — fired once per customer per year by the birthday
-// cron. Soft, warm, brand-voice — Sofia greeting the customer + a
+// cron. Soft, warm, brand-voice — an admin greeting the customer + a
 // personal-feeling discount code valid for 30 days.
 //
 // Localised EN / NL / FR / RU.
@@ -29,50 +29,50 @@ type Strings = {
 const STRINGS: Record<Locale, Strings> = {
   EN: {
     subject: "A small thing for your birthday",
-    preheader: "From Sofia and YU.R, with care.",
+    preheader: "From the Asian Beauty Shop team, with care.",
     heading: (f) =>
       f ? `Happy birthday, ${f}.` : "Happy birthday.",
     lede: "Thank you for letting us be a small part of your year. Here's a quiet something to mark the day — use whenever feels right.",
     codeLabel: "Your birthday code",
     codeNote: (p) => `${p}% off your next order. Single use, valid for 30 days.`,
     cta: "Browse the collection",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
     subject: "Een klein iets voor je verjaardag",
-    preheader: "Van Sofia en YU.R, met zorg.",
+    preheader: "Van het Asian Beauty Shop-team, met zorg.",
     heading: (f) =>
       f ? `Fijne verjaardag, ${f}.` : "Fijne verjaardag.",
     lede: "Bedankt dat we een klein onderdeel van je jaar mogen zijn. Hier is iets rustigs om de dag te markeren — gebruik wanneer het goed voelt.",
     codeLabel: "Je verjaardagscode",
     codeNote: (p) => `${p}% korting op je volgende bestelling. Eenmalig, 30 dagen geldig.`,
     cta: "Bekijk de collectie",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
     subject: "Un petit quelque chose pour votre anniversaire",
-    preheader: "De la part de Sofia et de YU.R, avec attention.",
+    preheader: "De la part de l'équipe Asian Beauty Shop, avec attention.",
     heading: (f) =>
       f ? `Joyeux anniversaire, ${f}.` : "Joyeux anniversaire.",
     lede: "Merci de nous laisser faire partie de votre année. Voici un petit geste discret pour marquer cette journée — à utiliser quand vous le souhaitez.",
     codeLabel: "Votre code anniversaire",
     codeNote: (p) => `${p} % sur votre prochaine commande. Usage unique, valable 30 jours.`,
     cta: "Découvrir la collection",
-    signoff: "Avec attention,\nSofia · YU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
     subject: "Небольшой подарок ко дню рождения",
-    preheader: "От Софии и YU.R, с заботой.",
+    preheader: "От команды Asian Beauty Shop, с заботой.",
     heading: (f) =>
       f ? `С днём рождения, ${f}.` : "С днём рождения.",
     lede: "Спасибо, что позволяете нам быть частью вашего года. Небольшой жест по случаю — используйте, когда удобно.",
     codeLabel: "Ваш код ко дню рождения",
     codeNote: (p) => `${p}% на следующий заказ. Одноразовый, действителен 30 дней.`,
     cta: "К коллекции",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -98,7 +98,7 @@ export async function sendBirthdayEmail(
   const s = STRINGS[payload.locale];
   const siteOrigin =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu";
+    "https://asianbeautyshop.eu";
   const shopUrl = `${siteOrigin}/${payload.locale.toLowerCase()}/shop`;
 
   const body = `

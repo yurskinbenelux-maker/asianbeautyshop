@@ -3,8 +3,8 @@
 //
 //   saveInstagramConfig  — paste/replace the access token + IG user ID.
 //                          Verifies against the Graph API before saving
-//                          so Sofia gets immediate feedback.
-//   disconnectInstagram  — clear the config (Sofia revoked the token).
+//                          so an admin gets immediate feedback.
+//   disconnectInstagram  — clear the config (an admin revoked the token).
 //   syncInstagramNow     — manual "Sync now" button. Same code path as
 //                          the cron, just triggered by hand.
 //   updateInstagramTile  — toggle visibility / set sort order on a
@@ -56,7 +56,7 @@ export async function saveInstagramConfig(formData: FormData): Promise<void> {
   const ctx = await requireCapability("homepage.edit", "/admin");
   const parsed = ConfigSchema.parse(Object.fromEntries(formData));
 
-  // Verify before saving — if Meta rejects, Sofia gets a clear error
+  // Verify before saving — if Meta rejects, an admin gets a clear error
   // banner without ever persisting bad credentials.
   let username: string | undefined;
   let profilePictureUrl: string | undefined;
@@ -92,7 +92,7 @@ export async function saveInstagramConfig(formData: FormData): Promise<void> {
 
 // ─────────────────────────────────────────────────────────────────────────
 // Disconnect — wipe the config. The cached posts stay in the DB so
-// the homepage continues to render until Sofia clears them or
+// the homepage continues to render until an admin clears them or
 // re-connects with a new token.
 // ─────────────────────────────────────────────────────────────────────────
 

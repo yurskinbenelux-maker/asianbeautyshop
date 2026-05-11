@@ -42,7 +42,7 @@ export type AdminIngredientDetail = {
   updatedAt: Date;
   // Dense EN/NL/FR/RU record so the form can index without undefined checks.
   translations: Record<Locale, AdminIngredientTranslationValues | null>;
-  // Products currently linked to this ingredient — helps Sofia decide
+  // Products currently linked to this ingredient — helps an admin decide
   // whether it's safe to rename/archive.
   linkedProducts: Array<{
     productId: string;

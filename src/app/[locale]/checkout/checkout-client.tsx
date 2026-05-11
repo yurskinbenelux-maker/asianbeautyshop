@@ -10,7 +10,7 @@
 //      payment, and returns { checkoutUrl }.
 //   3. We window.location.replace(checkoutUrl) to hand the visitor over
 //      to Mollie's hosted pay page. Mollie then bounces them back to
-//      /checkout/success?order=YUR-… or /checkout/failure?…
+//      /checkout/success?order=ABS-… or /checkout/failure?…
 //
 // Why a plain <form action={...}> wasn't enough:
 //   · We want to redirect to an external URL (Mollie) on success. Next's
@@ -38,6 +38,10 @@ import {
 import { submitCheckout, type CheckoutErrorCode } from "./actions";
 import { AddressAutocomplete } from "@/components/checkout/address-autocomplete";
 import { GiftCardCodesField } from "@/components/checkout/gift-card-codes-field";
+import {
+  CouponField,
+  type AppliedCoupon,
+} from "@/components/checkout/coupon-field";
 
 // ────────── props ───────────────────────────────────────────────────────
 
@@ -83,7 +87,19 @@ export function CheckoutClient({
   const [country, setCountry] = useState<string>(
     defaultAddress?.country ?? "BE",
   );
-  const [couponCode, setCouponCode] = useState("");
+  // Live coupon preview — fed by the CouponField's onCouponChange. The
+  // CouponField's Apply button calls lookupCouponAction server-side and
+  // hands back the validated shape; we feed it straight into
+  // computeOrderTotals(...) so the order summary re-renders with the
+  // strike-through subtotal + new grand total in real time.
+  //
+  // The coupon code rides along on the form via a hidden input inside
+  // CouponField — placeOrder() re-validates against the DB at submit
+  // time, so a stale tab can't fake a discount even if we trusted this
+  // state for the preview.
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(
+    null,
+  );
   // Live total of redeemed gift card balances. Subtracted from grandTotal
   // in the previewed totals so the customer sees the impact before submit.
   const [giftCardBalanceEur, setGiftCardBalanceEur] = useState(0);
@@ -111,15 +127,24 @@ export function CheckoutClient({
   const [debugMessage, setDebugMessage] = useState<string | null>(null);
   const [isSubmitting, startTransition] = useTransition();
 
-  // Client-side totals preview — intentionally without the coupon (coupons
-  // are validated server-side only; hiding a potential discount on the
-  // preview is safer than lying about one).
+  // Client-side totals preview — now includes the validated coupon so
+  // the order summary can show a strike-through subtotal + new grand
+  // total the moment the customer clicks Apply on the CouponField.
+  // The server re-validates the coupon at submit time, so we're not
+  // trusting the client to authorise the discount — just previewing it.
   const previewTotals = useMemo(
     () =>
       computeOrderTotals({
         cart,
         shippingCountry: country,
-        coupon: null,
+        coupon: appliedCoupon
+          ? {
+              code: appliedCoupon.code,
+              kind: appliedCoupon.kind,
+              value: appliedCoupon.value,
+              minSubtotal: appliedCoupon.minSubtotal,
+            }
+          : null,
         shipping: shippingSettings,
         tax: taxSettings,
         // Gift card balance applied here is a preview only — the server
@@ -127,13 +152,23 @@ export function CheckoutClient({
         // it down, so a stale tab can't fake a discount.
         giftCardBalanceEur: giftCardBalanceEur > 0 ? giftCardBalanceEur : undefined,
       }),
-    [cart, country, shippingSettings, taxSettings, giftCardBalanceEur],
+    [
+      cart,
+      country,
+      shippingSettings,
+      taxSettings,
+      giftCardBalanceEur,
+      appliedCoupon,
+    ],
   );
 
-  // Fall back to the server's first-render totals before the user touches
-  // country — avoids a flash of different numbers on mount.
+  // Fall back to the server's first-render totals only when nothing
+  // could possibly have changed since SSR. As soon as the customer
+  // touches country, gift cards, OR a coupon, prefer the live preview.
   const totals: PricingResult =
-    country === (defaultAddress?.country ?? "BE")
+    country === (defaultAddress?.country ?? "BE") &&
+    giftCardBalanceEur === 0 &&
+    appliedCoupon === null
       ? initialTotals
       : previewTotals;
 
@@ -302,18 +337,13 @@ export function CheckoutClient({
 
             {/* Extras */}
             <Section title={t("section_extras")}>
-              <Field
-                label={t("field_coupon")}
-                name="couponCode"
-                defaultValue=""
-                uppercase
-                maxLength={40}
-                value={couponCode}
-                onChange={(e) =>
-                  setCouponCode(e.target.value.toUpperCase().slice(0, 40))
-                }
-                hint={t("field_coupon_hint")}
-              />
+              {/* Coupon — now has its own Apply button (matches the
+                  gift-card pattern). Validates server-side on click,
+                  shows a chip with the discount preview, feeds the
+                  validated coupon shape up to previewTotals so the
+                  order summary re-renders with strike-through subtotal
+                  + new grand total in real time. */}
+              <CouponField onCouponChange={setAppliedCoupon} />
               {/* Gift card redemption — bearer token, can stack multiple codes
                   on one order. The disclaimer below flips loud → calm based
                   on whether the customer is signed in. */}
@@ -346,51 +376,117 @@ export function CheckoutClient({
             <div className="border border-ink/10 bg-white/60 p-6 md:p-8">
               <div className="eyebrow">{t("summary_title")}</div>
 
-              {/* Line items */}
+              {/* Line items — when a coupon is active, show strike-through
+               *  on each eligible product line so the customer can see the
+               *  discount apply per-product. Gift cards never get the
+               *  strikethrough because they're a payment instrument, not a
+               *  discountable product. */}
               <ul className="mt-5 space-y-4">
-                {cart.items.map((item) => (
-                  <li key={item.id} className="flex gap-4">
-                    <div className="relative h-16 w-14 shrink-0 overflow-hidden bg-ink/5">
-                      {item.imageUrl ? (
-                        <Image
-                          src={item.imageUrl}
-                          alt={item.name}
-                          fill
-                          sizes="56px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-ink-mid">
-                          <ShoppingBag className="h-4 w-4" aria-hidden />
-                        </div>
-                      )}
-                      <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center bg-ink px-1 text-[10px] text-rice">
-                        {item.quantity}
-                      </span>
-                    </div>
-                    <div className="flex flex-1 flex-col justify-between gap-1">
-                      <div className="text-[13px] leading-tight text-ink">
-                        {item.name}
+                {cart.items.map((item) => {
+                  // Eligible for discount? Only physical products. Gift
+                  // cards (requiresShipping=false) are excluded.
+                  const eligibleForDiscount =
+                    totals.discountRate > 0 && item.requiresShipping;
+                  const discountedLineTotal = eligibleForDiscount
+                    ? Math.round(
+                        item.lineTotalEur *
+                          (1 - totals.discountRate / 100) *
+                          100,
+                      ) / 100
+                    : item.lineTotalEur;
+                  return (
+                    <li key={item.id} className="flex gap-4">
+                      <div className="relative h-16 w-14 shrink-0 overflow-hidden bg-ink/5">
+                        {item.imageUrl ? (
+                          <Image
+                            src={item.imageUrl}
+                            alt={item.name}
+                            fill
+                            sizes="56px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-ink-mid">
+                            <ShoppingBag className="h-4 w-4" aria-hidden />
+                          </div>
+                        )}
+                        <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center bg-ink px-1 text-[10px] text-rice">
+                          {item.quantity}
+                        </span>
                       </div>
-                      {item.variantLabel || item.volumeMl ? (
-                        <div className="text-[10px] uppercase tracking-label text-ink-mid">
-                          {item.variantLabel ??
-                            (item.volumeMl ? `${item.volumeMl} ml` : "")}
+                      <div className="flex flex-1 flex-col justify-between gap-1">
+                        <div className="text-[13px] leading-tight text-ink">
+                          {item.name}
                         </div>
-                      ) : null}
-                    </div>
-                    <div className="text-[13px] tabular-nums text-ink">
-                      {formatEur(item.lineTotalEur, currencyLocale)}
-                    </div>
-                  </li>
-                ))}
+                        {item.variantLabel || item.volumeMl ? (
+                          <div className="text-[10px] uppercase tracking-label text-ink-mid">
+                            {item.variantLabel ??
+                              (item.volumeMl ? `${item.volumeMl} ml` : "")}
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="flex flex-col items-end text-[13px] tabular-nums">
+                        {eligibleForDiscount ? (
+                          <>
+                            <span className="text-ink-mid line-through opacity-60">
+                              {formatEur(item.lineTotalEur, currencyLocale)}
+                            </span>
+                            <span className="text-vermilion">
+                              {formatEur(discountedLineTotal, currencyLocale)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-ink">
+                            {formatEur(item.lineTotalEur, currencyLocale)}
+                          </span>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
 
               <div className="mt-6 space-y-2.5 border-t border-ink/10 pt-5 text-[13px]">
-                <Line
-                  label={t("summary_subtotal")}
-                  value={formatEur(totals.subtotalEur, currencyLocale)}
-                />
+                {/* Subtotal — strike-through when a coupon discount is
+                 *  applied, so the customer sees the pre/post comparison
+                 *  in the same row. The discount itself renders as a
+                 *  vermilion-tinted negative line below. */}
+                {totals.discountEur > 0 ? (
+                  <div className="flex items-baseline justify-between text-ink-mid">
+                    <span className="text-[13px]">{t("summary_subtotal")}</span>
+                    <span className="tabular-nums">
+                      <span className="line-through opacity-60">
+                        {formatEur(totals.subtotalEur, currencyLocale)}
+                      </span>
+                      <span className="ml-2 text-ink">
+                        {formatEur(
+                          Math.max(0, totals.subtotalEur - totals.discountEur),
+                          currencyLocale,
+                        )}
+                      </span>
+                    </span>
+                  </div>
+                ) : (
+                  <Line
+                    label={t("summary_subtotal")}
+                    value={formatEur(totals.subtotalEur, currencyLocale)}
+                  />
+                )}
+                {/* Coupon discount — vermilion, signed negative so it
+                 *  reads as money coming OFF the bill. Hidden when
+                 *  there's nothing to show. */}
+                {totals.discountEur > 0 ? (
+                  <div className="flex items-baseline justify-between text-vermilion">
+                    <span className="text-[13px]">
+                      {appliedCoupon
+                        ? `${t("summary_discount")} · ${appliedCoupon.code}`
+                        : t("summary_discount")}
+                    </span>
+                    <span className="tabular-nums">
+                      − {formatEur(totals.discountEur, currencyLocale)}
+                    </span>
+                  </div>
+                ) : null}
                 <Line
                   label={t("summary_shipping")}
                   value={
@@ -448,7 +544,7 @@ export function CheckoutClient({
                   Each tile preselects a Mollie method so the hosted page
                   lands directly on that wallet/method UI (no extra click
                   on Mollie's picker). The "All methods" tile reverts to
-                  the default (Mollie shows everything Sofia enabled).
+                  the default (Mollie shows everything an admin enabled).
                   Apple Pay only shows on devices where it works; we let
                   Mollie's hosted page handle the unavailable case
                   gracefully — surfacing it everywhere is fine.

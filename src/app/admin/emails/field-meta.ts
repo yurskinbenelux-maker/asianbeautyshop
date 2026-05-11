@@ -22,7 +22,7 @@
 //
 // Function-typed fields (`subject: (orderNo) => string`) MUST be marked
 // `kind: "dynamic"` — the editor renders those read-only with a warning
-// so Sofia can't accidentally replace them with plain text and lose
+// so an admin can't accidentally replace them with plain text and lose
 // her order-number / first-name interpolations.
 // ─────────────────────────────────────────────────────────────────────────
 

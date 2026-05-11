@@ -6,7 +6,7 @@
 //   video      → full-bleed 16:9 muted-loop with overlay typography
 //   collage    → asymmetric 3-product editorial spread
 //
-// Sofia switches variant in /admin/homepage/hero. No redeploy needed.
+// an admin switches variant in /admin/homepage/hero. No redeploy needed.
 // All three variants share the same `HeroCopy` shape so SiteCopy
 // overrides flow through unchanged.
 // ─────────────────────────────────────────────────────────────────────────

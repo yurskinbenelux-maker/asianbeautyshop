@@ -11,7 +11,7 @@
 //     The MotionConfig up in the layout makes this instant for users
 //     with prefers-reduced-motion set.
 //
-// Copy placeholder until Sofia provides real customer letters.
+// Copy placeholder until an admin provides real customer letters.
 // ─────────────────────────────────────────────────────────────────────────
 
 "use client";
@@ -20,7 +20,7 @@ import { motion } from "framer-motion";
 import type { TestimonialCard } from "@/lib/queries/testimonial";
 
 // Hardcoded fallback trio — rendered only if the DB is empty (first-run
-// before Sofia adds any rows in /admin/testimonials). Each card matches
+// before an admin adds any rows in /admin/testimonials). Each card matches
 // the TestimonialCard shape the real query returns so downstream rendering
 // doesn't need a branch.
 const FALLBACK: TestimonialCard[] = [

@@ -1,11 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Homepage — assembles Hero B + bestsellers + ritual + testimonials +
-// journal + newsletter. Each section is its own component so Sofia can
+// journal + newsletter. Each section is its own component so an admin can
 // reorder or A/B test later without touching this file much.
 //
 // Copy pipeline (since the /admin/homepage editor ships):
 //   1. We fetch every admin-editable SiteCopy override for the homepage in
-//      one query (`getSiteCopy`) — rows Sofia has saved win over the
+//      one query (`getSiteCopy`) — rows an admin has saved win over the
 //      `messages/{locale}.json` catalogue.
 //   2. We resolve every field on the server (via `siteCopy()`) so the
 //      client components just receive ready-to-render strings. Keeps the
@@ -33,7 +33,7 @@ export default async function Home({ params }: Props) {
   // Required for static rendering with next-intl
   setRequestLocale(locale);
 
-  // One SiteCopy query covers every homepage section. Any fields Sofia hasn't
+  // One SiteCopy query covers every homepage section. Any fields an admin hasn't
   // overridden come back empty and will fall back to t() below.
   const [copy, tHero, tSection, testimonials, instagramTiles] =
     await Promise.all([
@@ -67,7 +67,7 @@ export default async function Home({ params }: Props) {
   // (section, field) schema — e.g. our "home.bestsellers::lede" maps to
   // `section.bestsellers_lede`. siteCopyOr() takes a literal fallback string
   // (we resolve the right t() value first) and — critically — still honours
-  // the SITE_COPY_VOID sentinel, returning "" when Sofia has marked the
+  // the SITE_COPY_VOID sentinel, returning "" when an admin has marked the
   // field hidden. Inline `?? tSection(...)` would have leaked the sentinel.
   const bestsellersCopy = {
     eyebrow: siteCopyOr(copy, "home.bestsellers", "eyebrow", tSection("bestsellers")),
@@ -113,7 +113,7 @@ export default async function Home({ params }: Props) {
       <YourRitual copy={ritualCopy} />
       <Testimonials copy={testimonialsCopy} items={testimonials} />
       <JournalTeaser locale={locale} copy={journalCopy} />
-      {/* Curated Instagram grid — Sofia adds posts via
+      {/* Curated Instagram grid — an admin adds posts via
           /admin/marketing/instagram. Self-hides when the list is empty
           so a fresh install never shows a sad placeholder. */}
       <InstagramSection tiles={instagramTiles} />

@@ -2,7 +2,7 @@
 // Server actions for /admin/homepage — the SiteCopy editor.
 //
 // One save button per section saves all fields × all locales in that section
-// in a single transaction. Empty inputs delete the row so Sofia can revert
+// in a single transaction. Empty inputs delete the row so an admin can revert
 // any field to the JSON catalogue default.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -41,7 +41,7 @@ function isSection(value: string): value is SiteCopySection {
  * (reverts the slot to the JSON fallback). Non-blank → upsert.
  *
  * The form submits all fields for the section at once so we can do the
- * whole thing in one transaction — if Sofia updates three fields in four
+ * whole thing in one transaction — if an admin updates three fields in four
  * languages, that's 12 rows written/deleted atomically.
  */
 export async function saveSectionAction(

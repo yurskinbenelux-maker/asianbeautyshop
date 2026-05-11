@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Email preview fixtures — sample data used ONLY by the /admin/emails
-// preview surface. Lets Sofia QA every template offline (no need to place
+// preview surface. Lets an admin QA every template offline (no need to place
 // a real order just to see what the "Order shipped" email looks like).
 //
 // We deliberately avoid querying the DB: fixtures are frozen sample data
@@ -21,7 +21,7 @@ import type { LowStockReport } from "@/lib/queries/low-stock";
 export function fixtureOrder(locale: Locale): EmailOrder {
   return {
     id: "preview-order-id",
-    publicNumber: "YUR-2026-000123",
+    publicNumber: "ABS-2026-000123",
     email: "preview@example.com",
     locale,
     placedAt: new Date("2026-04-18T10:15:00Z"),

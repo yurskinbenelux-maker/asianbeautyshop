@@ -3,12 +3,14 @@
 //
 // Flow:
 //   1. Require the caller to be logged in as the order owner.
-//   2. Verify the order is in a state that allows returns (only DELIVERED —
-//      pending/shipped orders should be cancelled, not "returned").
+//   2. Verify the order is in a state that allows returns. Eligible:
+//      PAID + FULFILLING (treated as pre-ship cancellations on the admin
+//      side — full refund, no parcel pickup), SHIPPED + DELIVERED
+//      (standard RMAs). PENDING is excluded because no money has moved.
 //   3. Parse the FormData — each line-item ID carries a quantity; quantities
 //      cannot exceed the original order line.
 //   4. Validate the free-text reason maps to a ReturnReason enum value.
-//   5. Persist via createReturnRequest() — this mints the YUR-XXXX-R1 ref.
+//   5. Persist via createReturnRequest() — this mints the ABS-XXXX-R1 ref.
 //   6. Fire the customer and admin notification emails (non-blocking; Resend
 //      failure shouldn't block the flow).
 //   7. Redirect to /account/returns/{publicNumber}.
@@ -34,8 +36,15 @@ import { sendAdminNewReturnEmail } from "@/lib/email/admin-new-return";
 
 import type { ReturnFormState } from "./form-state";
 
-/** The orders that are eligible to be returned. */
-const RETURNABLE_ORDER_STATUSES = new Set(["DELIVERED", "SHIPPED"]);
+/** Order statuses that the customer can self-service return / cancel.
+ *  Mirrors the gating in [number]/page.tsx (button visibility) and
+ *  return/page.tsx (route guard). Keep these three in sync. */
+const RETURNABLE_ORDER_STATUSES = new Set([
+  "PAID",
+  "FULFILLING",
+  "SHIPPED",
+  "DELIVERED",
+]);
 
 function isReturnReason(v: string): v is ReturnReason {
   return (RETURN_REASON as readonly string[]).includes(v);

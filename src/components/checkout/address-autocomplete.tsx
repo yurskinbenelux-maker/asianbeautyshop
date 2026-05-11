@@ -6,7 +6,7 @@
 //
 // Setup:
 //   • Set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY on Hostinger (Maps JS + Places
-//     API enabled in Google Cloud, restricted to *.yurskinsolution.eu).
+//     API enabled in Google Cloud, restricted to *.asianbeautyshop.eu).
 //   • Without the key, this component degrades to a plain input — the
 //     existing form keeps working unchanged.
 //

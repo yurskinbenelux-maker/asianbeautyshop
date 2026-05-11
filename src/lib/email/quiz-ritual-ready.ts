@@ -70,7 +70,7 @@ type Strings = {
 
 const STRINGS: Record<Locale, Strings> = {
   EN: {
-    subject: (p) => `Your YU.R skincare routine is ready · save ${p}%`,
+    subject: (p) => `Your Asian Beauty Shop skincare routine is ready · save ${p}%`,
     preheader: "Your skin quiz, packaged. Open it any time in the next 60 days.",
     eyebrow: (p) => `Quiz reward · ${p}% off`,
     heading: "Your skin quiz, packaged.",
@@ -82,13 +82,13 @@ const STRINGS: Record<Locale, Strings> = {
     disclaimer: (d) =>
       `Single-use link, expires ${d}. The discount applies only to the items above — anything you add afterwards stays at full price. Once you place an order with this code, the link goes quiet.`,
     cta: "Open my routine cart",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
     intlLocale: "en-IE",
     fallbackItemName: "Skincare item",
   },
   NL: {
-    subject: (p) => `Jouw YU.R huidroutine is klaar · ${p}% korting`,
+    subject: (p) => `Jouw Asian Beauty Shop huidroutine is klaar · ${p}% korting`,
     preheader: "Je huidquiz, verpakt. Open hem op elk moment de komende 60 dagen.",
     eyebrow: (p) => `Quiz-beloning · ${p}% korting`,
     heading: "Je huidquiz, verpakt.",
@@ -100,13 +100,13 @@ const STRINGS: Record<Locale, Strings> = {
     disclaimer: (d) =>
       `Eenmalige link, verloopt op ${d}. De korting geldt alleen voor de items hierboven — alles wat je daarna toevoegt blijft op volle prijs. Zodra je een bestelling plaatst met deze code, wordt de link gedeactiveerd.`,
     cta: "Open mijn routinecart",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
     intlLocale: "nl-BE",
     fallbackItemName: "Huidverzorgingsproduct",
   },
   FR: {
-    subject: (p) => `Votre routine de soin YU.R est prête · ${p}% de remise`,
+    subject: (p) => `Votre routine de soin Asian Beauty Shop est prête · ${p}% de remise`,
     preheader:
       "Votre quiz peau, prêt à l'emploi. Ouvrez-le quand vous voulez dans les 60 prochains jours.",
     eyebrow: (p) => `Récompense quiz · ${p}% de remise`,
@@ -119,13 +119,13 @@ const STRINGS: Record<Locale, Strings> = {
     disclaimer: (d) =>
       `Lien à usage unique, expire le ${d}. La remise s'applique uniquement aux articles ci-dessus — tout ce que vous ajouterez ensuite reste au plein tarif. Une fois la commande passée avec ce code, le lien est désactivé.`,
     cta: "Ouvrir mon panier routine",
-    signoff: "Avec soin,\nSofia · YU.R Skin Solution",
+    signoff: "Avec soin,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
     intlLocale: "fr-BE",
     fallbackItemName: "Produit de soin",
   },
   RU: {
-    subject: (p) => `Ваш уход YU.R готов · скидка ${p}%`,
+    subject: (p) => `Ваш уход Asian Beauty Shop готов · скидка ${p}%`,
     preheader:
       "Ваш тест для кожи — собран. Откройте в любой момент в течение 60 дней.",
     eyebrow: (p) => `Награда за тест · скидка ${p}%`,
@@ -138,7 +138,7 @@ const STRINGS: Record<Locale, Strings> = {
     disclaimer: (d) =>
       `Одноразовая ссылка, действительна до ${d}. Скидка применяется только к средствам выше — всё, что вы добавите позже, останется по полной цене. После оформления заказа с этим кодом ссылка деактивируется.`,
     cta: "Открыть корзину с уходом",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Аартселар, Бельгия",
     intlLocale: "ru-RU",
     fallbackItemName: "Средство по уходу",
@@ -171,7 +171,7 @@ export async function sendQuizRitualReadyEmail(
 
   const siteOrigin =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu";
+    "https://asianbeautyshop.eu";
   const restoreUrl = `${siteOrigin}/${localeToUrlPrefix(locale)}/quiz/restore?token=${encodeURIComponent(
     payload.cartLinkToken,
   )}`;

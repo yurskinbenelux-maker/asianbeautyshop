@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Accrual hooks — the points-earning side of YU.R Club.
+// Accrual hooks — the points-earning side of A-Beauty Club.
 //
 // Three entry points:
 //   1. accrueOrderPoints  — called from sync-mollie's PAID transition
@@ -12,7 +12,7 @@
 //     coupon's discountTotal — if the user paid €0 of their own money,
 //     no accrual.
 //   · The program's master switch (LoyaltySettings.isProgramActive) gates
-//     every entry point, so Sofia can pause accruals without losing data.
+//     every entry point, so an admin can pause accruals without losing data.
 // ─────────────────────────────────────────────────────────────────────────
 
 import "server-only";
@@ -176,7 +176,7 @@ export async function accrueBirthday(opts: {
     firstName: opts.firstName,
     kind: LoyaltyEventKind.EARNED_BIRTHDAY,
     delta: settings.birthdayPoints,
-    reason: `Happy birthday from YU.R · ${opts.thisYear}`,
+    reason: `Happy birthday from Asian Beauty Shop · ${opts.thisYear}`,
   });
 
   return { awarded: settings.birthdayPoints, skipped: false };

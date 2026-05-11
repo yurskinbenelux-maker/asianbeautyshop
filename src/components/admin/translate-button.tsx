@@ -12,7 +12,7 @@
 //      decides what to do (set state, write to refs, etc.).
 //
 // "Fill blanks only" vs "overwrite": the button shows a small inline
-// checkbox so Sofia can choose. Default is blanks-only — re-clicking
+// checkbox so an admin can choose. Default is blanks-only — re-clicking
 // after manual corrections is safe.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -83,7 +83,7 @@ export function TranslateFromEnglishButton({
     const source = getSource();
 
     // Decide which fields to actually send. By default we skip fields
-    // that are already filled in the target locale — that way Sofia's
+    // that are already filled in the target locale — that way an admin's
     // manual edits aren't clobbered by a re-click. With "overwrite" on,
     // we send everything that has English content.
     const toSend = fields.filter((f) => {

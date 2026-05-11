@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Homepage hero variant — Sofia picks one of three looks from
+// Homepage hero variant — an admin picks one of three looks from
 // /admin/homepage/hero. Stored as a single Setting row keyed `home.hero`:
 //   {
 //     variant: "typography" | "video" | "collage",

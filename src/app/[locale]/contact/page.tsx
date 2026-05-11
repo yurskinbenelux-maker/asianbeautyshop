@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // /[locale]/contact — public contact page.
 //
-// Two-column editorial layout on desktop: the left column holds Sofia's
+// Two-column editorial layout on desktop: the left column holds an admin's
 // business card (brand, address, trade details — required under EU
 // e-commerce law) and the right column holds the form. Mobile stacks.
 //
@@ -67,17 +67,17 @@ export default async function ContactPage({ params }: Props) {
       </header>
 
       <div className="mt-14 grid gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] md:gap-16">
-        {/* ─── Sofia's business card ───────────────────────────────── */}
+        {/* ─── an admin's business card ───────────────────────────────── */}
         <aside className="space-y-10">
           <div>
             <div className="eyebrow">{t("reach_us")}</div>
             <dl className="mt-4 space-y-4 text-[14px] leading-relaxed text-ink">
               <ContactRow icon={<Mail className="h-4 w-4" aria-hidden />} term={t("label_email")}>
                 <a
-                  href="mailto:hello@yurskinsolution.eu"
+                  href="mailto:info@kelmusgroup.eu"
                   className="underline decoration-vermilion underline-offset-4 transition-colors hover:text-vermilion"
                 >
-                  hello@yurskinsolution.eu
+                  info@kelmusgroup.eu
                 </a>
               </ContactRow>
 
@@ -116,7 +116,7 @@ export default async function ContactPage({ params }: Props) {
             </dl>
           </div>
 
-          {/* Service SLA — sets expectations so Sofia doesn't get chased */}
+          {/* Service SLA — sets expectations so an admin doesn't get chased */}
           <div className="border border-ink/10 bg-white/40 p-5">
             <div className="eyebrow">{t("response_title")}</div>
             <p className="mt-3 text-[13px] leading-relaxed text-ink-mid">

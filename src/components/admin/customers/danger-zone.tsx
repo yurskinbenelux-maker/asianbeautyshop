@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Soft-delete ("anonymise") or restore a customer. Hidden behind a
-// toggle so Sofia doesn't trip over it while editing profiles.
+// toggle so an admin doesn't trip over it while editing profiles.
 //
 // Delete requires typing "DELETE" to confirm — matches the pattern the
 // rest of the app uses for destructive actions.

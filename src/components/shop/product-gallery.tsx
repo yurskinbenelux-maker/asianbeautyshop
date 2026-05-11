@@ -16,7 +16,7 @@
 //     under prefers-reduced-motion.
 //
 // Video tiles (Media.kind = VIDEO) are not yet rendered in the gallery
-// — Sofia hasn't uploaded any. Schema already supports it; when she
+// — an admin hasn't uploaded any. Schema already supports it; when she
 // does, this component gets a small extension to swap <img> for
 // <video> on those tiles.
 //
@@ -408,7 +408,7 @@ function GalleryFallback({
             fontSize="14"
             letterSpacing="2"
           >
-            YU.R
+            Asian Beauty Shop
           </text>
         </svg>
       </div>

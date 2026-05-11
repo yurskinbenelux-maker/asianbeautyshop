@@ -2,11 +2,11 @@
 // /shop/category/[slug] — category landing page.
 //
 // Standalone page per category (essences, cleansers, serums, …) so that
-// each category ranks on its own in search and Sofia has a place to
+// each category ranks on its own in search and an admin has a place to
 // merchandise it with a real editorial hero instead of just a filter pill.
 //
 // The hero (headline, intro paragraph, optional icon) is pulled from the
-// CategoryTranslation row Sofia already edits on /admin/categories — no
+// CategoryTranslation row an admin already edits on /admin/categories — no
 // new table, no new form surface. If a translation doesn't have copy,
 // we fall back to EN; if EN is empty too we just skip the intro block.
 //

@@ -49,7 +49,7 @@ export async function sendResetLinkAction(
   // We pass the locale-aware path as `redirectTo` (NOT a /auth/callback
   // URL) so Supabase surfaces it as `{{ .RedirectTo }}` in the email
   // template. Supabase still validates this against its redirect
-  // allow-list — yurskinsolution.eu/** is already permitted there.
+  // allow-list — asianbeautyshop.eu/** must be permitted there (Supabase Auth → URL Configuration → Redirect URLs).
   const next = `/${parsed.data.locale}/reset-password`;
 
   await supabase.auth.resetPasswordForEmail(parsed.data.email, {

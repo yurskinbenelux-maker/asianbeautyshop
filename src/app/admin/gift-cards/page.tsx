@@ -11,6 +11,7 @@ import { GiftCardStatus } from "@prisma/client";
 import { requireCapability } from "@/lib/auth-roles";
 import { listGiftCards } from "@/lib/queries/gift-cards";
 import { hasCapability } from "@/lib/auth-roles-shared";
+import { formatAdminDate } from "@/lib/utils/format-date";
 
 type Props = {
   searchParams: Promise<{
@@ -166,7 +167,7 @@ export default async function AdminGiftCardsPage({ searchParams }: Props) {
                     <StatusBadge status={c.status} />
                   </td>
                   <td className="px-4 py-3 text-ink-mid">
-                    {c.createdAt.toLocaleDateString()}
+                    {formatAdminDate(c.createdAt)}
                   </td>
                 </tr>
               ))}

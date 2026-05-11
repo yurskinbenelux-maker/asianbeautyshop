@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Footer — editorial, four columns over a single hairline rule.
-// Intentionally minimal: Sofia can extend legal links via admin later.
+// Intentionally minimal: an admin can extend legal links via admin later.
 //
-// Admin-editable copy: `tagline` (the line under YU.R) and `rights` (the
+// Admin-editable copy: `tagline` (the line under Asian Beauty Shop) and `rights` (the
 // small © line on the right). Both are part of the `footer` SiteCopy
 // section; everything else in the footer is UI chrome that stays in the
 // messages catalogue.
@@ -28,7 +28,7 @@ export async function Footer() {
   // (historical reason — the catalogue groups it with the masthead) and
   // footer.rights; the SiteCopy "footer" section flattens both under one
   // editable surface in /admin/homepage. siteCopyOr() honours the
-  // SITE_COPY_VOID sentinel and returns "" when Sofia hides the field.
+  // SITE_COPY_VOID sentinel and returns "" when an admin hides the field.
   const tagline = siteCopyOr(copy, "footer", "tagline", tBrand("tagline"));
   const rights = siteCopyOr(copy, "footer", "rights", t("footer.rights"));
 
@@ -41,13 +41,17 @@ export async function Footer() {
 
       <div className="container">
         {/* ── masthead ─────────────────────────────────────────── */}
-        {/* Real logo in lockup variant (shows "SKIN SOLUTION" tagline too,
-            because there's room here). The 유 CJK mark that used to sit
-            on the right has been retired along with the seal — the vector
-            wordmark now speaks for itself. Tagline text stays below the
-            mark for translated marketing copy (not part of the logo). */}
+        {/* Lockup at full prominence — footer has the vertical real estate
+            so we let the cherry-blossom mark + ASIAN BEAUTY SHOP wordmark
+            anchor the foot of the page. Mobile h-28 (112px), desktop
+            h-40 (160px). Tagline text stays below the mark for translated
+            marketing copy (not part of the logo). */}
         <div className="mb-16 flex flex-col items-start gap-4">
-          <Logo variant="lockup" height={72} alt={t("brand.name")} />
+          <Logo
+            variant="lockup"
+            heightClass="h-28 md:h-40"
+            alt={t("brand.name")}
+          />
           {tagline ? (
             <div className="text-[13px] text-ink-mid">{tagline}</div>
           ) : null}

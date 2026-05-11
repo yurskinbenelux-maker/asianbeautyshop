@@ -5,7 +5,7 @@
 // CategoryStrip + filter drawer + 4-col grid + infinite scroll), with
 // one locked filter: isNewOnly=true.
 //
-// IMPORTANT: this page is NOT createdAt-based. Sofia controls
+// IMPORTANT: this page is NOT createdAt-based. an admin controls
 // membership manually via the "New arrival" toggle on each product's
 // admin Basics form. A product uploaded six months ago can be flagged
 // New (e.g. it just got a glossy hero shoot); a product uploaded

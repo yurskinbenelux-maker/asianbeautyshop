@@ -294,7 +294,7 @@ export type PdpBundleItem = {
 
 /**
  * Fetch products linked with reason="bundle" or "ritual" in ProductRelated.
- * These are the products Sofia curated as "buy this together" pairings —
+ * These are the products an admin curated as "buy this together" pairings —
  * distinct from the `related` list, which is looser ("wear with").
  *
  * If no bundle relations exist, returns an empty array — the section on
@@ -424,7 +424,7 @@ export async function getProductReviews({
 }: {
   productId: string;
   /** @deprecated kept in the signature for callsite compatibility but no
-   *  longer filters — Sofia explicitly asked for all reviews to show
+   *  longer filters — an admin explicitly asked for all reviews to show
    *  regardless of which locale the visitor is browsing. A French
    *  shopper sees the Dutch reviews too. */
   locale?: string;

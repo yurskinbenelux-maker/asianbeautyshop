@@ -21,6 +21,10 @@ export type AdminOrderRow = {
   grandTotal: number;
   currency: string;
   isGuest: boolean;
+  /** H4: number of ReturnRequests in non-terminal states (REQUESTED /
+   *  APPROVED / RECEIVED). Drives the per-row vermilion 'Return' pill
+   *  on the admin orders list. 0 means no badge. */
+  activeReturnCount: number;
 };
 
 export type AdminOrdersListParams = {
@@ -90,7 +94,20 @@ export async function listAdminOrders(
         currency: true,
         userId: true,
         user: { select: { firstName: true, lastName: true } },
-        _count: { select: { items: true } },
+        // H4: count active returns per order so the orders list can flag
+        // rows that have an open return request without admin having to
+        // click into each one. "Active" = not yet refunded / rejected /
+        // cancelled — same definition the sidebar pill uses.
+        _count: {
+          select: {
+            items: true,
+            returns: {
+              where: {
+                status: { in: ["REQUESTED", "APPROVED", "RECEIVED"] },
+              },
+            },
+          },
+        },
         items: { select: { quantity: true } },
       },
     }),
@@ -115,6 +132,9 @@ export async function listAdminOrders(
         grandTotal: Number(o.grandTotal),
         currency: o.currency,
         isGuest: o.userId === null,
+        // H4: number of active (non-terminal) ReturnRequests on this
+        // order. Drives the vermilion "Return" pill on the row.
+        activeReturnCount: o._count.returns,
       };
     }),
     total,

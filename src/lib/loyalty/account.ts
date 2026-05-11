@@ -31,17 +31,19 @@ function randomCode(length: number): string {
 
 /** Generate a unique referral code shaped like "FIRSTNAME-AB12" so the
  *  customer recognises it as theirs when they share it. Falls back to
- *  "YURSKIN-AB12" when the user hasn't provided a first name. Retries on
- *  collision (≈1 in 1M chance for a 6-char tail; collision still possible
- *  if someone picks a really common name and gets unlucky). */
+ *  "FRIEND-AB12" when the user hasn't provided a first name (was the
+ *  legacy "YURSKIN" pre-rebrand — kept brand-neutral on purpose so we
+ *  never have to migrate referral codes again on a future rename).
+ *  Retries on collision (≈1 in 1M chance for a 6-char tail; collision
+ *  still possible if someone picks a really common name and gets unlucky). */
 export async function generateReferralCode(opts: {
   firstName: string | null | undefined;
   attempt?: number;
 }): Promise<string> {
-  const seed = (opts.firstName ?? "YURSKIN")
+  const seed = (opts.firstName ?? "FRIEND")
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, "")
-    .slice(0, 8) || "YURSKIN";
+    .slice(0, 8) || "FRIEND";
   const tail = randomCode(4);
   const code = `${seed}-${tail}`;
 
@@ -154,6 +156,11 @@ export async function applyLoyaltyEvent(opts: {
   taskClaimId?: string;
   rewardId?: string;
   referralId?: string;
+  /** Set on REVERSED_REFUND rows so the audit trail links back to the
+   *  specific RMA that triggered the clawback. One order can have
+   *  multiple returns; the orderId alone isn't enough to tell apart
+   *  separate refunds. */
+  returnId?: string;
   /** Optional override — when caller already has the account in hand,
    *  saves a SELECT inside the tx. */
   account?: Pick<LoyaltyAccount, "id" | "pointsBalance" | "pointsLifetime">;
@@ -192,6 +199,7 @@ export async function applyLoyaltyEvent(opts: {
         taskClaimId: opts.taskClaimId,
         rewardId: opts.rewardId,
         referralId: opts.referralId,
+        returnId: opts.returnId,
       },
     }),
   ]);
@@ -263,7 +271,7 @@ export async function readLoyaltyAccountSummary(
 }
 
 /** Recent history for the drawer's "My history" section. Default 50 rows;
- *  the full history page can paginate if Sofia ever asks. */
+ *  the full history page can paginate if an admin ever asks. */
 export async function readLoyaltyHistory(opts: {
   userId: string;
   limit?: number;

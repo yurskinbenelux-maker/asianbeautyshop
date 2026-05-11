@@ -5,7 +5,7 @@
 // with every SKU currently at or below the threshold, ordered by scarcity.
 // English-only (internal).
 //
-// Silently no-ops if the report is empty — we don't want Sofia getting
+// Silently no-ops if the report is empty — we don't want an admin getting
 // "All fine" emails every morning.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -21,7 +21,7 @@ import type { LowStockReport } from "@/lib/queries/low-stock";
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 

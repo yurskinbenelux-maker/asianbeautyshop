@@ -1,13 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Central promotions config — single source of truth for the percent-off
-// values + validity windows of YU.R's automated coupons.
+// values + validity windows of Asian Beauty Shop's automated coupons.
 //
 // Why centralised:
 //   Before this, REGISTRATION_COUPON_PERCENT (=10) lived as a constant in
 //   src/lib/coupons/registration-welcome.ts and QUIZ_REWARD_PERCENT (=15)
 //   in src/lib/quiz/reward.ts. Each was referenced by the actual coupon
 //   mint, by email templates, and by hardcoded text in marketing surfaces
-//   (popup, exit-intent, quiz card). Sofia couldn't change either without
+//   (popup, exit-intent, quiz card). an admin couldn't change either without
 //   a code change.
 //
 //   Storing them as a single Setting row keyed `marketing.promotions`
@@ -18,7 +18,7 @@
 // Behaviour notes:
 //   · Already-issued coupons keep their original % (the value was
 //     materialised onto the Coupon row at mint time). Only NEW coupons
-//     issued after Sofia changes the setting use the new %.
+//     issued after an admin changes the setting use the new %.
 //   · Sensible bounds enforced at write time (0-50%, 1-365 days) so a
 //     fat-finger doesn't ship a 100% coupon.
 // ─────────────────────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Auth confirmation email — YU.R-branded replacement for Supabase's
+// Auth confirmation email — Asian Beauty Shop-branded replacement for Supabase's
 // default "Confirm your email" template.
 //
 // HOW THIS GETS DELIVERED
@@ -17,12 +17,12 @@
 //
 // We control step 3 by pasting THIS template's HTML output into the
 // Supabase dashboard once. After that, every signup email is branded
-// YU.R automatically — no code path involved at runtime.
+// Asian Beauty Shop automatically — no code path involved at runtime.
 //
 // SETUP — TWO ONE-TIME STEPS IN SUPABASE
 // ──────────────────────────────────────
 //
-//   A. Custom SMTP (so the email comes from yurskinsolution.eu, not
+//   A. Custom SMTP (so the email comes from asianbeautyshop.eu, not
 //      supabase's noreply@mail.app.supabase.io):
 //        Supabase Dashboard → Project Settings → Authentication
 //        → SMTP Settings → enable "Custom SMTP"
@@ -30,8 +30,8 @@
 //        Port:     465
 //        Username: resend
 //        Password: <your Resend API key, the one in RESEND_API_KEY>
-//        Sender:   hello@yurskinsolution.eu  (or noreply@)
-//        Sender:   YU.R Skin Solution
+//        Sender:   do-not-reply@asianbeautyshop.eu
+//        Sender:   Asian Beauty Shop
 //
 //   B. The template itself:
 //        Supabase Dashboard → Authentication → Email Templates
@@ -45,7 +45,7 @@
 // ────────────────
 // Supabase's email template is a single piece of HTML; it doesn't
 // switch on the user's locale. Pragmatic choice: ship the EN version
-// in Supabase. Bilingual customers reading EN works fine. If Sofia
+// in Supabase. Bilingual customers reading EN works fine. If an admin
 // later wants per-locale templates we can move to the Send Email Hook
 // (Edge Function) approach which lets us swap templates at send time.
 //
@@ -80,9 +80,9 @@ type Strings = {
 
 const STRINGS: Record<Locale, Strings> = {
   EN: {
-    subject: "Confirm your YU.R account",
+    subject: "Confirm your Asian Beauty Shop account",
     preheader: "One tap to confirm your email and start your skincare routine.",
-    heading: "Welcome to YU.R.",
+    heading: "Welcome to Asian Beauty Shop.",
     lede: "We're glad you're here. Tap the button below to confirm your email and finish setting up your account — it keeps your basket safe and lets us send your order updates.",
     cta: "Confirm my email",
     fallbackIntro:
@@ -91,13 +91,13 @@ const STRINGS: Record<Locale, Strings> = {
     notYouHeading: "Didn't sign up?",
     notYouBody:
       "If this wasn't you, you can ignore this email — no account will be created.",
-    signoff: "With care,\nYU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
-    subject: "Bevestig je YU.R-account",
+    subject: "Bevestig je Asian Beauty Shop-account",
     preheader: "Eén tik om je e-mail te bevestigen en je huidverzorgingsroutine te starten.",
-    heading: "Welkom bij YU.R.",
+    heading: "Welkom bij Asian Beauty Shop.",
     lede: "Fijn dat je er bent. Tik op de knop hieronder om je e-mail te bevestigen en je account af te ronden — zo blijft je winkelmand bewaard en kunnen we je bestellingsupdates sturen.",
     cta: "Bevestig mijn e-mail",
     fallbackIntro:
@@ -106,14 +106,14 @@ const STRINGS: Record<Locale, Strings> = {
     notYouHeading: "Niet aangemeld?",
     notYouBody:
       "Was jij dit niet? Dan kun je deze e-mail rustig negeren — er wordt geen account aangemaakt.",
-    signoff: "Met zorg,\nYU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
-    subject: "Confirmez votre compte YU.R",
+    subject: "Confirmez votre compte Asian Beauty Shop",
     preheader:
       "Un clic pour confirmer votre adresse et commencer votre routine de soin.",
-    heading: "Bienvenue chez YU.R.",
+    heading: "Bienvenue chez Asian Beauty Shop.",
     lede: "Heureux de vous accueillir. Cliquez sur le bouton ci-dessous pour confirmer votre adresse et finaliser la création de votre compte — cela conserve votre panier et nous permet de vous envoyer les mises à jour de commande.",
     cta: "Confirmer mon e-mail",
     fallbackIntro:
@@ -122,14 +122,14 @@ const STRINGS: Record<Locale, Strings> = {
     notYouHeading: "Vous n'êtes pas à l'origine de cette inscription ?",
     notYouBody:
       "Si ce n'est pas vous, ignorez simplement cet e-mail — aucun compte ne sera créé.",
-    signoff: "Avec attention,\nYU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
-    subject: "Подтвердите ваш аккаунт YU.R",
+    subject: "Подтвердите ваш аккаунт Asian Beauty Shop",
     preheader:
       "Один клик, чтобы подтвердить почту и начать ваш уход.",
-    heading: "Добро пожаловать в YU.R.",
+    heading: "Добро пожаловать в Asian Beauty Shop.",
     lede: "Рады, что вы с нами. Нажмите на кнопку ниже, чтобы подтвердить адрес и завершить создание аккаунта — это сохранит вашу корзину и позволит нам отправлять обновления по заказу.",
     cta: "Подтвердить почту",
     fallbackIntro:
@@ -138,7 +138,7 @@ const STRINGS: Record<Locale, Strings> = {
     notYouHeading: "Это были не вы?",
     notYouBody:
       "Если регистрировались не вы, просто проигнорируйте письмо — аккаунт не будет создан.",
-    signoff: "С заботой,\nYU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -155,8 +155,8 @@ const STRINGS: Record<Locale, Strings> = {
 // PKCE flow which is fragile across browsers and pre-fetches.
 //
 // Instead, the URL points at our own /auth/confirm route on
-// yurskinsolution.eu. Supabase substitutes:
-//   {{ .SiteURL }}    → "https://yurskinsolution.eu"
+// asianbeautyshop.eu. Supabase substitutes:
+//   {{ .SiteURL }}    → "https://asianbeautyshop.eu"
 //   {{ .TokenHash }}  → the email-token hash for verifyOtp()
 //   {{ .RedirectTo }} → whatever emailRedirectTo we set in signUp() —
 //                       in our case the locale-aware /[locale]/account URL
@@ -185,7 +185,7 @@ export type AuthConfirmRendered = {
 };
 
 /**
- * Build the YU.R-branded confirmation email for a given locale.
+ * Build the Asian Beauty Shop-branded confirmation email for a given locale.
  *
  * The result is meant to be pasted ONCE into Supabase Dashboard →
  * Authentication → Email Templates → Confirm signup. Re-render and

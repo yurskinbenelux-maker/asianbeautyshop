@@ -1,13 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────
 // issueRegistrationWelcomeCoupon — mints a single-use 10%-off coupon for
-// a freshly-confirmed YU.R account holder, then emails it to them.
+// a freshly-confirmed Asian Beauty Shop account holder, then emails it to them.
 //
 // Replaces the older newsletter-confirmation coupon flow: the 10% offer
 // now rewards account creation, not the newsletter list. The popup on
 // the homepage CTA leads here through the standard signup flow.
 //
 // Idempotency:
-//   The coupon code is deterministic — `YUR-WELCOME-{first 8 chars of
+//   The coupon code is deterministic — `ABS-WELCOME-{first 8 chars of
 //   user.id, uppercase}`. If the same user re-clicks their confirmation
 //   email (or refreshes /auth/confirm) we look the row up, see it
 //   exists, and quietly skip. No double-issuance, no double-email,
@@ -43,7 +43,7 @@ export const REGISTRATION_COUPON_VALID_DAYS = 60;
  *  for a single brand's customer base. */
 function codeForUser(userId: string): string {
   const fragment = userId.replace(/-/g, "").slice(0, 8).toUpperCase();
-  return `YUR-WELCOME-${fragment}`;
+  return `ABS-WELCOME-${fragment}`;
 }
 
 export async function issueRegistrationWelcomeCoupon(args: {
@@ -96,7 +96,7 @@ export async function issueRegistrationWelcomeCoupon(args: {
   }
 
   // Email is best-effort — the customer can also see the code on
-  // /account if Sofia surfaces it there later. Logging the failure is
+  // /account if an admin surfaces it there later. Logging the failure is
   // enough for now.
   try {
     await sendRegistrationWelcomeEmail({

@@ -4,7 +4,7 @@
 // the order.
 //
 // Idempotent: skips lines that already have an `issuedGiftCardId`. Safe to
-// re-call if the webhook fires twice or if Sofia hand-syncs an order.
+// re-call if the webhook fires twice or if an admin hand-syncs an order.
 //
 // What it does per gift-card line:
 //   1. Read the `giftCardConfig` JSON snapshot persisted at order creation.

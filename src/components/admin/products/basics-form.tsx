@@ -165,7 +165,7 @@ export function BasicsForm({
       </Section>
 
       {/* ── Supplier / compliance ─────────────────────────────────── */}
-      {/* Honors the columns from Sofia's master-data sheet. Origin and
+      {/* Honors the columns from an admin's master-data sheet. Origin and
           audience surface on the public PDP; barcode + HS code are for
           ops (returns scanning, customs paperwork, retail compliance). */}
       <Section
@@ -178,7 +178,7 @@ export function BasicsForm({
             name="productLine"
             placeholder="e.g. Yu.R PRO"
             defaultValue={initial.productLine}
-            hint="Sub-brand within YU.R, if any."
+            hint="Sub-brand within Asian Beauty Shop, if any."
           />
           <Field
             label="Barcode (EAN / UPC / GTIN)"
@@ -220,7 +220,7 @@ export function BasicsForm({
               ))}
             </select>
             <p className="mt-1 text-[11px] text-ink-mid">
-              Most YU.R products are unisex. Used for the audience filter.
+              Most Asian Beauty Shop products are unisex. Used for the audience filter.
             </p>
           </div>
         </div>

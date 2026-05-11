@@ -4,7 +4,7 @@
 // Source of data: the InstagramPost cache table, populated by the
 // Graph API sync (cron-driven, see lib/instagram/sync.ts). When the
 // cache is empty (token not configured yet, or first sync hasn't
-// fired) the section self-hides. NOTHING is required from Sofia at
+// fired) the section self-hides. NOTHING is required from an admin at
 // the post level — adding/removing posts on Instagram and waiting for
 // the next sync is the entire workflow.
 //
@@ -31,7 +31,7 @@ export function InstagramSection({
   tiles: InstagramPostCard[];
   /** Display handle shown next to the heading. */
   handle?: string;
-  /** Where the heading link points (Sofia's IG profile). */
+  /** Where the heading link points (an admin's IG profile). */
   profileUrl?: string;
 }) {
   const visibleTiles = tiles.slice(0, 6);

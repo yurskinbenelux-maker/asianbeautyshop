@@ -2,7 +2,7 @@
 // /admin/loyalty/tasks — list + inline create form.
 //
 // Pending-claim count badges live here too (one per MANUAL_REVIEW task)
-// so Sofia knows where the queue is building up. Phase E adds the actual
+// so an admin knows where the queue is building up. Phase E adds the actual
 // review queue page.
 // ─────────────────────────────────────────────────────────────────────────
 

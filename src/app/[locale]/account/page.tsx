@@ -35,12 +35,41 @@ export default async function AccountOverviewPage({ params }: Props) {
   });
 
   const t = await getTranslations("account");
-  const [orders, addresses, glance, loyaltySummary] = await Promise.all([
+  // Each query is isolated so one failing dependency doesn't 500 the whole
+  // account home — a brand-new customer post-signup has no orders, no
+  // addresses, and no loyalty events, but the row reads must still succeed.
+  // If any query throws, we log with a tag (so it shows up in Hostinger
+  // logs) and degrade to an empty value instead of crashing.
+  const [ordersR, addressesR, glanceR, loyaltyR] = await Promise.allSettled([
     listMyOrders(profile.id),
     listMyAddresses(profile.id),
     getMyAccountGlance(profile.id),
     readLoyaltyAccountSummary(profile.id),
   ]);
+  if (ordersR.status === "rejected")
+    console.error("[account/page] listMyOrders failed", ordersR.reason);
+  if (addressesR.status === "rejected")
+    console.error("[account/page] listMyAddresses failed", addressesR.reason);
+  if (glanceR.status === "rejected")
+    console.error("[account/page] getMyAccountGlance failed", glanceR.reason);
+  if (loyaltyR.status === "rejected")
+    console.error(
+      "[account/page] readLoyaltyAccountSummary failed",
+      loyaltyR.reason,
+    );
+  const orders = ordersR.status === "fulfilled" ? ordersR.value : [];
+  const addresses = addressesR.status === "fulfilled" ? addressesR.value : [];
+  const glance =
+    glanceR.status === "fulfilled"
+      ? glanceR.value
+      : {
+          orderCount: 0,
+          lifetimeSpendEur: 0,
+          wishlistCount: 0,
+          memberSince: null,
+        };
+  const loyaltySummary =
+    loyaltyR.status === "fulfilled" ? loyaltyR.value : null;
   const recentOrders = orders.slice(0, 3);
   const defaultAddress =
     addresses.find((a) => a.isDefault) ?? addresses[0] ?? null;
@@ -74,7 +103,7 @@ export default async function AccountOverviewPage({ params }: Props) {
       )}
 
       {/* ── glance stats ────────────────────────────────────────── */}
-      {/* Middle cell swapped from "lifetime spend" to live YU.R Club
+      {/* Middle cell swapped from "lifetime spend" to live A-Beauty Club
           points — the actionable number for a customer who's already
           decided to come back. Clickable link drops them straight into
           the redeem catalogue so the stat doubles as a CTA. Falls back

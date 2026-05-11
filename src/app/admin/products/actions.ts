@@ -153,7 +153,7 @@ const BasicsSchema = z.object({
       { message: "Sale % must be 1-90" },
     ),
   // Manual "New arrival" flag — drives /new page membership.
-  // NOT createdAt-based; Sofia toggles this when she wants a product
+  // NOT createdAt-based; an admin toggles this when she wants a product
   // featured under New regardless of when it was uploaded.
   isNew: z.coerce.boolean(),
   volumeMl: PositiveIntOrEmpty,
@@ -347,7 +347,7 @@ export async function updateTranslation(
   }
 
   // Capture the previous slug BEFORE the upsert so we can auto-insert a
-  // redirect if Sofia is renaming (not creating) the translation.
+  // redirect if an admin is renaming (not creating) the translation.
   const prior = await prisma.productTranslation.findUnique({
     where: { productId_locale: { productId, locale } },
     select: { slug: true },
@@ -397,7 +397,7 @@ export async function updateTranslation(
 
 // ──────── duplicate ──────────────────────────────────────────────────────
 //
-//  "Duplicate product" — biggest daily time-saver Sofia asked for.
+//  "Duplicate product" — biggest daily time-saver an admin asked for.
 //
 //  When she's adding a new serum from the same line as an existing one, the
 //  pattern is: copy the existing product, edit the 2-3 fields that differ,
@@ -409,7 +409,7 @@ export async function updateTranslation(
 //    ✓ all translations (name → "... (copy)", slug gets "-copy" suffix
 //      with collision handling per locale)
 //    ✓ all media rows (pointing at the SAME Supabase objects — storage is
-//      immutable and we save bandwidth; Sofia replaces images in the
+//      immutable and we save bandwidth; an admin replaces images in the
 //      editor if she wants to)
 //    ✓ all taxonomy links: categories, skin types, concerns, benefits,
 //      ingredients
@@ -422,7 +422,7 @@ export async function updateTranslation(
 //    ✗ isFeatured / isBestseller — conservative: don't auto-promote a copy
 //    ✗ launchedAt — reset, the copy hasn't launched
 //
-//  We always land on the editor in Basics tab so Sofia can start editing
+//  We always land on the editor in Basics tab so an admin can start editing
 //  immediately.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -478,7 +478,7 @@ async function uniqueTranslationSlug(
 }
 
 /**
- * Clone a product and drop Sofia into the editor.
+ * Clone a product and drop an admin into the editor.
  *
  * Called as a Server Action — expects FormData with `productId`. Returning
  * via redirect() is what a Server Action is supposed to do, so we don't
@@ -542,7 +542,7 @@ export async function duplicateProduct(formData: FormData) {
       label: v.label,
       price: v.price,
       comparePrice: v.comparePrice,
-      stock: 0, // the copy has no inventory until Sofia receives the new SKU
+      stock: 0, // the copy has no inventory until an admin receives the new SKU
       isDefault: v.isDefault,
       sortOrder: v.sortOrder,
       weightGrams: v.weightGrams,
@@ -621,7 +621,7 @@ export async function duplicateProduct(formData: FormData) {
 
 // ──────── bulk publish ──────────────────────────────────────────────────
 //
-// One-click "publish all drafts" for the post-CSV-import flow. After Sofia
+// One-click "publish all drafts" for the post-CSV-import flow. After an admin
 // imports 35 supplier products and sets prices, she shouldn't have to open
 // each PDP and flip status to PUBLISHED. One button does the lot.
 //
@@ -697,7 +697,7 @@ export async function softDeleteProduct(productId: string) {
 
 /** Bring a soft-deleted product back into the active catalogue. Status
  *  stays ARCHIVED (so the shop doesn't suddenly show a long-trashed item)
- *  — Sofia bumps it to PUBLISHED from the editor when she's ready. */
+ *  — an admin bumps it to PUBLISHED from the editor when she's ready. */
 export async function restoreProduct(formData: FormData) {
   const actor = await requireAdmin();
   const productId = String(formData.get("productId") ?? "").trim();
@@ -760,7 +760,7 @@ export async function hardDeleteProduct(formData: FormData) {
     return;
   }
 
-  // Safety 2: any past OrderItems linked? Refuse — Sofia keeps the trashed
+  // Safety 2: any past OrderItems linked? Refuse — an admin keeps the trashed
   // row instead.
   const totalOrderRefs = product.variants.reduce(
     (n, v) => n + v._count.orderItems,
@@ -961,7 +961,7 @@ export async function setPrimaryMedia(mediaId: string) {
 
 // ──────── organise tab ───────────────────────────────────────────────────
 //
-//  Sofia uses this tab to tell each product *what it is* in taxonomy terms:
+//  an admin uses this tab to tell each product *what it is* in taxonomy terms:
 //    · Categories  (what shelf does it live on)
 //    · Skin types  (who is it for)
 //    · Concerns    (what does it treat)
@@ -1031,9 +1031,9 @@ export async function updateOrganise(
   // the single Brand picker, but homepage/shop "Yu•R / Yu•R Pro / Yu•R Me"
   // tabs still query by Product.productLine. Mapping the brand slug to
   // the canonical PRODUCT_LINES dbValue keeps those queries working
-  // without any frontend refactor. Non-YU.R brands (when Sofia adds
+  // without any frontend refactor. Non-Asian Beauty Shop brands (when an admin adds
   // AHC/COSRX/etc.) get productLine=null — they simply don't appear on
-  // the YU.R-branded line tabs.
+  // the Asian Beauty Shop-branded line tabs.
   const rawBrandId = String(formData.get("brandId") ?? "").trim();
   let brandIdToWrite: string | null = null;
   let brandSlugForLineDerivation: string | null = null;
@@ -1052,7 +1052,7 @@ export async function updateOrganise(
     brandSlugForLineDerivation = brand.slug;
   }
 
-  // Optional free-text INCI textarea on the Organise tab. Sofia pastes
+  // Optional free-text INCI textarea on the Organise tab. an admin pastes
   // a comma-separated INCI declaration ("Aqua, Glycerin, Niacinamide…")
   // and we (a) upsert each into the master Ingredient library, then
   // (b) merge the resulting IDs into the link set so they're saved
@@ -1074,15 +1074,15 @@ export async function updateOrganise(
   // already encodes the brand-slug → DB-value mapping (yur → null,
   // yur-pro → "Yu.R PRO", yur-me → "Yu.R Me") so we just look it up.
   // Brands outside that set (future K-beauty additions) get productLine
-  // = null, which means they don't appear on any YU.R-branded line tab —
+  // = null, which means they don't appear on any Asian Beauty Shop-branded line tab —
   // the right behaviour, since Yu•R / Yu•R Pro / Yu•R Me tabs are
-  // YU.R-house concepts and don't apply to outside brands.
+  // Asian Beauty Shop-house concepts and don't apply to outside brands.
   //
   // extraLines is now always [] because the multi-select Lines picker
   // was retired. If a future requirement re-emerges to put one product
   // on multiple line tabs (e.g. universal gift card), we can restore a
   // dedicated control then. Existing extraLines values on already-saved
-  // products remain in the DB until the next time Sofia saves the
+  // products remain in the DB until the next time an admin saves the
   // Organise tab on that product (at which point they're cleared).
   const lineDef = brandSlugForLineDerivation
     ? PRODUCT_LINES.find((l) => l.slug === brandSlugForLineDerivation)
@@ -1098,7 +1098,7 @@ export async function updateOrganise(
     // Persist the line column outside the per-relation transactions.
     // It's a scalar on Product, not a join table — keeping it separate
     // means a relation failure further down doesn't roll back the
-    // line edit, which Sofia would find surprising.
+    // line edit, which an admin would find surprising.
     await prisma.product.update({
       where: { id: productId },
       data: {
@@ -1347,7 +1347,7 @@ export async function moveProductMedia(
 
 // ──────── inventory adjustments ─────────────────────────────────────────
 //
-// Sofia's manual stock edit path — used for counts, correcting drift,
+// an admin's manual stock edit path — used for counts, correcting drift,
 // receiving a fresh shipment, etc. The signed delta is the *change*, not
 // the new total: +10 to add ten units, -1 to burn a tester. We deliberately
 // avoid a "set stock to N" field because it makes the log useless (you
@@ -1771,7 +1771,7 @@ export async function deleteVariantAction(
   }
 
   // Refuse if customer orders reference this variant — deleting would
-  // orphan order history. Sofia should archive the parent product instead.
+  // orphan order history. an admin should archive the parent product instead.
   if (existing._count.orderItems > 0) {
     return {
       ok: false,
@@ -1808,7 +1808,7 @@ export async function deleteVariantAction(
 // Reads the product's name + INCI + EN description, plus the live
 // taxonomy slug lists, and asks Groq for a structured suggestion.
 // Does NOT write anything to the DB — the client receives the
-// suggestion, renders it as a diff, and Sofia decides.
+// suggestion, renders it as a diff, and an admin decides.
 //
 // Returning a discriminated union so the UI can branch cleanly:
 //   { ok: true, suggestion: ... }     → render the diff
@@ -1825,7 +1825,7 @@ export type SuggestTagsResult =
       // The current tags so the client can diff without an extra
       // round-trip. Slugs only — labels are looked up from the
       // existing pill options that the form already has. Brand is
-      // intentionally NOT in the AI suggestion (Sofia picks YU.R / Pro
+      // intentionally NOT in the AI suggestion (an admin picks Asian Beauty Shop / Pro
       // / Me by hand) so it's not in current either.
       current: {
         categorySlugs: string[];
@@ -1878,7 +1878,7 @@ export async function suggestProductTags(
   // because the AI does better with natural-language labels than with
   // bare slugs (e.g. "Oil Cleansers" reads more clearly than
   // "oil-cleansers" when paired with an INCI list). Brand is omitted
-  // — Sofia picks the line by hand.
+  // — an admin picks the line by hand.
   const [categories, skinTypes, concerns, benefits] = await Promise.all([
     prisma.category.findMany({
       where: { isActive: true },
@@ -1966,7 +1966,7 @@ export async function suggestProductTags(
   } catch (err) {
     // Most likely cause: GROQ_API_KEY missing on prod, or the AI
     // returned malformed output that didn't validate against the
-    // Zod schema. Either way Sofia just gets a polite error pill.
+    // Zod schema. Either way an admin just gets a polite error pill.
     const message =
       err instanceof Error ? err.message : "AI suggestion failed.";
     return { ok: false, message };
@@ -1986,19 +1986,19 @@ export async function suggestProductTags(
 
 // ──────── AI: apply suggested tags ───────────────────────────────────────
 //
-// Commits a suggestion that Sofia accepted. Validates each slug
+// Commits a suggestion that an admin accepted. Validates each slug
 // against the live taxonomy (so a stale suggestion can't slip an
 // invalid id past), then writes ProductCategory + the three
 // single-axis taxonomies in one transaction per relation.
 //
-// Brand is intentionally NOT touched — Sofia picks the YU.R line
+// Brand is intentionally NOT touched — an admin picks the Asian Beauty Shop line
 // (Yu•R / Yu•R Pro / Yu•R Me) by hand because the choice depends on
 // marketing intent, not formulation. Apply preserves whatever brand
 // is currently set on the product.
 //
 // Strategy: REPLACE on each axis (delete-all + insert-chosen). Same
 // pattern as updateOrganise — keeps the action's behaviour predictable.
-// If Sofia wants to merge instead of replace, she can untick the
+// If an admin wants to merge instead of replace, she can untick the
 // suggestions she doesn't like in the diff modal before clicking
 // Apply, then click again to re-suggest from the new state.
 
@@ -2018,7 +2018,7 @@ export async function applySuggestedTags(
 
   // Resolve every suggested slug to its DB id. Anything that doesn't
   // resolve is silently dropped — the suggestion was generated against
-  // a snapshot of the taxonomy and Sofia might have deleted a chip in
+  // a snapshot of the taxonomy and an admin might have deleted a chip in
   // the meantime; we'd rather skip the stale tag than fail loudly.
   const [
     categoryRows,
@@ -2123,7 +2123,7 @@ export async function applySuggestedTags(
 //   · seoDescription
 //
 // Returns the polished values to the client. The client renders a
-// per-field diff modal; Sofia clicks Apply to inject the values into
+// per-field diff modal; an admin clicks Apply to inject the values into
 // the form, then Save translation to commit. No DB writes here.
 export type PolishTranslationResult =
   | {

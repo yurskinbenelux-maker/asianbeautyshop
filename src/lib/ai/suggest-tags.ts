@@ -36,8 +36,8 @@ export type SuggestTagsInput = {
   /** Volume / weight context — helps disambiguate cleanser size vs sample. */
   volumeMl: number | null;
   /** Available pill slugs the model is allowed to pick from. */
-  // Brand is intentionally NOT in the suggestion — Sofia picks the line
-  // (YU.R / YU.R Pro / YU.R Me) by hand because the choice depends on
+  // Brand is intentionally NOT in the suggestion — an admin picks the line
+  // (Asian Beauty Shop / Asian Beauty Shop Pro / Asian Beauty Shop Me) by hand because the choice depends on
   // marketing intent, not formulation. The AI is good at "is this an
   // exfoliating toner?" and bad at "is this Pro or Me line?".
   available: {
@@ -121,7 +121,7 @@ export async function suggestTagsForProduct(
   // rather pay 200 extra tokens per call for a model that doesn't
   // hallucinate or over-tag.
   const system = [
-    "You are a skincare product categorisation assistant for YU.R, a Korean skincare retailer.",
+    "You are a skincare product categorisation assistant for Asian Beauty Shop, a Korean skincare retailer.",
     "Given a product, you choose the best parent category, subcategory, plus relevant skin types, concerns, and benefits.",
     "",
     "RULES:",

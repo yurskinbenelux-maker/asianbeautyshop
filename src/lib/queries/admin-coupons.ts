@@ -7,7 +7,7 @@
 //
 // `getCouponAnalytics` derives performance numbers (redemptions, revenue,
 // top products) from actual Order rows — not the Coupon.redemptionsUsed
-// counter — so cancelled orders don't inflate the picture Sofia sees.
+// counter — so cancelled orders don't inflate the picture an admin sees.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { prisma } from "@/lib/prisma";
@@ -166,7 +166,7 @@ export async function getCouponAnalytics(
     const orderIds = orders.map((o) => o.id);
 
     // Group by productId only — grouping by nameSnapshot would split
-    // the same product into multiple rows if Sofia ever renamed it.
+    // the same product into multiple rows if an admin ever renamed it.
     const grouped = await prisma.orderItem.groupBy({
       by: ["productId"],
       where: { orderId: { in: orderIds } },

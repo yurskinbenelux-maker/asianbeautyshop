@@ -2,7 +2,7 @@
 // Resend webhook — bounces, complaints, deliveries.
 //
 // Set this up in Resend dashboard → Webhooks → Add Endpoint:
-//   URL:    https://yurskinsolution.eu/api/webhooks/resend
+//   URL:    https://asianbeautyshop.eu/api/webhooks/resend
 //   Events: email.bounced, email.complained, email.delivered (optional)
 //   Signing secret: paste into RESEND_WEBHOOK_SECRET in the env
 //
@@ -212,7 +212,7 @@ function isHardBounce(severity: string): boolean {
  * unsubscribedAt and clear the token.
  *
  * `reason` is written to the subscriber's source field prefixed with
- * "removed:" so Sofia can see why they left the list. This keeps the
+ * "removed:" so an admin can see why they left the list. This keeps the
  * audit trail inside the existing schema without needing a migration.
  */
 async function markRecipientsUnsubscribed(

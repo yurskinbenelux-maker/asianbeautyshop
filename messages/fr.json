@@ -17,8 +17,16 @@
     "cta_contact": "Nous contacter"
   },
   "brand": {
-    "name": "YU.R Skin Solution",
-    "tagline": "You Are the Skin Solution."
+    "name": "Asian Beauty Shop",
+    "tagline": "You Are the Skin Solution.",
+    "about_cta": "À propos →",
+    "browse_brand": "Découvrir les produits {name}",
+    "about_eyebrow": "À propos de la marque",
+    "about_inherited_from": "Histoire reprise de {parent}",
+    "about_empty": "Histoire bientôt disponible.",
+    "about_browse_cta": "Découvrir les produits {name} →",
+    "about_certifications": "Certifications",
+    "about_safety_note": "Précautions d’usage"
   },
   "nav": {
     "shop": "Boutique",
@@ -43,8 +51,8 @@
   },
   "announcement": {
     "free_shipping": "Livraison offerte dès {amount}",
-    "yurclub": "Cumulez des points à chaque commande — adhérez gratuitement à YU.R Club. Inscrivez-vous pour commencer",
-    "yurclub_balance": "{points, plural, =0 {Pas encore de points YU.R Club — continuez vos achats pour en cumuler} =1 {1 point YU.R Club sur votre compte — voir le solde} other {# points YU.R Club sur votre compte — voir le solde}}"
+    "yurclub": "Cumulez des points à chaque commande — adhérez gratuitement à A-Beauty Club. Inscrivez-vous pour commencer",
+    "yurclub_balance": "{points, plural, =0 {Pas encore de points A-Beauty Club — continuez vos achats pour en cumuler} =1 {1 point A-Beauty Club sur votre compte — voir le solde} other {# points A-Beauty Club sur votre compte — voir le solde}}"
   },
   "hero": {
     "eyebrow": "Nouveauté — collection printemps",
@@ -79,11 +87,11 @@
     "protect": "Protéger"
   },
   "ingredients": {
-    "meta_title": "Ingrédients — YU.R Skin Solution",
+    "meta_title": "Ingrédients — Asian Beauty Shop",
     "meta_description": "Chaque actif que nous utilisons — classé alphabétiquement, traduit, avec les produits qui le contiennent. Parcourez par actif clé ou explorez la liste INCI complète.",
     "eyebrow": "Ingrédients",
     "title": "Ce qu'il y a dans le pot, expliqué.",
-    "lede": "Vous devez savoir exactement ce qui touche votre peau. Chaque ingrédient que nous utilisons est listé ici — son nom INCI, son mode d'action, et les produits YU.R qui le contiennent.",
+    "lede": "Vous devez savoir exactement ce qui touche votre peau. Chaque ingrédient que nous utilisons est listé ici — son nom INCI, son mode d'action, et les produits qui le contiennent.",
     "crumb": "Ingrédients",
     "key_heading": "Actifs clés",
     "all_heading": "Tous les ingrédients",
@@ -105,7 +113,7 @@
     "empty_cta": "Découvrir la gamme"
   },
   "rituals": {
-    "meta_title": "Routines de soin — YU.R Skin Solution",
+    "meta_title": "Routines de soin — Asian Beauty Shop",
     "meta_description": "Un routine de soin coréen en quatre étapes — nettoyer, traiter, hydrater, protéger. Des produits réfléchis, une routine tranquille, des résultats visibles.",
     "eyebrow": "Le routine de soin",
     "title": "Quatre étapes, calmement répétées.",
@@ -232,16 +240,16 @@
     "title": "En promotion",
     "lede": "Une sélection de favoris à prix doux. Filtrez par marque, catégorie ou besoin au sein des promotions — les remises s'appliquent automatiquement au paiement.",
     "empty": "Aucun produit n'est en promotion pour le moment. Revenez bientôt — ou parcourez la collection complète.",
-    "seo_title": "Soldes — YU.R Skin Solution",
-    "seo_description": "Découvrez les produits YU.R en promotion dans toutes les catégories. Filtrez par type de peau, besoin ou marque parmi les soldes."
+    "seo_title": "Soldes — Asian Beauty Shop",
+    "seo_description": "Découvrez les produits en promotion dans toutes les catégories. Filtrez par type de peau, besoin ou marque parmi les soldes."
   },
   "new_page": {
     "eyebrow": "Nouveautés",
     "title": "Tout juste arrivé",
-    "lede": "Les pièces les plus récentes de la collection — choisies par Sofia, jamais ajoutées automatiquement. Filtrez par marque, catégorie ou besoin pour trouver votre prochain coup de cœur.",
+    "lede": "Les pièces les plus récentes de la collection — choisies par notre équipe, jamais ajoutées automatiquement. Filtrez par marque, catégorie ou besoin pour trouver votre prochain coup de cœur.",
     "empty": "Aucune nouveauté n'est mise en avant pour l'instant. Parcourez la collection complète en attendant.",
-    "seo_title": "Nouveautés — YU.R Skin Solution",
-    "seo_description": "Les nouveaux produits YU.R sélectionnés par Sofia. Filtrez par marque, catégorie ou besoin pour trouver votre prochain rituel."
+    "seo_title": "Nouveautés — Asian Beauty Shop",
+    "seo_description": "Les nouveaux produits de la collection. Filtrez par marque, catégorie ou besoin pour trouver votre prochain rituel."
   },
   "shop": {
     "title": "La collection",
@@ -342,6 +350,22 @@
     "field_billing_same": "Mon adresse de facturation est la même que mon adresse de livraison.",
     "field_coupon": "Code promo (optionnel)",
     "field_coupon_hint": "Appliqué à l'étape suivante s'il est valide.",
+    "summary_discount": "Remise",
+    "coupon": {
+      "field_label": "Code promo / code de réduction",
+      "field_placeholder": "Saisir le code",
+      "apply_label": "Appliquer",
+      "remove_label": "Retirer",
+      "summary_percent": "{value}% de remise",
+      "summary_fixed": "€{value} de remise",
+      "summary_free_shipping": "Livraison offerte",
+      "error_not_found": "Code introuvable.",
+      "error_inactive": "Ce code n'est plus actif.",
+      "error_not_yet_active": "Ce code n'est pas encore actif.",
+      "error_expired": "Ce code a expiré.",
+      "error_exhausted": "Ce code a atteint sa limite d'utilisation.",
+      "error_invalid": "Code invalide."
+    },
     "field_notes": "Notes de commande (optionnel)",
     "field_notes_placeholder": "Message cadeau, instructions de livraison…",
     "summary_title": "Votre commande",
@@ -522,7 +546,7 @@
     }
   },
   "quizPage": {
-    "meta_title": "Test de peau — YU.R Skin Solution",
+    "meta_title": "Test de peau — Asian Beauty Shop",
     "meta_description": "Sept questions rapides et nous composons un routine de soin coréen, chaque produit choisi à partir des ingrédients sur l'étiquette.",
     "eyebrow": "Test de peau",
     "title": "Quelques questions calmes sur votre peau.",
@@ -596,7 +620,7 @@
     "sign_in_lede": "Bon retour. Entrez votre e-mail et votre mot de passe pour continuer.",
     "sign_in_cta": "Se connecter",
     "signing_in": "Connexion en cours…",
-    "sign_in_no_account": "Nouveau chez YU.R Skin Solution ?",
+    "sign_in_no_account": "Nouveau chez Asian Beauty Shop ?",
     "sign_in_create_account": "Créer un compte",
     "sign_in_generic_error": "Nous n'avons pas pu vous connecter avec ces informations.",
     "forgot_password": "Mot de passe oublié ?",
@@ -628,7 +652,7 @@
     "field_last_name": "Nom",
     "field_marketing": "Envoyez-moi occasionnellement des lettres sur les nouveautés, routines de soin et notes d'ingrédients. Désabonnement à tout moment.",
     "field_email_language": "Langue des e-mails",
-    "field_email_language_help": "Nous enverrons vos confirmations de commande, rappels de réassort et e-mails YU.R Club dans cette langue. Modifiable plus tard dans votre compte.",
+    "field_email_language_help": "Nous enverrons vos confirmations de commande, rappels de réassort et e-mails A-Beauty Club dans cette langue. Modifiable plus tard dans votre compte.",
     "field_terms_pre": "J'accepte les ",
     "field_terms_link": "conditions et la politique de confidentialité",
     "field_terms_post": ".",
@@ -664,7 +688,7 @@
     "nav_addresses": "Adresses",
     "nav_wishlist": "Liste d'envies",
     "nav_gift_cards": "Cartes cadeaux",
-    "nav_yur_club": "YU.R Club",
+    "nav_yur_club": "A-Beauty Club",
     "nav_profile": "Profil",
     "nav_privacy": "Confidentialité",
     "nav_sign_out": "Se déconnecter",
@@ -719,6 +743,29 @@
       "REFUNDED": "Remboursée",
       "PARTIALLY_REFUNDED": "Partiellement remboursée"
     },
+    "order_timeline_heading": "Votre commande",
+    "order_timeline_status_label": "Statut actuel",
+    "order_timeline_step_ordered_title": "Commandée",
+    "order_timeline_step_ordered_body": "Votre commande est dans notre système. Nous confirmons le paiement.",
+    "order_timeline_step_ordered_detail": "Passée le {date}",
+    "order_timeline_step_paid_title": "Payée",
+    "order_timeline_step_paid_body": "Paiement confirmé. Votre facture vous a été envoyée par e-mail et reste disponible depuis votre compte.",
+    "order_timeline_step_paid_detail": "Payée le {date}",
+    "order_timeline_step_preparing_title": "En préparation",
+    "order_timeline_step_preparing_body": "Nous préparons votre commande à la main dans notre atelier d'Aartselaar.",
+    "order_timeline_step_shipped_title": "Expédiée",
+    "order_timeline_step_shipped_body": "Votre colis est en route. Utilisez le lien de suivi pour suivre son trajet.",
+    "order_timeline_step_shipped_detail": "Expédiée le {date}",
+    "order_timeline_step_delivered_title": "Livrée",
+    "order_timeline_step_delivered_body": "Votre colis est arrivé. Nous espérons qu'il vous plaît.",
+    "order_timeline_step_delivered_detail": "Livrée le {date}",
+    "order_timeline_track_cta": "Suivre le colis",
+    "order_timeline_cancelled_title": "Annulée",
+    "order_timeline_cancelled_body": "Cette commande a été annulée. Si un paiement avait été prélevé, le remboursement a été effectué — consultez l'e-mail de commande pour les détails.",
+    "order_timeline_refunded_title": "Remboursée",
+    "order_timeline_refunded_body": "Cette commande a été entièrement remboursée. L'argent est en route vers votre moyen de paiement d'origine.",
+    "order_timeline_partially_refunded_title": "Partiellement remboursée",
+    "order_timeline_partially_refunded_body": "Une partie de cette commande a été remboursée. Consultez l'e-mail de commande ou votre compte pour le détail.",
     "addresses_title": "Adresses",
     "addresses_lede": "Gardez vos adresses de livraison et de facturation au même endroit — sélectionnables au paiement.",
     "addresses_add_new": "Ajouter",
@@ -841,10 +888,10 @@
     },
     "field_birthday": "Date de naissance",
     "profile_birthday_hint": "Facultatif. Nous vous enverrons un petit quelque chose pour votre anniversaire.",
-    "glance_points": "Points YU.R Club"
+    "glance_points": "Points A-Beauty Club"
   },
   "privacy": {
-    "meta_title": "Vos données & confidentialité — YU.R Skin Solution",
+    "meta_title": "Vos données & confidentialité — Asian Beauty Shop",
     "eyebrow": "Compte",
     "title": "Vos données, votre choix",
     "lede": "Tout ce que nous conservons sur vous reste à vous. Téléchargez une copie de vos données quand vous le souhaitez, ou supprimez votre compte si vous préférez qu'on vous oublie.",
@@ -871,10 +918,10 @@
     "delete_error_server": "Nous n'avons pas pu planifier la suppression. Réessayez dans un instant.",
     "delete_cta": "Supprimer mon compte",
     "more_heading": "Besoin d'autre chose ?",
-    "more_body": "Pour corriger des données, arrêter un traitement spécifique, ou toute autre question de confidentialité, écrivez à hello@yurskinsolution.eu et nous vous répondrons sous un jour ouvré."
+    "more_body": "Pour corriger des données, arrêter un traitement spécifique, ou toute autre question de confidentialité, écrivez à info@kelmusgroup.eu et nous vous répondrons sous un jour ouvré."
   },
   "returns": {
-    "meta_title": "Retours — YU.R Skin Solution",
+    "meta_title": "Retours — Asian Beauty Shop",
     "eyebrow": "Compte",
     "title": "Vos retours",
     "lede": "Le journal de toutes vos demandes de retour — depuis leur arrivée dans notre boîte jusqu'au remboursement sur votre carte.",
@@ -902,7 +949,7 @@
       "ALLERGIC_REACTION": "J'ai eu une réaction",
       "OTHER": "Autre chose"
     },
-    "form_meta_title": "Demander un retour — YU.R Skin Solution",
+    "form_meta_title": "Demander un retour — Asian Beauty Shop",
     "form_back_to_order": "Retour à la commande {number}",
     "form_eyebrow": "Demande de retour",
     "form_title": "Réparons cela ensemble.",
@@ -930,7 +977,7 @@
       "server_error": "Quelque chose n'a pas fonctionné de notre côté — réessayez dans un instant.",
       "order_not_returnable": "Cette commande n'est pas encore éligible au retour."
     },
-    "detail_meta_title": "Retour {number} — YU.R Skin Solution",
+    "detail_meta_title": "Retour {number} — Asian Beauty Shop",
     "detail_back": "Retour à mes retours",
     "detail_eyebrow": "Demande de retour",
     "detail_for_order": "Pour la commande {number}",
@@ -944,22 +991,42 @@
     "detail_refunded_on": "Remboursé le",
     "detail_track_cta": "Suivre le colis",
     "detail_cancel_hint": "Vous avez changé d'avis ? Vous pouvez annuler cette demande tant que nous ne l'avons pas approuvée.",
-    "detail_cancel_cta": "Annuler cette demande"
+    "detail_cancel_cta": "Annuler cette demande",
+    "timeline_heading": "Votre retour",
+    "timeline_status_label": "Statut actuel",
+    "timeline_step_requested_title": "Demandé",
+    "timeline_step_requested_body": "Nous avons reçu votre demande et notre équipe l'examine.",
+    "timeline_step_requested_detail": "Soumise le {date}",
+    "timeline_step_approved_title": "Approuvé",
+    "timeline_step_approved_body": "Votre retour est approuvé. Renvoyez les articles selon les instructions ci-dessous.",
+    "timeline_step_received_title": "Reçu",
+    "timeline_step_received_body": "Votre colis est arrivé à notre entrepôt. Nous inspectons les articles.",
+    "timeline_step_received_detail": "Reçu le {date}",
+    "timeline_step_refunded_title": "Remboursé",
+    "timeline_step_refunded_body": "Le remboursement est en route vers votre moyen de paiement d'origine — généralement sous 1 à 3 jours ouvrés.",
+    "timeline_step_refunded_detail": "{amount} remboursés le {date}",
+    "timeline_label_cta": "Télécharger l'étiquette de retour (PDF)",
+    "timeline_label_hint": "Collez l'étiquette sur votre colis et déposez-le dans un point relais indiqué sur l'étiquette.",
+    "timeline_rejected_title": "Nous n'avons pas pu approuver ce retour",
+    "timeline_rejected_body": "Après examen, nous n'avons pas pu accepter ce retour. Pour toute question, répondez à l'e-mail que nous avons envoyé — nous lisons chaque réponse.",
+    "timeline_cancelled_title": "Annulé",
+    "timeline_cancelled_body": "Vous avez annulé cette demande de retour. Si vous changez d'avis, vous pouvez en soumettre une nouvelle depuis la page de la commande, tant que la fenêtre de retour est encore ouverte.",
+    "timeline_admin_notes": "Message de notre équipe"
   },
   "seo": {
-    "title_template": "%s · YU.R Skin Solution",
+    "title_template": "%s · Asian Beauty Shop",
     "home": {
-      "title": "YU.R Skin Solution — soins coréens, sélectionnés avec soin.",
+      "title": "Asian Beauty Shop — soins coréens, sélectionnés avec soin.",
       "description": "Une sélection de soins coréens haut de gamme. Formulés pour les peaux sensibles, pensés pour un routine de soin quotidien."
     },
     "shop": {
-      "title": "Boutique — YU.R Skin Solution",
+      "title": "Boutique — Asian Beauty Shop",
       "description": "Parcourez notre sélection de soins coréens. Filtrez par type de peau, préoccupation, marque ou ingrédient pour trouver votre routine de soin."
     }
   },
   "search": {
     "eyebrow": "Recherche",
-    "page_title": "Recherche — YU.R Skin Solution",
+    "page_title": "Recherche — Asian Beauty Shop",
     "page_description": "Trouvez votre prochain routine de soin — recherchez par produit, marque ou ingrédient.",
     "overlay_label": "Rechercher dans la boutique",
     "placeholder": "Essayez « nettoyant au riz » ou « hydratation »…",
@@ -967,7 +1034,7 @@
     "searching": "Recherche en cours…",
     "no_results": "Aucun résultat. Essayez une marque, un ingrédient ou un besoin.",
     "suggest_heading": "Ou commencez par une étape du routine de soin",
-    "suggest_lede": "Chaque produit YU.R s'inscrit dans l'un des quatre gestes lents et mesurés.",
+    "suggest_lede": "Chaque produit s'inscrit dans l'un des quatre gestes lents et mesurés.",
     "ritual_cleanse": "Nettoyer",
     "ritual_treat": "Soigner",
     "ritual_moisturise": "Hydrater",
@@ -998,11 +1065,11 @@
     "empty_body": "Nous rassemblons les essais d'ouverture — l'un sur le ginseng, l'autre sur la jarre-lune Joseon, un troisième sur le premier geste du matin. Ils apparaîtront ici dès qu'ils seront prêts à être lus.",
     "empty_cta": "Parcourir la boutique",
     "back_to_journal": "Retour au journal",
-    "meta_title": "Journal — YU.R Skin Solution",
+    "meta_title": "Journal — Asian Beauty Shop",
     "meta_description": "Études d'ingrédients, notes de routine de soin et pensées posées sur la skincare coréenne."
   },
   "contact": {
-    "meta_title": "Contact — YU.R Skin Solution",
+    "meta_title": "Contact — Asian Beauty Shop",
     "meta_description": "Questions sur votre commande, retours, gros ou un produit ? Écrivez-nous — nous lisons chaque message personnellement.",
     "eyebrow": "Quelques mots",
     "title": "Écrivez-nous.",
@@ -1020,7 +1087,7 @@
     "label_registered": "Siège social",
     "value_registered": "Bruxelles, Belgique",
     "response_title": "Délai de réponse",
-    "response_body": "Nous répondons sous deux jours ouvrés. Pour une question sur une commande, indiquez votre numéro de commande (il commence par YUR-) — nous retrouvons votre routine de soin immédiatement.",
+    "response_body": "Nous répondons sous deux jours ouvrés. Pour une question sur une commande, indiquez votre numéro de commande (il commence par ABS-) — nous retrouvons votre routine de soin immédiatement.",
     "field_name": "Votre nom",
     "field_email": "Adresse email",
     "field_phone_optional": "Téléphone (optionnel)",
@@ -1047,19 +1114,6 @@
     "error_message_too_long": "Ce message est trop long — 4 000 caractères maximum.",
     "error_consent_required": "Veuillez cocher la case pour nous permettre de conserver votre message.",
     "error_generic": "Une erreur est survenue. Vérifiez les champs surlignés."
-  },
-  "exit_intent": {
-    "eyebrow": "Avant de partir",
-    "title": "10 % sur votre premier routine de soin",
-    "body": "Laissez votre e-mail et nous vous envoyons un code à usage unique, plus une note discrète de temps en temps sur les soins coréens. Désinscription à tout moment.",
-    "email_label": "Adresse e-mail",
-    "email_placeholder": "vous@exemple.com",
-    "cta": "Envoyer mon code",
-    "cta_loading": "Envoi…",
-    "dismiss": "Non merci",
-    "close": "Fermer",
-    "fine_print": "Nous enverrons d'abord un lien de confirmation avant le code.",
-    "success": "Vérifiez votre boîte de réception pour le lien de confirmation."
   },
   "home": {},
   "gift_card": {
@@ -1114,7 +1168,7 @@
   },
   "yur_club": {
     "eyebrow": "Fidélité",
-    "title": "YU.R Club",
+    "title": "A-Beauty Club",
     "close": "Fermer",
     "tier_label": "Votre niveau",
     "points": "points",
@@ -1139,7 +1193,7 @@
     "earn_ways_placeholder": "Passez une commande, fêtez votre anniversaire, parrainez un·e ami·e, partagez-nous sur les réseaux — chaque geste rapporte.",
     "section_history": "Mon historique",
     "history_empty": "Votre première activité apparaîtra ici dès votre première commande ou récompense.",
-    "footer": "YU.R · Skin Solution",
+    "footer": "Asian Beauty Shop",
     "share": "Partager",
     "milestones_disabled": "Les paliers de récompenses sont en pause — gardez un œil ouvert, ils reviendront.",
     "milestones_caption": "{done, number} / {total, number} commandes · +{points, number} pts à la commande #{target, number}"

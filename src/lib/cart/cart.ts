@@ -296,7 +296,7 @@ export async function addItem(args: {
 
   // Apply Product.isOnSale + salePercent on top of the (variant or
   // product) base price. The variant inherits the product's sale state —
-  // there's no per-variant override today; if Sofia ever wants one, we
+  // there's no per-variant override today; if an admin ever wants one, we
   // add isOnSale/salePercent to ProductVariant and read here.
   let unitPrice: Prisma.Decimal = regularUnitPrice;
   let lineDiscountReason: string | null = null;
@@ -360,7 +360,7 @@ export async function addItem(args: {
     // gets its own recipient/message. If the customer wants two €50 cards
     // for two different people, that's two lines.
     // (Gift cards aren't currently put on sale via the standard sale
-    // flags, but if Sofia ever toggles isOnSale on a GIFT_CARD product
+    // flags, but if an admin ever toggles isOnSale on a GIFT_CARD product
     // the discount flows through here too.)
     await prisma.cartItem.create({
       data: {

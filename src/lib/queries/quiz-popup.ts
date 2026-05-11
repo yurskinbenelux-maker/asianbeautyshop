@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Quiz popup config — Sofia edits every field from
+// Quiz popup config — an admin edits every field from
 // /admin/marketing/quiz-popup. Fires AFTER the welcome popup is finished
 // (closed, dismissed, or never-shown) plus a configurable delay (default
 // 30s). Same single-Setting-row pattern as the welcome popup.
@@ -52,7 +52,7 @@ export const QUIZ_POPUP_DEFAULTS: QuizPopupSettings = {
   bigOffer: "+15%",
   bigOfferSubtitle: "your reward for taking the skin quiz",
   headline: "Discover your <em>routine</em>.",
-  body: "Two minutes, seven questions. We pair the YU.R products to your skin's exact needs and unlock 15% off the recommended set.",
+  body: "Two minutes, seven questions. We pair the right products to your skin's exact needs and unlock 15% off the recommended set.",
   bonus1Enabled: true,
   bonus1Pct: "2 min",
   bonus1Text: "Built around Korean dermatology — quick to answer, designed by professionals.",

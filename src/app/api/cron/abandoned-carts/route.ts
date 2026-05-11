@@ -4,7 +4,7 @@
 // How to wire on Hostinger:
 //   hPanel → Advanced → Cron Jobs → Add new (daily at a sensible hour):
 //     0 11 * * *   curl -fsS -H "Authorization: Bearer $CRON_SECRET" \
-//                    https://yurskinsolution.eu/api/cron/abandoned-carts
+//                    https://asianbeautyshop.eu/api/cron/abandoned-carts
 //
 // What it does:
 //   • Finds carts that have items, belong to a logged-in user, were

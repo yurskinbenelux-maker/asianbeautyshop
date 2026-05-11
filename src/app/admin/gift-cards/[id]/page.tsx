@@ -16,6 +16,7 @@ import { GiftCardStatus } from "@prisma/client";
 import { requireCapability } from "@/lib/auth-roles";
 import { hasCapability } from "@/lib/auth-roles-shared";
 import { getGiftCard } from "@/lib/queries/gift-cards";
+import { formatAdminDate, formatAdminDateTime } from "@/lib/utils/format-date";
 import {
   voidGiftCardAction,
   resendGiftCardAction,
@@ -56,11 +57,11 @@ export default async function AdminGiftCardDetailPage({ params }: Props) {
           <div className="mt-2 flex items-center gap-3 text-[12px] text-ink-mid">
             <StatusBadge status={card.status} />
             <span>·</span>
-            <span>Issued {card.createdAt.toLocaleDateString()}</span>
+            <span>Issued {formatAdminDate(card.createdAt)}</span>
             {card.expiresAt && (
               <>
                 <span>·</span>
-                <span>Expires {card.expiresAt.toLocaleDateString()}</span>
+                <span>Expires {formatAdminDate(card.expiresAt)}</span>
               </>
             )}
           </div>
@@ -142,7 +143,7 @@ export default async function AdminGiftCardDetailPage({ params }: Props) {
                 {card.redemptions.map((r) => (
                   <tr key={r.id} className="border-b border-ink/5">
                     <td className="px-4 py-3 text-ink-mid">
-                      {r.createdAt.toLocaleString()}
+                      {formatAdminDateTime(r.createdAt)}
                     </td>
                     <td className="px-4 py-3">
                       <Link

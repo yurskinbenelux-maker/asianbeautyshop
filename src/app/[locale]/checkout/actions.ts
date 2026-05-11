@@ -45,7 +45,7 @@ const AddressSchema = z.object({
  *
  * Slugs match Mollie's API exactly — see
  * https://docs.mollie.com/reference/v2/payments-api/create-payment#parameters
- * Adding a method here also requires Sofia to enable it in the Mollie
+ * Adding a method here also requires an admin to enable it in the Mollie
  * Dashboard → Settings → Payment methods. We only surface methods that
  * make sense for our customer geography (BE / NL / FR / LU / DE).
  */
@@ -126,7 +126,7 @@ export async function submitCheckout(
   // own catch) OR Prisma write failed in this context.
   //
   // This version returns the error AS DATA so the client renders it
-  // inline. Sofia / Max sees the actual message on the checkout page
+  // inline. an admin / Max sees the actual message on the checkout page
   // instead of a 500. Remove once the bug is identified.
   try {
     return await submitCheckoutInner(formData);

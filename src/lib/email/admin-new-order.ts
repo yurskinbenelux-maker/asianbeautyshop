@@ -1,14 +1,14 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Admin new-order notification — sent to admin@yurskinsolution.eu the
+// Admin new-order notification — sent to admin@asianbeautyshop.eu the
 // moment an order flips to PAID.
 //
 // English-only (internal). Minimal chrome, maximum skimability — the goal
-// is to let Sofia glance at her inbox and know a real customer paid for a
+// is to let an admin glance at her inbox and know a real customer paid for a
 // real order, without having to open the admin panel.
 //
 // Unlike the customer confirmation, this one uses fromNewsletter() on
 // purpose? No — it uses the same transactional sender (donotreply@) with
-// Reply-To hello@, so Sofia can reply to discuss the order and the thread
+// Reply-To hello@, so an admin can reply to discuss the order and the thread
 // stays with the human inbox.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -25,7 +25,7 @@ import { Locale } from "@prisma/client";
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 
@@ -49,7 +49,7 @@ export async function sendAdminNewOrderEmail(
     return { sent: false, reason: "order-not-found" };
   }
 
-  // Force EN formatting — Sofia's admin panel is English regardless of
+  // Force EN formatting — an admin's admin panel is English regardless of
   // the customer's locale.
   const money = (n: number) => formatEmailMoney(n, order.currency, Locale.EN);
 
@@ -65,7 +65,7 @@ export async function sendAdminNewOrderEmail(
 
   const adminUrl = `${siteUrl()}/admin/orders/${encodeURIComponent(order.id)}`;
 
-  // Item summary — one line per SKU, capped so Sofia's inbox preview
+  // Item summary — one line per SKU, capped so an admin's inbox preview
   // stays compact even for big carts.
   const itemList = order.items
     .slice(0, 6)

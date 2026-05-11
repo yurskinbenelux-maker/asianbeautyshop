@@ -19,7 +19,7 @@ export type HomeVideoSettings = {
   /**
    * mp4 URLs (or any browser-playable codec). Single mode uses urls[0];
    * trio mode uses urls[0..2]. Extra URLs are ignored. Missing URLs in
-   * trio mode are rendered as a soft placeholder so Sofia can ship in
+   * trio mode are rendered as a soft placeholder so an admin can ship in
    * stages.
    */
   urls: string[];

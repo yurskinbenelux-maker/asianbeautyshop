@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Top navigation — hanji-white backdrop, hairline underline on scroll.
-// Structure: YU.R wordmark (left) · primary links (center) · utility (right)
+// Structure: Asian Beauty Shop wordmark (left) · primary links (center) · utility (right)
 // ─────────────────────────────────────────────────────────────────────────
 
 "use client";
@@ -50,7 +50,7 @@ export function Nav({
   // categories first.
   const [mobileShopOpen, setMobileShopOpen] = useState(false);
   // Per-parent expansion inside the mobile Shop accordion — a Set so
-  // multiple parents can be open simultaneously (Sofia's customers may
+  // multiple parents can be open simultaneously (an admin's customers may
   // want to compare sub-shelves across two parents at once).
   const [mobileExpandedParents, setMobileExpandedParents] = useState<
     Set<string>
@@ -136,6 +136,16 @@ export function Nav({
     });
   };
 
+  // Homepage is the only route designed to bleed through the nav (the
+  // cinematic hero photo extends to viewport top so a transparent nav
+  // reads as editorial). Every other route — /shop, /brands, listings,
+  // PDPs, account etc. — has solid content right up to the nav, where
+  // a transparent header looks broken: brand tabs / category strips /
+  // toolbars appear to mash into the nav with no visual separation.
+  // next/navigation's usePathname includes the locale prefix here, so
+  // homepage matches /en|/nl|/fr|/ru (no trailing path).
+  const isHome = /^\/[a-z]{2}$/.test(pathname);
+
   return (
     <header
       // z-[60] sits above the AI concierge orb (~z-50) and any cookie
@@ -145,10 +155,24 @@ export function Nav({
       // catches taps. Belt-and-braces.
       className={cn(
         "sticky top-0 z-[60] w-full transition-colors duration-300",
-        scrolled ? "glass border-b border-ink/5" : "bg-transparent",
+        // Transparent at scroll-top ONLY on the homepage hero. On every
+        // other route, the nav stays glass-opaque from the start so
+        // listing-page strips don't visually collide with it. Once the
+        // user has scrolled past the threshold (anywhere), the nav
+        // always glasses up regardless.
+        scrolled || !isHome
+          ? "glass border-b border-ink/5"
+          : "bg-transparent",
       )}
     >
-      <div className="container flex h-16 items-center justify-between gap-3 md:h-20 md:gap-6">
+      {/* Full-width inner shell (no `container` max-width cap) so the
+          logo hugs the left viewport edge and the utility cluster
+          hugs the right on wide displays. The page CONTENT below
+          still uses `container` and stays centred — only this strip
+          is edge-to-edge so the brand wordmark and cart cluster get
+          the full width to breathe in instead of sitting inside
+          a 1536px-capped band with empty 200px gutters either side. */}
+      <div className="flex h-16 w-full items-center justify-between gap-3 px-4 md:h-20 md:gap-6 md:px-8">
         {/* ── Hamburger (mobile only) ──────────────────────────────── */}
         {/* Sits on the leading edge — the conventional spot for mobile
             menu triggers and the easiest one for thumb reach. Hidden on
@@ -159,7 +183,7 @@ export function Nav({
           aria-expanded={mobileOpen}
           aria-controls="mobile-nav-drawer"
           onClick={() => setMobileOpen(true)}
-          className="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:text-vermilion md:hidden"
+          className="-ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:text-vermilion md:hidden"
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -172,12 +196,25 @@ export function Nav({
             room to read as a luxury mark rather than a tiny smudge. */}
         <Link
           href="/"
-          className="flex items-center"
+          // shrink-0 is critical — without it, the Link can be squeezed to
+          // zero width when long-translation languages (FR, RU) make the
+          // primary nav row overflow. The Logo's own flex-shrink:0 only
+          // protects the <img>, not its parent.
+          className="flex shrink-0 items-center"
           aria-label={t("brand.name")}
         >
-          {/* height=48 reads comfortably inside the h-16 mobile nav (64px)
-              and h-20 desktop nav (80px) without overwhelming either. */}
-          <Logo variant="wordmark" height={48} alt={t("brand.name")} />
+          {/* Lockup overflows the nav bar editorially. Height steps up
+              with viewport so smaller-desktop FR/RU don't lose room for
+              the primary links: h-14 (56px) mobile inside h-16 (64px) bar
+              · h-20 (80px) at md (1024px+) · h-24 (96px) at lg (1280px+) ·
+              h-28 (112px) at xl (1536px+) where there's plenty of width.
+              Requires the parent <header> to allow visible overflow. */}
+          <Logo
+            variant="lockup"
+            heightClass="h-14 md:h-20 lg:h-24 xl:h-28"
+            alt={t("brand.name")}
+            className="md:relative md:z-10"
+          />
         </Link>
 
         {/* ── Instagram link — sits right next to the wordmark on every
@@ -198,16 +235,19 @@ export function Nav({
         </a>
 
         {/* ── Primary navigation (desktop only) ────────────────────── */}
-        {/* Eight items now: Product types, Brands, Sale, New, Skin Quiz,
+        {/* Eight items: Product types, Brands, Sale, New, Skin Quiz,
             Ingredients, Journal, About. Both Product types and Brands
             are mega-menus (hover opens panel; click trigger goes to a
             full page). Sale, New, Ingredients, Journal, About are
             plain text anchors.
-            Gap dropped from 8 → 5 (lg+ breakpoints get 6) so all eight
-            items fit on a 1280px laptop. The lighter gap reads tight
-            but not crowded — luxury convention. */}
+            Responsive gap progression: gap-3 (md) → gap-4 (lg) →
+            gap-5 (xl). The tightest setting is needed on mid-desktop
+            widths (1024–1279px) when RU labels (ИНГРЕДИЕНТЫ etc.)
+            are wider than their FR/EN equivalents and were pushing
+            the cart icon past the viewport edge. xl+ gets a
+            comfortable gap once there's room to breathe. */}
         <nav
-          className="hidden items-center gap-5 lg:gap-6 md:flex"
+          className="hidden items-center gap-3 lg:gap-4 xl:gap-5 md:flex"
           aria-label="Primary"
         >
           <ShopMegaMenu tree={shopTree} />
@@ -237,20 +277,22 @@ export function Nav({
         </nav>
 
         {/* ── Utility ──────────────────────────────────────────────── */}
-        <div className="flex items-center gap-2 md:gap-3">
-          {/* Mobile-only locale dropdown — sits before the icon row so
-              the order on a phone reads: Instagram → EN ⌄ → Search →
-              Account → Cart. Tapping the trigger opens a small menu
-              with EN / NL / FR / RU. The desktop inline pills below
-              take over from sm: breakpoint up. */}
-          <div className="sm:hidden">
-            <LocaleDropdown />
-          </div>
-          {/* Desktop / tablet inline pills — EN · NL · FR · RU. Hidden
-              on mobile where LocaleDropdown above does the job. */}
-          <div className="hidden sm:block">
-            <LocaleSwitcher />
-          </div>
+        {/* Tighter gaps (gap-1 mobile / gap-2 tablet+) so the locale
+            pills + search + user + cart cluster doesn't push the
+            content area off the right edge in FR / RU where the rest
+            of the nav is widest. Each IconBtn already has internal
+            tap padding so visual density doesn't compromise touch
+            target size. */}
+        <div className="flex items-center gap-1 md:gap-2">
+          {/* Locale picker — single trigger showing the active locale
+              (EN / NL / FR / RU), opens a 4-item dropdown on click.
+              Used at every viewport now: the inline 4-pill switcher
+              took ~120px on desktop, which crowded FR / RU labels
+              against the right edge. The dropdown collapses that to
+              ~40px and only expands when needed. The mobile drawer
+              footer still uses the inline LocaleSwitcher because the
+              drawer has plenty of horizontal room. */}
+          <LocaleDropdown />
           <IconBtn
             label={t("nav.search")}
             onClick={() => setSearchOpen(true)}
@@ -621,10 +663,14 @@ function NavLink({
   return (
     <Link
       href={href}
+      // whitespace-nowrap stops "SKIN QUIZ", "PRODUCT TYPES" etc. from
+      // wrapping mid-link when the bigger logo squeezes the available
+      // horizontal room. Each link stays one line, the row may scroll
+      // horizontally on very narrow screens (extremely rare on desktop).
       className={
         highlight
-          ? "relative text-[13px] uppercase tracking-label text-vermilion transition-colors hover:text-vermilion/80"
-          : "relative text-[13px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
+          ? "relative whitespace-nowrap text-[13px] uppercase tracking-label text-vermilion transition-colors hover:text-vermilion/80"
+          : "relative whitespace-nowrap text-[13px] uppercase tracking-label text-ink transition-colors hover:text-vermilion"
       }
     >
       {children}

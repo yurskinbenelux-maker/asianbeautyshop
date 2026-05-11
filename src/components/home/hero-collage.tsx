@@ -12,7 +12,7 @@
 //     opacity cream so it never competes with the product.
 //   · Sparse vermilion-tinted petals drift across both sides of the
 //     hero, matching the Typography variant's motif so this variant
-//     still feels native to the brand when Sofia switches between them.
+//     still feels native to the brand when an admin switches between them.
 //
 // Client component — uses framer-motion AnimatePresence for the
 // product crossfade and useState for the current carousel index.

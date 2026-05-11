@@ -216,19 +216,19 @@ export type ShopFilterArgs = {
  * lookup, label, and URL slug derives from here. Adding a fourth line
  * later is a one-row change.
  *
- * Why not a Brand row per line: the company is one brand (YU.R, one VAT,
+ * Why not a Brand row per line: the company is one brand (Asian Beauty Shop, one VAT,
  * one supplier). The "Pro" and "Me" labels are *sub-lines* within the
  * brand, not separate brands. Modelling them as a Product.productLine
  * column reflects the buyer mental model + keeps the Brand model clean
- * for a future where Sofia stocks a second supplier.
+ * for a future where an admin stocks a second supplier.
  *
  * `dbValues` is the set of strings that appear in Product.productLine for
  * that line. The default line includes both `null` and the empty string —
  * old imports wrote both depending on whether the supplier sheet had an
  * explicit blank or omitted the cell.
  */
-// Labels use U+2022 BULLET (•) per the YU.R brand book — "Yu•R", not
-// "Yu.R" or "YU.R". Matches the typography Max requested for the
+// Labels use U+2022 BULLET (•) per the Asian Beauty Shop brand book — "Yu•R", not
+// "Yu.R" or "Asian Beauty Shop". Matches the typography Max requested for the
 // front-end line tabs and the admin organize picker.
 export const PRODUCT_LINES = [
   { slug: "yur", label: "Yu•R", dbValues: [null as string | null, ""] },
@@ -246,7 +246,7 @@ export type ProductLineSlug = (typeof PRODUCT_LINES)[number]["slug"];
  *   · its `extraLines` array contains one of X's non-null dbValues
  *
  * The second arm is what lets a single product (e.g. a gift card) live
- * under every line tab — Sofia ticks all 3 boxes in admin and the rest
+ * under every line tab — an admin ticks all 3 boxes in admin and the rest
  * of the line's non-primary memberships go into extraLines.
  */
 function lineWhere(slugs: string[]): Prisma.ProductWhereInput {
@@ -510,7 +510,7 @@ export async function getShopCategories(
   });
 
   // When a line filter is active, hide categories with zero matches —
-  // they only confuse. Without a line filter we keep zeros (Sofia may be
+  // they only confuse. Without a line filter we keep zeros (an admin may be
   // staging a new shelf and wants the chip to render as "MORE" candidate).
   if (lineSlugs && lineSlugs.length > 0) {
     return mapped.filter((c) => c.count > 0);
@@ -754,6 +754,11 @@ export type BrandIndexCard = {
   logoUrl: string | null;
   tagline: string | null;
   productCount: number;
+  /** Whether the brand has its own about content (cover OR story OR tagline)
+   *  — when false the tile suppresses the "About" link affordance. We don't
+   *  resolve aboutFromBrandId here for performance; the about page itself
+   *  handles the inheritance. Tiles whose brand inherits get the link too. */
+  hasAbout: boolean;
 };
 
 export async function getBrandsForIndexPage(
@@ -768,9 +773,11 @@ export async function getBrandsForIndexPage(
       slug: true,
       name: true,
       logoUrl: true,
+      coverImageUrl: true,
+      aboutFromBrandId: true,
       translations: {
         where: { locale: { in: [loc, Locale.EN] } },
-        select: { locale: true, tagline: true },
+        select: { locale: true, tagline: true, story: true },
       },
       _count: {
         select: {
@@ -791,16 +798,228 @@ export async function getBrandsForIndexPage(
       const localeTr = b.translations.find((t) => t.locale === loc);
       const enTr = b.translations.find((t) => t.locale === Locale.EN);
       const tagline = localeTr?.tagline ?? enTr?.tagline ?? null;
+      // "Has about" is true when EITHER:
+      //   - the brand has its own cover/tagline/story locally, OR
+      //   - it inherits from another brand (aboutFromBrandId set).
+      // The about page handles whether the inherited brand actually has
+      // content — tiles just need a yes/no for the link.
+      const hasOwnContent =
+        b.coverImageUrl !== null ||
+        localeTr?.story != null ||
+        enTr?.story != null ||
+        tagline != null;
+      const hasAbout = hasOwnContent || b.aboutFromBrandId !== null;
       return {
         slug: b.slug,
         name: b.name,
         logoUrl: b.logoUrl,
         tagline,
         productCount: b._count.products,
+        hasAbout,
       };
     })
     // Drop dead brands — same rule as the mega-menu list.
     .filter((b) => b.productCount > 0);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// /brands/[slug]/about query — resolves the aboutFromBrandId chain so that
+// sub-brands inherit their canonical parent's content. Returns the SOURCE
+// brand's tagline + story + cover image, while keeping the requested
+// brand's name as the page heading. One DB roundtrip via include.
+// ─────────────────────────────────────────────────────────────────────────
+
+/** Single certification row authored by the admin. Codes are usually
+ *  short universal acronyms (CPNP, ECAS, GMP); descriptions explain
+ *  the code in human language. */
+export type BrandCertification = {
+  code: string;
+  description: string;
+};
+
+export type ShopBrandAbout = {
+  /** The slug used to reach this page (preserved even when content is inherited). */
+  slug: string;
+  /** Display name shown in the H1. Always the requested brand's own name. */
+  name: string;
+  /** Cover image URL — resolved from aboutFromBrand if set, else self. */
+  coverImageUrl: string | null;
+  /** CSS `object-position` value for the cover crop. Resolved from the
+   *  same source as coverImageUrl so the position stays paired with
+   *  its photo (you don't get the parent's photo with the child's
+   *  position). */
+  coverPosition: string;
+  /** Tagline — locale-first w/ EN fallback, resolved from inherited brand. */
+  tagline: string | null;
+  /** Story HTML — same resolution as tagline. */
+  story: string | null;
+  /** Certifications — empty when none authored. Resolved from the source
+   *  brand (inherited if applicable). */
+  certifications: BrandCertification[];
+  /** Safety/usage note rendered as a callout box on the page. Same
+   *  inheritance rules as certifications. */
+  safetyNote: string | null;
+  /** When true, this brand inherits from another (used to show a small
+   *  "About {parentName}" subhead on the page). */
+  inheritedFromName: string | null;
+};
+
+/** Cover position is stored as `"X% Y%"` where X and Y are 0-100. The
+ *  admin focal-point picker writes percentages directly, which gives
+ *  pixel-accurate control vs. the original 9-keyword grid. Any value
+ *  that doesn't match the expected format (legacy keyword values,
+ *  hand-edited DB rows, garbage) falls back to centred so the renderer
+ *  never receives arbitrary CSS. */
+const COVER_POSITION_PCT_RE = /^\d{1,3}% \d{1,3}%$/;
+
+function resolveCoverPosition(raw: string | null | undefined): string {
+  if (!raw) return "50% 50%";
+  if (!COVER_POSITION_PCT_RE.test(raw)) return "50% 50%";
+  // Defensive bounds-check: regex allows up to 999%, clamp to 100.
+  const [x, y] = raw.split(" ").map((s) => Number.parseInt(s, 10));
+  if (x > 100 || y > 100) return "50% 50%";
+  return raw;
+}
+
+/** Defensive parser for the certifications JSONB column — admins can
+ *  paste odd values, the migration is permissive, so we filter out
+ *  malformed rows rather than render `[object Object]` to customers. */
+function parseCertifications(raw: unknown): BrandCertification[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const r = row as Record<string, unknown>;
+    const code = typeof r.code === "string" ? r.code.trim() : "";
+    const description =
+      typeof r.description === "string" ? r.description.trim() : "";
+    if (!code && !description) return [];
+    return [{ code, description }];
+  });
+}
+
+export async function getBrandAboutBySlug(
+  locale: string,
+  slug: string,
+): Promise<ShopBrandAbout | null> {
+  const loc = toPrismaLocale(locale);
+
+  const brand = await prisma.brand.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      isActive: true,
+      coverImageUrl: true,
+      coverPosition: true,
+      aboutFromBrandId: true,
+      // Certifications are GLOBAL (Brand-level) — codes like CPNP /
+      // ECAS / GMP are regulatory acronyms that don't translate, so
+      // there's no NL/FR/RU variant to maintain. Safety note IS
+      // per-locale on BrandTranslation so DeepL can fill it.
+      certifications: true,
+      translations: {
+        where: { locale: { in: [loc, Locale.EN] } },
+        select: {
+          locale: true,
+          tagline: true,
+          story: true,
+          safetyNote: true,
+        },
+      },
+      // Pull the parent's content in the same query so we don't fan out a
+      // second roundtrip when sub-brands resolve to a parent. Null when
+      // aboutFromBrandId is unset.
+      aboutFromBrand: {
+        select: {
+          name: true,
+          coverImageUrl: true,
+          coverPosition: true,
+          certifications: true,
+          translations: {
+            where: { locale: { in: [loc, Locale.EN] } },
+            select: {
+              locale: true,
+              tagline: true,
+              story: true,
+              safetyNote: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!brand || !brand.isActive) return null;
+
+  // Pick the SOURCE for content — parent if set, otherwise self. The page
+  // heading still uses the REQUESTED brand's name (so visiting /brands/yur-pro
+  // still says "Yu.R Pro" at the top, just with Yu.R's story below).
+  const source = brand.aboutFromBrand ?? brand;
+  const localeTr = source.translations.find((t) => t.locale === loc);
+  const enTr = source.translations.find((t) => t.locale === Locale.EN);
+
+  // Certifications are global on the source brand. Safety note still
+  // resolves locale-first with EN fallback (it's prose, gets DeepL'd).
+  const certifications = parseCertifications(source.certifications);
+
+  return {
+    slug: brand.slug,
+    name: brand.name,
+    coverImageUrl: source.coverImageUrl,
+    coverPosition: resolveCoverPosition(source.coverPosition),
+    tagline: localeTr?.tagline ?? enTr?.tagline ?? null,
+    story: localeTr?.story ?? enTr?.story ?? null,
+    certifications,
+    safetyNote: localeTr?.safetyNote ?? enTr?.safetyNote ?? null,
+    inheritedFromName: brand.aboutFromBrand?.name ?? null,
+  };
+}
+
+/** Lightweight list for the admin's "Source about content from" picker.
+ *  Returns every active brand except the one being edited (a brand can't
+ *  inherit from itself). Keep cheap — name + slug only. */
+export async function getBrandsForAboutPicker(
+  excludeBrandId: string,
+): Promise<Array<{ id: string; name: string; slug: string }>> {
+  return prisma.brand.findMany({
+    where: { id: { not: excludeBrandId }, isActive: true },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, slug: true },
+  });
+}
+
+/**
+ * Given a brand slug, return the slugs of every brand in its "About
+ * family" — used by the brand About page CTA to deep-link back to /shop
+ * with a pre-applied multi-brand filter. The family is:
+ *
+ *   · the canonical brand (self if standalone, else aboutFromBrand parent)
+ *   · every other brand inheriting from that canonical (siblings + self)
+ *
+ * Example: for Yu.R Me (which inherits from Yu.R), the family is
+ * { Yu.R, Yu.R Pro, Yu.R Me }. For a standalone brand it's just itself.
+ *
+ * Inactive brands are excluded so the CTA never points at hidden inventory.
+ */
+export async function getBrandFamilySlugs(slug: string): Promise<string[]> {
+  const brand = await prisma.brand.findUnique({
+    where: { slug },
+    select: { id: true, isActive: true, aboutFromBrandId: true },
+  });
+  if (!brand || !brand.isActive) return [];
+
+  const canonicalId = brand.aboutFromBrandId ?? brand.id;
+
+  const family = await prisma.brand.findMany({
+    where: {
+      isActive: true,
+      OR: [{ id: canonicalId }, { aboutFromBrandId: canonicalId }],
+    },
+    select: { slug: true },
+    orderBy: { name: "asc" },
+  });
+  return family.map((b) => b.slug);
 }
 
 /**
@@ -909,7 +1128,7 @@ export type ShopFilters = {
   /**
    * Product lines (Yu.R / Yu.R Pro / Yu.R Me). Counts are scoped to
    * published products and reflect each line's actual inventory volume.
-   * Always emitted in PRODUCT_LINES order, never alphabetised — Sofia
+   * Always emitted in PRODUCT_LINES order, never alphabetised — an admin
    * cares about the Pro/Me hierarchy reading consistently.
    */
   lines: ShopFilterTaxon[];
@@ -928,7 +1147,7 @@ export type ShopFilters = {
  * with their natural counts so the user can always see (and add) other
  * facets. The grid itself does the final narrowing.
  *
- * Ingredients are optionally capped to the most-used ones because Sofia
+ * Ingredients are optionally capped to the most-used ones because an admin
  * can create hundreds of INCI rows and a 300-item sidebar is unusable.
  */
 export async function getShopFilters(
@@ -1137,7 +1356,7 @@ export async function getProductBySlug({
   slug: string;
   /**
    * When true, DRAFT and ARCHIVED products are also returned. Used by the
-   * admin "Preview as customer" flow so Sofia can QA a product page before
+   * admin "Preview as customer" flow so an admin can QA a product page before
    * flipping it to PUBLISHED. The caller MUST gate this behind an admin
    * auth check — never pass `true` based on an untrusted query param alone.
    * Soft-deleted products (`deletedAt`) remain hidden in either mode.
@@ -1149,7 +1368,7 @@ export async function getProductBySlug({
   // Lookup strategy:
   //   1. Strict match on (URL locale, slug) — the happy path.
   //   2. If that returns null, fall back to the EN translation with the
-  //      same slug. This catches the case where Sofia hasn't translated a
+  //      same slug. This catches the case where an admin hasn't translated a
   //      product into the visitor's chosen locale yet — the LocaleSwitcher
   //      sends them to /ru/shop/<EN slug> rather than 404'ing, and we
   //      surface the EN copy with localized chrome (nav, footer) around it.
@@ -1534,7 +1753,7 @@ export async function getAllPublishedProductSlugs(): Promise<
  * Category slugs are shared across locales (they live on Category, not on
  * CategoryTranslation), so a single slug emits four sitemap entries —
  * one per locale under /[locale]/shop/category/<slug>. `updatedAt` is
- * the category row's, so Google sees a fresh stamp when Sofia edits
+ * the category row's, so Google sees a fresh stamp when an admin edits
  * its hero copy.
  */
 export type CategorySitemapEntry = {
@@ -1557,7 +1776,7 @@ export async function getAllActiveCategorySlugs(): Promise<
  * getAllActiveBrandSlugs — brand slugs for the sitemap.
  *
  * Same treatment as category slugs: shared across locales, one entry
- * per (slug, locale) pair. Only active brands are emitted — Sofia may
+ * per (slug, locale) pair. Only active brands are emitted — an admin may
  * be staging a new brand and we don't want Google to find a
  * not-yet-launched URL.
  */

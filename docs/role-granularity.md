@@ -9,7 +9,7 @@
 ## Why
 
 Up to now the admin was a single club: an email was either on
-`ADMIN_ALLOWED_EMAILS` or it wasn't. Once Sofia starts working with a VA
+`ADMIN_ALLOWED_EMAILS` or it wasn't. Once an admin starts working with a VA
 or a freelance copywriter, she'll want to hand out narrower keys — a
 copywriter should never see the customer export, and a fulfilment
 helper should never be able to change the VAT rate.
@@ -129,7 +129,7 @@ only has owners) is preserved.
 
 ---
 
-## 4. Still to do (Sofia's next pass)
+## 4. Still to do (an admin's next pass)
 
 These already have the matrix entries — they just need a
 `requireCapability(...)` added at the top of each handler.
@@ -150,7 +150,7 @@ in a separate pass keeps this overnight change-set easier to review.
 
 ## Why allow-list instead of DB-level roles
 
-- Sofia never has to think about a "user management UI".
+- an admin never has to think about a "user management UI".
 - Role grants are auditable via git/Hostinger env-var history.
 - No migration needed.
 - Matches how the existing `ADMIN_ALLOWED_EMAILS` already works — we're

@@ -78,7 +78,7 @@ export default async function EmailPreviewPage({
           </p>
         </div>
         {/* Edit-copy link — only shown when the email is registered in
-            FIELD_META as having editable fields. Click takes Sofia to
+            FIELD_META as having editable fields. Click takes an admin to
             the per-locale editor with DeepL + Groq buttons. */}
         {hasEditableCopy(template.key) && (
           <Link
@@ -133,7 +133,7 @@ export default async function EmailPreviewPage({
           hook that surfaces the success/error toast can only run on the client.
 
           Keyed by template+locale so the form remounts on each switch and the
-          "Sent!" indicator from a previous locale doesn't linger while Sofia
+          "Sent!" indicator from a previous locale doesn't linger while an admin
           is flipping between languages.
         */}
         <TestSendForm

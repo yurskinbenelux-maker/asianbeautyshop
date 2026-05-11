@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────────────────
-   YU.R Skin Solution — globals.css
+   Asian Beauty Shop — globals.css
    Rice-paper base, sumi-ink type, vermilion accent.
    Font CSS variables are injected by next/font in layout.tsx:
      --font-display  Fraunces (display serif)
@@ -33,6 +33,12 @@
     background-image: var(--hanji-grain);
     background-repeat: repeat;
     background-size: 160px 160px;
+    /* Lock horizontal scrolling on body only. Setting overflow-x on
+       <html> is the modern way but breaks position:sticky for
+       descendants on iOS Safari (well-known WebKit bug) — including
+       the sticky top nav. Body-level clip is safe across browsers
+       and accomplishes the same visual lock. */
+    overflow-x: clip;
   }
 
   /* Display type defaults — Fraunces with optical weight */
@@ -97,6 +103,47 @@
     -webkit-backdrop-filter: saturate(140%) blur(14px);
     border: 1px solid rgba(18,17,16,0.06);
   }
+
+  /* Brand About story — opinionated typography for the per-brand
+     editorial page (/brands/[slug]/about). Solves the "everything reads
+     like one paragraph" problem by giving headings, lists, and bold
+     real visual weight even when the admin authors with mixed-quality
+     HTML out of Tiptap. */
+  .brand-story > * + * { @apply mt-5; }
+  .brand-story p { @apply leading-[1.8]; }
+  .brand-story h2 {
+    @apply mt-12 font-display text-[24px] leading-tight text-ink;
+  }
+  .brand-story h2:first-child { @apply mt-0; }
+  .brand-story h3 {
+    @apply mt-10 text-[11px] uppercase tracking-label text-vermilion;
+  }
+  .brand-story h4 {
+    @apply mt-8 text-[15px] font-medium text-ink;
+  }
+  .brand-story strong { @apply font-medium text-ink; }
+  .brand-story em { @apply italic; }
+  .brand-story ul {
+    @apply mt-4 space-y-2 pl-0 list-none;
+  }
+  .brand-story ul li {
+    @apply relative pl-6 leading-relaxed text-ink;
+  }
+  .brand-story ul li::before {
+    content: "";
+    @apply absolute left-0 top-[0.7em] h-[5px] w-[5px] bg-vermilion;
+  }
+  .brand-story ol {
+    @apply mt-4 list-decimal space-y-2 pl-6 marker:text-vermilion;
+  }
+  .brand-story ol li { @apply leading-relaxed text-ink; }
+  .brand-story blockquote {
+    @apply my-8 border-l-2 border-vermilion pl-5 italic text-ink;
+  }
+  .brand-story a {
+    @apply underline decoration-vermilion underline-offset-4 hover:text-vermilion;
+  }
+  .brand-story hr { @apply my-10 border-ink/10; }
 
   /* Editorial rich-text styling — for product descriptions, journal
      entries, and anything coming out of the Tiptap editor in admin.

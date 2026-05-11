@@ -2,7 +2,7 @@
 // /admin/ingredients — list page for the Ingredient library.
 //
 // Unlike the public /ingredients page, this view shows every row
-// regardless of whether a product currently links to it. Sofia can:
+// regardless of whether a product currently links to it. an admin can:
 //   · toggle the key-asset / allergen flags in-line
 //   · click the slug / display name to open the full editor
 //   · create a new ingredient via the masthead button

@@ -5,7 +5,7 @@
 // hold on the signed-in user as a downloadable file.  The browser gets a
 // Content-Disposition: attachment with a filename like
 //
-//     yurskin-my-data-2026-04-23.json
+//     asianbeautyshop-my-data-2026-04-23.json
 //
 // Guarded by requireCustomer(): unauthenticated callers are redirected
 // to /sign-in via the standard redirect.  There's no rate-limit here yet
@@ -32,7 +32,7 @@ export async function GET() {
   const body = JSON.stringify(archive, null, 2);
 
   const today = new Date().toISOString().slice(0, 10);
-  const filename = `yurskin-my-data-${today}.json`;
+  const filename = `asianbeautyshop-my-data-${today}.json`;
 
   return new NextResponse(body, {
     status: 200,

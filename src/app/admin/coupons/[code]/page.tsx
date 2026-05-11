@@ -8,6 +8,7 @@ import {
 import { CouponForm } from "@/components/admin/coupons/coupon-form";
 import { CouponDangerZone } from "@/components/admin/coupons/coupon-danger-zone";
 import { formatDiscount, formatWindow } from "../format";
+import { ADMIN_DATETIME_FMT } from "@/lib/utils/format-date";
 
 export const dynamic = "force-dynamic";
 
@@ -31,13 +32,7 @@ export default async function EditCouponPage({
     currency: "EUR",
   });
 
-  const DATETIME = new Intl.DateTimeFormat("en-IE", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const DATETIME = ADMIN_DATETIME_FMT;
 
   return (
     <div className="mx-auto max-w-5xl px-8 py-10">
@@ -72,7 +67,7 @@ export default async function EditCouponPage({
         Performance strip — derived from real Order rows (cancelled orders
         excluded) rather than Coupon.redemptionsUsed. The counter in the
         masthead above shows the raw checkout increment; this block tells
-        Sofia whether the promo actually made money.
+        an admin whether the promo actually made money.
       */}
       <section className="mb-10 border border-ink/10 bg-white/60">
         <div className="flex items-center justify-between gap-4 border-b border-ink/10 px-6 py-4">

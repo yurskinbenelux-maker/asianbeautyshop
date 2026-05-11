@@ -58,7 +58,7 @@ export function effectivePriceEur(p: SalePricingInput): number {
  * Display-friendly tuple — what every product card / PDP needs to
  * render the price section consistently:
  *
- *   • `current`        — the price to show prominently (€ Sofia gets paid)
+ *   • `current`        — the price to show prominently (€ an admin gets paid)
  *   • `original`       — the strikethrough "was" price (only set when on sale)
  *   • `discountPercent` — the small "−X%" chip value (only set when on sale)
  *   • `isOnSale`       — convenience boolean for branchy UI

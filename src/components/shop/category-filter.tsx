@@ -10,7 +10,7 @@
 // Visual hierarchy (the 2026-04 polish):
 //   Premium beauty sites surface ~6 broad categories prominently and
 //   tuck the long tail behind a "more" disclosure. Showing all 17 of
-//   YU.R's narrow K-beauty sub-categories (CC cream, DD cream, peeling
+//   Asian Beauty Shop's narrow K-beauty sub-categories (CC cream, DD cream, peeling
 //   gel, cushion…) in one strip reads as a wall of noise.
 //
 //   So we split the list:
@@ -22,7 +22,7 @@
 //
 // Why full navigations (not the old same-page ?category= refinement):
 // each category now has its own canonical URL so it ranks on its own
-// and Sofia can merchandise a hero per category. Because we're leaving
+// and an admin can merchandise a hero per category. Because we're leaving
 // the current page, scroll-to-top is desirable (the feedback rule about
 // preserving scroll only applies to *refinements* within the same page).
 // ─────────────────────────────────────────────────────────────────────────

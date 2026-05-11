@@ -7,7 +7,7 @@
 //   · "single" → one 16:9 mp4, contained max-w 7xl, autoplay muted loop
 //   · "trio"   → three 9:16 portrait mp4s in a row with gaps; stacks on
 //                mobile. Slots without a URL render a soft placeholder so
-//                Sofia can launch with one or two videos and add more
+//                an admin can launch with one or two videos and add more
 //                later without the layout breaking.
 //
 // Server component — the autoplay/loop/muted are pure HTML attributes,

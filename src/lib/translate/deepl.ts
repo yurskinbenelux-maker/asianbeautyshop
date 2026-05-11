@@ -3,7 +3,7 @@
 //
 // Why DeepL: best-in-class quality for our actual locale pairs (EN→NL,
 // EN→FR, EN→RU), HTML tag preservation built in, and the free tier
-// (500k chars/month) comfortably covers Sofia's whole catalogue. We only
+// (500k chars/month) comfortably covers an admin's whole catalogue. We only
 // call this from server-side code — the API key never touches the
 // browser.
 //
@@ -188,7 +188,7 @@ export async function translateBatch(
 }
 
 /** Friendly error message for the admin UI. Hides DeepL implementation
- *  detail — Sofia doesn't need to know what HTTP 456 means. */
+ *  detail — an admin doesn't need to know what HTTP 456 means. */
 export function describeDeepLError(err: DeepLError): string {
   switch (err.kind) {
     case "missing-key":

@@ -2,7 +2,7 @@
 // /admin/products/import/template — download a starter CSV.
 //
 // Returns a UTF-8 CSV (with BOM so Excel on Windows opens it cleanly)
-// containing the full column set and one example row. Sofia can open it
+// containing the full column set and one example row. an admin can open it
 // in Excel/Numbers, fill in her catalogue, and upload back via the import
 // form.
 // ─────────────────────────────────────────────────────────────────────────

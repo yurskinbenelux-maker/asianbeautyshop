@@ -47,7 +47,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
   } else {
     // No token configured at all. In dev this is fine; in prod this means
-    // Sofia deployed without setting CRON_SECRET/MOLLIE_WEBHOOK_SECRET.
+    // an admin deployed without setting CRON_SECRET/MOLLIE_WEBHOOK_SECRET.
     // Log loudly so the issue shows up in server logs.
     console.warn(
       "[mollie-webhook] WARN: no MOLLIE_WEBHOOK_SECRET or CRON_SECRET " +

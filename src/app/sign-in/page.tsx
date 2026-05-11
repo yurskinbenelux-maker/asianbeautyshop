@@ -20,7 +20,7 @@ export default async function SignInPage({ searchParams }: Props) {
             this compact context). The 유 seal that used to sit beside
             the text wordmark has been retired. */}
         <div className="mb-12">
-          <Logo variant="wordmark" height={34} alt="YU.R" />
+          <Logo variant="lockup" height={64} alt="Asian Beauty Shop" />
         </div>
 
         <div className="eyebrow">Admin</div>

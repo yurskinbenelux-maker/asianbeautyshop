@@ -269,7 +269,7 @@ export async function deleteOrphansAction(
 // ──────── upload directly to the library (no product attached) ────────
 //
 // Creates a Media row with productId=null so it sits in the library
-// asset pool until Sofia links it to one or more products via
+// asset pool until an admin links it to one or more products via
 // linkMediaToProductAction. The Storage object lives under "library/"
 // to keep the bucket organised separately from product-uploaded files.
 export async function uploadLibraryMediaAction(
@@ -326,7 +326,7 @@ export async function uploadLibraryMediaAction(
       // <video> previews for clips and <img> for stills.
       kind: isVideoMime(file.type) ? MediaKind.VIDEO : MediaKind.IMAGE,
       url: publicUrl,
-      // Best-effort placeholder alt — Sofia can override in the drawer.
+      // Best-effort placeholder alt — an admin can override in the drawer.
       alt: safeName.replace(/\.[^.]+$/, "").replace(/-/g, " "),
       isPrimary: false,
       sortOrder: 0,
@@ -374,7 +374,7 @@ export async function linkMediaToProductAction(
 
   // Source asset to copy from. We pull the canonical URL/alt/dimensions —
   // alt is intentionally copied so the new product copy starts with the
-  // library's alt text, but Sofia can edit it per-row afterwards.
+  // library's alt text, but an admin can edit it per-row afterwards.
   const source = await prisma.media.findUnique({
     where: { id: mediaId },
     select: {

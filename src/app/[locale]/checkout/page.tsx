@@ -107,7 +107,7 @@ async function CheckoutPageInner({ params }: Props) {
   setRequestLocale(locale);
 
   // 1. No Mollie key? Show a friendly "not configured yet" screen — prevents
-  //    server-500s if Sofia hasn't pasted her key into Hostinger yet.
+  //    server-500s if an admin hasn't pasted her key into Hostinger yet.
   if (!hasMollieKey()) {
     return <CheckoutUnavailable locale={locale} />;
   }

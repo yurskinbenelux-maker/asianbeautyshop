@@ -55,7 +55,7 @@ export type EmailTemplate = {
   label: string;
   /** Short one-liner describing WHEN the email is sent. */
   description: string;
-  /** Who receives this — customer vs. Sofia. Drives colour + icon. */
+  /** Who receives this — customer vs. an admin. Drives colour + icon. */
   audience: EmailAudience;
   /**
    * When true, the preview page exposes a locale switcher (EN/NL/FR/RU).
@@ -68,14 +68,14 @@ export type EmailTemplate = {
    * current fixture" (e.g. empty low-stock report).
    *
    * `overrides` (optional) lets the editor preview show admin-edited
-   * copy live as Sofia types. Templates that don't accept overrides
+   * copy live as an admin types. Templates that don't accept overrides
    * yet ignore the parameter — they just render their defaults.
    */
   render: (locale: Locale, overrides?: EmailOverrides) => RenderedEmail | null;
 };
 
 /**
- * The ordered list of templates Sofia can preview. Ordering matters —
+ * The ordered list of templates an admin can preview. Ordering matters —
  * the grid on the index page follows this order (customer first, then
  * admin). Grouping handled in the page itself.
  */
@@ -84,7 +84,7 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     key: "auth-confirm",
     label: "Account confirmation (per-locale preview)",
     description:
-      "Per-locale preview of the YU.R-branded confirm-signup email. Supabase only ships ONE template at a time — for production, use the 'Account confirmation (multilingual)' entry below instead.",
+      "Per-locale preview of the Asian Beauty Shop-branded confirm-signup email. Supabase only ships ONE template at a time — for production, use the 'Account confirmation (multilingual)' entry below instead.",
     audience: "customer",
     localised: true,
     render: (locale) => {
@@ -173,7 +173,7 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     localised: true,
     render: (locale, overrides) =>
       buildConfirmationEmail({
-        confirmUrl: "https://yurskinsolution.eu/api/newsletter/confirm?t=preview",
+        confirmUrl: "https://asianbeautyshop.eu/api/newsletter/confirm?t=preview",
         locale,
         overrides,
       }),

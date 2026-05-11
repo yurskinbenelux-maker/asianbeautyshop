@@ -2,7 +2,7 @@
 // /admin/media — media library.
 //
 // Uploads happen from the product editor (that's where every image is
-// born). The library lets Sofia:
+// born). The library lets an admin:
 //   • browse every image in the catalogue at a glance
 //   • find orphans (no product, no banner) and clean them up in bulk
 //   • fix alt text, copy a public URL, reassign primary, or delete

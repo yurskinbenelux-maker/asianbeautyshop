@@ -4,7 +4,7 @@
 // while the tab stays visible.
 //
 // Used by the admin dashboard "visitors online" widget to estimate
-// how many concurrent users are on the site (so Sofia sees when she's
+// how many concurrent users are on the site (so an admin sees when she's
 // approaching the Hostinger Max Processes ceiling).
 //
 // Behaviour notes:

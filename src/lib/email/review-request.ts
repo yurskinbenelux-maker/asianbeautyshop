@@ -7,7 +7,7 @@
 // five separate emails to someone who bought five things.
 //
 // Localised EN / NL / FR / RU. Uses fromTransactional() + hello@ Reply-To
-// (so replies go to Sofia if the customer has something to say).
+// (so replies go to an admin if the customer has something to say).
 // ─────────────────────────────────────────────────────────────────────────
 
 import { Locale } from "@prisma/client";
@@ -39,7 +39,7 @@ type Strings = {
 
 export const REVIEW_REQUEST_STRINGS: Record<Locale, Strings> = {
   EN: {
-    subject: (n) => `How did your ${n} skincare routine go? — YU.R Skin Solution`,
+    subject: (n) => `How did your ${n} skincare routine go? — Asian Beauty Shop`,
     preheader: "Share a few words about your products.",
     heading: (f) =>
       f ? `${f}, how did it go?` : "How did it go?",
@@ -48,11 +48,11 @@ export const REVIEW_REQUEST_STRINGS: Record<Locale, Strings> = {
     incentive:
       "A few honest lines is plenty. No forms, no pressure — just your words.",
     cta: "Leave a review",
-    signoff: "Thank you,\nSofia · YU.R Skin Solution",
+    signoff: "Thank you,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
-    subject: (n) => `Hoe bevielen de producten uit ${n}? — YU.R Skin Solution`,
+    subject: (n) => `Hoe bevielen de producten uit ${n}? — Asian Beauty Shop`,
     preheader: "Deel je ervaring met je producten.",
     heading: (f) =>
       f ? `${f}, hoe was het?` : "Hoe was het?",
@@ -61,11 +61,11 @@ export const REVIEW_REQUEST_STRINGS: Record<Locale, Strings> = {
     incentive:
       "Een paar eerlijke zinnen is ruim voldoende. Geen formulieren, geen druk — gewoon jouw woorden.",
     cta: "Review achterlaten",
-    signoff: "Bedankt,\nSofia · YU.R Skin Solution",
+    signoff: "Bedankt,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
-    subject: (n) => `Comment s'est passé votre routine de soin ${n} ? — YU.R Skin Solution`,
+    subject: (n) => `Comment s'est passé votre routine de soin ${n} ? — Asian Beauty Shop`,
     preheader: "Partagez votre expérience en quelques mots.",
     heading: (f) =>
       f ? `${f}, comment ça s'est passé ?` : "Comment ça s'est passé ?",
@@ -74,11 +74,11 @@ export const REVIEW_REQUEST_STRINGS: Record<Locale, Strings> = {
     incentive:
       "Quelques mots sincères suffisent. Pas de formulaire, aucune pression — juste votre ressenti.",
     cta: "Laisser un avis",
-    signoff: "Merci,\nSofia · YU.R Skin Solution",
+    signoff: "Merci,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
-    subject: (n) => `Как прошёл ваш рутина по заказу ${n}? — YU.R Skin Solution`,
+    subject: (n) => `Как прошёл ваш рутина по заказу ${n}? — Asian Beauty Shop`,
     preheader: "Поделитесь впечатлениями от продуктов.",
     heading: (f) =>
       f ? `${f}, как впечатления?` : "Как впечатления?",
@@ -87,7 +87,7 @@ export const REVIEW_REQUEST_STRINGS: Record<Locale, Strings> = {
     incentive:
       "Достаточно нескольких искренних строк. Без форм и давления — просто ваши слова.",
     cta: "Оставить отзыв",
-    signoff: "Благодарю,\nСофия · YU.R Skin Solution",
+    signoff: "Благодарю,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -103,7 +103,7 @@ export type ReviewRequestEmail = {
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu"
+    "https://asianbeautyshop.eu"
   );
 }
 

@@ -61,7 +61,7 @@ export async function listMyGiftCards(
     orderBy: { createdAt: "desc" },
     include: {
       redemptions: { select: { amountUsed: true } },
-      // The order public number, for "this card came from order YUR-1042".
+      // The order public number, for "this card came from order ABS-1042".
       // Joining via raw FK because Prisma doesn't expose the relation
       // (purchaseOrderId is plain — no `@relation`).
     },

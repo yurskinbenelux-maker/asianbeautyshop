@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // /admin/ingredients/export — download the entire Ingredient library as CSV.
 //
-// Sofia's main use case: take a snapshot of every ingredient (often with
+// an admin's main use case: take a snapshot of every ingredient (often with
 // half the descriptions blank), feed the file to an LLM to draft the
 // missing descriptions in bulk, then re-import via /admin/ingredients/import.
 //

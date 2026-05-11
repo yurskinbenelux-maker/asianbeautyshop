@@ -62,8 +62,20 @@ export type ReturnRow = {
   adminNotes: string | null;
   refundAmount: number | null;
   refundedAt: Date | null;
+  /** Mollie refund id (re_xxxx) — set once A1's issueRefundAndCreditNote
+   *  fires payments_refunds.create and the gateway accepts. Acts as the
+   *  idempotency gate so a re-clicked "Mark received" button never
+   *  produces a double refund. */
+  mollieRefundId: string | null;
   trackingNumber: string | null;
   trackingUrl: string | null;
+  /** Prepaid return-label PDF URL (Sendcloud-hosted). Null when the
+   *  customer ships at their own cost — free-plan fallback or admin
+   *  opted out of auto-label. */
+  returnLabelUrl: string | null;
+  /** Sendcloud parcel id for the return — idempotency gate against
+   *  re-clicked Approve buttons. */
+  sendcloudReturnParcelId: string | null;
   receivedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;

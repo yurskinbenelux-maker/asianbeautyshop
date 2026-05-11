@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { LoyaltyTaskClaimStatus } from "@prisma/client";
 import { requireCapability } from "@/lib/auth-roles";
 import { ClaimDecisionForms } from "./forms";
+import { formatAdminDateTime } from "@/lib/utils/format-date";
 
 type Props = {
   searchParams: Promise<{ status?: string }>;
@@ -123,12 +124,7 @@ export default async function ClaimsQueuePage({ searchParams }: Props) {
                       +{(c.task?.points ?? 0).toLocaleString()} pts
                     </p>
                     <p className="mt-0.5 text-[10px] uppercase tracking-label text-ink-mid">
-                      {c.createdAt.toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatAdminDateTime(c.createdAt)}
                     </p>
                   </div>
                 </header>

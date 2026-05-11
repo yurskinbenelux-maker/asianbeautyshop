@@ -21,7 +21,7 @@ Get these in writing from the client BEFORE starting Phase 1. Half a day saved l
 - [ ] **CLIENT** Provide company legal info: registered name, VAT number, registered address, contact email, contact phone
 - [ ] **CLIENT** Confirm sender email addresses we should use (`hello@`, `support@`, `orders@`, `noreply@`)
 - [ ] **CLIENT** Provide registrar EPP / auth code for the domain transfer
-- [ ] **CLIENT** Confirm whether old `yurskinsolution.eu` domain stays alive (recommended: yes, redirect to new domain for 12 months)
+- [ ] **CLIENT** Confirm whether old `asianbeautyshop.eu` domain stays alive (recommended: yes, redirect to new domain for 12 months)
 - [ ] **MAX** Take a full Supabase backup before any migration work starts (Supabase Dashboard → Database → Backups → Manual backup)
 - [ ] **MAX** Tag a git release: `git tag pre-kelmus-migration && git push --tags` — your rollback anchor
 
@@ -51,7 +51,7 @@ Can run in parallel with Phase 1 (no live deploy yet — work on a branch).
 
 - [ ] **MAX** Cut a branch: `git checkout -b kelmus-rebrand`
 - [ ] **MAX** Find/replace audit (use `rg -l "yurskinsolution" src/ messages/`):
-  - [ ] `yurskinsolution.eu` → `kelmusgroup.com` everywhere
+  - [ ] `asianbeautyshop.eu` → `kelmusgroup.com` everywhere
   - [ ] `YurSkin Solutions` → `Kelmusgroup` everywhere
   - [ ] `YurSkin` → `Kelmusgroup`
   - [ ] `YU.R` → review case-by-case (it's the product brand the client sells, may stay; ask)
@@ -83,7 +83,7 @@ Each service: prepare in parallel; flip the switch in Phase 4. Don't break the l
 - [ ] **MAX** Add `kelmusgroup.com` as a domain in Resend dashboard
 - [ ] **MAX** Add the SPF/DKIM/DMARC records to Hostinger DNS (already in Phase 1)
 - [ ] **MAX** Wait for "Verified" status in Resend (usually 5–15 min)
-- [ ] **MAX** Keep `yurskinsolution.eu` ALSO verified for 30 days — orders in flight still send from old sender
+- [ ] **MAX** Keep `asianbeautyshop.eu` ALSO verified for 30 days — orders in flight still send from old sender
 - [ ] **MAX** New webhook URL `https://kelmusgroup.com/api/webhooks/resend` — set in Phase 4 after deploy
 - [ ] **MAX** New env var: `RESEND_FROM_EMAIL="hello@kelmusgroup.com"` — push to Hostinger in Phase 4
 
@@ -184,7 +184,7 @@ Done after Phase 4 confirms the site is live.
 
 ### 5c. Google Ads
 - [ ] **MAX** Re-verify domain ownership in Google Ads (TXT record at Hostinger DNS)
-- [ ] **MAX** Update final URLs in EVERY active ad — old `yurskinsolution.eu` URLs → new
+- [ ] **MAX** Update final URLs in EVERY active ad — old `asianbeautyshop.eu` URLs → new
 - [ ] **MAX** Update sitelinks, callouts, structured snippets
 - [ ] **MAX** Rewrite ad copy that mentions brand name
 - [ ] **MAX** Check conversion actions still fire (do a real test purchase)
@@ -194,13 +194,13 @@ Done after Phase 4 confirms the site is live.
 - [ ] **MAX** Add `kelmusgroup.com` as new property
 - [ ] **MAX** Verify ownership (TXT record at Hostinger DNS)
 - [ ] **MAX** Submit `https://kelmusgroup.com/sitemap.xml`
-- [ ] **MAX** Use the "Change of Address" tool in old `yurskinsolution.eu` property to point Google at the new domain — preserves SEO juice
+- [ ] **MAX** Use the "Change of Address" tool in old `asianbeautyshop.eu` property to point Google at the new domain — preserves SEO juice
 - [ ] **MAX** Monitor migration report weekly for 90 days
 
 ### 5e. 301 redirects (old domain → new)
 - [ ] **MAX** Confirm old domain still resolves (Hostinger panel)
-- [ ] **MAX** Add a redirect rule: `yurskinsolution.eu/*` → `kelmusgroup.com/$1` (301 permanent). Hostinger does this in Domains → Forwarding, or via `_redirects` file
-- [ ] **MAX** Test: `curl -I https://yurskinsolution.eu/shop` should return `301` + Location header to new domain
+- [ ] **MAX** Add a redirect rule: `asianbeautyshop.eu/*` → `kelmusgroup.com/$1` (301 permanent). Hostinger does this in Domains → Forwarding, or via `_redirects` file
+- [ ] **MAX** Test: `curl -I https://asianbeautyshop.eu/shop` should return `301` + Location header to new domain
 
 ---
 
@@ -235,9 +235,9 @@ A simple cadence to catch silent failures.
 - [ ] **MAX** Check Resend — domain reputation healthy
 
 ### Day +30
-- [ ] **MAX** Disable old `yurskinsolution.eu` Resend domain (no more legacy senders)
+- [ ] **MAX** Disable old `asianbeautyshop.eu` Resend domain (no more legacy senders)
 - [ ] **MAX** Delete old cron-job.org jobs
-- [ ] **MAX** Decide: keep `yurskinsolution.eu` redirecting forever, or sunset after 12 months
+- [ ] **MAX** Decide: keep `asianbeautyshop.eu` redirecting forever, or sunset after 12 months
 - [ ] **MAX** Tag the milestone: `git tag kelmus-migration-stable`
 
 ---
@@ -247,7 +247,7 @@ A simple cadence to catch silent failures.
 If Phase 4 deploy is broken in a way you can't fix in 30 min:
 
 1. In Hostinger, redeploy from the `pre-kelmus-migration` git tag — site goes back to YurSkin branding on the old `kelmusgroup.com` domain (looks weird but works)
-2. Revert Supabase Auth URL config to `yurskinsolution.eu`
+2. Revert Supabase Auth URL config to `asianbeautyshop.eu`
 3. Revert Mollie + Sendcloud + Resend webhooks back to old domain
 4. Old domain still resolves, old cron jobs still run — site is functional under the old brand
 5. Investigate, fix, retry the merge later

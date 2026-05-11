@@ -34,89 +34,89 @@ const STRINGS: Record<Locale, Strings> = {
   EN: {
     subjectFriend: (s) =>
       s
-        ? `${s} sent you a YU•R gift card`
-        : "You've received a YU•R gift card",
-    subjectSelf: "Your YU•R gift card is ready",
+        ? `${s} sent you a Asian Beauty Shop gift card`
+        : "You've received a Asian Beauty Shop gift card",
+    subjectSelf: "Your Asian Beauty Shop gift card is ready",
     preheader: "A small balance for a slow Korean skincare routine.",
     greet: (n) => (n ? `Hello ${n},` : "Hello,"),
     introFriend: (s, amount) =>
       s
-        ? `${s} thought of you and sent you a ${amount} YU•R gift card.`
-        : `Someone thought of you and sent you a ${amount} YU•R gift card.`,
+        ? `${s} thought of you and sent you a ${amount} Asian Beauty Shop gift card.`
+        : `Someone thought of you and sent you a ${amount} Asian Beauty Shop gift card.`,
     introSelf: (amount) =>
-      `Your ${amount} YU•R gift card is ready. Use it whenever the moment feels right.`,
+      `Your ${amount} Asian Beauty Shop gift card is ready. Use it whenever the moment feels right.`,
     noteLabel: "A note from your sender",
     codeLabel: "Your gift card code",
     codeNote: (amount, until) =>
       `Balance ${amount}. Apply at checkout. Valid until ${until}.`,
     cta: "Browse the collection",
-    signoff: "With care,\nSofia · YU•R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
     subjectFriend: (s) =>
       s
-        ? `${s} heeft je een YU•R cadeaubon gestuurd`
-        : "Je hebt een YU•R cadeaubon ontvangen",
-    subjectSelf: "Je YU•R cadeaubon is klaar",
+        ? `${s} heeft je een Asian Beauty Shop cadeaubon gestuurd`
+        : "Je hebt een Asian Beauty Shop cadeaubon ontvangen",
+    subjectSelf: "Je Asian Beauty Shop cadeaubon is klaar",
     preheader: "Een klein saldo voor een langzaam Koreaans huidverzorgingsroutine.",
     greet: (n) => (n ? `Hallo ${n},` : "Hallo,"),
     introFriend: (s, amount) =>
       s
-        ? `${s} heeft aan je gedacht en stuurt je een YU•R cadeaubon van ${amount}.`
-        : `Iemand heeft aan je gedacht en stuurt je een YU•R cadeaubon van ${amount}.`,
+        ? `${s} heeft aan je gedacht en stuurt je een Asian Beauty Shop cadeaubon van ${amount}.`
+        : `Iemand heeft aan je gedacht en stuurt je een Asian Beauty Shop cadeaubon van ${amount}.`,
     introSelf: (amount) =>
-      `Je YU•R cadeaubon van ${amount} staat klaar. Gebruik wanneer het goed voelt.`,
+      `Je Asian Beauty Shop cadeaubon van ${amount} staat klaar. Gebruik wanneer het goed voelt.`,
     noteLabel: "Een bericht van je verzender",
     codeLabel: "Je cadeaubon-code",
     codeNote: (amount, until) =>
       `Saldo ${amount}. In te wisselen aan de kassa. Geldig tot ${until}.`,
     cta: "Bekijk de collectie",
-    signoff: "Met zorg,\nSofia · YU•R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
     subjectFriend: (s) =>
       s
-        ? `${s} vous a envoyé une carte cadeau YU•R`
-        : "Vous avez reçu une carte cadeau YU•R",
-    subjectSelf: "Votre carte cadeau YU•R est prête",
+        ? `${s} vous a envoyé une carte cadeau Asian Beauty Shop`
+        : "Vous avez reçu une carte cadeau Asian Beauty Shop",
+    subjectSelf: "Votre carte cadeau Asian Beauty Shop est prête",
     preheader: "Un solde discret pour un routine de soin coréen lent.",
     greet: (n) => (n ? `Bonjour ${n},` : "Bonjour,"),
     introFriend: (s, amount) =>
       s
-        ? `${s} a pensé à vous et vous offre une carte cadeau YU•R de ${amount}.`
-        : `Quelqu'un a pensé à vous et vous offre une carte cadeau YU•R de ${amount}.`,
+        ? `${s} a pensé à vous et vous offre une carte cadeau Asian Beauty Shop de ${amount}.`
+        : `Quelqu'un a pensé à vous et vous offre une carte cadeau Asian Beauty Shop de ${amount}.`,
     introSelf: (amount) =>
-      `Votre carte cadeau YU•R de ${amount} est prête. À utiliser quand vous le souhaitez.`,
+      `Votre carte cadeau Asian Beauty Shop de ${amount} est prête. À utiliser quand vous le souhaitez.`,
     noteLabel: "Un mot de votre expéditeur",
     codeLabel: "Votre code carte cadeau",
     codeNote: (amount, until) =>
       `Solde ${amount}. À utiliser en caisse. Valable jusqu'au ${until}.`,
     cta: "Découvrir la collection",
-    signoff: "Avec attention,\nSofia · YU•R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
     subjectFriend: (s) =>
       s
-        ? `${s} прислал(а) вам подарочную карту YU•R`
-        : "Вы получили подарочную карту YU•R",
-    subjectSelf: "Ваша подарочная карта YU•R готова",
+        ? `${s} прислал(а) вам подарочную карту Asian Beauty Shop`
+        : "Вы получили подарочную карту Asian Beauty Shop",
+    subjectSelf: "Ваша подарочная карта Asian Beauty Shop готова",
     preheader: "Небольшой баланс для медленного корейского рутины.",
     greet: (n) => (n ? `Здравствуйте, ${n},` : "Здравствуйте,"),
     introFriend: (s, amount) =>
       s
-        ? `${s} подумал(а) о вас и прислал(а) подарочную карту YU•R на ${amount}.`
-        : `Кто-то подумал о вас и прислал подарочную карту YU•R на ${amount}.`,
+        ? `${s} подумал(а) о вас и прислал(а) подарочную карту Asian Beauty Shop на ${amount}.`
+        : `Кто-то подумал о вас и прислал подарочную карту Asian Beauty Shop на ${amount}.`,
     introSelf: (amount) =>
-      `Ваша подарочная карта YU•R на ${amount} готова. Применяйте, когда удобно.`,
+      `Ваша подарочная карта Asian Beauty Shop на ${amount} готова. Применяйте, когда удобно.`,
     noteLabel: "Сообщение от отправителя",
     codeLabel: "Код подарочной карты",
     codeNote: (amount, until) =>
       `Баланс ${amount}. Применяется при оформлении заказа. Действует до ${until}.`,
     cta: "К коллекции",
-    signoff: "С заботой,\nСофия · YU•R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -144,7 +144,7 @@ export async function sendGiftCardRecipientEmail(
   const s = STRINGS[payload.locale];
   const siteOrigin =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu";
+    "https://asianbeautyshop.eu";
   const shopUrl = `${siteOrigin}/${payload.locale.toLowerCase()}/shop`;
 
   // Format the EUR amount in a locale-friendly way.

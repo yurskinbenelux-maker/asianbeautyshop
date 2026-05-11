@@ -4,17 +4,17 @@
 // Two modes per call, dispatched by `locale`:
 //
 //   EN:  improve the existing English copy — fix grammar, sharpen
-//        sensory descriptors, match the YU.R voice. Strict rule: NEVER
+//        sensory descriptors, match the Asian Beauty Shop voice. Strict rule: NEVER
 //        invent ingredient claims that aren't in the source. The model
 //        is editing what's there, not authoring fresh marketing.
 //
 //   NL/FR/RU: improve the existing translation, OR translate from EN if
 //        empty. Match native idioms in the target locale, preserve
-//        meaning, keep the YU.R voice. We pass BOTH the EN source AND
+//        meaning, keep the Asian Beauty Shop voice. We pass BOTH the EN source AND
 //        the current translated value so the model can choose: use the
 //        translation if non-empty (improve it), else translate from EN.
 //
-// Cosmetic-claim guardrail (EU CPNP regulation): Sofia faces fines if
+// Cosmetic-claim guardrail (EU CPNP regulation): an admin faces fines if
 // she ships product copy with unsubstantiated medical or efficacy
 // claims. The system prompt explicitly forbids "anti-aging", "cures",
 // "treats", "heals", "removes wrinkles", and similar. The model is
@@ -33,14 +33,14 @@ import { z } from "zod";
 import { Locale } from "@prisma/client";
 import { getGroqModel } from "./groq";
 
-// ──────── Brand voice — derived from YU.R's own product copy ───────────
+// ──────── Brand voice — derived from Asian Beauty Shop's own product copy ───────────
 //
-// Inferred from the existing seed product descriptions. Sofia's client
-// (the YU.R brand owner) wrote those, so they ARE the voice. If the
+// Inferred from the existing seed product descriptions. an admin's client
+// (the Asian Beauty Shop brand owner) wrote those, so they ARE the voice. If the
 // brand voice ever drifts, edit this constant rather than hunting
 // through every prompt.
 const BRAND_VOICE = `
-The YU.R voice is:
+The Asian Beauty Shop voice is:
   · Warm, sensory, ritual-led — feel + texture + how it sits on skin.
   · Concise. Sentences are short. No buzzword soup.
   · Mentions one or two hero ingredients with their effect ("with
@@ -50,7 +50,7 @@ The YU.R voice is:
     "fight", "attack", "destroy", or "miracle".
   · Cadence reference (samples written by the brand):
     · "A low-pH milk cleanser with fermented rice water, made for
-       sensitive skin. Begins every YU.R ritual."
+       sensitive skin. Begins every Asian Beauty Shop ritual."
     · "A layered essence with ginseng, niacinamide, and red saffron.
        Sinks into skin in seconds, leaves a quiet, even glow."
     · "A dense, inky balm with black sesame and centella. Rebuilds the
@@ -138,8 +138,8 @@ HTML PRESERVATION:
 
   const system = isEnglish
     ? [
-        "You are a copy editor for YU.R, a luxury Korean skincare brand.",
-        "Your job: polish the product copy provided by YU.R staff. Fix grammar, sharpen sensory descriptors, match the YU.R voice. NEVER invent ingredient claims that aren't already in the source — you're editing, not authoring.",
+        "You are a copy editor for Asian Beauty Shop, a luxury Korean skincare brand.",
+        "Your job: polish the product copy provided by Asian Beauty Shop staff. Fix grammar, sharpen sensory descriptors, match the Asian Beauty Shop voice. NEVER invent ingredient claims that aren't already in the source — you're editing, not authoring.",
         "",
         BRAND_VOICE,
         "",
@@ -148,12 +148,12 @@ HTML PRESERVATION:
         htmlRule,
       ].join("\n")
     : [
-        `You are translating + editing product copy for YU.R into ${localeName[input.locale]}.`,
+        `You are translating + editing product copy for Asian Beauty Shop into ${localeName[input.locale]}.`,
         "For each field you receive both the English source and the current target-language value. Decide:",
         `  · If the current value is empty: translate the English source into ${localeName[input.locale]}.`,
         `  · If the current value is non-empty: improve it — fix awkward phrasing, match native idioms, preserve meaning.`,
         "",
-        "Match the YU.R voice across languages — warm, sensory, never clinical.",
+        "Match the Asian Beauty Shop voice across languages — warm, sensory, never clinical.",
         "",
         BRAND_VOICE,
         "",

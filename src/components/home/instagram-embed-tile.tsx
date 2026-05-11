@@ -8,7 +8,7 @@
 // instead of an editorial moment.
 //
 // The homepage Instagram section now uses image-only tiles (see
-// instagram-section.tsx). Sofia uploads a thumbnail per post and the
+// instagram-section.tsx). an admin uploads a thumbnail per post and the
 // tile clicks through to the actual IG post.
 //
 // File kept (empty) so any stale imports surface as compile errors

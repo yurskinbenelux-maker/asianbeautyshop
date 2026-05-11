@@ -172,7 +172,7 @@ export default async function ProductDetailPage({
     getProductConcerns({ productId: product.id, locale }),
     getProductRitualSteps({ productId: product.id, locale }),
     getProductReviewSummary({ productId: product.id }),
-    // No locale filter — Sofia wants the PDP to surface every approved
+    // No locale filter — an admin wants the PDP to surface every approved
     // review regardless of which locale the visitor is browsing.
     getProductReviews({ productId: product.id, limit: 8 }),
     getProductBundle({ productId: product.id, locale }),
@@ -190,7 +190,7 @@ export default async function ProductDetailPage({
   // URL. slugByLocale is keyed by Prisma's uppercase enum (EN/NL/FR/RU);
   // URL locales are lowercase, so we normalise here.
   //
-  // For locales that don't have their own translated slug yet (Sofia
+  // For locales that don't have their own translated slug yet (an admin
   // hasn't filled NL/FR/RU on this product) we fall back to the EN
   // slug. The PDP query then resolves /ru/shop/<en-slug> via its
   // EN-slug fallback so the visitor sees the product with EN copy and
@@ -251,7 +251,7 @@ export default async function ProductDetailPage({
               {/*
                 NextLink (not the locale-aware one) because /admin is a
                 non-localized route group — the i18n Link would prepend the
-                locale and send Sofia to /en/admin/products (404).
+                locale and send an admin to /en/admin/products (404).
               */}
               <NextLink
                 href="/admin/products"
@@ -520,7 +520,7 @@ export default async function ProductDetailPage({
 
         {/* ── UGC: How customers use this ─────────────────────── */}
         {/* Self-hides when there are no active photos for this product —
-            hides on launch until Sofia uploads the first one. */}
+            hides on launch until an admin uploads the first one. */}
         <UgcSection productId={product.id} />
 
         {/* ── recently viewed (client-only; hidden when empty) ─── */}

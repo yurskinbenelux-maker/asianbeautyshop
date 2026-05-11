@@ -4,7 +4,7 @@
 // How to wire on Hostinger:
 //   hPanel → Advanced → Cron Jobs → Add new (daily at 03:00):
 //     0 3 * * *  curl -fsS -H "Authorization: Bearer $CRON_SECRET" \
-//                  https://yurskinsolution.eu/api/cron/purge-deleted-users
+//                  https://asianbeautyshop.eu/api/cron/purge-deleted-users
 //
 // What it does for each user where deletedAt is NOT NULL and older than
 // ERASURE_GRACE_DAYS (default 30):
@@ -63,7 +63,7 @@ export async function GET(req: Request) {
       // because Order.userId (and Review.userId, ContactMessage.userId)
       // references it.  Email is rewritten to a stable tombstone so the
       // unique index still passes.
-      const tombstone = `deleted+${u.id}@yurskin.invalid`;
+      const tombstone = `deleted+${u.id}@asianbeautyshop.invalid`;
       await prisma.$transaction([
         prisma.wishlistItem.deleteMany({ where: { userId: u.id } }),
         prisma.address.deleteMany({ where: { userId: u.id } }),

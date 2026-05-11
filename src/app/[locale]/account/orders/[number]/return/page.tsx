@@ -21,7 +21,10 @@ import { ReturnForm } from "./return-form";
 
 type Props = { params: Promise<{ locale: string; number: string }> };
 
-const RETURNABLE = new Set(["DELIVERED", "SHIPPED"]);
+// Order states that can be returned/cancelled by the customer.
+// PAID + FULFILLING are pre-ship cancellations (handled as full refunds,
+// no parcel pickup needed). SHIPPED + DELIVERED are standard RMAs.
+const RETURNABLE = new Set(["PAID", "FULFILLING", "SHIPPED", "DELIVERED"]);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;

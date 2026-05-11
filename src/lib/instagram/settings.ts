@@ -35,7 +35,7 @@ export type IgLastSync = {
   ok: boolean;
 };
 
-/** Read the Instagram config — null if Sofia hasn't set up yet. */
+/** Read the Instagram config — null if an admin hasn't set up yet. */
 export async function readIgConfig(): Promise<IgConfig | null> {
   const row = await prisma.setting.findUnique({
     where: { key: KEY_CONFIG },
@@ -54,7 +54,7 @@ export async function readIgConfig(): Promise<IgConfig | null> {
 
 /**
  * Save (or replace) the Instagram config. Pass `null` to clear it
- * (e.g. when Sofia disconnects).
+ * (e.g. when an admin disconnects).
  */
 export async function writeIgConfig(
   patch: Partial<IgConfig> | null,

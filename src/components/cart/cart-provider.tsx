@@ -41,7 +41,7 @@ type CartContextValue = {
   lastError: string | null;
   /** Free-shipping threshold in EUR — passed in from the server layout
    *  so the cart drawer can render a "€X to go" progress indicator that
-   *  honours Sofia's admin overrides. 0 means no threshold configured. */
+   *  honours an admin's admin overrides. 0 means no threshold configured. */
   freeShippingThresholdEur: number;
 
   openDrawer: () => void;

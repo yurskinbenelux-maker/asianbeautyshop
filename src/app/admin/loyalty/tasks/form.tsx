@@ -102,7 +102,7 @@ export function TaskForm({ initial }: { initial?: LoyaltyTask }) {
           rows={5}
           maxLength={8000}
           defaultValue={initial?.instructionsHtml ?? ""}
-          placeholder="<p>Follow @yurskin and repost our latest story to your feed. Paste your IG handle below — we'll verify within 48 hours.</p>"
+          placeholder="<p>Follow @asianbeautyshop and repost our latest story to your feed. Paste your IG handle below — we'll verify within 48 hours.</p>"
           className="mt-1 block w-full border border-ink/15 bg-white px-3 py-2 font-mono text-[12px] focus:border-vermilion focus:outline-none"
         />
       </label>

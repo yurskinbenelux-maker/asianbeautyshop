@@ -25,13 +25,13 @@ export type PolishEmailInput = {
   /** Field's human label (e.g. "Lede paragraph") so the model knows what
    *  kind of voice it's editing. */
   fieldLabel: string;
-  /** The current value Sofia typed. */
+  /** The current value an admin typed. */
   current: string;
 };
 
 /**
  * Rewrite a single email-copy string in the same locale, polishing for
- * the YU.R brand voice (luxury skincare, calm and deliberate, minimal
+ * the Asian Beauty Shop brand voice (luxury skincare, calm and deliberate, minimal
  * exclamation, no emoji). Throws when GROQ_API_KEY is missing.
  */
 export async function polishEmailText(
@@ -45,7 +45,7 @@ export async function polishEmailText(
   const targetLanguage = LOCALE_NAME[input.locale];
 
   const system = [
-    "You are an editor for a luxury Korean-skincare e-commerce brand named YU.R Skin Solution.",
+    "You are an editor for a luxury Korean-skincare e-commerce brand named Asian Beauty Shop.",
     "Your job is to polish a single piece of transactional email copy without changing its meaning.",
     "Rules:",
     "- Keep the same language. Output language: " + targetLanguage + ".",

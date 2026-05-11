@@ -27,7 +27,7 @@ export default async function AdminLoyaltySettingsPage() {
         Settings
       </h1>
       <p className="mt-2 max-w-2xl text-[13px] text-ink-mid">
-        Every economic lever for the YU.R Club. Changes apply immediately.
+        Every economic lever for the A-Beauty Club. Changes apply immediately.
         Past balances are never recalculated when you change a rule.
       </p>
 

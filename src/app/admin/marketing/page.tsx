@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 // /admin/marketing — index page that fans out to every marketing
-// surface Sofia can edit. Modelled on /admin/homepage but for
+// surface an admin can edit. Modelled on /admin/homepage but for
 // time-bounded campaigns rather than evergreen copy.
 //
 // Three cards as of launch:
@@ -9,7 +9,7 @@
 //   · Promotions (the central discount-% settings)
 //
 // Each card shows whether the surface is currently enabled — small but
-// useful when Sofia wants to know at a glance if either popup is paused.
+// useful when an admin wants to know at a glance if either popup is paused.
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";

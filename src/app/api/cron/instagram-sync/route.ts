@@ -6,7 +6,7 @@
 // burning rate limit):
 //
 //   0 */4 * * *  curl -fsS -H "Authorization: Bearer $CRON_SECRET" \
-//                  https://yurskinsolution.eu/api/cron/instagram-sync
+//                  https://asianbeautyshop.eu/api/cron/instagram-sync
 //
 // Returns JSON describing what happened so cron-job.org's success
 // detection works (200 + ok:true) and the dashboard email notifications
@@ -41,7 +41,7 @@ async function handle(req: Request): Promise<Response> {
 
   if (!result.ok) {
     // Return 200 even on logical failure so cron-job.org doesn't
-    // spam Sofia with retries — the error is recorded in the
+    // spam an admin with retries — the error is recorded in the
     // Setting table and surfaces in admin.
     return NextResponse.json({
       ok: false,

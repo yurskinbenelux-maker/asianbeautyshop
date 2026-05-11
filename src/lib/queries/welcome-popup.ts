@@ -1,12 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Welcome popup config — Sofia edits every field from
+// Welcome popup config — an admin edits every field from
 // /admin/marketing/welcome-popup. Stored as a single Setting row keyed
 // `marketing.welcome_popup`.
 //
 // The popup itself (src/components/marketing/register-welcome-popup.tsx)
 // reads these settings on the server (in src/app/[locale]/layout.tsx)
 // and passes them down to the client component, so the on-load modal
-// renders with whatever copy and image Sofia last saved.
+// renders with whatever copy and image an admin last saved.
 //
 // Read returns sane defaults so a fresh DB still shows the canonical
 // English popup out of the box. Field shape is forward-compatible —
@@ -23,16 +23,16 @@ import { prisma } from "@/lib/prisma";
 const SETTING_KEY = "marketing.welcome_popup";
 
 /**
- * Everything Sofia can tweak from the admin form. The frontend popup
+ * Everything an admin can tweak from the admin form. The frontend popup
  * reads this verbatim — no further transformation.
  */
 export type WelcomePopupSettings = {
   /** Master kill-switch. False → popup never renders (regardless of
-   *  cookie state, route, etc). Lets Sofia pause it during a campaign. */
+   *  cookie state, route, etc). Lets an admin pause it during a campaign. */
   enabled: boolean;
 
   /** How many seconds after first paint before the popup appears.
-   *  Default 3. Sofia can edit from the admin form. Bounds: 0-60. */
+   *  Default 3. an admin can edit from the admin form. Bounds: 0-60. */
   delaySeconds: number;
 
   /** Public URL of the image shown on the LEFT side of the card.
@@ -45,15 +45,15 @@ export type WelcomePopupSettings = {
   /** Small uppercase label above the big number. e.g. "Welcome gift" */
   eyebrow: string;
 
-  /** The big italic number — kept editable in case Sofia wants to
+  /** The big italic number — kept editable in case an admin wants to
    *  restyle it ("FREE", "−15%", "GIFT"). Phase 2 will tie this to
    *  the central promotions setting; for Phase 1 it's free-text. */
   bigOffer: string;
   /** Sub-label under the big number. e.g. "on your first order" */
   bigOfferSubtitle: string;
 
-  /** Headline — supports `<em>YU.R</em>` markup for the italic
-   *  vermilion emphasis on the brand name. Sofia writes raw HTML
+  /** Headline — supports `<em>Asian Beauty Shop</em>` markup for the italic
+   *  vermilion emphasis on the brand name. an admin writes raw HTML
    *  but we sanitise to a small allowlist on save. */
   headline: string;
 
@@ -87,7 +87,7 @@ export const WELCOME_POPUP_DEFAULTS: WelcomePopupSettings = {
   eyebrow: "Welcome gift",
   bigOffer: "−10%",
   bigOfferSubtitle: "on your first order",
-  headline: "Create your <em>YU.R</em> account.",
+  headline: "Create your <em>Asian Beauty Shop</em> account.",
   body: "Register in under a minute and we'll send a 10% off code straight to your inbox — plus order tracking, saved addresses, and your skin-quiz results next time you visit.",
   bonus1Enabled: true,
   bonus1Pct: "+15%",

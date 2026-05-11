@@ -46,10 +46,22 @@ export default function LocaleError({
           {t("lede")}
         </p>
 
-        {/* Show digest in dev so the dev team can correlate with server logs */}
-        {process.env.NODE_ENV === "development" && error.digest && (
+        {/* Show digest + message so we can correlate with server logs.
+         *  Originally dev-only, but Hostinger Business doesn't expose
+         *  runtime logs over MCP — without surfacing the error here we
+         *  have no way to diagnose 500s from a customer report.
+         *  Safe to show: digest is a non-secret correlation hash, and
+         *  Next.js redacts the actual stack/message in production by
+         *  default (replaces with "An error occurred"). The .message we
+         *  see here is therefore already the sanitized one. */}
+        {error.digest && (
           <p className="mt-4 font-mono text-[11px] text-ink-mid/70">
             digest: {error.digest}
+          </p>
+        )}
+        {error.message && (
+          <p className="mt-2 font-mono text-[11px] text-ink-mid/70">
+            {error.message}
           </p>
         )}
 

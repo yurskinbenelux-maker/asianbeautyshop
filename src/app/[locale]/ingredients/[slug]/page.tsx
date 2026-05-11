@@ -30,10 +30,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ...buildPageMetadata({
       locale,
       tail: `/ingredients/${ing.slug}`,
-      title: `${ing.displayName} — YU.R Skin Solution`,
+      title: `${ing.displayName} — Asian Beauty Shop`,
       description:
         stripHtml(ing.descriptionHtml ?? "") ||
-        `INCI: ${ing.inciName}. Learn how ${ing.displayName} works in skincare and which YU.R products use it.`,
+        `INCI: ${ing.inciName}. Learn how ${ing.displayName} works in skincare and which Asian Beauty Shop products use it.`,
     }),
     robots: { index: true, follow: true },
   };
@@ -58,7 +58,7 @@ export default async function IngredientDetailPage({ params }: Props) {
         className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-label text-ink-mid"
       >
         <Link href="/" className="transition-colors hover:text-ink">
-          YU.R
+          Asian Beauty Shop
         </Link>
         <span aria-hidden>·</span>
         <Link

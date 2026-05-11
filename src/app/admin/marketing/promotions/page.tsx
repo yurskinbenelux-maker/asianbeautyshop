@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// /admin/marketing/promotions — single page where Sofia controls every
+// /admin/marketing/promotions — single page where an admin controls every
 // automated coupon's percentage and validity window.
 //
 // One Setting row underpins everything that displays a discount in the
@@ -12,7 +12,7 @@
 // Edit a number here, save, and every surface picks it up on the next
 // request. Already-issued coupons keep their original % (the value was
 // frozen on the Coupon row at mint time — that's by design, so a customer
-// who clicked through with 10% won't see Sofia accidentally bump them).
+// who clicked through with 10% won't see an admin accidentally bump them).
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
@@ -50,7 +50,7 @@ export default async function AdminPromotionsPage({
           Promotions
         </h1>
         <p className="mt-3 text-[13px] leading-relaxed text-ink-mid">
-          The percent-off values for YU.R&apos;s automated coupons. Editing
+          The percent-off values for Asian Beauty Shop&apos;s automated coupons. Editing
           a number here changes every place the discount is displayed (the
           welcome popup, exit-intent popup, quiz card, emails) <em>and</em>{" "}
           the actual discount applied to coupons issued going forward.
@@ -95,7 +95,7 @@ export default async function AdminPromotionsPage({
               min={0}
               max={50}
               suffix="%"
-              hint="0 disables (the popup will still display whatever text Sofia wrote, but the coupon won't apply a discount)."
+              hint="0 disables (the popup will still display whatever text an admin wrote, but the coupon won't apply a discount)."
             />
             <NumberField
               label="Validity (days)"

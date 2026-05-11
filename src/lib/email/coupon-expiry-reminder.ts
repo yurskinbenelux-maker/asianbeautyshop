@@ -45,7 +45,7 @@ const STRINGS: Record<Locale, Strings> = {
     codeLabel: "Your code",
     codeNote: (label) => label,
     cta: "Browse the collection",
-    signoff: "With care,\nSofia · YU.R Skin Solution",
+    signoff: "With care,\nThe Asian Beauty Shop team",
     footer: "K'Elmus Group BV · Aartselaar, Belgium",
   },
   NL: {
@@ -58,7 +58,7 @@ const STRINGS: Record<Locale, Strings> = {
     codeLabel: "Je code",
     codeNote: (label) => label,
     cta: "Bekijk de collectie",
-    signoff: "Met zorg,\nSofia · YU.R Skin Solution",
+    signoff: "Met zorg,\nHet Asian Beauty Shop-team",
     footer: "K'Elmus Group BV · Aartselaar, België",
   },
   FR: {
@@ -71,7 +71,7 @@ const STRINGS: Record<Locale, Strings> = {
     codeLabel: "Votre code",
     codeNote: (label) => label,
     cta: "Découvrir la collection",
-    signoff: "Avec attention,\nSofia · YU.R Skin Solution",
+    signoff: "Avec attention,\nL'équipe Asian Beauty Shop",
     footer: "K'Elmus Group BV · Aartselaar, Belgique",
   },
   RU: {
@@ -84,7 +84,7 @@ const STRINGS: Record<Locale, Strings> = {
     codeLabel: "Ваш код",
     codeNote: (label) => label,
     cta: "К коллекции",
-    signoff: "С заботой,\nСофия · YU.R Skin Solution",
+    signoff: "С заботой,\nКоманда Asian Beauty Shop",
     footer: "K'Elmus Group BV · Артселар, Бельгия",
   },
 };
@@ -113,7 +113,7 @@ export async function sendCouponExpiryReminderEmail(
   const s = STRINGS[payload.locale];
   const siteOrigin =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://yurskinsolution.eu";
+    "https://asianbeautyshop.eu";
   const shopUrl = `${siteOrigin}/${payload.locale.toLowerCase()}/shop`;
 
   const body = `

@@ -3,18 +3,18 @@
 // + Subcategory + Skin Types + Concerns + Benefits in one shot.
 //
 // Flow:
-//   1. Sofia clicks "Suggest with AI" on the Organise tab
+//   1. an admin clicks "Suggest with AI" on the Organise tab
 //   2. Button shows a loading state, server action calls Groq with the
 //      product's name + INCI + EN description + the live taxonomy
 //   3. Modal opens with a side-by-side diff: current tags on the left,
 //      suggested tags on the right, with a confidence pill + the AI's
 //      one-sentence reasoning
-//   4. Sofia clicks Apply (overwrite all six axes) or Cancel
+//   4. an admin clicks Apply (overwrite all six axes) or Cancel
 //
 // Why a full overwrite instead of merge: the AI is producing a coherent
 // classification — picking a parent category implies picking the
 // subcategory, picking a brand implies a productLine. Merging across
-// runs would leave inconsistent state. Sofia can re-run if the first
+// runs would leave inconsistent state. an admin can re-run if the first
 // suggestion isn't right, or untick individual chips manually after
 // applying. Keeps the action's behaviour predictable.
 // ─────────────────────────────────────────────────────────────────────────
@@ -36,7 +36,7 @@ import type { SuggestTagsOutput } from "@/lib/ai/suggest-tags";
 type Props = {
   productId: string;
   /** Reusable lookup tables so the diff can show LABELS, not slugs.
-   *  Brand isn't in the AI suggestion (Sofia picks it manually) so
+   *  Brand isn't in the AI suggestion (an admin picks it manually) so
    *  it's not in this lookup either. */
   labels: {
     categories: Record<string, string>;
@@ -143,7 +143,7 @@ function DiffModal({
       const r = await applySuggestedTags(productId, suggestion);
       setStatus({ ok: r.ok ?? false, message: r.message ?? "" });
       if (r.ok) {
-        // Give Sofia a beat to read the success message, then refresh
+        // Give an admin a beat to read the success message, then refresh
         // the page so the Organise form reflects the new tags.
         setTimeout(() => {
           window.location.reload();

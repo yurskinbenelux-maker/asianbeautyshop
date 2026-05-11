@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // /admin/ingredients/[id] — edit a single ingredient.
 //
-// Includes a read-only "Linked products" strip so Sofia can see where
+// Includes a read-only "Linked products" strip so an admin can see where
 // this ingredient is currently surfaced before renaming / deleting it.
 // Delete is destructive (cascades product links — products don't lose
 // their rows, they lose their link to this ingredient).
