@@ -21,6 +21,10 @@ export type AdminOrderRow = {
   grandTotal: number;
   currency: string;
   isGuest: boolean;
+  /** H4: number of ReturnRequests in non-terminal states (REQUESTED /
+   *  APPROVED / RECEIVED). Drives the per-row vermilion 'Return' pill
+   *  on the admin orders list. 0 means no badge. */
+  activeReturnCount: number;
 };
 
 export type AdminOrdersListParams = {
