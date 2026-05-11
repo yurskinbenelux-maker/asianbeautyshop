@@ -191,10 +191,18 @@ export function ProductGallery({
               ★
             </div>
           )}
+          {/* F5: PDP gallery hero is the LCP candidate on /shop/[slug].
+           *  Eager + fetchpriority="high" tells the browser to fetch it
+           *  before anything below-the-fold (related products, reviews,
+           *  ingredients section). decoding="async" lets the browser
+           *  decode without blocking the main thread. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={main.url}
             alt={main.alt ?? productName}
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
             className={cn(
               "absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-out",
               "motion-reduce:transition-none",

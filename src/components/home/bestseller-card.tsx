@@ -29,6 +29,7 @@ export function BestsellerCard({
   index,
   locale,
   onQuickView,
+  eagerCount = 1,
 }: {
   product: ProductCardData;
   index: number;
@@ -41,6 +42,15 @@ export function BestsellerCard({
    * without the trigger.
    */
   onQuickView?: (product: ProductCardData) => void;
+  /**
+   * F2: how many cards from the start should fetch their image with
+   * priority=true (eager + fetchpriority="high"). Defaults to 1 —
+   * correct for the homepage bestsellers row where only the first card
+   * is fully above the fold on mobile. /shop overrides with 4 because
+   * its 2-up mobile / 4-up desktop grid puts 2-4 cards in the viewport
+   * before any scroll, all candidates for LCP.
+   */
+  eagerCount?: number;
 }) {
   const swatch = SWATCHES[index % SWATCHES.length];
   const label = String(index + 1).padStart(2, "0");
@@ -104,7 +114,7 @@ export function BestsellerCard({
               src={product.imageUrl}
               alt={product.imageAlt ?? product.name}
               fill
-              priority={index === 0}
+              priority={index < eagerCount}
               sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />

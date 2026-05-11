@@ -116,6 +116,11 @@ export function ShopInfiniteGrid({
             index={i}
             locale={locale}
             onQuickView={setQuickViewProduct}
+            // F2: shop grid is 2-up mobile / 4-up desktop, so first 4
+            // cards land above the fold (or near it). Eager-load all
+            // four to nail mobile LCP and avoid a flash of empty space
+            // on desktop while the LCP card waits its turn.
+            eagerCount={4}
           />
         ))}
       </div>

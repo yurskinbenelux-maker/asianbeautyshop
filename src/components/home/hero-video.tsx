@@ -83,10 +83,17 @@ export function HeroVideo({
           disableRemotePlayback
         />
       ) : poster ? (
+        // F5: hero poster is the LCP candidate when the video isn't
+        // ready yet. fetchpriority="high" + eager loading + decoding
+        // async tells the browser to download this BEFORE non-critical
+        // assets (analytics, fonts, below-the-fold images).
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={poster}
           alt=""
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover"
         />
       ) : (

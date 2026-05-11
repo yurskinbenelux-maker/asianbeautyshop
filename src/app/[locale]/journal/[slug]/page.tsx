@@ -162,10 +162,16 @@ export default async function JournalPostPage({ params }: Props) {
                 cropping when an admin (or anyone) uploads a portrait into
                 the hero slot. The cream `bg-rice-dim` lets the
                 letterboxing read as intentional editorial framing. */}
+            {/* F5: journal hero is the LCP on /journal/[slug]. Eager
+             *  load + fetchpriority high so the post's "above the fold"
+             *  hero lands before reviews/related posts below. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={post.heroUrl ?? post.coverUrl ?? ""}
               alt={post.title}
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
               className="aspect-[16/9] w-full bg-rice-dim object-contain"
             />
           </div>
