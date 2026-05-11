@@ -285,12 +285,33 @@ export default async function AdminOrdersPage({
                       />
                     </Td>
                     <Td>
-                      <Link
-                        href={`/admin/orders/${o.id}`}
-                        className="font-mono text-[12px] text-ink hover:underline"
-                      >
-                        {o.publicNumber}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/admin/orders/${o.id}`}
+                          className="font-mono text-[12px] text-ink hover:underline"
+                        >
+                          {o.publicNumber}
+                        </Link>
+                        {/* H4: active-return pill — surfaces orders
+                         *  that have a non-terminal ReturnRequest so
+                         *  admin can spot them while scanning the list
+                         *  without opening each one. The number is the
+                         *  count of active returns on this order
+                         *  (almost always 1, but Belgian law lets a
+                         *  customer file multiple partial RMAs). Click
+                         *  goes to /admin/returns filtered to this
+                         *  order. */}
+                        {o.activeReturnCount > 0 ? (
+                          <Link
+                            href={`/admin/returns?q=${encodeURIComponent(o.publicNumber)}`}
+                            className="inline-flex items-center gap-1 border border-vermilion/40 bg-vermilion/5 px-1.5 py-0.5 text-[9px] uppercase tracking-label text-vermilion transition-colors hover:bg-vermilion hover:text-white"
+                            title={`${o.activeReturnCount} active return${o.activeReturnCount === 1 ? "" : "s"} — click to open`}
+                          >
+                            Return
+                            {o.activeReturnCount > 1 ? ` · ${o.activeReturnCount}` : null}
+                          </Link>
+                        ) : null}
+                      </div>
                       {o.isGuest && (
                         <div className="mt-0.5 text-[10px] uppercase tracking-label text-ink-mid/70">
                           Guest
