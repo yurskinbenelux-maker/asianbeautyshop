@@ -709,6 +709,7 @@
     "order_items_count": "{count, plural, one {# artikel} other {# artikelen}}",
     "order_view_details": "Details bekijken",
     "order_back_to_orders": "Terug naar bestellingen",
+    "order_retry_payment": "Betaling opnieuw proberen",
     "order_eyebrow": "Bestellingsdetails",
     "order_items_heading": "Artikelen",
     "order_sku": "SKU {sku}",

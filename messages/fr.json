@@ -709,6 +709,7 @@
     "order_items_count": "{count, plural, one {# article} other {# articles}}",
     "order_view_details": "Voir les détails",
     "order_back_to_orders": "Retour aux commandes",
+    "order_retry_payment": "Réessayer le paiement",
     "order_eyebrow": "Détails de la commande",
     "order_items_heading": "Articles",
     "order_sku": "SKU {sku}",

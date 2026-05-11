@@ -25,6 +25,7 @@ import { formatEur, priceLocale } from "@/lib/utils";
 import { OrderReviewForm } from "@/components/account/order-review-form";
 import { ReorderButton } from "@/components/account/reorder-button";
 import { OrderTimeline } from "@/components/account/order-timeline";
+import { RetryPaymentButton } from "@/components/account/retry-payment-button";
 
 type Props = { params: Promise<{ locale: string; number: string }> };
 
@@ -99,6 +100,23 @@ export default async function OrderDetailPage({ params }: Props) {
           <span className="seal">
             {t(`order_status.${order.status}` as OrderStatusKey)}
           </span>
+          {/* G4: retry-payment CTA — surfaces when the order is stuck
+           *  in PENDING + FAILED/EXPIRED/CANCELED. Clicks mint a fresh
+           *  Mollie payment URL and redirect to the new hosted page,
+           *  so the path works regardless of how long ago the order
+           *  was placed (the original Mollie URL expires after 24h).
+           *  We deliberately render it BEFORE the reorder button — a
+           *  stuck-payment order is a "finish this" CTA, not a
+           *  "buy again" CTA. */}
+          {order.status === "PENDING" &&
+            ["FAILED", "EXPIRED", "CANCELED"].includes(order.paymentStatus) && (
+              <RetryPaymentButton
+                orderId={order.id}
+                locale={locale}
+                label={t("order_retry_payment")}
+                variant="outline"
+              />
+            )}
           {/* One-click reorder — only meaningful once the order has
               actually been delivered (or shipped, but we still show
               earlier so customers can pre-stock for next month). */}

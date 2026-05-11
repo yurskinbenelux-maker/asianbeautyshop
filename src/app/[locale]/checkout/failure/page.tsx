@@ -16,6 +16,7 @@ import { XCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { syncByPublicNumber } from "@/lib/checkout/sync-mollie";
 import { Link } from "@/i18n/routing";
+import { RetryPaymentButton } from "@/components/account/retry-payment-button";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -59,6 +60,12 @@ export default async function CheckoutFailurePage({
       id: true,
       publicNumber: true,
       molliePaymentUrl: true,
+      // G4: gate the retry button on status — only PENDING orders with
+      // a paymentStatus that genuinely failed get the CTA. PAID orders
+      // shouldn't even reach this page; if they do (Mollie returned
+      // late on the cancel URL), we don't want to confuse the user.
+      status: true,
+      paymentStatus: true,
     },
   });
 
@@ -94,15 +101,26 @@ export default async function CheckoutFailurePage({
         </div>
       </div>
 
+      {/* G4: replaced the static <a href={molliePaymentUrl}> with a
+       *  server action that mints a fresh Mollie payment on click. The
+       *  static link broke 24h after order placement because Mollie
+       *  expires hosted payment URLs; the action creates a new one
+       *  every time so the retry path works indefinitely.
+       *
+       *  Only render the retry CTA when the order is genuinely
+       *  retryable. PENDING + FAILED/EXPIRED/CANCELED is what
+       *  retryOrderPaymentAction also gates on internally — duplicated
+       *  here so we don't render a button that 'll immediately error. */}
       <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-        {order.molliePaymentUrl && (
-          <a
-            href={order.molliePaymentUrl}
-            className="h-12 bg-ink px-6 text-[12px] uppercase tracking-label leading-[3rem] text-rice transition-colors hover:bg-vermilion"
-          >
-            {t("failure_cta_retry")}
-          </a>
-        )}
+        {order.status === "PENDING" &&
+          ["FAILED", "EXPIRED", "CANCELED"].includes(order.paymentStatus) && (
+            <RetryPaymentButton
+              orderId={order.id}
+              locale={locale}
+              label={t("failure_cta_retry")}
+              variant="primary"
+            />
+          )}
         <Link
           href="/cart"
           className="h-12 border border-ink px-6 text-[12px] uppercase tracking-label leading-[2.75rem] text-ink transition-colors hover:bg-ink hover:text-rice"

@@ -709,6 +709,7 @@
     "order_items_count": "{count, plural, one {# товар} few {# товара} many {# товаров} other {# товаров}}",
     "order_view_details": "Подробнее",
     "order_back_to_orders": "Назад к заказам",
+    "order_retry_payment": "Повторить оплату",
     "order_eyebrow": "Детали заказа",
     "order_items_heading": "Товары",
     "order_sku": "SKU {sku}",
