@@ -1188,6 +1188,17 @@ model ReturnItem {
   /// action layer.
   rejectionReason String?
 
+  /// Snapshot of the underlying product's kind so the admin UI + the
+  /// refund pipeline can tell gift-card lines apart from standard
+  /// product lines WITHOUT a join through OrderItem → Product.
+  /// Kept as a denormalised snapshot in line with nameSnapshot /
+  /// skuSnapshot — the row should survive product or order deletion
+  /// and still tell us what it was. Default STANDARD covers legacy
+  /// rows created before this column existed (none of which were
+  /// gift cards, since gift cards weren't returnable in the prior
+  /// workflow).
+  productKindSnapshot ProductKind @default(STANDARD)
+
   @@index([returnId])
   @@index([orderItemId])
 }

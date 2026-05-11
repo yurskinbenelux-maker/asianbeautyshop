@@ -30,6 +30,20 @@ type RawReturnItem = {
   nameSnapshot: string;
   skuSnapshot: string;
   quantity: number;
+  // Per-item adjudication columns added 2026-05. NULL = not yet
+  // adjudicated. See ReturnItem in schema.prisma for full semantics.
+  acceptedRefundEur: unknown | null;
+  rejectionReason: string | null;
+  // Denormalised snapshot of the underlying product's kind (added
+  // 2026-05). Lets the admin UI disable gift-card rows and the refund
+  // pipeline reject them server-side without joining through OrderItem
+  // → Product. Lives alongside nameSnapshot / skuSnapshot in spirit.
+  //
+  // Marked optional here so this file typechecks BEFORE Max runs
+  // `prisma generate` against the updated schema — the generated
+  // client only adds this field once regen has happened. mapItem
+  // defaults to STANDARD when the field is undefined.
+  productKindSnapshot?: "STANDARD" | "GIFT_CARD";
   unitPrice: unknown; // Decimal
   lineTotal: unknown; // Decimal
 };
@@ -88,6 +102,9 @@ function mapItem(raw: RawReturnItem): ReturnItemRow {
     quantity: raw.quantity,
     unitPrice: toNumber(raw.unitPrice),
     lineTotal: toNumber(raw.lineTotal),
+    acceptedRefundEur: toNumberOrNull(raw.acceptedRefundEur),
+    rejectionReason: raw.rejectionReason,
+    productKind: raw.productKindSnapshot ?? "STANDARD",
   };
 }
 
@@ -140,6 +157,9 @@ export async function getReturnsForUser(userId: string): Promise<ReturnRow[]> {
     where: { userId },
     orderBy: { createdAt: "desc" },
     include: {
+      // productKindSnapshot is a plain column on ReturnItem (added
+      // 2026-05), so a flat `include: true` is enough. No need to
+      // join through orderItem → product anymore.
       items: true,
       order: { select: { publicNumber: true, email: true } },
       user: { select: { firstName: true, lastName: true } },
@@ -155,6 +175,9 @@ export async function getReturnByPublicNumberForUser(
   const row = (await prisma.returnRequest.findFirst({
     where: { userId, publicNumber },
     include: {
+      // productKindSnapshot is a plain column on ReturnItem (added
+      // 2026-05), so a flat `include: true` is enough. No need to
+      // join through orderItem → product anymore.
       items: true,
       order: { select: { publicNumber: true, email: true } },
       user: { select: { firstName: true, lastName: true } },
@@ -181,7 +204,10 @@ export async function listReturnsForAdmin(params?: {
       take: limit,
       skip: offset,
       include: {
-        items: true,
+        // productKindSnapshot is a plain column on ReturnItem (added
+      // 2026-05), so a flat `include: true` is enough. No need to
+      // join through orderItem → product anymore.
+      items: true,
         order: { select: { publicNumber: true, email: true } },
         user: { select: { firstName: true, lastName: true } },
       },
@@ -198,6 +224,9 @@ export async function getReturnByIdForAdmin(
   const row = (await prisma.returnRequest.findUnique({
     where: { id },
     include: {
+      // productKindSnapshot is a plain column on ReturnItem (added
+      // 2026-05), so a flat `include: true` is enough. No need to
+      // join through orderItem → product anymore.
       items: true,
       order: { select: { publicNumber: true, email: true } },
       user: { select: { firstName: true, lastName: true } },
@@ -223,6 +252,10 @@ export type CreateReturnInput = {
     nameSnapshot: string;
     skuSnapshot: string;
     unitPrice: number;
+    /** Snapshot of the underlying product's kind. Optional — falls
+     *  back to STANDARD if the caller doesn't know (e.g. a future
+     *  email-token guest path). Real callers should always pass it. */
+    productKind?: "STANDARD" | "GIFT_CARD";
   }>;
 };
 
@@ -255,10 +288,14 @@ export async function createReturnRequest(
           quantity: it.quantity,
           unitPrice: it.unitPrice,
           lineTotal: Math.round(it.unitPrice * it.quantity * 100) / 100,
+          productKindSnapshot: it.productKind ?? "STANDARD",
         })),
       },
     },
     include: {
+      // productKindSnapshot is a plain column on ReturnItem (added
+      // 2026-05), so a flat `include: true` is enough. No need to
+      // join through orderItem → product anymore.
       items: true,
       order: { select: { publicNumber: true, email: true } },
       user: { select: { firstName: true, lastName: true } },
@@ -322,6 +359,9 @@ export async function updateReturnAdminFields(
     where: { id: returnId },
     data,
     include: {
+      // productKindSnapshot is a plain column on ReturnItem (added
+      // 2026-05), so a flat `include: true` is enough. No need to
+      // join through orderItem → product anymore.
       items: true,
       order: { select: { publicNumber: true, email: true } },
       user: { select: { firstName: true, lastName: true } },
@@ -399,7 +439,10 @@ export async function transitionReturnStatus(
       where: { id: returnId },
       data,
       include: {
-        items: true,
+        // productKindSnapshot is a plain column on ReturnItem (added
+      // 2026-05), so a flat `include: true` is enough. No need to
+      // join through orderItem → product anymore.
+      items: true,
         order: { select: { publicNumber: true, email: true } },
         user: { select: { firstName: true, lastName: true } },
       },

@@ -45,6 +45,18 @@ export type ReturnItemRow = {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+  /** Per-item refund adjudication (added 2026-05 alongside the new
+   *  admin return workflow). NULL = not adjudicated yet. A number =
+   *  EUR amount the admin approves to refund for this line. Zero =
+   *  accepted into stock but no refund (e.g. non-refundable). */
+  acceptedRefundEur: number | null;
+  /** Short reason when the line isn't fully refunded — surfaces in
+   *  the customer "return received" email. */
+  rejectionReason: string | null;
+  /** Product kind on the original order item. Drives the admin UI's
+   *  gift-card disabled state + the safety check inside the refund
+   *  pipeline that prevents gift-card refunds from ever firing. */
+  productKind: "STANDARD" | "GIFT_CARD";
 };
 
 export type ReturnRow = {

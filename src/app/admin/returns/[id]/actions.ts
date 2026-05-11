@@ -19,6 +19,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { logAudit } from "@/lib/audit/log";
 import {
@@ -39,6 +40,134 @@ import {
 
 function isReturnStatus(v: string): v is ReturnStatus {
   return (RETURN_STATUS as readonly string[]).includes(v);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Step 3: per-item refund adjudication.
+//
+// Replaces the legacy single "Refund amount" input. Admin now decides, for
+// EACH return item, what amount (if any) to refund and — when rejecting —
+// the reason that gets shown to the customer in the 'return received'
+// email so reality and expectations line up.
+//
+// FormData shape (form fields built by ReturnAdjudicationForm):
+//   returnId: <uuid>
+//   item.<itemId>.accept: "yes" | "no"   (toggle)
+//   item.<itemId>.amount: "<eur>"        (number, only meaningful when accept=yes)
+//   item.<itemId>.reason: "<text>"       (only meaningful when accept=no)
+//
+// Server-side rules:
+//   · Gift cards: amount is forced to 0 + reason is forced to
+//     "Non-refundable gift card" regardless of what the form posted.
+//     Belt-and-braces in case any UI guard is bypassed.
+//   · Non-numeric amounts → treated as 0 (no refund) instead of
+//     bailing — admin's intent was "approve this line at €0".
+//   · Total refund stored on ReturnRequest.refundAmount = SUM of
+//     per-item acceptedRefundEur, so the existing transition gate
+//     (refundAmount > 0) still works without rewiring.
+// ─────────────────────────────────────────────────────────────────────────
+export async function updateReturnAdjudicationAction(
+  formData: FormData,
+): Promise<void> {
+  const actor = await requireAdmin();
+
+  const returnId = String(formData.get("returnId") ?? "");
+  if (!returnId) return;
+
+  const current = await getReturnByIdForAdmin(returnId);
+  if (!current) return;
+
+  // Walk every return item, read its three form fields, normalise.
+  type Decision = {
+    itemId: string;
+    acceptedRefundEur: number;
+    rejectionReason: string | null;
+  };
+  const decisions: Decision[] = [];
+
+  for (const it of current.items) {
+    const acceptKey = `item.${it.id}.accept`;
+    const amountKey = `item.${it.id}.amount`;
+    const reasonKey = `item.${it.id}.reason`;
+
+    const acceptRaw = String(formData.get(acceptKey) ?? "yes").toLowerCase();
+    const amountRaw = String(formData.get(amountKey) ?? "");
+    const reasonRaw = String(formData.get(reasonKey) ?? "").trim();
+
+    // Gift cards are forcibly rejected — the form should already
+    // disable the inputs, but this is the final safety net so a
+    // hand-crafted POST can't sneak a refund through.
+    if (it.productKind === "GIFT_CARD") {
+      decisions.push({
+        itemId: it.id,
+        acceptedRefundEur: 0,
+        rejectionReason: "Non-refundable gift card",
+      });
+      continue;
+    }
+
+    if (acceptRaw === "no") {
+      decisions.push({
+        itemId: it.id,
+        acceptedRefundEur: 0,
+        rejectionReason: reasonRaw.slice(0, 120) || "Not accepted",
+      });
+      continue;
+    }
+
+    // Accepted. Parse amount; default to 0 on bad input so we don't
+    // silently refund the line total on a malformed submit.
+    const parsed = Number.parseFloat(amountRaw.replace(",", "."));
+    const amount = Number.isFinite(parsed) && parsed > 0
+      ? Math.round(parsed * 100) / 100
+      : 0;
+
+    decisions.push({
+      itemId: it.id,
+      acceptedRefundEur: amount,
+      // Even on accepted lines, persist a reason if the admin typed
+      // one (e.g. "Approved at reduced amount — slight damage"). Null
+      // otherwise so the email template can branch cleanly.
+      rejectionReason: reasonRaw ? reasonRaw.slice(0, 120) : null,
+    });
+  }
+
+  const total = decisions.reduce((sum, d) => sum + d.acceptedRefundEur, 0);
+
+  // Persist all per-item amounts + roll up to ReturnRequest.refundAmount
+  // in one transaction so the page never sees a half-written state.
+  await prisma.$transaction([
+    ...decisions.map((d) =>
+      prisma.returnItem.update({
+        where: { id: d.itemId },
+        data: {
+          acceptedRefundEur: d.acceptedRefundEur,
+          rejectionReason: d.rejectionReason,
+        },
+      }),
+    ),
+    prisma.returnRequest.update({
+      where: { id: returnId },
+      data: { refundAmount: total },
+    }),
+  ]);
+
+  await logAudit({
+    actor,
+    action: "return.adjudicate",
+    entityType: "ReturnRequest",
+    entityId: returnId,
+    summary: `Adjudicated ${current.publicNumber} — total accepted €${total.toFixed(2)} across ${decisions.length} item${decisions.length === 1 ? "" : "s"}`,
+    meta: {
+      decisions: decisions.map((d) => ({
+        itemId: d.itemId,
+        eur: d.acceptedRefundEur,
+        reason: d.rejectionReason,
+      })),
+    },
+  });
+
+  revalidatePath(`/admin/returns/${returnId}`);
 }
 
 export async function transitionReturnAction(formData: FormData): Promise<void> {

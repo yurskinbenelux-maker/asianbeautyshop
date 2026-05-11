@@ -94,6 +94,7 @@ export async function submitReturnRequest(
     nameSnapshot: string;
     skuSnapshot: string;
     unitPrice: number;
+    productKind: "STANDARD" | "GIFT_CARD";
   }> = [];
 
   for (const line of order.items) {
@@ -114,6 +115,7 @@ export async function submitReturnRequest(
       nameSnapshot: line.nameSnapshot,
       skuSnapshot: line.skuSnapshot,
       unitPrice: line.unitPrice,
+      productKind: line.productKind ?? "STANDARD",
     });
   }
 

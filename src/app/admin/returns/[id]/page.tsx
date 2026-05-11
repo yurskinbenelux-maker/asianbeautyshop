@@ -28,6 +28,7 @@ import { getReturnByIdForAdmin } from "@/lib/returns/db";
 import { ALLOWED_TRANSITIONS } from "@/lib/returns/types";
 import { cn } from "@/lib/utils";
 import { formatAdminDateTime } from "@/lib/utils/format-date";
+import { ReturnAdjudicationForm } from "@/components/admin/returns/adjudication-form";
 
 import {
   transitionReturnAction,
@@ -172,66 +173,47 @@ export default async function AdminReturnDetail({ params, searchParams }: Props)
             {primary.helper}
           </p>
 
-          {/* APPROVED → RECEIVED requires a refund amount on file.
-           *  Pair the input visually with the action button so admin
-           *  can't miss it. The amount is saved via the existing
-           *  updateReturnNotesAction; once saved, click Mark received. */}
+          {/* APPROVED → RECEIVED is the refund moment. Step 1 is now
+           *  the per-item adjudication form (replaces the old single
+           *  refund-amount field). Admin accepts each line at a
+           *  refund EUR amount OR rejects with a reason. Gift cards
+           *  are auto-rejected at €0. The form's running total feeds
+           *  back into ReturnRequest.refundAmount so Step 2's gate
+           *  (refundAmount > 0) still works. */}
           {primaryTarget === "RECEIVED" ? (
-            <div className="mt-5 grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
-              <form action={updateReturnNotesAction} className="space-y-2">
-                <input type="hidden" name="returnId" value={ret.id} />
-                {/* Hidden passthrough so we don't blank these on Save */}
-                <input
-                  type="hidden"
-                  name="adminNotes"
-                  value={ret.adminNotes ?? ""}
-                />
-                <input
-                  type="hidden"
-                  name="trackingNumber"
-                  value={ret.trackingNumber ?? ""}
-                />
-                <input
-                  type="hidden"
-                  name="trackingUrl"
-                  value={ret.trackingUrl ?? ""}
-                />
-                <label className="block">
-                  <span className="mb-1 block text-[11px] uppercase tracking-label text-ink-mid">
-                    Step 1 · Refund amount (€)
-                  </span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    name="refundAmount"
-                    defaultValue={ret.refundAmount ?? ""}
-                    placeholder="e.g. 44.99"
-                    className="w-full max-w-xs border border-ink/20 bg-white px-3 py-2 text-[14px] text-ink focus:border-vermilion focus:outline-none"
+            <div className="mt-5 space-y-6">
+              <div>
+                <h3 className="text-[12px] uppercase tracking-label text-ink-mid">
+                  Step 1 · Adjudicate each item
+                </h3>
+                <p className="mt-1 text-[12px] leading-relaxed text-ink-mid">
+                  Accept the line at a refund amount or reject it with a
+                  reason. Rejection reasons appear in the customer&apos;s
+                  &ldquo;return received&rdquo; email so what they hear
+                  matches what arrived.
+                </p>
+                <div className="mt-3">
+                  <ReturnAdjudicationForm
+                    returnId={ret.id}
+                    items={ret.items}
                   />
-                </label>
-                <button
-                  type="submit"
-                  className="border border-ink/20 bg-white px-4 py-2 text-[11px] uppercase tracking-label text-ink transition-colors hover:border-ink"
-                >
-                  Save refund amount
-                </button>
-              </form>
+                </div>
+              </div>
 
               <form action={transitionReturnAction}>
                 <input type="hidden" name="returnId" value={ret.id} />
                 <input type="hidden" name="target" value={primaryTarget} />
-                <div className="text-right">
-                  <span className="block text-[11px] uppercase tracking-label text-ink-mid">
-                    Step 2
-                  </span>
+                <div>
+                  <h3 className="text-[12px] uppercase tracking-label text-ink-mid">
+                    Step 2 · Fire the refund pipeline
+                  </h3>
                   <button
                     type="submit"
                     disabled={!ret.refundAmount || Number(ret.refundAmount) <= 0}
-                    className="mt-1 inline-flex items-center gap-2 border border-vermilion bg-vermilion px-5 py-3 text-[12px] uppercase tracking-label text-white transition-colors hover:bg-ink hover:border-ink disabled:cursor-not-allowed disabled:opacity-40"
+                    className="mt-2 inline-flex items-center gap-2 border border-vermilion bg-vermilion px-5 py-3 text-[12px] uppercase tracking-label text-white transition-colors hover:bg-ink hover:border-ink disabled:cursor-not-allowed disabled:opacity-40"
                     title={
                       !ret.refundAmount || Number(ret.refundAmount) <= 0
-                        ? "Save a refund amount first (Step 1)"
+                        ? "Save adjudication first (Step 1) — total must be > €0"
                         : `Fires Mollie refund of €${Number(ret.refundAmount).toFixed(2)}`
                     }
                   >
