@@ -107,14 +107,23 @@ const orderSelect = {
   // Needed on the PAID transition to detect quiz-reward orders and
   // mark the user's QuizCompletion as redeemed (rule A enforcement).
   couponCode: true,
-  // A-Beauty Club accrual on the PAID transition needs the customer + the
-  // subtotal (we award on subtotal not grandTotal so shipping/tax don't
-  // earn points). The user relation is optional because guest checkouts
+  // A-Beauty Club accrual on the PAID transition computes points from
+  // the PHYSICAL-PRODUCT subtotal — we exclude gift card lines (those
+  // are a payment instrument, not a real purchase, same logic as the
+  // VAT-out-of-scope rule for MPVs) AND of course shipping/tax. We pull
+  // OrderItem.product.kind to do the gift-card filter without an extra
+  // round-trip. The user relation is optional because guest checkouts
   // don't earn loyalty points — anonymous orders have no account to
   // credit and signing up later doesn't retroactively claim past orders.
   subtotal: true,
   userId: true,
   user: { select: { firstName: true } },
+  items: {
+    select: {
+      lineTotal: true,
+      product: { select: { kind: true } },
+    },
+  },
 } satisfies Prisma.OrderSelect;
 
 type OrderForSync = Prisma.OrderGetPayload<{ select: typeof orderSelect }>;
@@ -327,14 +336,22 @@ async function syncOrderWithMollie(order: OrderForSync): Promise<SyncResult> {
     // roll back a real-money payment.
     if (order.userId) {
       try {
-        const subtotalEur = Number(order.subtotal);
+        // Physical-product subtotal — sum of OrderItem.lineTotal for lines
+        // whose product is NOT a GIFT_CARD. Gift cards = store credit, not
+        // a real product; awarding points on a €100 gift card sale would
+        // let customers farm 100 points for nothing (they keep the gift
+        // card balance, and on refund we'd only claw back proportionally).
+        // Same rule as VAT: gift cards don't count.
+        const physicalSubtotalEur = order.items
+          .filter((it) => it.product.kind !== "GIFT_CARD")
+          .reduce((sum, it) => sum + Number(it.lineTotal), 0);
         const { accrueOrderPoints, accrueMilestone } = await import(
           "@/lib/loyalty/accrue"
         );
         await accrueOrderPoints({
           orderId: order.id,
           userId: order.userId,
-          subtotalEur,
+          subtotalEur: physicalSubtotalEur,
           firstName: order.user?.firstName,
         });
         await accrueMilestone({

@@ -7,11 +7,18 @@
 // return items to farm points.
 //
 // Math:
-//   pointsReversed = round( totalPointsEarned × (refundAmount / orderGrandTotal) )
+//   pointsReversed = round( totalPointsEarned × (refundAmount / physicalProductSubtotal) )
 //
-// Where totalPointsEarned is the sum of EARNED_ORDER + EARNED_MILESTONE
-// rows for this orderId (other earning paths — birthday, task, referral
-// — aren't tied to the order, so they're untouched).
+// Where physicalProductSubtotal is the same base accrual used (sum of
+// non-gift-card OrderItem.lineTotal — excludes shipping, excludes
+// vouchers). Using grandTotal here would create asymmetric math:
+// accrual would award fewer points than a full refund would claw back,
+// AND partial product refunds would under-claw because the grandTotal
+// denominator includes shipping the customer DID NOT earn points on.
+//
+// totalPointsEarned is the sum of EARNED_ORDER + EARNED_MILESTONE rows
+// for this orderId. Other earning paths (birthday, task, referral)
+// aren't tied to the order, so they're untouched.
 //
 // Idempotency:
 //   Scoped per (orderId, returnId, kind=REVERSED_REFUND). One order can
@@ -38,7 +45,12 @@ export type ReverseLoyaltyInput = {
   returnId: string;
   /** VAT-inclusive refund amount in EUR — the customer-facing total. */
   refundAmount: number;
-  /** Order grand total in EUR — used to compute the proportion. */
+  /**
+   * Order grand total in EUR — kept for backwards compatibility with the
+   * caller signature, but no longer used for the proportion calculation
+   * (see file header for why). The function now reads OrderItems
+   * directly to derive the physical-product subtotal.
+   */
   orderGrandTotal: number;
 };
 
@@ -62,9 +74,22 @@ export async function reverseLoyaltyOnRefund(
   input: ReverseLoyaltyInput,
 ): Promise<ReverseLoyaltyResult> {
   // ── 1. Find the customer's loyalty account via the order's userId ──
+  // Also pull the order items so we can compute the physical-product
+  // subtotal (excludes gift cards + shipping + tax). That base must
+  // match what accrual used, otherwise the math doesn't balance on
+  // full refunds.
   const order = await prisma.order.findUnique({
     where: { id: input.orderId },
-    select: { userId: true, publicNumber: true },
+    select: {
+      userId: true,
+      publicNumber: true,
+      items: {
+        select: {
+          lineTotal: true,
+          product: { select: { kind: true } },
+        },
+      },
+    },
   });
   if (!order || !order.userId) {
     // Guest checkout — no account, nothing to reverse.
@@ -105,13 +130,20 @@ export async function reverseLoyaltyOnRefund(
     return { reversed: 0, skipped: true, reason: "no-points-to-reverse" };
   }
 
-  // ── 4. Proportional clawback ─────────────────────────────────────────
-  // Guard against divide-by-zero if grandTotal is 0 (free orders shouldn't
-  // be hitting this path — they have no Mollie refund — but be defensive).
-  if (input.orderGrandTotal <= 0) {
+  // ── 4. Proportional clawback against the PHYSICAL subtotal ───────────
+  // Use the same base accrual used (sum of non-gift-card OrderItem
+  // lineTotals). Capping at 1.0 means a refund larger than the physical
+  // subtotal — e.g. customer refunds product + shipping — claws back
+  // every point earned but never more.
+  const physicalSubtotal = order.items
+    .filter((it) => it.product.kind !== "GIFT_CARD")
+    .reduce((sum, it) => sum + Number(it.lineTotal), 0);
+  if (physicalSubtotal <= 0) {
+    // No physical products on this order — no points were earned, no
+    // clawback. Bypass the rounding-to-zero branch with a clearer reason.
     return { reversed: 0, skipped: true, reason: "no-points-to-reverse" };
   }
-  const fraction = Math.min(1, input.refundAmount / input.orderGrandTotal);
+  const fraction = Math.min(1, input.refundAmount / physicalSubtotal);
   const pointsToReverse = Math.round(totalEarned * fraction);
   if (pointsToReverse <= 0) {
     return { reversed: 0, skipped: true, reason: "rounded-to-zero" };
