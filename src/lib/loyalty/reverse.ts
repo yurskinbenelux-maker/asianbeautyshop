@@ -42,7 +42,10 @@ import { applyLoyaltyEvent } from "./account";
 
 export type ReverseLoyaltyInput = {
   orderId: string;
-  returnId: string;
+  /** Return id when the clawback is tied to a specific return parcel.
+   *  Null when the clawback is for an admin-side cancellation refund —
+   *  the LoyaltyEvent in that case is scoped to (orderId, kind) only. */
+  returnId: string | null;
   /** VAT-inclusive refund amount in EUR — the customer-facing total. */
   refundAmount: number;
   /**
@@ -98,10 +101,13 @@ export async function reverseLoyaltyOnRefund(
 
   // ── 2. Idempotency: did we already reverse for THIS specific return? ─
   // Scope by (orderId, returnId) — one order can have multiple returns.
+  // For cancellation refunds (returnId === null) the scope drops to
+  // (orderId, kind=REVERSED_REFUND) — there can only ever be one
+  // cancellation per order so the order-level uniqueness is enough.
   const alreadyReversed = await prisma.loyaltyEvent.findFirst({
     where: {
       orderId: input.orderId,
-      returnId: input.returnId,
+      returnId: input.returnId ?? null,
       kind: LoyaltyEventKind.REVERSED_REFUND,
     },
     select: { id: true },
@@ -161,7 +167,7 @@ export async function reverseLoyaltyOnRefund(
     delta: -pointsToReverse,
     reason: `Refund clawback — order ${order.publicNumber} (${Math.round(fraction * 100)}%)`,
     orderId: input.orderId,
-    returnId: input.returnId,
+    returnId: input.returnId ?? undefined,
   });
 
   return { reversed: pointsToReverse, skipped: false };

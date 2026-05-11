@@ -41,6 +41,10 @@ import {
   sendOrderRefundedEmail,
   type RefundKind,
 } from "@/lib/email/order-refunded";
+import {
+  issueCancellationRefundAndCreditNote,
+  IssueRefundError,
+} from "@/lib/credit-notes/issue";
 
 // ────────── email side-effects ──────────────────────────────────────────
 //
@@ -63,8 +67,15 @@ async function notifyOrderShipped(orderId: string): Promise<void> {
   await sendOrderShippedEmail(orderId);
 }
 
-async function notifyOrderCancelled(orderId: string): Promise<void> {
-  await sendOrderCancelledEmail(orderId);
+async function notifyOrderCancelled(
+  orderId: string,
+  refund?: {
+    refundAmountEur: number;
+    reasonNote: string | null;
+    creditNoteNumber: string;
+  } | null,
+): Promise<void> {
+  await sendOrderCancelledEmail(orderId, refund ?? undefined);
 }
 
 async function notifyOrderRefunded(
@@ -467,6 +478,23 @@ export async function markDeliveredAction(
 }
 
 // ──────── cancel ───────────────────────────────────────────────────────
+//
+// 2026-05: this is the canonical cancellation path, wired to a dedicated
+// CancelOrderForm on /admin/orders/[id]. Replaces the old generic
+// "Move to Cancelled" status-transition button, which captured no reason
+// and triggered no refund — a Belgian Code de droit économique VI.83
+// problem (B2C refund within 14 days mandatory).
+//
+// Flow when admin submits:
+//   1. Validate transition + parse reason + parse issueRefund toggle
+//   2. Cancel + restock (transactional)
+//   3. If PAID + issueRefund: fire issueCancellationRefundAndCreditNote
+//      — Mollie refund, credit note (reason=CANCELLATION), loyalty
+//      clawback, paymentStatus → REFUNDED. Best-effort wrapped so a
+//      pipeline failure doesn't roll back the cancellation; admin can
+//      retry the refund step from the order page or Mollie dashboard.
+//   4. Notify customer — refund context surfaces in the email so the
+//      copy matches what just happened in their bank account.
 
 const CancelSchema = z.object({
   orderId: z.string().uuid(),
@@ -476,6 +504,12 @@ const CancelSchema = z.object({
     .max(500)
     .optional()
     .transform((v) => (v ? v : undefined)),
+  /** Checkbox in the admin form. When true AND the order was paid,
+   *  fire the cancellation-refund pipeline after the cancel commits. */
+  issueRefund: z
+    .union([z.literal("yes"), z.literal("on"), z.literal("true"), z.literal("")])
+    .optional()
+    .transform((v) => v === "yes" || v === "on" || v === "true"),
 });
 
 export async function cancelOrderAction(
@@ -486,6 +520,7 @@ export async function cancelOrderAction(
   const parsed = CancelSchema.safeParse({
     orderId: formData.get("orderId"),
     reason: formData.get("reason") ?? undefined,
+    issueRefund: formData.get("issueRefund") ?? undefined,
   });
   if (!parsed.success) return { ok: false, message: "Invalid order." };
 
@@ -546,14 +581,74 @@ export async function cancelOrderAction(
     entityType: "Order",
     entityId: order.id,
     summary: `Cancelled order ${order.publicNumber}`,
-    meta: { reason: parsed.data.reason ?? null, previousStatus: order.status },
+    meta: {
+      reason: parsed.data.reason ?? null,
+      previousStatus: order.status,
+      refundRequested: parsed.data.issueRefund,
+    },
   });
+
+  // Cancellation-refund pipeline. Only fires for orders that were
+  // actually paid AND when admin checked the box. We wrap it in
+  // try/catch so a refund failure (Mollie outage, network blip)
+  // doesn't roll back the already-committed cancellation — the order
+  // is cancelled either way, admin can retry the refund manually.
+  let refundContext: {
+    refundAmountEur: number;
+    reasonNote: string | null;
+    creditNoteNumber: string;
+  } | null = null;
+  let refundError: string | null = null;
+  if (wasPaid && parsed.data.issueRefund) {
+    try {
+      const result = await issueCancellationRefundAndCreditNote({
+        orderId: order.id,
+        reasonNote: parsed.data.reason ?? null,
+        actorId: actor.id,
+        actorEmail: actor.email ?? null,
+      });
+      refundContext = {
+        refundAmountEur: result.amount,
+        reasonNote: parsed.data.reason ?? null,
+        creditNoteNumber: result.creditNoteNumber,
+      };
+      revalidateOrder(order.id);
+    } catch (err) {
+      // Log + surface to admin but don't fail the cancel.
+      const code =
+        err instanceof IssueRefundError ? err.code : "unknown";
+      console.error(
+        `[cancel] refund pipeline failed for ${order.publicNumber} (${code}) — order already cancelled, admin must retry refund`,
+        err,
+      );
+      refundError = code;
+      await prisma.orderEvent.create({
+        data: {
+          orderId: order.id,
+          kind: "refund.failed",
+          message: `Cancellation refund pipeline failed (${code}) — retry from Mollie or admin order page.`,
+          metadata: { code, actor: actor.email ?? null },
+        },
+      });
+    }
+  }
 
   // Notify customer after commit. Fire-and-catch so a Resend hiccup
   // doesn't block the admin from seeing "cancelled" in the panel.
-  await notifyOrderCancelled(order.id);
+  await notifyOrderCancelled(order.id, refundContext);
 
-  return { ok: true, message: "Order cancelled." };
+  if (refundError) {
+    return {
+      ok: true,
+      message: `Order cancelled, but refund failed (${refundError}). Issue refund manually from Mollie.`,
+    };
+  }
+  return {
+    ok: true,
+    message: refundContext
+      ? `Order cancelled and refunded €${refundContext.refundAmountEur.toFixed(2)}.`
+      : "Order cancelled.",
+  };
 }
 
 // ──────── refund (H2-removed) ─────────────────────────────────────────

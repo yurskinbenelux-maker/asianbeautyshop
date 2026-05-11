@@ -535,6 +535,361 @@ export async function issueRefundAndCreditNote(
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// Cancellation-refund pipeline (2026-05)
+//
+// Mirrors issueRefundAndCreditNote but for the "admin cancels a paid
+// order" flow — there's no parcel coming back, no ReturnRequest, just a
+// full-order reversal driven from /admin/orders/[id]'s cancel form.
+//
+// Why a separate function instead of reusing the return-keyed helper?
+//   · The return-side helper requires a ReturnRequest row + per-item
+//     adjudication. Synthesizing one for a cancel would pollute the
+//     /admin/returns list with rows that were never actually returned.
+//   · The line breakdown comes straight from OrderItem (everything is
+//     credited, no per-line accept/reject decision needed).
+//   · Idempotency gate is "any CreditNote already exists for this order
+//     with reason=CANCELLATION", not the return's mollieRefundId.
+//
+// Mollie-first ordering: same posture as the return-side helper. CN
+// number reservation must stay gap-free per Belgian Code TVA Art. 53octies,
+// so the Mollie HTTP call goes BEFORE we burn a number.
+//
+// Loyalty + VAT YTD: the loyalty reversal helper is fired the same way.
+// VAT YTD subtraction happens automatically because the cross-border
+// dashboard sums CN amounts as negatives — we don't need a separate call.
+// ─────────────────────────────────────────────────────────────────────────
+
+export type IssueCancellationRefundInput = {
+  orderId: string;
+  /** Admin's typed reason — surfaces on the CN's reasonNote field and
+   *  in the customer cancellation email. Free text, customer-facing. */
+  reasonNote?: string | null;
+  actorId?: string | null;
+  actorEmail?: string | null;
+};
+
+export type IssueCancellationRefundResult = {
+  mollieRefundId: string;
+  creditNoteNumber: string;
+  creditNoteId: string;
+  /** Full grandTotal amount that was refunded, in EUR. */
+  amount: number;
+  alreadyIssued: boolean;
+};
+
+export async function issueCancellationRefundAndCreditNote(
+  input: IssueCancellationRefundInput,
+): Promise<IssueCancellationRefundResult> {
+  // ── 1. Load the order + invoice + line items ──────────────────────
+  const order = await prisma.order.findUnique({
+    where: { id: input.orderId },
+    select: {
+      id: true,
+      publicNumber: true,
+      mollieId: true,
+      grandTotal: true,
+      paymentStatus: true,
+      invoice: {
+        select: {
+          id: true,
+          vatRate: true,
+          destinationCountry: true,
+          issuerSnapshot: true,
+          customerSnapshot: true,
+        },
+      },
+      items: {
+        select: {
+          nameSnapshot: true,
+          skuSnapshot: true,
+          quantity: true,
+          lineTotal: true,
+          product: { select: { kind: true } },
+        },
+      },
+    },
+  });
+  if (!order) {
+    throw new IssueRefundError(
+      "return-not-found",
+      `Order ${input.orderId} not found`,
+    );
+  }
+
+  // ── 2. Idempotency: a cancellation CN already exists? ─────────────
+  // Gate on (orderId, reason=CANCELLATION) so a re-clicked cancel
+  // button never produces a double refund. The Mollie unique-constraint
+  // side is enforced by the order's paymentStatus too — once flipped
+  // to REFUNDED, the cancel action won't reach this helper again.
+  const existing = await prisma.creditNote.findFirst({
+    where: { orderId: order.id, reason: "CANCELLATION" },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, number: true },
+  });
+  if (existing) {
+    return {
+      mollieRefundId: "",
+      creditNoteNumber: existing.number,
+      creditNoteId: existing.id,
+      amount: Number(order.grandTotal),
+      alreadyIssued: true,
+    };
+  }
+
+  if (!order.mollieId) {
+    throw new IssueRefundError(
+      "no-original-payment",
+      `Order ${order.publicNumber} has no Mollie payment id — cancel-refund only works for Mollie-paid orders.`,
+    );
+  }
+  if (!order.invoice) {
+    throw new IssueRefundError(
+      "no-original-invoice",
+      `Order ${order.publicNumber} has no invoice — issue the invoice before cancelling.`,
+    );
+  }
+
+  const amount = round2(Number(order.grandTotal));
+  if (amount <= 0) {
+    throw new IssueRefundError(
+      "amount-invalid",
+      `Order ${order.publicNumber} has zero grand total — nothing to refund.`,
+    );
+  }
+
+  // ── 3. Issue the Mollie refund FIRST ───────────────────────────────
+  const mollie = getMollie();
+  let mollieRefund;
+  try {
+    mollieRefund = await mollie.paymentRefunds.create({
+      paymentId: order.mollieId,
+      amount: { currency: "EUR", value: amount.toFixed(2) },
+      description: `Cancellation refund for order ${order.publicNumber}`,
+      metadata: {
+        orderId: order.id,
+        orderPublicNumber: order.publicNumber,
+        reason: "CANCELLATION",
+      },
+    });
+  } catch (err) {
+    throw new IssueRefundError(
+      "mollie-refund-failed",
+      err instanceof Error
+        ? err.message
+        : "Mollie payments_refunds.create threw an unknown error",
+      err,
+    );
+  }
+
+  // ── 4. Build per-line breakdown from OrderItem ─────────────────────
+  // Gift-card lines are explicitly excluded — even on a full cancel the
+  // gift card itself is out-of-scope per EU Dir 2016/1065 MPV rules.
+  // (Practically: a cancelled order's gift card was issued at order.paid
+  // time; cancelling the order should also void the gift card balance,
+  // which is a separate concern handled by the cancel action below.)
+  const vatRate = Number(order.invoice.vatRate);
+  const standardItems = order.items.filter(
+    (it) => it.product.kind !== "GIFT_CARD",
+  );
+
+  type CnLineDraft = {
+    nameSnapshot: string;
+    skuSnapshot: string;
+    quantity: number;
+    unitPriceExclVat: number;
+    vatRate: number;
+    lineTotalInclVat: number;
+  };
+
+  let cnLines: CnLineDraft[] =
+    standardItems.length > 0
+      ? standardItems.map((it) => {
+          const lineTotalInclVat = round2(Number(it.lineTotal));
+          const lineExclVat = lineTotalInclVat / (1 + vatRate);
+          const unitExcl =
+            it.quantity > 0 ? lineExclVat / it.quantity : lineExclVat;
+          return {
+            nameSnapshot: it.nameSnapshot,
+            skuSnapshot: it.skuSnapshot,
+            quantity: it.quantity,
+            unitPriceExclVat: round2(unitExcl),
+            vatRate,
+            lineTotalInclVat,
+          };
+        })
+      : [];
+
+  // Last-line delta absorbs sub-cent rounding so the per-line sum
+  // matches the Mollie refund amount exactly.
+  if (cnLines.length > 0) {
+    const linesSum = cnLines.reduce((s, l) => s + l.lineTotalInclVat, 0);
+    const delta = round2(amount - linesSum);
+    if (delta !== 0) {
+      const last = cnLines[cnLines.length - 1];
+      const fixedTotal = round2(last.lineTotalInclVat + delta);
+      const fixedExcl = fixedTotal / (1 + vatRate);
+      cnLines[cnLines.length - 1] = {
+        ...last,
+        lineTotalInclVat: fixedTotal,
+        unitPriceExclVat: round2(
+          last.quantity > 0 ? fixedExcl / last.quantity : fixedExcl,
+        ),
+      };
+    }
+  } else {
+    // Edge case: order was 100% gift cards (shouldn't reach here — gift
+    // card-only orders aren't paid via Mollie the same way) but guard
+    // with a synthetic line so the CN row still satisfies the schema.
+    cnLines = [
+      {
+        nameSnapshot: `Cancellation · order ${order.publicNumber}`,
+        skuSnapshot: `CANCEL-${order.publicNumber}`,
+        quantity: 1,
+        unitPriceExclVat: round2(amount / (1 + vatRate)),
+        vatRate,
+        lineTotalInclVat: round2(amount),
+      },
+    ];
+  }
+
+  const cnGrandTotal = round2(
+    cnLines.reduce((s, l) => s + l.lineTotalInclVat, 0),
+  );
+  const cnVatTotal = round2(cnGrandTotal * (vatRate / (1 + vatRate)));
+  const cnSubtotalExclVat = round2(cnGrandTotal - cnVatTotal);
+
+  // ── 5. Reserve CN number + persist row ─────────────────────────────
+  const issueDate = new Date();
+  const reserved = await reserveNextCreditNoteNumber(issueDate.getFullYear());
+
+  let creditNoteId: string;
+  try {
+    creditNoteId = await prisma.$transaction(async (tx) => {
+      const cn = await tx.creditNote.create({
+        data: {
+          invoiceId: order.invoice!.id,
+          orderId: order.id,
+          // No returnId — this is a cancellation CN, not return-tied.
+          number: reserved.number,
+          year: reserved.year,
+          sequence: reserved.sequence,
+          issuedAt: issueDate,
+          pdfPath: null,
+          issuerSnapshot: order.invoice!.issuerSnapshot as Prisma.InputJsonValue,
+          customerSnapshot: order.invoice!.customerSnapshot as Prisma.InputJsonValue,
+          subtotalExclVat: cnSubtotalExclVat,
+          vatTotal: cnVatTotal,
+          shippingTotal: 0,
+          grandTotal: cnGrandTotal,
+          destinationCountry: order.invoice!.destinationCountry,
+          vatRate: order.invoice!.vatRate,
+          reason: "CANCELLATION",
+          reasonNote: input.reasonNote ?? null,
+          items: {
+            create: cnLines.map((l) => ({
+              nameSnapshot: l.nameSnapshot,
+              skuSnapshot: l.skuSnapshot,
+              quantity: l.quantity,
+              unitPriceExclVat: l.unitPriceExclVat,
+              vatRate: l.vatRate,
+              lineTotalInclVat: l.lineTotalInclVat,
+            })),
+          },
+        },
+      });
+
+      // Flip the order's payment status to REFUNDED. Order has no
+      // refundedAt column (that lives on ReturnRequest); the
+      // OrderEvent below + the credit note's issuedAt timestamp give
+      // us the "refund time" audit trail.
+      await tx.order.update({
+        where: { id: order.id },
+        data: {
+          paymentStatus: "REFUNDED",
+        },
+      });
+
+      await tx.orderEvent.create({
+        data: {
+          orderId: order.id,
+          kind: "refund.issued",
+          message: `Cancellation refund €${amount.toFixed(2)} · credit note ${reserved.number}`,
+          metadata: {
+            kind: "cancellation",
+            mollieRefundId: mollieRefund.id,
+            creditNoteId: cn.id,
+            creditNoteNumber: reserved.number,
+            amount,
+            actorId: input.actorId ?? null,
+            actorEmail: input.actorEmail ?? null,
+          },
+        },
+      });
+
+      return cn.id;
+    });
+  } catch (err) {
+    console.error(
+      "[credit-notes/cancel] DB write failed after successful Mollie refund — manual reconciliation needed",
+      {
+        orderId: order.id,
+        mollieRefundId: mollieRefund.id,
+        cnNumber: reserved.number,
+        err,
+      },
+    );
+    throw new IssueRefundError(
+      "db-write-failed",
+      `Mollie refund ${mollieRefund.id} succeeded but DB write failed — record manually as ${reserved.number}`,
+      err,
+    );
+  }
+
+  // ── 6. Mint the PDF (best-effort, non-blocking) ────────────────────
+  try {
+    await mintCreditNotePdf(creditNoteId);
+  } catch (err) {
+    console.error(
+      "[credit-notes/cancel] PDF mint failed — row exists, can be re-rendered later",
+      { creditNoteId, cnNumber: reserved.number, err },
+    );
+  }
+
+  // ── 7. Reverse loyalty points (best-effort) ────────────────────────
+  // Pass null for returnId since this isn't return-tied — the loyalty
+  // reverser's idempotency check on (orderId, REVERSED_REFUND) still
+  // gates a double-clawback if cancel and a separate refund somehow
+  // both fired against the same order.
+  try {
+    const { reverseLoyaltyOnRefund } = await import("@/lib/loyalty/reverse");
+    const result = await reverseLoyaltyOnRefund({
+      orderId: order.id,
+      returnId: null,
+      refundAmount: amount,
+      orderGrandTotal: Number(order.grandTotal),
+    });
+    if (result.reversed > 0) {
+      console.info(
+        `[credit-notes/cancel] loyalty clawback · ${result.reversed} pts on order ${order.publicNumber}`,
+      );
+    }
+  } catch (err) {
+    console.error(
+      "[credit-notes/cancel] loyalty reversal failed — admin can patch via /admin/customers/<id>/loyalty",
+      { orderId: order.id, err },
+    );
+  }
+
+  return {
+    mollieRefundId: mollieRefund.id,
+    creditNoteNumber: reserved.number,
+    creditNoteId,
+    amount,
+    alreadyIssued: false,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // PDF minting — A7
 //
 // Idempotent on CreditNote.pdfPath. If a path is already set, downloads

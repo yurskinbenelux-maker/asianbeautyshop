@@ -31,6 +31,7 @@ import {
   PAYMENT_STATUS_LABELS,
 } from "@/lib/orders/labels";
 import { StatusActions } from "@/components/admin/orders/status-actions";
+import { CancelOrderForm } from "@/components/admin/orders/cancel-order-form";
 import { TrackingForm } from "@/components/admin/orders/tracking-form";
 import { NotesForm } from "@/components/admin/orders/notes-form";
 import { SendcloudRetryButton } from "@/components/admin/orders/sendcloud-retry-button";
@@ -59,20 +60,26 @@ export default async function AdminOrderDetailPage({
 
   // Compute which status transitions are legal right now. Client component
   // will render only the buttons we list here.
+  //
+  // CANCELLED is intentionally excluded — cancellation has its own
+  // dedicated CancelOrderForm below the StatusActions so admin can
+  // capture a reason and (for paid orders) fire the refund pipeline.
+  // The old generic "Move to Cancelled" button captured neither and
+  // left the customer's money with us, a Code de droit économique
+  // VI.83 problem.
   const statusOptions = (
-    ["PAID", "FULFILLING", "SHIPPED", "DELIVERED", "CANCELLED"] as OrderStatus[]
+    ["PAID", "FULFILLING", "SHIPPED", "DELIVERED"] as OrderStatus[]
   )
     .filter((t) => canTransition(order.status, t))
     .map((value) => ({
       value,
       label: `Move to ${ORDER_STATUS_LABELS[value]}`,
       variant:
-        value === "CANCELLED"
-          ? ("danger" as const)
-          : value === "SHIPPED" || value === "DELIVERED"
-            ? ("primary" as const)
-            : ("secondary" as const),
+        value === "SHIPPED" || value === "DELIVERED"
+          ? ("primary" as const)
+          : ("secondary" as const),
     }));
+  const canCancel = canTransition(order.status, "CANCELLED");
 
   const customerName =
     order.user &&
@@ -424,6 +431,15 @@ export default async function AdminOrderDetailPage({
         <aside className="space-y-8">
           <Panel title="Status">
             <StatusActions orderId={order.id} options={statusOptions} />
+            {canCancel && (
+              <div className="mt-4">
+                <CancelOrderForm
+                  orderId={order.id}
+                  grandTotal={Number(order.grandTotal)}
+                  isPaid={order.paymentStatus === PaymentStatus.PAID}
+                />
+              </div>
+            )}
           </Panel>
 
           {/* Shipping panel hidden for digital-only orders — no parcel
