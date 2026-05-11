@@ -64,13 +64,17 @@ export function BestsellerCard({
       transition={{ duration: 0.7, delay: index * 0.1 }}
       className="group"
     >
-      <Link href={`/shop/${product.slug}`} className="block">
+      <Link href={`/shop/${product.slug}`} className="block card-lift">
         {/* ── product image / SVG fallback ─────────────────── */}
         {/* view-transition-name pairs with the PDP hero so the image
             morphs smoothly between this card and the product page on
             click. The slug-based name is unique per-product per-page,
             which is what the API requires. Browsers without VT support
-            ignore the property; the navigation still works normally. */}
+            ignore the property; the navigation still works normally.
+            Luxury polish #05: `card-lift` (globals.css) replaces the
+            old transition — 700ms ease-out + 2px translate-y + warm
+            shadow on hover. The internal scale-105 image zoom below
+            still fires, just slower. */}
         <div
           className="relative aspect-[4/5] overflow-hidden bg-rice-dim"
           style={{ viewTransitionName: `product-image-${product.slug}` }}
@@ -116,7 +120,7 @@ export function BestsellerCard({
               fill
               priority={index < eagerCount}
               sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
             />
           ) : (
             <div className="flex h-full items-end justify-center pb-10">
@@ -165,8 +169,14 @@ export function BestsellerCard({
             without bestseller status get the editorial mark instead.
             Tighter top margin + smaller text on mobile so the meta
             block doesn't dominate a 170 px card. */}
+        {/* Luxury polish #06: vermilion as punctuation, not paint. The
+         *  old solid-red label is replaced by a 4px dot + spaced ink
+         *  label. Same information density; reads as editorial mark
+         *  instead of UI flag. The dot is the only red moment, which
+         *  makes it land. */}
         {(product.isBestseller || product.isFeatured) && (
-          <p className="mt-2 text-[9px] uppercase tracking-label text-vermilion sm:mt-4 sm:text-[10px]">
+          <p className="mt-2 text-[9px] uppercase tracking-eyebrow text-ink-mid sm:mt-4 sm:text-[10px]">
+            <span className="accent-dot" aria-hidden />
             {product.isBestseller ? "Bestseller" : "Editor's pick"}
           </p>
         )}

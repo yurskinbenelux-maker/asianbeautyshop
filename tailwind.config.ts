@@ -72,9 +72,14 @@ const config: Config = {
       },
       fontSize: {
         // Display scale for Hero B (Moon Jar)
-        "display-xl": ["clamp(48px, 7vw, 108px)", { lineHeight: "1.02", letterSpacing: "-0.01em" }],
-        "display-lg": ["clamp(44px, 6vw, 96px)", { lineHeight: "1.02", letterSpacing: "-0.01em" }],
-        "display-md": ["clamp(30px, 3.4vw, 54px)", { lineHeight: "1.1",  letterSpacing: "-0.01em" }],
+        // Luxury polish #01: tightened tracking from -0.01em → -0.018em on
+        // display sizes for that fashion-house "considered" feel. Lighter
+        // line-height too (1.02 → 1.0) on the largest sizes — Fraunces is
+        // an optical-size variable face and at clamp >96px the letters
+        // already feel slightly loose at 1.02.
+        "display-xl": ["clamp(48px, 7vw, 108px)", { lineHeight: "1.0",  letterSpacing: "-0.018em" }],
+        "display-lg": ["clamp(44px, 6vw, 96px)",  { lineHeight: "1.02", letterSpacing: "-0.018em" }],
+        "display-md": ["clamp(30px, 3.4vw, 54px)", { lineHeight: "1.08", letterSpacing: "-0.018em" }],
       },
       borderRadius: {
         // architectural, tight — no rounded corners on core surfaces

@@ -58,7 +58,10 @@ export async function JournalTeaser({ locale, copy }: Props) {
   });
 
   return (
-    <section className="bg-rice-dim/50 py-32">
+    // Luxury polish #02: bg-rice-dim/50 → bg-rice-dim. Full strength so
+    // the alternating rhythm (rice → rice-dim → rice → rice-dim → rice
+    // through the homepage) reads as deliberate depth rather than ambient.
+    <section className="bg-rice-dim py-32">
       <div className="container">
         <div className="mb-16 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
           <div>

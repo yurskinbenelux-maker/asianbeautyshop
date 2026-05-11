@@ -49,7 +49,11 @@ export function YourRitual({ copy }: { copy: RitualCopy }) {
       // py-14 mobile / py-20 desktop. Earlier values left the section
       // floating with whitespace — the timeline is so visually small
       // (just four 14px dots) that bigger padding looks broken.
-      className="relative scroll-mt-24 bg-ivory py-14 sm:py-20"
+      // Luxury polish #02: switched bg-ivory → bg-rice-dim. The site now
+      // alternates rice → rice-dim → rice → rice-dim → rice through the
+      // homepage scroll. The cream tones are close enough that the eye
+      // reads it as warmth/depth rather than stripes.
+      className="relative scroll-mt-24 bg-rice-dim py-14 sm:py-20"
     >
       {/* Decorative top-right maehwa branch — scaled down with the section.
           Original was h-64 w-96 / 40% opacity; the timeline layout has

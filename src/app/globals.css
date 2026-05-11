@@ -41,10 +41,15 @@
     overflow-x: clip;
   }
 
-  /* Display type defaults — Fraunces with optical weight */
+  /* Display type defaults — Fraunces with optical weight.
+   * Luxury polish #01: explicit tighter letter-spacing so any heading
+   * that doesn't use a `display-*` font-size token still gets the same
+   * editorial tracking. tnum disables proportional figure spacing in
+   * mixed-numeric headlines ("4 steps", "01"). */
   h1, h2, h3 {
     @apply font-display;
-    font-feature-settings: "ss01", "ss02";
+    font-feature-settings: "ss01", "ss02", "tnum";
+    letter-spacing: -0.018em;
   }
 
   /* Korean text uses Noto Serif KR — opt-in via .font-kr */
@@ -73,9 +78,45 @@
 
 /* ─── Components: reusable atoms ──────────────────────────────────────── */
 @layer components {
-  /* Eyebrow — tiny uppercase label used above section titles */
+  /* Eyebrow — tiny uppercase label used above section titles.
+   * Luxury polish #01: ever-so-slight weight bump (font-medium) +
+   * tracking-eyebrow (0.24em). The 500-weight reads as "considered"
+   * versus the 400-weight default — the kind of micro-adjustment
+   * fashion houses make on category labels. */
   .eyebrow {
-    @apply text-[11px] uppercase tracking-eyebrow text-ink-mid;
+    @apply text-[11px] font-medium uppercase tracking-eyebrow text-ink-mid;
+  }
+
+  /* Vermilion-tinted eyebrow — for "headline" eyebrow moments where
+   * we want the accent colour to do the work (e.g. "In their words"
+   * above testimonials). Subtle, used sparingly — overuse defeats the
+   * "vermilion as punctuation" principle from luxury polish #06. */
+  .eyebrow-accent {
+    @apply text-[11px] font-medium uppercase tracking-eyebrow text-vermilion;
+  }
+
+  /* Vermilion accent dot — 4px circle for editorial "Bestseller" /
+   * "Editor's pick" punctuation marks (luxury polish #06). Use inline
+   * before an eyebrow label as a quiet accent without colouring the
+   * whole label vermilion. */
+  .accent-dot {
+    @apply inline-block h-1 w-1 rounded-full bg-vermilion align-middle;
+    margin-right: 0.5rem;
+    transform: translateY(-1px);
+  }
+
+  /* Luxury restraint card hover — slow, restrained, warm shadow.
+   * Used by product cards (luxury polish #05). The previous default
+   * was a 500ms scale(1.05); this is 700ms scale(1.03) with a 2px
+   * lift and a brass-tinted shadow that reads as "considered"
+   * rather than "eager". */
+  .card-lift {
+    transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .card-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px -22px rgba(74, 46, 20, 0.28);
   }
 
   /* Rule — the single hairline we use as section separator */
