@@ -25,6 +25,10 @@ import { useState, useTransition } from "react";
 import { AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cancelOrderAction, type ActionState } from "@/app/admin/orders/actions";
 
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 const COMMON_REASONS = [
   "Customer requested cancellation",
   "Item out of stock",
@@ -38,21 +42,44 @@ type Props = {
   orderId: string;
   /** Grand total in EUR — shown next to the refund checkbox. */
   grandTotal: number;
+  /** Shipping portion of grandTotal in EUR (VAT-inclusive). */
+  shippingTotal: number;
   /** True when paymentStatus === PAID. Drives whether the refund
    *  toggle is shown + pre-checked. */
   isPaid: boolean;
+  /** True when the parcel is already with the carrier OR a Sendcloud
+   *  parcel was created (we'll be on the hook for shipping either way).
+   *  When true, the "Refund shipping" sub-toggle defaults to OFF —
+   *  admin can still override. */
+  shippingAtRisk: boolean;
 };
 
-export function CancelOrderForm({ orderId, grandTotal, isPaid }: Props) {
+export function CancelOrderForm({
+  orderId,
+  grandTotal,
+  shippingTotal,
+  isPaid,
+  shippingAtRisk,
+}: Props) {
   const [reason, setReason] = useState<string>(COMMON_REASONS[0]);
   const [customReason, setCustomReason] = useState("");
   const [issueRefund, setIssueRefund] = useState(isPaid);
+  // Default for the shipping sub-toggle: refund shipping only when the
+  // parcel isn't already on its way. Matches the policy "we refund what
+  // we haven't already spent on the carrier".
+  const [refundShipping, setRefundShipping] = useState(!shippingAtRisk);
   const [confirming, setConfirming] = useState(false);
   const [state, setState] = useState<ActionState>({ ok: false });
   const [isPending, startTransition] = useTransition();
 
   const isCustom = reason === "__custom__";
   const finalReason = isCustom ? customReason.trim() : reason;
+
+  // Live refund amount the admin will charge to Mollie. When shipping
+  // is excluded, subtract the shipping portion from the grand total.
+  const effectiveRefund = round2(
+    grandTotal - (refundShipping ? 0 : shippingTotal),
+  );
 
   function handleSubmit(formData: FormData) {
     setState({ ok: false });
@@ -124,25 +151,58 @@ export function CancelOrderForm({ orderId, grandTotal, isPaid }: Props) {
         <input type="hidden" name="reason" value={finalReason} />
 
         {isPaid && (
-          <label className="flex items-start gap-2 text-[12px] text-ink">
-            <input
-              type="checkbox"
-              name="issueRefund"
-              value="yes"
-              checked={issueRefund}
-              onChange={(e) => setIssueRefund(e.target.checked)}
-              disabled={isPending}
-              className="mt-0.5 h-4 w-4 border-ink/30 text-vermilion focus:ring-vermilion disabled:cursor-not-allowed disabled:opacity-60"
-            />
-            <span>
-              Issue full refund —{" "}
-              <strong className="font-medium">
-                €{grandTotal.toFixed(2)}
-              </strong>{" "}
-              incl. shipping. Generates a credit note and emails the
-              customer.
-            </span>
-          </label>
+          <div className="space-y-2">
+            <label className="flex items-start gap-2 text-[12px] text-ink">
+              <input
+                type="checkbox"
+                name="issueRefund"
+                value="yes"
+                checked={issueRefund}
+                onChange={(e) => setIssueRefund(e.target.checked)}
+                disabled={isPending}
+                className="mt-0.5 h-4 w-4 border-ink/30 text-vermilion focus:ring-vermilion disabled:cursor-not-allowed disabled:opacity-60"
+              />
+              <span>
+                Issue refund —{" "}
+                <strong className="font-medium">
+                  €{effectiveRefund.toFixed(2)}
+                </strong>
+                . Generates a credit note and emails the customer.
+              </span>
+            </label>
+
+            {/* Shipping sub-toggle. Only relevant when:
+             *   - admin is actually issuing a refund
+             *   - there's a non-zero shipping cost on the order
+             * Default state mirrors the policy: refund shipping unless
+             * the parcel is already with the carrier (we'd be paying
+             * for it either way). */}
+            {issueRefund && shippingTotal > 0 && (
+              <label className="ml-6 flex items-start gap-2 text-[11px] text-ink-mid">
+                <input
+                  type="checkbox"
+                  name="refundShipping"
+                  value="yes"
+                  checked={refundShipping}
+                  onChange={(e) => setRefundShipping(e.target.checked)}
+                  disabled={isPending}
+                  className="mt-0.5 h-3.5 w-3.5 border-ink/30 text-vermilion focus:ring-vermilion disabled:cursor-not-allowed disabled:opacity-60"
+                />
+                <span>
+                  Include shipping (€{shippingTotal.toFixed(2)}) in the
+                  refund.{" "}
+                  {shippingAtRisk ? (
+                    <span className="text-vermilion">
+                      Parcel already with carrier — usually leave
+                      unchecked.
+                    </span>
+                  ) : (
+                    <span>Parcel not shipped yet — safe to refund.</span>
+                  )}
+                </span>
+              </label>
+            )}
+          </div>
         )}
 
         {!confirming ? (

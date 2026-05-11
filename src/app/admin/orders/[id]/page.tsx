@@ -436,7 +436,11 @@ export default async function AdminOrderDetailPage({
                 <CancelOrderForm
                   orderId={order.id}
                   grandTotal={Number(order.grandTotal)}
+                  shippingTotal={Number(order.shippingTotal)}
                   isPaid={order.paymentStatus === PaymentStatus.PAID}
+                  shippingAtRisk={
+                    order.shippedAt !== null || order.sendcloudParcelId !== null
+                  }
                 />
               </div>
             )}

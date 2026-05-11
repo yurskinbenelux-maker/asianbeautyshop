@@ -564,6 +564,19 @@ export type IssueCancellationRefundInput = {
   /** Admin's typed reason — surfaces on the CN's reasonNote field and
    *  in the customer cancellation email. Free text, customer-facing. */
   reasonNote?: string | null;
+  /** Whether the €X.XX shipping portion of the order is refunded.
+   *  Policy: shipping is refundable ONLY when the parcel has not been
+   *  handed to the carrier. Cancellations happen pre-ship by the
+   *  status-transition rules (PAID/FULFILLING → CANCELLED), so this
+   *  defaults to true. The caller can pass false if a Sendcloud parcel
+   *  was already created — even if not yet scanned, we'd be on the hook
+   *  for the shipping cost if it gets picked up after cancel.
+   *
+   *  When false:
+   *    - Mollie refunds (grandTotal − shippingTotal) instead of grandTotal
+   *    - CN has no Shipping line and grandTotal excludes shipping
+   *    - Customer email shows the reduced amount */
+  refundShipping?: boolean;
   actorId?: string | null;
   actorEmail?: string | null;
 };
@@ -572,8 +585,14 @@ export type IssueCancellationRefundResult = {
   mollieRefundId: string;
   creditNoteNumber: string;
   creditNoteId: string;
-  /** Full grandTotal amount that was refunded, in EUR. */
+  /** Total amount refunded to the customer in EUR. Equals
+   *  (grandTotal − withheld shipping) — withheld shipping is zero on
+   *  the happy path and equals the shipping cost when the parcel was
+   *  already on its way. */
   amount: number;
+  /** Whether the shipping portion was refunded. False when the parcel
+   *  was already with the carrier. */
+  refundedShipping: boolean;
   alreadyIssued: boolean;
 };
 
@@ -588,6 +607,9 @@ export async function issueCancellationRefundAndCreditNote(
       publicNumber: true,
       mollieId: true,
       grandTotal: true,
+      shippingTotal: true,
+      shippedAt: true,
+      sendcloudParcelId: true,
       paymentStatus: true,
       invoice: {
         select: {
@@ -632,6 +654,7 @@ export async function issueCancellationRefundAndCreditNote(
       creditNoteNumber: existing.number,
       creditNoteId: existing.id,
       amount: Number(order.grandTotal),
+      refundedShipping: false,
       alreadyIssued: true,
     };
   }
@@ -649,11 +672,26 @@ export async function issueCancellationRefundAndCreditNote(
     );
   }
 
-  const amount = round2(Number(order.grandTotal));
+  // Shipping refund policy (2026-05): refund shipping unless the
+  // parcel is already in the carrier's hands. Caller's refundShipping
+  // flag wins, but we default to true only when neither shippedAt nor
+  // a Sendcloud parcel exists. If the parcel was already created (even
+  // not yet scanned) we'd be paying for it once the carrier picks up.
+  const shippingTotal = round2(Number(order.shippingTotal));
+  const shippingAtRisk =
+    order.shippedAt !== null || order.sendcloudParcelId !== null;
+  const refundShipping =
+    typeof input.refundShipping === "boolean"
+      ? input.refundShipping
+      : !shippingAtRisk;
+  const shippingRefund = refundShipping ? shippingTotal : 0;
+
+  const grandTotal = round2(Number(order.grandTotal));
+  const amount = round2(grandTotal - (shippingTotal - shippingRefund));
   if (amount <= 0) {
     throw new IssueRefundError(
       "amount-invalid",
-      `Order ${order.publicNumber} has zero grand total — nothing to refund.`,
+      `Order ${order.publicNumber} computed refund is €${amount.toFixed(2)} — nothing to refund.`,
     );
   }
 
@@ -664,11 +702,14 @@ export async function issueCancellationRefundAndCreditNote(
     mollieRefund = await mollie.paymentRefunds.create({
       paymentId: order.mollieId,
       amount: { currency: "EUR", value: amount.toFixed(2) },
-      description: `Cancellation refund for order ${order.publicNumber}`,
+      description: `Cancellation refund for order ${order.publicNumber}${
+        !refundShipping && shippingTotal > 0 ? " (excl. shipping)" : ""
+      }`,
       metadata: {
         orderId: order.id,
         orderPublicNumber: order.publicNumber,
         reason: "CANCELLATION",
+        refundShipping: String(refundShipping),
       },
     });
   } catch (err) {
@@ -719,24 +760,33 @@ export async function issueCancellationRefundAndCreditNote(
         })
       : [];
 
-  // Last-line delta absorbs sub-cent rounding so the per-line sum
-  // matches the Mollie refund amount exactly.
-  if (cnLines.length > 0) {
-    const linesSum = cnLines.reduce((s, l) => s + l.lineTotalInclVat, 0);
-    const delta = round2(amount - linesSum);
-    if (delta !== 0) {
-      const last = cnLines[cnLines.length - 1];
-      const fixedTotal = round2(last.lineTotalInclVat + delta);
-      const fixedExcl = fixedTotal / (1 + vatRate);
-      cnLines[cnLines.length - 1] = {
-        ...last,
-        lineTotalInclVat: fixedTotal,
-        unitPriceExclVat: round2(
-          last.quantity > 0 ? fixedExcl / last.quantity : fixedExcl,
-        ),
-      };
-    }
-  } else {
+  // When shipping is being refunded, append a dedicated "Shipping" line
+  // so the CN PDF reads cleanly:
+  //
+  //   Moist layer cushion       1×   €44.99
+  //   Perfect moisture cleanser 1×   €22.99
+  //   Shipping                  1×    €9.99
+  //                            ─────────────
+  //                              Total €77.97
+  //
+  // Previously the shipping amount was absorbed into the last product
+  // line via a rounding-delta fix-up — making it look like the second
+  // product cost €32.98 instead of €22.99. That was wrong on a legal
+  // record. With an explicit shipping line the line breakdown matches
+  // the original invoice's structure.
+  if (shippingRefund > 0) {
+    const lineExclVat = shippingRefund / (1 + vatRate);
+    cnLines.push({
+      nameSnapshot: "Shipping",
+      skuSnapshot: `SHIP-${order.publicNumber}`,
+      quantity: 1,
+      unitPriceExclVat: round2(lineExclVat),
+      vatRate,
+      lineTotalInclVat: round2(shippingRefund),
+    });
+  }
+
+  if (cnLines.length === 0) {
     // Edge case: order was 100% gift cards (shouldn't reach here — gift
     // card-only orders aren't paid via Mollie the same way) but guard
     // with a synthetic line so the CN row still satisfies the schema.
@@ -750,6 +800,32 @@ export async function issueCancellationRefundAndCreditNote(
         lineTotalInclVat: round2(amount),
       },
     ];
+  } else {
+    // Absorb any sub-cent rounding remainder onto the LAST PRODUCT line
+    // (never the shipping line — that one stays clean and matches what
+    // the customer paid for shipping exactly).
+    const linesSum = cnLines.reduce((s, l) => s + l.lineTotalInclVat, 0);
+    const delta = round2(amount - linesSum);
+    if (delta !== 0) {
+      // Find the index of the last non-shipping line; if there are
+      // only shipping/synthetic lines, fall back to the last entry.
+      const productIdx = (() => {
+        for (let i = cnLines.length - 1; i >= 0; i -= 1) {
+          if (!cnLines[i].skuSnapshot.startsWith("SHIP-")) return i;
+        }
+        return cnLines.length - 1;
+      })();
+      const last = cnLines[productIdx];
+      const fixedTotal = round2(last.lineTotalInclVat + delta);
+      const fixedExcl = fixedTotal / (1 + vatRate);
+      cnLines[productIdx] = {
+        ...last,
+        lineTotalInclVat: fixedTotal,
+        unitPriceExclVat: round2(
+          last.quantity > 0 ? fixedExcl / last.quantity : fixedExcl,
+        ),
+      };
+    }
   }
 
   const cnGrandTotal = round2(
@@ -885,6 +961,7 @@ export async function issueCancellationRefundAndCreditNote(
     creditNoteNumber: reserved.number,
     creditNoteId,
     amount,
+    refundedShipping: refundShipping && shippingTotal > 0,
     alreadyIssued: false,
   };
 }

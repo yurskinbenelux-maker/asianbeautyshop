@@ -510,6 +510,16 @@ const CancelSchema = z.object({
     .union([z.literal("yes"), z.literal("on"), z.literal("true"), z.literal("")])
     .optional()
     .transform((v) => v === "yes" || v === "on" || v === "true"),
+  /** Sub-toggle in the admin form. When false, Mollie refund excludes
+   *  the shipping portion and the CN has no Shipping line. Sent as
+   *  "yes" when checked, absent when unchecked — the typical HTML
+   *  checkbox semantics. Default (when absent) is true to preserve
+   *  the "refund everything" expectation; the form decides the right
+   *  default based on whether the parcel is at risk. */
+  refundShipping: z
+    .union([z.literal("yes"), z.literal("on"), z.literal("true"), z.literal("")])
+    .optional()
+    .transform((v) => v === "yes" || v === "on" || v === "true"),
 });
 
 export async function cancelOrderAction(
@@ -521,6 +531,7 @@ export async function cancelOrderAction(
     orderId: formData.get("orderId"),
     reason: formData.get("reason") ?? undefined,
     issueRefund: formData.get("issueRefund") ?? undefined,
+    refundShipping: formData.get("refundShipping") ?? undefined,
   });
   if (!parsed.success) return { ok: false, message: "Invalid order." };
 
@@ -604,6 +615,7 @@ export async function cancelOrderAction(
       const result = await issueCancellationRefundAndCreditNote({
         orderId: order.id,
         reasonNote: parsed.data.reason ?? null,
+        refundShipping: parsed.data.refundShipping,
         actorId: actor.id,
         actorEmail: actor.email ?? null,
       });
