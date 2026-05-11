@@ -27,6 +27,7 @@ import {
   getAllActiveBrandSlugs,
 } from "@/lib/queries/products";
 import { getAllPublishedJournalSlugs } from "@/lib/queries/journal";
+import { getAllSitemapIngredientSlugs } from "@/lib/queries/ingredients";
 import { LEGAL_PAGE_KEYS } from "@/lib/queries/pages";
 
 // Revalidate hourly — long enough to stay cheap, short enough that new
@@ -86,7 +87,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }> = [
     { tail: "", priority: 1.0, changeFrequency: "daily" },
     { tail: "/shop", priority: 0.9, changeFrequency: "daily" },
+    { tail: "/sale", priority: 0.7, changeFrequency: "daily" },
+    { tail: "/new", priority: 0.7, changeFrequency: "daily" },
+    { tail: "/brands", priority: 0.6, changeFrequency: "weekly" },
+    { tail: "/ingredients", priority: 0.6, changeFrequency: "weekly" },
     { tail: "/journal", priority: 0.6, changeFrequency: "weekly" },
+    { tail: "/quiz", priority: 0.6, changeFrequency: "monthly" },
+    { tail: "/rituals", priority: 0.5, changeFrequency: "monthly" },
+    { tail: "/faq", priority: 0.4, changeFrequency: "monthly" },
+    { tail: "/shipping", priority: 0.4, changeFrequency: "monthly" },
+    { tail: "/contact", priority: 0.4, changeFrequency: "yearly" },
     { tail: "/sign-in", priority: 0.2, changeFrequency: "yearly" },
     { tail: "/sign-up", priority: 0.3, changeFrequency: "yearly" },
   ];
@@ -220,6 +230,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       entries.push({
         url: `${origin}/${locale}/journal/${slugFor[locale]}`,
         lastModified: p.updatedAt,
+        changeFrequency: "monthly",
+        priority: 0.5,
+        alternates: { languages: alternates },
+      });
+    }
+  }
+
+  // ── Ingredient detail pages ───────────────────────────────────────
+  // Slug lives on Ingredient (shared across locales), so one row fans
+  // out to 4 entries — same /ingredients/<slug> tail per locale. These
+  // are content pages indexable for long-tail INCI / asset queries
+  // ("hyaluronic acid serum benefits"), so priority sits at 0.5.
+  //
+  // Without this loop, ingredient pages were only reachable via
+  // internal links — Google would crawl them but treat them as low
+  // priority and (per the May 2026 GSC report) keep them in the
+  // "crawled, not indexed" bucket. Explicit sitemap entries upgrade
+  // that signal.
+  const ingredients = await getAllSitemapIngredientSlugs();
+  for (const ing of ingredients) {
+    const tail = `/ingredients/${ing.slug}`;
+    const alternates = sameTailAlternates(origin, tail);
+    for (const locale of LOCALES) {
+      entries.push({
+        url: `${origin}/${locale}${tail}`,
+        lastModified: ing.updatedAt,
         changeFrequency: "monthly",
         priority: 0.5,
         alternates: { languages: alternates },

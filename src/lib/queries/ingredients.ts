@@ -31,6 +31,38 @@ function toPrismaLocale(urlLocale: string): Locale {
   }
 }
 
+// ─── sitemap helper ─────────────────────────────────────────────────────
+//
+// Returns slug + updatedAt for every ingredient that has at least one
+// published, non-deleted product using it. Sitemap entries use the
+// per-row updatedAt so admin edits propagate at the next crawl.
+//
+// We don't filter on translations here — if the row exists, it has at
+// minimum the EN translation (admin enforces it). Locale variants are
+// rendered with the EN fallback when missing, mirroring the PDP pattern.
+
+export type IngredientSlugRow = { slug: string; updatedAt: Date };
+
+export async function getAllSitemapIngredientSlugs(): Promise<
+  IngredientSlugRow[]
+> {
+  // Only surface ingredients that actually have published products
+  // attached — listing orphan ingredients in the sitemap would only
+  // dilute Google's crawl budget on a small site.
+  const rows = await prisma.ingredient.findMany({
+    where: {
+      productLinks: {
+        some: {
+          product: { status: ProductStatus.PUBLISHED, deletedAt: null },
+        },
+      },
+    },
+    select: { slug: true, updatedAt: true },
+    orderBy: { inciName: "asc" },
+  });
+  return rows;
+}
+
 // ─── list ───────────────────────────────────────────────────────────────
 
 export type IngredientListRow = {
