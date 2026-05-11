@@ -143,17 +143,37 @@ export async function issueInvoiceForOrder(
   const shippingRate = 0.21;
   const shippingExclVat = shippingInclVat / (1 + shippingRate);
 
-  // Totals — recompute from the line snapshots so the PDF and the
-  // database stay in lockstep down to the cent. The numbers are the
-  // same as Order.subtotal / Order.taxTotal / Order.grandTotal, but
-  // we deliberately re-derive so a future Order schema change doesn't
-  // silently break the invoice.
-  const subtotalExclVat = items.reduce(
+  // Totals — products + shipping ex-VAT for the displayed subtotal,
+  // discount + tax + grand pulled straight from Order so the invoice
+  // can NEVER drift from what hit the books at order placement.
+  //
+  // Why we don't re-derive vatTotal from grandTotal − subtotalExclVat
+  // anymore: with a coupon discount in the picture, the old formula
+  // computed vatTotal against an un-discounted base, leaving the math
+  // visibly wrong on every discounted invoice. Trusting Order.taxTotal
+  // (computed by pricing.ts at place-order time, the same code path
+  // Mollie was charged from) keeps the invoice arithmetically
+  // consistent with the actual payment.
+  const productsExclVat = items.reduce(
     (sum, it) => sum + it.unitPriceExclVat * it.quantity,
-    shippingExclVat,
+    0,
   );
+  const subtotalExclVat = productsExclVat + shippingExclVat;
   const grandTotal = Number(order.grandTotal);
-  const vatTotal = grandTotal - subtotalExclVat;
+  const vatTotal = Number(order.taxTotal);
+  // Coupon discount line. discountTotal is stored VAT-INCLUSIVE (the
+  // amount the customer saw subtracted in the checkout preview).
+  // Renders as a separate line on the invoice per Belgian Royal Decree
+  // no. 1 art. 5 — keeps the line-item table at retail prices and
+  // shows the deduction explicitly in the totals box.
+  const discountInclVat = Number(order.discountTotal ?? 0);
+  const discountForInvoice =
+    discountInclVat > 0
+      ? {
+          label: order.couponCode ?? "Discount",
+          amount: round2(discountInclVat),
+        }
+      : undefined;
 
   // Phase 1: single-rate BE 21% so destinationCountry on the row is
   // recorded purely for the OSS €10k tracking widget — it doesn't change
@@ -188,6 +208,7 @@ export async function issueInvoiceForOrder(
       subtotalExclVat: round2(subtotalExclVat),
       vatTotal: round2(vatTotal),
       grandTotal,
+      discount: discountForInvoice,
     },
     paymentMethod,
     molliePaymentReference: order.mollieId ?? null,

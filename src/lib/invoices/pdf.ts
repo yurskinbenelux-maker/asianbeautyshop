@@ -105,6 +105,16 @@ export type InvoicePdfInput = {
     subtotalExclVat: number;
     vatTotal: number;
     grandTotal: number;
+    /** When set, renders a vermilion "Discount" line between the
+     *  subtotal and shipping rows. The amount is the discount value
+     *  including VAT (the same number that's stored on
+     *  Order.discountTotal and what the customer saw in checkout's
+     *  preview). Omitted / 0 → no discount line rendered. The label
+     *  is typically the coupon code, e.g. "ABS-WELCOME-XXXX". */
+    discount?: {
+      label: string;
+      amount: number;
+    };
   };
   paymentMethod: string | null;       // "Bancontact" / "iDEAL" / etc.
   molliePaymentReference: string | null;
@@ -435,6 +445,23 @@ function drawTotals(
   }
 
   row("Subtotal excl. VAT", formatEur(input.totals.subtotalExclVat));
+  // Coupon discount line (Option B per H-fix). Sits between subtotal
+  // and shipping so the eye reads "products − discount = what you
+  // paid for the products, then add shipping and tax." Belgian Royal
+  // Decree no. 1 art. 5 requires the discount to be visible on the
+  // invoice — either pro-rated across lines or shown as a separate
+  // line; we chose the line approach so line items keep retail prices
+  // (useful for warranty + return value disputes).
+  if (input.totals.discount && input.totals.discount.amount > 0) {
+    const d = input.totals.discount;
+    doc.fillColor(COLORS.vermilion).font(FONTS.sans);
+    doc.text(`Discount · ${d.label}`, labelX, y, { width: 200 });
+    doc.text(`− ${formatEur(d.amount)}`, valueRight - valueWidth, y, {
+      width: valueWidth,
+      align: "right",
+    });
+    y += 16;
+  }
   row("VAT (21%)", formatEur(input.totals.vatTotal));
   row("Shipping", formatEur(input.shipping.inclVat));
 
