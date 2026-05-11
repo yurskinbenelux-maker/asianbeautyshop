@@ -961,6 +961,7 @@
     "form_eyebrow": "Return request",
     "form_title": "Let's make this right.",
     "form_lede": "Tell us which items you'd like to return and why. We read every request by hand and reply within one business day.",
+    "form_only_gift_cards": "This order only contains gift cards. Gift cards are non-refundable — please contact us at info@kelmusgroup.eu if you need help.",
     "form_items_heading": "Items to return",
     "form_sku_price": "{sku} · {price}",
     "form_ordered_qty": "Ordered: {qty}",

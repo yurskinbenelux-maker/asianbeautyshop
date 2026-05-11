@@ -53,6 +53,11 @@ export type MyOrderDetail = {
     lineTotal: number;
     thumbnailUrl: string | null;
     slug: string | null;
+    /** Product kind — used by the return form to filter out gift
+     *  cards (non-refundable per EU Dir 2016/1065 MPV rules + our
+     *  own gift-card PDP policy). "STANDARD" for physical products,
+     *  "GIFT_CARD" for digital vouchers. */
+    productKind: "STANDARD" | "GIFT_CARD";
   }>;
 };
 
@@ -235,6 +240,10 @@ export async function getMyOrderByNumber(
         lineTotal: Number(item.lineTotal),
         thumbnailUrl: item.product.media[0]?.url ?? null,
         slug: localised?.slug ?? null,
+        // Used by the return-creation form to filter gift cards out
+        // of the selectable line items — they're non-refundable per
+        // EU Dir 2016/1065 MPV rules + our own gift card PDP policy.
+        productKind: item.product.kind,
       };
     }),
   };

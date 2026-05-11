@@ -961,6 +961,7 @@
     "form_eyebrow": "Retourverzoek",
     "form_title": "Laten we dit rechtzetten.",
     "form_lede": "Vertel ons welke producten je wilt retourneren en waarom. We lezen elk verzoek persoonlijk en antwoorden binnen één werkdag.",
+    "form_only_gift_cards": "Deze bestelling bevat alleen cadeaubonnen. Cadeaubonnen kunnen niet worden teruggegeven — neem contact op via info@kelmusgroup.eu als je hulp nodig hebt.",
     "form_items_heading": "Producten om te retourneren",
     "form_sku_price": "{sku} · {price}",
     "form_ordered_qty": "Besteld: {qty}",

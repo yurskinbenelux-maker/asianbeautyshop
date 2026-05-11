@@ -76,18 +76,42 @@ export default async function ReturnRequestPage({ params }: Props) {
 
       <div className="rule my-10" />
 
-      <ReturnForm
-        locale={locale}
-        orderNumber={order.publicNumber}
-        items={order.items.map((it) => ({
-          id: it.id,
-          name: it.nameSnapshot,
-          sku: it.skuSnapshot,
-          quantity: it.quantity,
-          unitPrice: it.unitPrice,
-          thumbnailUrl: it.thumbnailUrl,
-        }))}
-      />
+      {/* Filter gift card lines out of the return-form selection.
+       *  Multi-Purpose Vouchers (EU Dir 2016/1065) cannot be VAT-refunded
+       *  at the cardholder's request, our own gift-card PDP states they
+       *  are non-refundable, and from a UX standpoint there's no parcel
+       *  to send back. Belt + braces: the customer never sees them as
+       *  return options, and the admin action layer will also reject
+       *  gift-card refunds if anything ever slips through (step 4). */}
+      {(() => {
+        const refundableItems = order.items.filter(
+          (it) => it.productKind !== "GIFT_CARD",
+        );
+        if (refundableItems.length === 0) {
+          // Edge case: order contained ONLY gift cards. There's
+          // nothing to return — render a friendly explanation instead
+          // of an empty form.
+          return (
+            <p className="text-[14px] leading-relaxed text-ink-mid">
+              {t("form_only_gift_cards")}
+            </p>
+          );
+        }
+        return (
+          <ReturnForm
+            locale={locale}
+            orderNumber={order.publicNumber}
+            items={refundableItems.map((it) => ({
+              id: it.id,
+              name: it.nameSnapshot,
+              sku: it.skuSnapshot,
+              quantity: it.quantity,
+              unitPrice: it.unitPrice,
+              thumbnailUrl: it.thumbnailUrl,
+            }))}
+          />
+        );
+      })()}
     </section>
   );
 }

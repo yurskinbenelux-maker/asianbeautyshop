@@ -961,6 +961,7 @@
     "form_eyebrow": "Demande de retour",
     "form_title": "Réparons cela ensemble.",
     "form_lede": "Dites-nous quels articles vous souhaitez retourner et pourquoi. Nous lisons chaque demande à la main et répondons sous un jour ouvré.",
+    "form_only_gift_cards": "Cette commande ne contient que des cartes cadeau. Les cartes cadeau ne sont pas remboursables — contactez-nous à info@kelmusgroup.eu si vous avez besoin d'aide.",
     "form_items_heading": "Articles à retourner",
     "form_sku_price": "{sku} · {price}",
     "form_ordered_qty": "Commandés : {qty}",
