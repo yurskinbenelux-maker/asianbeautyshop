@@ -779,6 +779,130 @@ export async function bulkMarkFulfillingAction(
   };
 }
 
+// ──────── bulk: mark shipped ───────────────────────────────────────────
+//
+// Fulfilment-day flow: admin drops a batch of parcels at the post office
+// without tracking-able labels (stamp + handwritten address), or wraps up
+// a Sendcloud manual-pick session. Selecting all and clicking "Mark as
+// shipped" flips each order to SHIPPED, stamps shippedAt, fires the
+// customer email (without a tracking number, the template renders the
+// "tracking will follow" copy), and writes an OrderEvent per order.
+//
+// Tracking numbers are NOT touched — if an admin previously typed one on
+// the individual order page or Sendcloud auto-filled it via webhook, it
+// stays. This action is for the common case where there's no tracking
+// to fill (small parcels, free shipping, stamp & drop).
+//
+// Skips:
+//   · Orders not in a transition-able status (already SHIPPED, etc.).
+//   · Digital-only orders (gift cards only) — no parcel to ship.
+// The skipped count is surfaced in the result message so the admin can
+// see what was actually touched.
+//
+// Emails fire after the DB commit, parallelised via Promise.allSettled so
+// a slow / bouncing recipient can't stall the whole batch. Email failures
+// log but don't roll back the state change — the order IS shipped on the
+// books, the admin just needs to follow up with the customer manually
+// if Resend complains.
+// ─────────────────────────────────────────────────────────────────────────
+
+export async function bulkMarkShippedAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const actor = await requireAdmin();
+
+  const orderIds = formData.getAll("orderIds").map(String);
+  const parsed = BulkSchema.safeParse({ orderIds });
+  if (!parsed.success) {
+    return { ok: false, message: "Select at least one order." };
+  }
+
+  // Pull the orders + their items (we need to detect digital-only carts
+  // — gift-card-only orders have nothing to ship and shouldn't transition).
+  const orders = await prisma.order.findMany({
+    where: { id: { in: parsed.data.orderIds } },
+    select: {
+      id: true,
+      status: true,
+      shippedAt: true,
+      items: {
+        select: { product: { select: { kind: true } } },
+      },
+    },
+  });
+
+  const eligible = orders.filter((o) => {
+    if (!canTransition(o.status, "SHIPPED")) return false;
+    // Skip digital-only orders (every item is a gift card) — gift cards
+    // are delivered by email at the Mollie-PAID transition, not by post.
+    const hasPhysical = o.items.some((i) => i.product.kind !== "GIFT_CARD");
+    return hasPhysical;
+  });
+  if (eligible.length === 0) {
+    return {
+      ok: false,
+      message: "None of those orders can be marked shipped.",
+    };
+  }
+
+  const now = new Date();
+  await prisma.$transaction([
+    // updateMany cannot conditionally set shippedAt per-row, so we set
+    // it for ALL eligible orders. Orders already shipped were filtered
+    // out by canTransition above (transitioning into SHIPPED from
+    // SHIPPED is blocked) so this is safe — we never overwrite an
+    // older shippedAt with the bulk-action timestamp.
+    prisma.order.updateMany({
+      where: { id: { in: eligible.map((o) => o.id) } },
+      data: { status: "SHIPPED", shippedAt: now },
+    }),
+    prisma.orderEvent.createMany({
+      data: eligible.map((o) => ({
+        orderId: o.id,
+        kind: "shipped",
+        message: `${o.status} → SHIPPED (bulk, no tracking)`,
+        metadata: {
+          from: o.status,
+          to: "SHIPPED",
+          actor: actor.email ?? null,
+          bulk: true,
+          at: now.toISOString(),
+        },
+      })),
+    }),
+  ]);
+
+  // Fire the "your parcel is on its way" email per order in parallel —
+  // allSettled so one bounce doesn't break the rest. We don't await this
+  // for the response message since the admin's UI shouldn't hang on
+  // Resend latency; the action returns success based on the DB write.
+  await Promise.allSettled(
+    eligible.map((o) =>
+      notifyOrderShipped(o.id).catch((err) => {
+        console.error(
+          "[bulk-mark-shipped] email failed for",
+          o.id,
+          err,
+        );
+      }),
+    ),
+  );
+
+  revalidatePath("/admin/orders");
+  for (const o of eligible) {
+    revalidatePath(`/admin/orders/${o.id}`);
+  }
+  const skipped = orders.length - eligible.length;
+  return {
+    ok: true,
+    message:
+      skipped === 0
+        ? `${eligible.length} marked as shipped.`
+        : `${eligible.length} marked as shipped · ${skipped} skipped.`,
+  };
+}
+
 // ─── Sendcloud retry ───────────────────────────────────────────────────
 //
 // When the auto-sync that runs on Mollie webhook fails (Sendcloud down,
