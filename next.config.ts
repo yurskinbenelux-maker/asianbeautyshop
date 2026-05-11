@@ -89,6 +89,30 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["pdfkit", "fontkit"],
   // Hostinger's Node runtime sits behind a proxy — trust it for correct IPs in GDPR logs
   async headers() {
+    // D4: long-cache static assets. The rule of thumb: if the file
+    // path itself encodes a version (Next's hashed chunks like
+    // /_next/static/css/abc123.css), it's safe to cache for a year +
+    // mark immutable — a content change yields a new path, so stale
+    // cache is impossible by construction.
+    //
+    // Non-hashed assets in /public (fonts, brand icons, OG image) are
+    // also given a year but WITHOUT immutable — if we replace a logo
+    // file we want returning visitors to pick it up on the NEXT
+    // deploy's HTML revalidation. immutable would tell the browser to
+    // skip even the revalidation check.
+    //
+    // sw.js is special — the service worker MUST revalidate on every
+    // page load, otherwise customers get stuck on an old PWA shell
+    // until they manually clear cache. no-cache there is correct.
+    //
+    // Customer-facing content (product pages, prices, etc.) is NOT
+    // affected by any of this — those are HTML pages rendered by
+    // Server Components and have their own per-route cache strategy
+    // managed by Next.js + revalidatePath() on admin edits.
+    const ONE_YEAR_IMMUTABLE = "public, max-age=31536000, immutable";
+    const ONE_YEAR = "public, max-age=31536000";
+    const NO_CACHE = "no-cache, no-store, must-revalidate";
+
     return [
       {
         source: "/:path*",
@@ -98,6 +122,35 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=()" },
         ],
+      },
+      // Hashed JS / CSS / Next chunks. Safe to cache forever — webpack
+      // emits a new hash whenever the source changes, so a content
+      // edit yields a brand-new URL.
+      {
+        source: "/_next/static/:path*",
+        headers: [{ key: "Cache-Control", value: ONE_YEAR_IMMUTABLE }],
+      },
+      // Brand assets (icons, OG image, logo). Filenames are stable so
+      // we drop `immutable` — if we re-upload favicon.svg one day, the
+      // browser's normal revalidation cycle will catch the change.
+      {
+        source: "/brand/:path*",
+        headers: [{ key: "Cache-Control", value: ONE_YEAR }],
+      },
+      // Bundled fonts (Noto Sans TTFs used by PDF invoices + any
+      // future font-face declarations). Filenames are stable, files
+      // are ~150kb each — long cache pays back immediately on repeat
+      // visits.
+      {
+        source: "/fonts/:path*",
+        headers: [{ key: "Cache-Control", value: ONE_YEAR }],
+      },
+      // Service worker — must revalidate every load. Otherwise the
+      // browser keeps the old SW alive until the cache expires, and
+      // returning visitors get stuck on a pre-deploy shell.
+      {
+        source: "/sw.js",
+        headers: [{ key: "Cache-Control", value: NO_CACHE }],
       },
     ];
   },
