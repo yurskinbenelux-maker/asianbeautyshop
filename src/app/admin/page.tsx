@@ -159,7 +159,7 @@ export default async function AdminOverviewPage() {
         <article className="border border-ink/10 bg-white/60 p-8">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
-              <div className="eyebrow">Last 30 days</div>
+              <div className="eyebrow">Last 30 days · Order ledger</div>
               <div className="mt-2 font-display text-[40px] leading-none text-ink">
                 {EUR.format(analytics.revenueCents / 100)}
               </div>
@@ -168,6 +168,13 @@ export default async function AdminOverviewPage() {
                 {analytics.orderCount === 1 ? "" : "s"} · avg{" "}
                 {EUR_FINE.format(analytics.aovCents / 100)}
               </div>
+              {/* Disclose source so it doesn't get confused with the
+               *  cross-border VAT YTD tracker above (which reads net
+               *  invoices YTD). This is gross order revenue, rolling
+               *  30 days — operational glance, not legal. */}
+              <p className="mt-2 text-[11px] text-ink-mid">
+                Rolling 30 days · gross order revenue, pre-refund
+              </p>
             </div>
             <Link
               href="/admin/orders"

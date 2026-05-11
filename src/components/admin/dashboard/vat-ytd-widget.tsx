@@ -66,10 +66,18 @@ export function VatYtdWidget({ snapshot }: { snapshot: VatYtdSnapshot }) {
     <article className={`border ${cardTone} p-6 md:p-8 transition-colors`}>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="eyebrow">VAT — {year}</div>
+          <div className="eyebrow">VAT · Year to date</div>
           <h2 className="mt-2 font-display text-[24px] leading-tight text-ink">
             Cross-border revenue tracker
           </h2>
+          {/* Disclose the time window + ledger so it doesn't get
+           *  confused with the "Last 30 days" revenue strip below.
+           *  This widget reads from the Invoice ledger (net of credit
+           *  notes), Jan 1 → today, because that's what determines OSS
+           *  threshold compliance. The 30d strip reads from Order. */}
+          <p className="mt-1 text-[11px] text-ink-mid">
+            Net invoiced revenue · Jan 1 – {year} · drives OSS €10k threshold
+          </p>
         </div>
         {status === "exceeded" ? (
           <span className="inline-flex items-center gap-2 bg-vermilion px-3 py-1.5 text-[10px] uppercase tracking-label text-rice">
