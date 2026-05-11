@@ -1160,6 +1160,34 @@ model ReturnItem {
   unitPrice      Decimal        @db.Decimal(10, 2)
   lineTotal      Decimal        @db.Decimal(10, 2)
 
+  /// Per-item refund adjudication (added 2026-05 alongside the new
+  /// admin return workflow). NULL = not adjudicated yet (return is
+  /// still REQUESTED / APPROVED — admin hasn't decided per-line). A
+  /// number = the EUR amount the admin is approving as a refund for
+  /// THIS line. Zero = accepted into stock but with no refund
+  /// (e.g. a free gift card line that arrived in the return parcel).
+  ///
+  /// Default-on-receive flow: admin marking RECEIVED gets a per-line
+  /// form pre-filled with lineTotal for refundable items and 0 for
+  /// gift cards (which are non-refundable per EU Dir 2016/1065 MPV
+  /// rules + our own policy on the gift card PDP).
+  ///
+  /// Total refund actually sent to Mollie + credited via CN-NNNN =
+  /// SUM(acceptedRefundEur) across this return's items. Replaces the
+  /// previous "proportional split" behaviour that divided the
+  /// admin-typed refund amount across all lines regardless of which
+  /// ones the customer actually returned.
+  acceptedRefundEur Decimal?     @db.Decimal(10, 2)
+
+  /// Short reason when acceptedRefundEur is NULL or 0 — surfaces in
+  /// the customer "return received" email so they see why a line
+  /// didn't get refunded ("Item missing from parcel", "Opened and
+  /// used", "Non-refundable gift card"). Enum-like in spirit but
+  /// stored as plain text so an admin can add new reasons without a
+  /// migration. Limited to ~120 chars by Zod validation at the
+  /// action layer.
+  rejectionReason String?
+
   @@index([returnId])
   @@index([orderItemId])
 }
