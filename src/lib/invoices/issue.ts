@@ -154,12 +154,11 @@ export async function issueInvoiceForOrder(
     const unitExclVat = lineExclVat / Math.max(it.quantity, 1);
     // Prefer the English product name; fall back to whatever snapshot was
     // captured at place-order time (may be Russian/French/etc) so the
-    // invoice never shows blank product names. Gift cards: use a fixed
-    // English label since "Подарочная карта YU•R" snapshots wouldn't fit
-    // here either.
-    const nameEn = isVoucher
-      ? "Gift card · YU•R"
-      : (enNameByProductId.get(it.productId) ?? it.nameSnapshot);
+    // invoice never shows blank product names. Same treatment for gift
+    // cards as for physical products — if the admin renames the gift
+    // card (e.g. "YU•R Gift Card" → "Asian Beauty Club card"), the
+    // invoice picks up the new EN name on the next download.
+    const nameEn = enNameByProductId.get(it.productId) ?? it.nameSnapshot;
     return {
       name: nameEn,
       sku: it.skuSnapshot,
