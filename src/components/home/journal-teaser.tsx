@@ -1,9 +1,19 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Journal teaser — three most recent PUBLISHED posts, pulled from the DB.
 //
-// This is a server component so we can hit Prisma directly. When the DB
-// has no published posts yet (early days), we fall back to three editorial
-// "coming soon" placeholders so the homepage never has a blank strip.
+// This is a server component so we can hit Prisma directly. Filtering is
+// done at the query layer (getJournalTeasers): only posts where status =
+// PUBLISHED and publishedAt <= now() are returned — drafts and scheduled
+// posts never appear here.
+//
+// Zero-state behaviour: when the DB has no qualifying posts, the entire
+// section is hidden (component returns null). The homepage rhythm
+// collapses cleanly to the next section.
+//
+// Previously we rendered three "coming soon" placeholder tiles in that
+// case — but they linked to /journal which 404'd on click, and they kept
+// showing after admin deleted the last published post, looking like
+// stale ghost content. Hiding the section is the honest UX.
 //
 // The card itself is animated — that part is factored into the small
 // client child `JournalCard`, which also honours prefers-reduced-motion
@@ -15,28 +25,11 @@ import { getJournalTeasers } from "@/lib/queries/journal";
 import { priceLocale } from "@/lib/utils";
 import { JournalCard } from "./journal-card";
 
-// Fallback strip used only when the DB has zero published posts.
-const FALLBACK = [
-  {
-    eyebrow: "Ingredient",
-    title: "Ginseng, slowly",
-    gradient: "from-vermilion/20 via-rice to-ink/10",
-  },
-  {
-    eyebrow: "Heritage",
-    title: "The Joseon moon jar",
-    gradient: "from-ink/10 via-bone to-vermilion/10",
-  },
-  {
-    eyebrow: "Ritual",
-    title: "The first gesture of the morning",
-    gradient: "from-bone via-rice to-vermilion/20",
-  },
-];
-
-// `coming_soon` is the subline under each fallback card — only visible when
-// the DB has no published posts. It isn't worth an admin surface of its own
-// yet, so it rides along with the journal-teaser copy block.
+// `coming_soon` is kept on the copy type for backwards compatibility with
+// the SiteCopy admin editor and the en/nl/fr/ru JSON fallbacks. The
+// component itself no longer renders it (the empty-state shows nothing
+// at all rather than placeholder tiles), but the field is harmless to
+// keep around in case we want to revive a "coming soon" splash later.
 export type JournalTeaserCopy = {
   eyebrow: string;
   lede: string;
@@ -51,6 +44,11 @@ type Props = {
 
 export async function JournalTeaser({ locale, copy }: Props) {
   const posts = await getJournalTeasers(locale, 3);
+
+  // Zero published posts → hide the entire section. No header, no
+  // placeholder tiles, no "Read all" link to an empty list. The
+  // homepage just skips straight to whatever section follows.
+  if (posts.length === 0) return null;
 
   const dateFmt = new Intl.DateTimeFormat(priceLocale(locale), {
     month: "long",
@@ -81,29 +79,17 @@ export async function JournalTeaser({ locale, copy }: Props) {
         </div>
 
         <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
-          {posts.length > 0
-            ? posts.map((p, i) => (
-                <JournalCard
-                  key={p.id}
-                  index={i}
-                  href={`/journal/${p.slug}`}
-                  coverUrl={p.coverUrl}
-                  eyebrow={p.authorName ?? copy.eyebrow}
-                  title={p.title}
-                  subline={dateFmt.format(p.publishedAt)}
-                />
-              ))
-            : FALLBACK.map((p, i) => (
-                <JournalCard
-                  key={p.title}
-                  index={i}
-                  href="/journal"
-                  gradient={p.gradient}
-                  eyebrow={p.eyebrow}
-                  title={p.title}
-                  subline={copy.coming_soon}
-                />
-              ))}
+          {posts.map((p, i) => (
+            <JournalCard
+              key={p.id}
+              index={i}
+              href={`/journal/${p.slug}`}
+              coverUrl={p.coverUrl}
+              eyebrow={p.authorName ?? copy.eyebrow}
+              title={p.title}
+              subline={dateFmt.format(p.publishedAt)}
+            />
+          ))}
         </div>
       </div>
     </section>
