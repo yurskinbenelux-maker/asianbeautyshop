@@ -61,7 +61,17 @@ export function BestsellerCard({
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.7, delay: index * 0.1 }}
+      // Cap the stagger at the first row (4 cards). Cards 1-4 cascade in
+      // elegantly for the brand feel; cards 5+ animate together without
+      // making the customer wait. Pre-2026-05 this was `index * 0.1`,
+      // which meant card #20 sat invisible for 1.9 seconds before its
+      // 0.7s fade-in started — a ~2.6s perceived delay that read as
+      // "the site is slow" rather than "this is elegant". Duration also
+      // tightened from 0.7s to 0.5s. Same component renders the
+      // homepage bestsellers row, the /shop grid, related-products on
+      // the PDP, and the recently-viewed rail, so this fix applies
+      // everywhere products are listed.
+      transition={{ duration: 0.5, delay: Math.min(index, 3) * 0.08 }}
       className="group"
     >
       <Link href={`/shop/${product.slug}`} className="block card-lift">
