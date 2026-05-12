@@ -410,10 +410,28 @@ export async function transitionReturnStatus(
   // Resolve variantIds for restock BEFORE the transaction so we can roll
   // the whole thing back if something goes wrong. Only needed on the
   // RECEIVED transition — other transitions don't touch stock.
+  //
+  // 2026-05 (per-item adjudication): restock ONLY lines the admin
+  // accepted (acceptedRefundEur > 0). Rejected lines (€0 refund —
+  // "Opened and used", "Item missing", "Damaged on receipt", etc.)
+  // don't go back on the shelf, they're written off. Gift-card lines
+  // are always excluded — they're not physical inventory and the
+  // adjudication form locks them at €0 anyway.
+  //
+  // Legacy fallback: when acceptedRefundEur is null (return predates
+  // the adjudication form, or admin clicked Mark Received without
+  // ever opening the form), treat as fully accepted — matches the
+  // pre-2026-05 behaviour so old returns don't suddenly stop
+  // restocking.
   let restockPairs: Array<{ variantId: string; quantity: number }> = [];
   const willRestock = to === "RECEIVED" && current.status !== "RECEIVED";
   if (willRestock) {
-    const orderItemIds = current.items.map((it) => it.orderItemId);
+    const accepted = current.items.filter((it) => {
+      if (it.productKind === "GIFT_CARD") return false;
+      if (it.acceptedRefundEur === null) return true; // legacy
+      return it.acceptedRefundEur > 0;
+    });
+    const orderItemIds = accepted.map((it) => it.orderItemId);
     const orderItems = orderItemIds.length
       ? await prisma.orderItem.findMany({
           where: { id: { in: orderItemIds } },
@@ -423,7 +441,7 @@ export async function transitionReturnStatus(
     const variantByOrderItem = new Map(
       orderItems.map((oi) => [oi.id, oi.variantId]),
     );
-    restockPairs = current.items
+    restockPairs = accepted
       .map((it) => ({
         variantId: variantByOrderItem.get(it.orderItemId) ?? null,
         quantity: it.quantity,
