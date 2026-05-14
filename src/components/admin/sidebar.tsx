@@ -1,105 +1,33 @@
 // ─────────────────────────────────────────────────────────────────────────
-// AdminSidebar — left rail for the admin panel.
+// AdminSidebar — left rail for the admin panel (desktop only, md+).
 //
-// Client component only because we highlight the active section from
-// usePathname().  Everything else (the user info, sign-out button) is
-// straight JSX.
+// Client component because we highlight the active section from
+// usePathname(). The mobile counterpart lives in
+// `./mobile-nav.tsx` — both read the same sections list from
+// `./sidebar-config.ts` so the nav stays in sync across surfaces.
+//
+// IMPORTANT: this component is rendered with `hidden md:flex` from the
+// admin layout, so it disappears below the md breakpoint (768px). On
+// mobile the AdminMobileNav (hamburger + drawer) takes over.
 // ─────────────────────────────────────────────────────────────────────────
 
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Package,
-  Tag,
-  ShoppingBag,
-  Users,
-  Image as ImageIcon,
-  Settings,
-  ExternalLink,
-  BadgePercent,
-  LayoutPanelTop,
-  MessageSquare,
-  Mail,
-  Quote,
-  BookOpen,
-  FileText,
-  PenSquare,
-  Send,
-  RotateCcw,
-  CornerDownRight,
-  History,
-  Beaker,
-  Gift,
-  FileSpreadsheet,
-  Sparkles,
-  Megaphone,
-} from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  hasCapability,
-  type AdminCapability,
-  type AdminRole,
-} from "@/lib/auth-roles-shared";
+import { hasCapability, type AdminRole } from "@/lib/auth-roles-shared";
 import { Logo } from "@/components/brand/logo";
+import {
+  ADMIN_SECTIONS,
+  ADMIN_ROLE_LABEL,
+  type AdminSidebarBadgeCounts,
+} from "./sidebar-config";
 
-type Section = {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  // Capability required to see this section in the sidebar. The nav is
-  // filtered purely for UX — the real access-control happens at the page
-  // level via `requireCapability(...)` in the server component.
-  cap: AdminCapability;
-  // Optional: key for the badge counts map. When set, the sidebar
-  // looks up `props.badgeCounts[badgeKey]` and renders a red dot with
-  // the number if > 0. Decrements happen automatically because the
-  // count is recomputed server-side on every admin route change.
-  badgeKey?: "ordersAwaitingShipment" | "returnsAwaitingRefund";
-};
-
-export type AdminSidebarBadgeCounts = {
-  ordersAwaitingShipment: number;
-  returnsAwaitingRefund: number;
-};
-
-// NB: Each section is a route under /admin. Order matters — roughly mirrors
-// the mental model: content first, then operations, then platform.
-const SECTIONS: Section[] = [
-  { href: "/admin",            label: "Overview",   icon: LayoutDashboard,  cap: "products.view" },
-  { href: "/admin/products",    label: "Products",    icon: Package,          cap: "products.view" },
-  { href: "/admin/categories",  label: "Categories",  icon: Tag,              cap: "categories.edit" },
-  { href: "/admin/ingredients", label: "Ingredients", icon: Beaker,           cap: "ingredients.edit" },
-  { href: "/admin/quiz-tester", label: "Quiz tester", icon: Sparkles,         cap: "products.view" },
-  { href: "/admin/orders",     label: "Orders",     icon: ShoppingBag,      cap: "orders.view", badgeKey: "ordersAwaitingShipment" },
-  { href: "/admin/invoices",   label: "Invoices",   icon: FileSpreadsheet,  cap: "orders.view" },
-  { href: "/admin/returns",    label: "Returns",    icon: RotateCcw,        cap: "returns.view", badgeKey: "returnsAwaitingRefund" },
-  { href: "/admin/customers",  label: "Customers",  icon: Users,            cap: "customers.view" },
-  { href: "/admin/coupons",    label: "Coupons",    icon: BadgePercent,     cap: "coupons.edit" },
-  { href: "/admin/gift-cards", label: "Gift cards", icon: Gift,             cap: "giftcards.view" },
-  { href: "/admin/loyalty",    label: "A-Beauty Club",  icon: Sparkles,         cap: "loyalty.edit" },
-  { href: "/admin/reviews",      label: "Reviews",      icon: MessageSquare, cap: "reviews.moderate" },
-  { href: "/admin/contact",      label: "Messages",     icon: Mail,          cap: "contact.view" },
-  { href: "/admin/testimonials", label: "Testimonials", icon: Quote,         cap: "testimonials.edit" },
-  { href: "/admin/banners",      label: "Banners",      icon: LayoutPanelTop, cap: "banners.edit" },
-  { href: "/admin/homepage",     label: "Website copy", icon: PenSquare,     cap: "homepage.edit" },
-  { href: "/admin/marketing",    label: "Marketing",    icon: Megaphone,     cap: "homepage.edit" },
-  { href: "/admin/journal",    label: "Journal",    icon: BookOpen,         cap: "journal.edit" },
-  { href: "/admin/pages",      label: "Pages",      icon: FileText,         cap: "pages.edit" },
-  { href: "/admin/media",      label: "Media",      icon: ImageIcon,        cap: "media.edit" },
-  { href: "/admin/emails",     label: "Emails",     icon: Send,             cap: "emails.send" },
-  { href: "/admin/redirects",  label: "Redirects",  icon: CornerDownRight,  cap: "redirects.edit" },
-  { href: "/admin/audit",      label: "Audit log",  icon: History,          cap: "audit.view" },
-  { href: "/admin/settings",   label: "Settings",   icon: Settings,         cap: "settings.view" },
-];
-
-const ROLE_LABEL: Record<AdminRole, string> = {
-  OWNER: "Owner",
-  EDITOR: "Editor",
-  FULFILMENT: "Fulfilment",
-};
+// Re-export the badge-counts type so existing imports
+// (`@/components/admin/sidebar`) keep working without churn.
+export type { AdminSidebarBadgeCounts } from "./sidebar-config";
 
 export function AdminSidebar({
   userEmail,
@@ -114,7 +42,7 @@ export function AdminSidebar({
   badgeCounts?: AdminSidebarBadgeCounts;
 }) {
   const pathname = usePathname();
-  const visible = SECTIONS.filter((s) => hasCapability(role, s.cap));
+  const visible = ADMIN_SECTIONS.filter((s) => hasCapability(role, s.cap));
   const counts: AdminSidebarBadgeCounts = badgeCounts ?? {
     ordersAwaitingShipment: 0,
     returnsAwaitingRefund: 0,
@@ -202,7 +130,7 @@ export function AdminSidebar({
           </div>
           {/* Role pill — reassuring for editors/fulfilment to see their scope */}
           <span className="rounded-full border border-ink/15 px-2 py-[2px] text-[9px] uppercase tracking-label text-ink-mid">
-            {ROLE_LABEL[role]}
+            {ADMIN_ROLE_LABEL[role]}
           </span>
         </div>
         <div className="mt-1 truncate text-[13px] text-ink" title={userEmail}>

@@ -17,6 +17,7 @@ import "../globals.css";
 
 import { requireAdminWithRole } from "@/lib/auth-roles";
 import { AdminSidebar } from "@/components/admin/sidebar";
+import { AdminMobileNav } from "@/components/admin/mobile-nav";
 import { getAdminBadgeCounts } from "@/lib/admin/badge-counts";
 
 const fraunces = Fraunces({
@@ -58,13 +59,23 @@ export default async function AdminLayout({
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
       <body className="min-h-screen bg-rice text-ink antialiased">
+        {/* Mobile-only sticky top bar + slide-in drawer. Renders nothing
+            visible above md — display:none kicks in there so the desktop
+            sidebar takes over. Outside the flex row on purpose because
+            the bar is `position: sticky` and the drawer is `position:
+            fixed`; both ignore parent flex layout anyway. */}
+        <AdminMobileNav
+          userEmail={user.email ?? ""}
+          role={role}
+          badgeCounts={badgeCounts}
+        />
         <div className="flex min-h-screen">
           <AdminSidebar
             userEmail={user.email ?? ""}
             role={role}
             badgeCounts={badgeCounts}
           />
-          <main className="flex-1">{children}</main>
+          <main className="min-w-0 flex-1">{children}</main>
         </div>
       </body>
     </html>
