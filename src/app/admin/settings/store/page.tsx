@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function StoreSettingsPage() {
   const initial = await readSetting("store");
   return (
-    <div className="mx-auto max-w-5xl px-8 py-10">
+    <div className="mx-auto max-w-5xl px-4 py-6 md:px-8 md:py-10">
       <SettingsHeader
         eyebrow="Settings"
         title="Store"

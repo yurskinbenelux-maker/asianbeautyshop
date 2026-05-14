@@ -44,7 +44,7 @@ export default async function TagsPage({
   const hasIcon = kind === "benefit";
 
   return (
-    <div className="mx-auto max-w-5xl px-8 py-10">
+    <div className="mx-auto max-w-5xl px-4 py-6 md:px-8 md:py-10">
       <header>
         <div className="eyebrow">Organise</div>
         <h1 className="mt-2 font-display text-[30px] leading-tight text-ink">

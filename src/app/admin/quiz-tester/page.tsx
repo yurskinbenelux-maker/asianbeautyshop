@@ -23,7 +23,7 @@ export default async function AdminQuizTesterPage() {
   await requireAdmin();
 
   return (
-    <div className="mx-auto max-w-6xl px-8 py-12">
+    <div className="mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-12">
       <header className="mb-10">
         <div className="eyebrow">Tools</div>
         <h1 className="mt-2 flex items-center gap-3 font-display text-[34px] leading-tight text-ink">

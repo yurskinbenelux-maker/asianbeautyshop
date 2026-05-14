@@ -20,7 +20,7 @@ export default async function EditPagePage({
   const title = page.translations.EN.title || "(untitled page)";
 
   return (
-    <div className="mx-auto max-w-3xl px-8 py-10">
+    <div className="mx-auto max-w-3xl px-4 py-6 md:px-8 md:py-10">
       <Link
         href="/admin/pages"
         className="inline-flex items-center gap-1 text-[12px] uppercase tracking-label text-ink-mid hover:text-ink"

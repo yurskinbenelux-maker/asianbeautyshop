@@ -36,7 +36,7 @@ export default async function AdminGiftCardDetailPage({ params }: Props) {
   const canManage = hasCapability(role, "giftcards.manage");
 
   return (
-    <div className="px-8 py-10">
+    <div className="px-4 py-6 md:px-8 md:py-10">
       {/* ── crumb ─────────────────────────────────────────────────── */}
       <Link
         href="/admin/gift-cards"
@@ -131,7 +131,7 @@ export default async function AdminGiftCardDetailPage({ params }: Props) {
           </p>
         ) : (
           <div className="mt-4 border border-ink/10">
-            <table className="w-full text-[13px]">
+            <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-[13px]">
               <thead className="border-b border-ink/10 bg-rice-dim/50 text-left text-[11px] uppercase tracking-label text-ink-mid">
                 <tr>
                   <th className="px-4 py-3">Date</th>
@@ -159,7 +159,7 @@ export default async function AdminGiftCardDetailPage({ params }: Props) {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           </div>
         )}
       </div>

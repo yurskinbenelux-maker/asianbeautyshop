@@ -367,7 +367,7 @@ function PreviewTable({ rows }: { rows: PreviewRow[] }) {
 
   return (
     <div className="border border-ink/10 bg-white/60">
-      <table className="w-full text-[13px]">
+      <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-[13px]">
         <thead>
           <tr className="border-b border-ink/10 text-left text-[11px] uppercase tracking-label text-ink-mid">
             <Th className="w-[64px]">Row</Th>
@@ -382,7 +382,7 @@ function PreviewTable({ rows }: { rows: PreviewRow[] }) {
             <PreviewRowView key={row.rowNumber} row={row} />
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 }

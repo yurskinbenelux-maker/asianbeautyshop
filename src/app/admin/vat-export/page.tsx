@@ -35,7 +35,7 @@ export default async function VatExportPage() {
   const quarters = [1, 2, 3, 4] as const;
 
   return (
-    <div className="mx-auto max-w-3xl px-8 py-10">
+    <div className="mx-auto max-w-3xl px-4 py-6 md:px-8 md:py-10">
       <header className="mb-8">
         <div className="eyebrow">Accounting</div>
         <h1 className="mt-2 font-display text-[30px] leading-tight text-ink">

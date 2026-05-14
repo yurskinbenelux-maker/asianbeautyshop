@@ -109,7 +109,7 @@ export default async function AdminReturnDetail({ params, searchParams }: Props)
   const primary = primaryCopy(primaryTarget);
 
   return (
-    <div className="mx-auto max-w-5xl px-8 py-12">
+    <div className="mx-auto max-w-5xl px-4 py-8 md:px-8 md:py-12">
       <Link
         href="/admin/returns"
         className="inline-flex items-center gap-1 text-[11px] uppercase tracking-label text-ink-mid transition-colors hover:text-ink"

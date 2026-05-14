@@ -136,7 +136,7 @@ export default async function ProductsListPage({
   const zeroPricedDraftCount = draftCount - publishableDraftCount;
 
   return (
-    <div className="mx-auto max-w-6xl px-8 py-12">
+    <div className="mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-12">
       {/* masthead */}
       <header className="flex flex-wrap items-end justify-between gap-6">
         <div>
@@ -288,7 +288,7 @@ export default async function ProductsListPage({
         {products.length === 0 ? (
           <EmptyState hasFilters={Boolean(q) || Boolean(statusFilter)} />
         ) : (
-          <table className="w-full text-[13px]">
+          <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-[13px]">
             <thead>
               <tr className="border-b border-ink/10 text-left text-[11px] uppercase tracking-label text-ink-mid">
                 <Th className="w-[42%]">Product</Th>
@@ -394,7 +394,7 @@ export default async function ProductsListPage({
                 );
               })}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
     </div>

@@ -59,7 +59,7 @@ export default async function MediaPage({
   const totalPages = Math.max(1, Math.ceil(result.total / MEDIA_PAGE_SIZE));
 
   return (
-    <div className="mx-auto max-w-7xl px-8 py-10">
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-10">
       <header className="flex flex-wrap items-end justify-between gap-6">
         <div>
           <div className="eyebrow">Library</div>
@@ -194,7 +194,7 @@ function EmptyState({
   hasQuery: boolean;
 }) {
   return (
-    <div className="border border-dashed border-ink/20 bg-white/60 px-8 py-16 text-center">
+    <div className="border border-dashed border-ink/20 bg-white/60 px-4 py-10 md:px-8 md:py-16 text-center">
       <ImageIcon className="mx-auto h-8 w-8 text-ink-mid" />
       <p className="mt-3 font-display text-[18px] text-ink">
         {hasQuery

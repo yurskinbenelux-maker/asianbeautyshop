@@ -52,7 +52,7 @@ export default async function AdminGiftCardsPage({ searchParams }: Props) {
   const canManage = hasCapability(role, "giftcards.manage");
 
   return (
-    <div className="px-8 py-10">
+    <div className="px-4 py-6 md:px-8 md:py-10">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="text-[10px] uppercase tracking-label text-ink-mid">
@@ -110,7 +110,7 @@ export default async function AdminGiftCardsPage({ searchParams }: Props) {
         </div>
       ) : (
         <div className="overflow-x-auto border border-ink/10">
-          <table className="w-full text-[13px]">
+          <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-[13px]">
             <thead className="border-b border-ink/10 bg-rice-dim/50">
               <tr className="text-left text-[11px] uppercase tracking-label text-ink-mid">
                 <th className="px-4 py-3">Code</th>
@@ -172,7 +172,7 @@ export default async function AdminGiftCardsPage({ searchParams }: Props) {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </div>
       )}
 

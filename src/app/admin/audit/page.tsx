@@ -48,7 +48,7 @@ export default async function AuditLogPage({
   ]);
 
   return (
-    <div className="mx-auto max-w-6xl px-8 py-10">
+    <div className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-10">
       <header className="mb-8">
         <div className="eyebrow">Audit</div>
         <h1 className="mt-2 font-display text-[34px] leading-tight text-ink">
@@ -109,7 +109,7 @@ export default async function AuditLogPage({
 
       {/* list */}
       {rows.length === 0 ? (
-        <div className="border border-dashed border-ink/20 px-8 py-16 text-center">
+        <div className="border border-dashed border-ink/20 px-4 py-10 md:px-8 md:py-16 text-center">
           <History className="mx-auto h-8 w-8 text-ink-mid" aria-hidden />
           <p className="mt-3 text-[13px] text-ink-mid">
             No entries match these filters yet.

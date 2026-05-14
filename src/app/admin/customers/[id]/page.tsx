@@ -61,7 +61,7 @@ export default async function AdminCustomerDetailPage({
     .trim();
 
   return (
-    <div className="mx-auto max-w-7xl px-8 py-12">
+    <div className="mx-auto max-w-7xl px-4 py-8 md:px-8 md:py-12">
       <Link
         href="/admin/customers"
         className="inline-flex items-center gap-1 text-[11px] uppercase tracking-label text-ink-mid hover:text-ink"
@@ -146,7 +146,7 @@ export default async function AdminCustomerDetailPage({
                 No orders yet.
               </p>
             ) : (
-              <table className="w-full text-[13px]">
+              <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-[13px]">
                 <thead>
                   <tr className="border-b border-ink/10 text-left text-[11px] uppercase tracking-label text-ink-mid">
                     <th className="px-2 py-2 font-normal">Order</th>
@@ -197,7 +197,7 @@ export default async function AdminCustomerDetailPage({
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             )}
           </Panel>
 

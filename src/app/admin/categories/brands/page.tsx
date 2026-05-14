@@ -20,7 +20,7 @@ export default async function BrandsPage({
   const brands = await listAdminBrands();
 
   return (
-    <div className="mx-auto max-w-7xl px-8 py-12">
+    <div className="mx-auto max-w-7xl px-4 py-8 md:px-8 md:py-12">
       <header className="flex flex-wrap items-end justify-between gap-6">
         <div>
           <div className="eyebrow">Organise</div>

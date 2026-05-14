@@ -49,7 +49,7 @@ export default async function AdminReturnsPage({
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <div className="mx-auto max-w-7xl px-8 py-12">
+    <div className="mx-auto max-w-7xl px-4 py-8 md:px-8 md:py-12">
       <header className="flex flex-wrap items-end justify-between gap-6">
         <div>
           <div className="eyebrow">Commerce</div>
@@ -87,7 +87,7 @@ export default async function AdminReturnsPage({
             </p>
           </div>
         ) : (
-          <table className="w-full text-[13px]">
+          <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-[13px]">
             <thead>
               <tr className="border-b border-ink/10 text-left text-[11px] uppercase tracking-label text-ink-mid">
                 <th className="px-4 py-3 font-normal">Return</th>
@@ -152,7 +152,7 @@ export default async function AdminReturnsPage({
                 );
               })}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
 

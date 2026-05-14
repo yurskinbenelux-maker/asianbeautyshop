@@ -29,7 +29,7 @@ export default async function EmailsIndexPage() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-8 py-12">
+    <div className="mx-auto max-w-5xl px-4 py-8 md:px-8 md:py-12">
       <header>
         <div className="eyebrow">Email</div>
         <h1 className="mt-2 font-display text-[34px] leading-tight text-ink">

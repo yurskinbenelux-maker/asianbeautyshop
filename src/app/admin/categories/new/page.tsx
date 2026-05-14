@@ -27,7 +27,7 @@ export default async function NewCategoryPage() {
   }));
 
   return (
-    <div className="mx-auto max-w-5xl px-8 py-12">
+    <div className="mx-auto max-w-5xl px-4 py-8 md:px-8 md:py-12">
       <Link
         href="/admin/categories"
         className="inline-flex items-center gap-1 text-[11px] uppercase tracking-label text-ink-mid hover:text-ink"

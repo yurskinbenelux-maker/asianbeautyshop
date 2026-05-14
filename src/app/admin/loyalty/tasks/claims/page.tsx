@@ -51,7 +51,7 @@ export default async function ClaimsQueuePage({ searchParams }: Props) {
   ]);
 
   return (
-    <div className="mx-auto max-w-5xl px-8 py-10">
+    <div className="mx-auto max-w-5xl px-4 py-6 md:px-8 md:py-10">
       <Link
         href="/admin/loyalty/tasks"
         className="inline-flex items-center gap-1 text-[11px] uppercase tracking-label text-ink-mid transition-colors hover:text-ink"

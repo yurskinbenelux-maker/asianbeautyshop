@@ -73,7 +73,7 @@ export default async function AdminContactDetailPage({ params }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-8 py-12">
+    <div className="mx-auto max-w-5xl px-4 py-8 md:px-8 md:py-12">
       {/* breadcrumb */}
       <Link
         href="/admin/contact"

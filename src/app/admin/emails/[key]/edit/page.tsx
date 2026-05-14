@@ -51,7 +51,7 @@ export default async function EmailEditPage({ params }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-8 py-10">
+    <div className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-10">
       <Link
         href={`/admin/emails/${key}`}
         className="inline-flex items-center gap-2 text-[12px] uppercase tracking-label text-ink-mid transition-colors hover:text-ink"

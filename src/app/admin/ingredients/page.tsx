@@ -36,7 +36,7 @@ export default async function AdminIngredientsPage() {
   const rows = await listAdminIngredients();
 
   return (
-    <div className="mx-auto max-w-6xl px-8 py-10">
+    <div className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-10">
       <header className="mb-8 flex items-end justify-between gap-6">
         <div>
           <div className="eyebrow">Ingredients</div>
@@ -84,7 +84,7 @@ export default async function AdminIngredientsPage() {
         <EmptyState />
       ) : (
         <div className="border border-ink/10 bg-white/60">
-          <table className="w-full text-[13px]">
+          <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-[13px]">
             <thead className="border-b border-ink/10 text-[10px] uppercase tracking-label text-ink-mid">
               <tr>
                 <th className="px-4 py-3 text-left font-normal">
@@ -147,7 +147,7 @@ export default async function AdminIngredientsPage() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </div>
       )}
     </div>

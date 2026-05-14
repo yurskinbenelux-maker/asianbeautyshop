@@ -32,7 +32,7 @@ export default async function EditBannerPage({
   const englishHeadline = banner.translations.EN.headline || "Untitled banner";
 
   return (
-    <div className="mx-auto max-w-3xl px-8 py-10">
+    <div className="mx-auto max-w-3xl px-4 py-6 md:px-8 md:py-10">
       <Link
         href="/admin/banners"
         className="inline-flex items-center gap-1 text-[12px] uppercase tracking-label text-ink-mid hover:text-ink"
