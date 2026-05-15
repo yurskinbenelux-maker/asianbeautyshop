@@ -278,6 +278,25 @@ export default async function LocaleLayout({ children, params }: Props) {
             fetchPriority="low"
           />
         )}
+        {/*
+          Hero popup preload — sits between welcome and quiz in the
+          on-load chain (welcome → hero → quiz, per popup-coordinator).
+          Unlike the other two it doesn't have a single hero image; it
+          renders product CARDS. We preload only the FIRST card so the
+          popup paints with at least one product visible immediately,
+          while the rest stream in. Priority is "auto" (default) — high
+          would compete with the welcome image, low would lose to
+          unrelated below-fold images. Only emitted when the popup is
+          enabled AND a first card exists (heroPopupCards is empty
+          when the admin hasn't picked products yet).
+        */}
+        {heroPopupEnabled && heroPopupCards[0]?.imageUrl && (
+          <link
+            rel="preload"
+            as="image"
+            href={heroPopupCards[0].imageUrl}
+          />
+        )}
       </head>
       <body className="min-h-screen">
         {/* Google Tag Manager + Consent Mode v2 — loads as early as
