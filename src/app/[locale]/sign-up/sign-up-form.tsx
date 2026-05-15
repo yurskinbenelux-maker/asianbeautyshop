@@ -10,6 +10,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { signUpAction, type SignUpState } from "./actions";
 import { readStoredReferralCode } from "@/components/marketing/referral-capture";
 
@@ -238,6 +239,13 @@ export function SignUpForm({ locale }: { locale: string }) {
         label={t("sign_up_cta")}
         pendingLabel={t("signing_up")}
       />
+
+      {/* OAuth alternative — same component used on /sign-in. New
+          Google sign-ups skip the email-language picker on this form
+          (default EN) and the first/last-name fields (Google provides
+          them). The 10% welcome coupon still fires on first sign-in
+          via the /auth/callback route + idempotent coupon helper. */}
+      <GoogleSignInButton locale={locale} />
     </form>
   );
 }

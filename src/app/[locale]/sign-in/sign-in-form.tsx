@@ -9,6 +9,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import {
   signInWithPasswordAction,
   type SignInState,
@@ -76,6 +77,13 @@ export function SignInForm({
       )}
 
       <SubmitButton label={t("sign_in_cta")} pendingLabel={t("signing_in")} />
+
+      {/* OAuth alternative — appears below the primary email/password
+          flow with an "or" divider. Lives inside the form for visual
+          rhythm but is its own self-contained client interaction (does
+          NOT submit the form); the button's own onClick redirects the
+          browser to Google. */}
+      <GoogleSignInButton locale={locale} next={next} />
     </form>
   );
 }
