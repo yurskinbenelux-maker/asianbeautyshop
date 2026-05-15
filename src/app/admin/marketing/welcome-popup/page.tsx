@@ -16,6 +16,7 @@ import Image from "next/image";
 import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
 import { requireCapability } from "@/lib/auth-roles";
 import { readWelcomePopupSettings } from "@/lib/queries/welcome-popup";
+import { FocalPointPicker } from "@/components/admin/marketing/focal-point-picker";
 import { saveWelcomePopupAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -169,20 +170,20 @@ export default async function AdminWelcomePopupPage({
               placeholder="A model holding a Asian Beauty Shop Solution toner"
               hint="Describe what's in the image. Required if the image is set."
             />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field
-                label="Image focus — desktop"
-                name="imageObjectPositionDesktop"
-                defaultValue={cfg.imageObjectPositionDesktop}
-                placeholder="center"
-                hint='CSS object-position. e.g. "center", "center top", "50% 30%", "30% center".'
-              />
-              <Field
-                label="Image focus — mobile"
-                name="imageObjectPositionMobile"
-                defaultValue={cfg.imageObjectPositionMobile}
-                placeholder="center"
-                hint="Same syntax. Mobile shows a shorter crop — usually wants the focal point pushed up or down vs desktop."
+            {/* Visual focal-point picker — replaces the Phase 1 text
+                fields with a click/drag pin on the actual image, plus
+                live preview thumbnails at desktop + mobile aspect
+                ratios. Submits the same two hidden inputs
+                (imageObjectPositionDesktop / Mobile) so the server
+                action and Zod schema are unchanged. */}
+            <div>
+              <div className="mb-2 text-[11px] uppercase tracking-label text-ink-mid">
+                Image focus point
+              </div>
+              <FocalPointPicker
+                imageUrl={cfg.imageUrl}
+                initialDesktop={cfg.imageObjectPositionDesktop}
+                initialMobile={cfg.imageObjectPositionMobile}
               />
             </div>
           </div>

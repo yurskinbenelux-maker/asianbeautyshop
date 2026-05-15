@@ -9,6 +9,7 @@ import Image from "next/image";
 import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
 import { requireCapability } from "@/lib/auth-roles";
 import { readQuizPopupSettings } from "@/lib/queries/quiz-popup";
+import { FocalPointPicker } from "@/components/admin/marketing/focal-point-picker";
 import { saveQuizPopupAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -162,20 +163,18 @@ export default async function AdminQuizPopupPage({
               placeholder="A model with glowing skin after her routine"
               hint="Describe what's in the image."
             />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field
-                label="Image focus — desktop"
-                name="imageObjectPositionDesktop"
-                defaultValue={cfg.imageObjectPositionDesktop}
-                placeholder="center"
-                hint='CSS object-position. e.g. "center", "center top", "50% 30%", "30% center".'
-              />
-              <Field
-                label="Image focus — mobile"
-                name="imageObjectPositionMobile"
-                defaultValue={cfg.imageObjectPositionMobile}
-                placeholder="center"
-                hint="Same syntax. Mobile shows a shorter crop — usually wants the focal point pushed up or down vs desktop."
+            {/* Visual focal-point picker — same component used in the
+                welcome popup admin. Mirrors what the customer sees by
+                rendering background-image with the same object-position
+                value the popup will use. */}
+            <div>
+              <div className="mb-2 text-[11px] uppercase tracking-label text-ink-mid">
+                Image focus point
+              </div>
+              <FocalPointPicker
+                imageUrl={cfg.imageUrl}
+                initialDesktop={cfg.imageObjectPositionDesktop}
+                initialMobile={cfg.imageObjectPositionMobile}
               />
             </div>
           </div>
