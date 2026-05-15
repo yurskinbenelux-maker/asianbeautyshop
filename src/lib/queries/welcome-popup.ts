@@ -41,6 +41,18 @@ export type WelcomePopupSettings = {
   imageUrl: string;
   /** Alt text for accessibility + SEO. Required if imageUrl is set. */
   imageAlt: string;
+  /** CSS `object-position` value used at desktop breakpoints (md+).
+   *  Examples: "center", "center top", "50% 30%", "30% center".
+   *  Default "center" preserves the current crop behaviour. Lets
+   *  an admin shift the focal point when the auto-centred crop hides
+   *  the most important part of a portrait photograph (faces, products).
+   *  Defensive: invalid CSS just renders as if "center" — browsers
+   *  ignore unrecognised object-position values.  */
+  imageObjectPositionDesktop: string;
+  /** Same as above but applied below md. Mobile cards are wider-aspect
+   *  relative to the source image so the focal point usually wants to
+   *  shift differently than on desktop. */
+  imageObjectPositionMobile: string;
 
   /** Small uppercase label above the big number. e.g. "Welcome gift" */
   eyebrow: string;
@@ -84,6 +96,8 @@ export const WELCOME_POPUP_DEFAULTS: WelcomePopupSettings = {
   delaySeconds: 3,
   imageUrl: "",
   imageAlt: "",
+  imageObjectPositionDesktop: "center",
+  imageObjectPositionMobile: "center",
   eyebrow: "Welcome gift",
   bigOffer: "−10%",
   bigOfferSubtitle: "on your first order",
@@ -136,6 +150,14 @@ export async function readWelcomePopupSettings(): Promise<WelcomePopupSettings> 
       ),
       imageUrl: asString(v.imageUrl, WELCOME_POPUP_DEFAULTS.imageUrl),
       imageAlt: asString(v.imageAlt, WELCOME_POPUP_DEFAULTS.imageAlt),
+      imageObjectPositionDesktop: asString(
+        v.imageObjectPositionDesktop,
+        WELCOME_POPUP_DEFAULTS.imageObjectPositionDesktop,
+      ),
+      imageObjectPositionMobile: asString(
+        v.imageObjectPositionMobile,
+        WELCOME_POPUP_DEFAULTS.imageObjectPositionMobile,
+      ),
       eyebrow: asString(v.eyebrow, WELCOME_POPUP_DEFAULTS.eyebrow),
       bigOffer: asString(v.bigOffer, WELCOME_POPUP_DEFAULTS.bigOffer),
       bigOfferSubtitle: asString(

@@ -29,6 +29,12 @@ const Schema = z.object({
   delaySeconds: z.coerce.number().int().min(0).max(60),
   imageUrl: z.string().trim().max(2000).optional().default(""),
   imageAlt: z.string().trim().max(300).optional().default(""),
+  // CSS object-position values — short strings. Capped at 60 chars
+  // (longer than any sane value but room for `calc(...)`-style edge
+  // cases). Empty string is OK and falls through to "center" in the
+  // popup component default.
+  imageObjectPositionDesktop: z.string().trim().max(60).optional().default(""),
+  imageObjectPositionMobile: z.string().trim().max(60).optional().default(""),
   eyebrow: z.string().trim().max(60).optional().default(""),
   bigOffer: z.string().trim().max(20).optional().default(""),
   bigOfferSubtitle: z.string().trim().max(80).optional().default(""),
@@ -65,6 +71,8 @@ export async function saveWelcomePopupAction(
     delaySeconds: parsed.delaySeconds,
     imageUrl: parsed.imageUrl,
     imageAlt: parsed.imageAlt,
+    imageObjectPositionDesktop: parsed.imageObjectPositionDesktop || "center",
+    imageObjectPositionMobile: parsed.imageObjectPositionMobile || "center",
     eyebrow: parsed.eyebrow,
     bigOffer: parsed.bigOffer,
     bigOfferSubtitle: parsed.bigOfferSubtitle,

@@ -24,6 +24,16 @@ export type QuizPopupSettings = {
 
   imageUrl: string;
   imageAlt: string;
+  /** CSS `object-position` value used at desktop breakpoints (md+).
+   *  Examples: "center", "center top", "50% 30%", "30% center".
+   *  Default "center" preserves auto-centred crop behaviour.
+   *  Mirrors WelcomePopupSettings for symmetry — an admin sets one
+   *  string per popup per viewport and the image element applies it. */
+  imageObjectPositionDesktop: string;
+  /** Mobile-specific object-position; usually wants to differ from
+   *  desktop because the visible crop is taller (portrait container)
+   *  vs the wider desktop slot. */
+  imageObjectPositionMobile: string;
 
   eyebrow: string;
   bigOffer: string;
@@ -48,6 +58,8 @@ export const QUIZ_POPUP_DEFAULTS: QuizPopupSettings = {
   delaySecondsAfterWelcome: 30,
   imageUrl: "",
   imageAlt: "",
+  imageObjectPositionDesktop: "center",
+  imageObjectPositionMobile: "center",
   eyebrow: "Skin assessment",
   bigOffer: "+15%",
   bigOfferSubtitle: "your reward for taking the skin quiz",
@@ -97,6 +109,14 @@ export async function readQuizPopupSettings(): Promise<QuizPopupSettings> {
       ),
       imageUrl: asString(v.imageUrl, QUIZ_POPUP_DEFAULTS.imageUrl),
       imageAlt: asString(v.imageAlt, QUIZ_POPUP_DEFAULTS.imageAlt),
+      imageObjectPositionDesktop: asString(
+        v.imageObjectPositionDesktop,
+        QUIZ_POPUP_DEFAULTS.imageObjectPositionDesktop,
+      ),
+      imageObjectPositionMobile: asString(
+        v.imageObjectPositionMobile,
+        QUIZ_POPUP_DEFAULTS.imageObjectPositionMobile,
+      ),
       eyebrow: asString(v.eyebrow, QUIZ_POPUP_DEFAULTS.eyebrow),
       bigOffer: asString(v.bigOffer, QUIZ_POPUP_DEFAULTS.bigOffer),
       bigOfferSubtitle: asString(

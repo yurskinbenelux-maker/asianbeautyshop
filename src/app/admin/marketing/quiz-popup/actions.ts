@@ -21,6 +21,9 @@ const Schema = z.object({
   delaySecondsAfterWelcome: z.coerce.number().int().min(0).max(300),
   imageUrl: z.string().trim().max(2000).optional().default(""),
   imageAlt: z.string().trim().max(300).optional().default(""),
+  // CSS object-position — same shape as welcome-popup actions.
+  imageObjectPositionDesktop: z.string().trim().max(60).optional().default(""),
+  imageObjectPositionMobile: z.string().trim().max(60).optional().default(""),
   eyebrow: z.string().trim().max(60).optional().default(""),
   bigOffer: z.string().trim().max(20).optional().default(""),
   bigOfferSubtitle: z.string().trim().max(80).optional().default(""),
@@ -54,6 +57,8 @@ export async function saveQuizPopupAction(
     delaySecondsAfterWelcome: parsed.delaySecondsAfterWelcome,
     imageUrl: parsed.imageUrl,
     imageAlt: parsed.imageAlt,
+    imageObjectPositionDesktop: parsed.imageObjectPositionDesktop || "center",
+    imageObjectPositionMobile: parsed.imageObjectPositionMobile || "center",
     eyebrow: parsed.eyebrow,
     bigOffer: parsed.bigOffer,
     bigOfferSubtitle: parsed.bigOfferSubtitle,

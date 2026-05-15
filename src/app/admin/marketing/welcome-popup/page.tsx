@@ -169,6 +169,22 @@ export default async function AdminWelcomePopupPage({
               placeholder="A model holding a Asian Beauty Shop Solution toner"
               hint="Describe what's in the image. Required if the image is set."
             />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                label="Image focus — desktop"
+                name="imageObjectPositionDesktop"
+                defaultValue={cfg.imageObjectPositionDesktop}
+                placeholder="center"
+                hint='CSS object-position. e.g. "center", "center top", "50% 30%", "30% center".'
+              />
+              <Field
+                label="Image focus — mobile"
+                name="imageObjectPositionMobile"
+                defaultValue={cfg.imageObjectPositionMobile}
+                placeholder="center"
+                hint="Same syntax. Mobile shows a shorter crop — usually wants the focal point pushed up or down vs desktop."
+              />
+            </div>
           </div>
         </section>
 

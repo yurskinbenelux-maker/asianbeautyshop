@@ -149,12 +149,23 @@ export function QuizPopup({ config }: { config: QuizPopupSettings }) {
       >
         {hasImage && (
           <div className="relative h-44 w-full md:h-auto md:min-h-[480px]">
+            {/* Per-viewport object-position — see register-welcome-popup
+                for the rationale. Two CSS variables, mobile applied by
+                default and desktop swapped in via md: variant. */}
             <Image
               src={config.imageUrl}
               alt={config.imageAlt}
               fill
               sizes="(max-width: 768px) 100vw, 410px"
-              className="object-cover"
+              className="object-cover [object-position:var(--yur-pop-pos-mobile)] md:[object-position:var(--yur-pop-pos-desktop)]"
+              style={
+                {
+                  "--yur-pop-pos-desktop":
+                    config.imageObjectPositionDesktop || "center",
+                  "--yur-pop-pos-mobile":
+                    config.imageObjectPositionMobile || "center",
+                } as React.CSSProperties
+              }
               priority
             />
           </div>

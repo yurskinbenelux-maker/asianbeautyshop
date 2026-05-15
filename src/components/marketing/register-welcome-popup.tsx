@@ -169,12 +169,29 @@ export function RegisterWelcomePopup({
             column at the typical mega-menu height. */}
         {hasImage && (
           <div className="relative h-44 w-full md:h-auto md:min-h-[480px]">
+            {/* Per-viewport object-position lets an admin keep the focal
+                point of a portrait photo visible at both desktop AND
+                mobile crops — the mobile slot is much shorter so the
+                default centred crop frequently hides the bag/face/etc.
+                Tailwind can't read arbitrary string values at runtime,
+                so we publish two CSS custom properties and switch
+                between them via a media query in the inline <style>
+                below. The fallback is "center" everywhere — same as
+                the pre-feature behaviour. */}
             <Image
               src={config.imageUrl}
               alt={config.imageAlt}
               fill
               sizes="(max-width: 768px) 100vw, 410px"
-              className="object-cover"
+              className="object-cover [object-position:var(--yur-pop-pos-mobile)] md:[object-position:var(--yur-pop-pos-desktop)]"
+              style={
+                {
+                  "--yur-pop-pos-desktop":
+                    config.imageObjectPositionDesktop || "center",
+                  "--yur-pop-pos-mobile":
+                    config.imageObjectPositionMobile || "center",
+                } as React.CSSProperties
+              }
               priority
             />
           </div>
