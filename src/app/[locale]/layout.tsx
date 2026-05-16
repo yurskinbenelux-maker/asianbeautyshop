@@ -262,12 +262,21 @@ export default async function LocaleLayout({ children, params }: Props) {
           image set. Plain <link> tags inside JSX are hoisted to <head>
           by Next.js, so this works from a server component.
         */}
+        {/*
+          All three popup preloads use fetchPriority="low" — they fire
+          3s+ after page load, so they must NEVER compete with the
+          actual hero LCP image on the mobile connection. Previously
+          the welcome popup was marked "high", which we measured
+          torpedoing mobile LCP to 11s (Hostinger PageSpeed, 2026-05-16).
+          "low" still beats default-priority unrelated assets so the
+          image is normally cached by the time the popup fires.
+        */}
         {welcomePopup.enabled && welcomePopup.imageUrl && (
           <link
             rel="preload"
             as="image"
             href={welcomePopup.imageUrl}
-            fetchPriority="high"
+            fetchPriority="low"
           />
         )}
         {quizPopup.enabled && quizPopup.imageUrl && (
@@ -284,9 +293,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           Unlike the other two it doesn't have a single hero image; it
           renders product CARDS. We preload only the FIRST card so the
           popup paints with at least one product visible immediately,
-          while the rest stream in. Priority is "auto" (default) — high
-          would compete with the welcome image, low would lose to
-          unrelated below-fold images. Only emitted when the popup is
+          while the rest stream in. Only emitted when the popup is
           enabled AND a first card exists (heroPopupCards is empty
           when the admin hasn't picked products yet).
         */}
@@ -295,6 +302,7 @@ export default async function LocaleLayout({ children, params }: Props) {
             rel="preload"
             as="image"
             href={heroPopupCards[0].imageUrl}
+            fetchPriority="low"
           />
         )}
       </head>

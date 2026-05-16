@@ -137,10 +137,17 @@ export function HeroVideo({
           muted
           loop
           playsInline
-          // `auto` tells the browser to download the whole file eagerly
-          // instead of pausing after the metadata. Hero videos should
-          // play without delay — bandwidth cost is justified.
-          preload="auto"
+          // `metadata` downloads ~tens of KB (enough for the browser
+          // to know dimensions + first frame index) instead of the
+          // whole 5-8MB file up-front. The cinematic poster intro
+          // gives the actual stream POSTER_HOLD_MS to buffer in the
+          // background, so by the time the poster fades the video is
+          // ready to play without a stutter on mobile too. Previously
+          // this was `preload="auto"` and the mp4 download was
+          // competing with the poster image for the mobile LCP slot,
+          // tanking PageSpeed mobile scores to ~50 — see Hostinger's
+          // PageSpeed report for the asianbeautyshop.eu cutover.
+          preload="metadata"
           // Disable the native macOS/iOS picture-in-picture promotion
           // so the video stays in the page where we want it.
           disablePictureInPicture
@@ -176,6 +183,15 @@ export function HeroVideo({
           loading="eager"
           decoding="async"
           fetchPriority="high"
+          // Explicit intrinsic dimensions silence the Lighthouse
+          // "image elements do not have explicit width and height"
+          // audit and let the browser reserve space for the LCP
+          // candidate before the file arrives. We assume a 16:9
+          // source (the recommended 1920×1080 from the admin hint);
+          // the absolute-inset CSS scales it to fill the hero either
+          // way, so a non-16:9 source still renders correctly.
+          width={1920}
+          height={1080}
           // Same object-position custom props as the video so the crop
           // matches exactly — the visitor doesn't notice the transition
           // because the framing is identical on both layers.
