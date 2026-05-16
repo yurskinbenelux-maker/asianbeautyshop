@@ -43,6 +43,13 @@ type Props = {
    *  popup names so existing callers keep working unchanged. */
   desktopFieldName?: string;
   mobileFieldName?: string;
+  /** Optional MP4 URL. When `imageUrl` is empty AND `videoUrl` is set,
+   *  the picker renders the actual playing video as its editor canvas
+   *  (and uses <video> elements in the live previews) so the admin
+   *  can position a cinematic hero crop without having to upload a
+   *  separate poster image first. When both are set, image wins
+   *  (lighter preview, no autoplay needed). */
+  videoUrl?: string;
 };
 
 /** Internal pin coordinates as percentages 0..100. */
@@ -116,7 +123,16 @@ export function FocalPointPicker({
   initialMobile,
   desktopFieldName = "imageObjectPositionDesktop",
   mobileFieldName = "imageObjectPositionMobile",
+  videoUrl,
 }: Props) {
+  // What we'll use as the editor canvas + the preview source. Image
+  // wins when both are set because a still loads faster, doesn't drain
+  // battery, and gives the admin a steady frame to pin on. Video is
+  // the fallback for the cinematic hero where a poster might not exist
+  // yet. Empty string when neither — picker falls back to its empty
+  // state.
+  const usingVideo = !imageUrl && !!videoUrl;
+  const mediaUrl = imageUrl || videoUrl || "";
   const [desktop, setDesktop] = useState<Pin>(() =>
     parseObjectPosition(initialDesktop),
   );
@@ -143,11 +159,11 @@ export function FocalPointPicker({
   // Show empty state when there's no image yet — admin hasn't pasted a
   // URL or the popup is disabled. The hidden inputs still submit (so the
   // saved value survives), but the picker UI is hidden.
-  if (!imageUrl) {
+  if (!mediaUrl) {
     return (
       <div className="border border-dashed border-ink/15 px-4 py-6 text-[12px] text-ink-mid">
-        Upload or paste an image URL above to use the visual focal-point
-        picker.
+        Upload or paste an image / video URL above to use the visual
+        focal-point picker.
         <input
           type="hidden"
           name={desktopFieldName}
@@ -211,9 +227,12 @@ export function FocalPointPicker({
         </span>
       </div>
 
-      {/* Main interaction surface: full image with a draggable pin */}
+      {/* Main interaction surface: full image / video with a draggable
+          pin. Same component handles either; usingVideo flips the
+          underlying element from <img> to <video>. */}
       <PinSurface
-        imageUrl={imageUrl}
+        mediaUrl={mediaUrl}
+        isVideo={usingVideo}
         pin={activePin}
         onChange={setActivePin}
       />
@@ -229,13 +248,15 @@ export function FocalPointPicker({
       <div className="grid grid-cols-2 gap-4 pt-2">
         <CropPreview
           label="Desktop preview"
-          imageUrl={imageUrl}
+          mediaUrl={mediaUrl}
+          isVideo={usingVideo}
           pin={desktop}
           aspectClass="aspect-[41/48]"
         />
         <CropPreview
           label="Mobile preview"
-          imageUrl={imageUrl}
+          mediaUrl={mediaUrl}
+          isVideo={usingVideo}
           pin={mobile}
           aspectClass="aspect-[360/176]"
         />
@@ -253,11 +274,13 @@ export function FocalPointPicker({
 // ────────── interactive image surface with draggable pin ──────────────
 
 function PinSurface({
-  imageUrl,
+  mediaUrl,
+  isVideo,
   pin,
   onChange,
 }: {
-  imageUrl: string;
+  mediaUrl: string;
+  isVideo: boolean;
   pin: Pin;
   onChange: (p: Pin) => void;
 }) {
@@ -317,16 +340,31 @@ function PinSurface({
         (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
       }}
     >
-      {/* The image itself — object-contain so the WHOLE photograph is
+      {/* The editor canvas — object-contain so the WHOLE frame is
           visible to the admin (this is the editor; we're choosing the
-          crop, not previewing it). */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={imageUrl}
-        alt=""
-        draggable={false}
-        className="block max-h-[420px] w-full object-contain"
-      />
+          crop, not previewing it). When a video URL is being edited
+          we render <video autoPlay muted loop> so the admin sees the
+          motion they're pinning a crop on. */}
+      {isVideo ? (
+        // eslint-disable-next-line jsx-a11y/media-has-caption
+        <video
+          src={mediaUrl}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          className="block max-h-[420px] w-full object-contain"
+        />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={mediaUrl}
+          alt=""
+          draggable={false}
+          className="block max-h-[420px] w-full object-contain"
+        />
+      )}
 
       {/* Crosshair pin — positioned absolutely at the chosen X%, Y%.
           Translates by -50% so the centre of the pin lines up with the
@@ -351,12 +389,14 @@ function PinSurface({
  */
 function CropPreview({
   label,
-  imageUrl,
+  mediaUrl,
+  isVideo,
   pin,
   aspectClass,
 }: {
   label: string;
-  imageUrl: string;
+  mediaUrl: string;
+  isVideo: boolean;
   pin: Pin;
   aspectClass: string;
 }) {
@@ -370,14 +410,37 @@ function CropPreview({
       <div className="mb-1 text-[11px] uppercase tracking-label text-ink-mid">
         {label}
       </div>
-      <div
-        className={`relative w-full overflow-hidden border border-ink/15 bg-ink/5 ${aspectClass}`}
-        style={{
-          backgroundImage: `url("${imageUrl}")`,
-          backgroundSize: "cover",
-          backgroundPosition: positionCss,
-        }}
-      />
+      {/* Same crop math whether the source is an image or a video.
+          For images we stamp a CSS background — no extra DOM. For
+          videos we render an inline <video> with object-cover +
+          object-position because background-image can't render mp4s.
+          Both paths visually match the production output exactly. */}
+      {isVideo ? (
+        <div
+          className={`relative w-full overflow-hidden border border-ink/15 bg-ink/5 ${aspectClass}`}
+        >
+          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+          <video
+            src={mediaUrl}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ objectPosition: positionCss }}
+          />
+        </div>
+      ) : (
+        <div
+          className={`relative w-full overflow-hidden border border-ink/15 bg-ink/5 ${aspectClass}`}
+          style={{
+            backgroundImage: `url("${mediaUrl}")`,
+            backgroundSize: "cover",
+            backgroundPosition: positionCss,
+          }}
+        />
+      )}
       <div className="mt-1 tabular-nums text-[10px] text-ink-mid/70">
         {positionCss}
       </div>

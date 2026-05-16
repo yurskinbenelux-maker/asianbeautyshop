@@ -141,15 +141,18 @@ export default async function AdminHeroVariantPage({
               </div>
               <FocalPointPicker
                 imageUrl={cfg.videoPoster}
+                videoUrl={cfg.videoUrl}
                 initialDesktop={cfg.videoObjectPositionDesktop}
                 initialMobile={cfg.videoObjectPositionMobile}
                 desktopFieldName="videoObjectPositionDesktop"
                 mobileFieldName="videoObjectPositionMobile"
               />
               <p className="mt-2 text-[11px] text-ink-mid">
-                Set a poster image above first — the picker uses it as
-                the editor canvas. The same crop coordinates are then
-                applied to the playing video on the homepage.
+                When a poster image is set above, the picker uses it as
+                the editor canvas (lighter preview). If no poster is
+                set, the picker falls back to the actual video — drag
+                the pin while it plays. Same crop coordinates apply to
+                the live hero either way.
               </p>
             </div>
           </div>
