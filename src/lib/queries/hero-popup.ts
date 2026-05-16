@@ -15,11 +15,14 @@ import { prisma } from "@/lib/prisma";
 
 import {
   EMPTY_COPY,
+  EMPTY_CROP,
   HERO_POPUP_DEFAULT_EN,
   type HeroPopupCopy,
   type HeroPopupPickerOption,
   type HeroPopupProductCard,
   type HeroPopupSettings,
+  type ProductCrop,
+  type ProductCropMap,
 } from "./hero-popup-types";
 
 // Re-export the public types/constants from this module so existing
@@ -27,12 +30,15 @@ import {
 // know about the split. Server callers get the full surface.
 export {
   EMPTY_COPY,
+  EMPTY_CROP,
   HERO_POPUP_DEFAULT_EN,
   HERO_POPUP_FIELDS,
   type HeroPopupCopy,
   type HeroPopupPickerOption,
   type HeroPopupProductCard,
   type HeroPopupSettings,
+  type ProductCrop,
+  type ProductCropMap,
 } from "./hero-popup-types";
 
 const SETTING_KEY = "marketing.hero_popup";
@@ -41,6 +47,7 @@ export const HERO_POPUP_DEFAULTS: HeroPopupSettings = {
   enabled: false,
   delaySeconds: 3,
   productIds: [],
+  productCrops: {},
   copy: {
     [Locale.EN]: HERO_POPUP_DEFAULT_EN,
     [Locale.NL]: { ...EMPTY_COPY },
@@ -70,6 +77,28 @@ function asProductIds(v: unknown): string[] {
   return v
     .filter((x): x is string => typeof x === "string" && x.length > 0)
     .slice(0, 6);
+}
+
+/** Tolerant parse of a saved productCrops map. Drops anything that
+ *  isn't `{ desktop: string; mobile: string }`. */
+function asProductCrops(v: unknown): ProductCropMap {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return {};
+  const out: ProductCropMap = {};
+  for (const [id, raw] of Object.entries(v as Record<string, unknown>)) {
+    if (typeof id !== "string" || !id) continue;
+    if (!raw || typeof raw !== "object") continue;
+    const r = raw as Record<string, unknown>;
+    const desktop = asString(r.desktop);
+    const mobile = asString(r.mobile);
+    // Skip empty entries — empty == default == "no crop set", and
+    // leaving them out keeps the JSON column small.
+    if (!desktop && !mobile) continue;
+    out[id] = {
+      desktop: desktop.slice(0, 60),
+      mobile: mobile.slice(0, 60),
+    };
+  }
+  return out;
 }
 
 function asCopy(v: unknown, fallback: HeroPopupCopy): HeroPopupCopy {
@@ -108,6 +137,7 @@ export async function readHeroPopupSettings(): Promise<HeroPopupSettings> {
         60,
       ),
       productIds: asProductIds(v.productIds),
+      productCrops: asProductCrops(v.productCrops),
       copy: {
         [Locale.EN]: asCopy(copyV[Locale.EN], HERO_POPUP_DEFAULTS.copy.EN),
         [Locale.NL]: asCopy(copyV[Locale.NL], EMPTY_COPY),
@@ -126,10 +156,19 @@ export async function readHeroPopupSettings(): Promise<HeroPopupSettings> {
 export async function writeHeroPopupSettings(
   next: HeroPopupSettings,
 ): Promise<void> {
+  // Prune crops for products that are no longer in the picked list —
+  // they can't be edited from the admin anyway and just bloat the JSON.
+  const allowedIds = new Set(asProductIds(next.productIds));
+  const prunedCrops: ProductCropMap = {};
+  for (const [id, c] of Object.entries(next.productCrops ?? {})) {
+    if (allowedIds.has(id)) prunedCrops[id] = c;
+  }
+
   const safe: HeroPopupSettings = {
     enabled: !!next.enabled,
     delaySeconds: asInt(next.delaySeconds, 3, 0, 60),
     productIds: asProductIds(next.productIds),
+    productCrops: asProductCrops(prunedCrops),
     copy: {
       [Locale.EN]: asCopy(next.copy?.EN, HERO_POPUP_DEFAULTS.copy.EN),
       [Locale.NL]: asCopy(next.copy?.NL, EMPTY_COPY),
@@ -198,11 +237,16 @@ export async function getHeroPopupProductCards(
       p.translations.find((x) => x.locale === locale) ??
       p.translations.find((x) => x.locale === Locale.EN);
     if (!t) continue;
+    // Pull the saved per-product crop, falling back to empty strings
+    // (which the public tile treats as "browser default = center").
+    const crop = cfg.productCrops?.[p.id];
     cards.push({
       id: p.id,
       name: t.name,
       slug: t.slug,
       imageUrl: p.media[0]?.url ?? "",
+      objectPositionDesktop: crop?.desktop ?? "",
+      objectPositionMobile: crop?.mobile ?? "",
     });
   }
   return cards;

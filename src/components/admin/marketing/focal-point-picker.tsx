@@ -50,6 +50,12 @@ type Props = {
    *  separate poster image first. When both are set, image wins
    *  (lighter preview, no autoplay needed). */
   videoUrl?: string;
+  /** Optional callback fired whenever either pin moves. Receives the
+   *  CSS strings ("30% 50%" etc.) so callers can sync their own state
+   *  (e.g. a live popup preview that renders the same crop without
+   *  waiting for form submit). When omitted the picker behaves
+   *  exactly as before — fully self-contained via hidden inputs. */
+  onChange?: (desktop: string, mobile: string) => void;
 };
 
 /** Internal pin coordinates as percentages 0..100. */
@@ -124,6 +130,7 @@ export function FocalPointPicker({
   desktopFieldName = "imageObjectPositionDesktop",
   mobileFieldName = "imageObjectPositionMobile",
   videoUrl,
+  onChange,
 }: Props) {
   // What we'll use as the editor canvas + the preview source. Image
   // wins when both are set because a still loads faster, doesn't drain
@@ -156,6 +163,17 @@ export function FocalPointPicker({
     // image change" behaviour if we ever want it.
   }, [imageUrl]);
 
+  // Notify the parent whenever either pin moves. Lets a caller drive a
+  // live preview off the same crop strings the picker is about to
+  // serialise into hidden inputs. We fire from a useEffect (not inline
+  // in setDesktop / setMobile) so the callback only runs after React
+  // commits the new state — that way the parent's render and the
+  // picker's preview stay in sync, no stale-value rounds.
+  useEffect(() => {
+    if (!onChange) return;
+    onChange(formatObjectPosition(desktop), formatObjectPosition(mobile));
+  }, [desktop, mobile, onChange]);
+
   // Show empty state when there's no image yet — admin hasn't pasted a
   // URL or the popup is disabled. The hidden inputs still submit (so the
   // saved value survives), but the picker UI is hidden.
@@ -183,16 +201,20 @@ export function FocalPointPicker({
 
   return (
     <div className="space-y-4">
-      {/* Hidden inputs — what the server action actually reads. Same
-          field names as the Phase 1 text inputs so no action change. */}
+      {/* Hidden inputs — what the server action actually reads. Names
+          come from the props so different forms (welcome popup, quiz
+          popup, video hero, per-product crops in the hero popup, …)
+          can all share this picker by passing their own field names.
+          Defaults match the original Phase 1 popup field names so
+          existing callers keep working unchanged. */}
       <input
         type="hidden"
-        name="imageObjectPositionDesktop"
+        name={desktopFieldName}
         value={formatObjectPosition(desktop)}
       />
       <input
         type="hidden"
-        name="imageObjectPositionMobile"
+        name={mobileFieldName}
         value={formatObjectPosition(mobile)}
       />
 

@@ -20,10 +20,27 @@ export type HeroPopupCopy = {
   hintLabel: string;
 };
 
+/** CSS `object-position` overrides for one product image inside the
+ *  popup bento. Stored per viewport because portrait product photos
+ *  often need a different crop in the 3:1 wide hero slot vs the 1:1
+ *  square slots. Empty strings = "center" (default). */
+export type ProductCrop = {
+  desktop: string;
+  mobile: string;
+};
+
+/** Map of product id → crop. Keyed by id (not slot index) so reordering
+ *  the bento doesn't strand crops on the wrong product. */
+export type ProductCropMap = Record<string, ProductCrop>;
+
 export type HeroPopupSettings = {
   enabled: boolean;
   delaySeconds: number;
   productIds: string[];
+  /** Per-product focal points. Optional — products without an entry
+   *  render with the browser's default "center" crop. Added late so
+   *  the read side tolerates rows saved before this field existed. */
+  productCrops: ProductCropMap;
   copy: Record<Locale, HeroPopupCopy>;
 };
 
@@ -33,6 +50,11 @@ export type HeroPopupProductCard = {
   name: string;
   slug: string;
   imageUrl: string;
+  /** Per-viewport CSS object-position. Empty string falls back to the
+   *  browser default ("center"). Passed through from the admin
+   *  focal-point picker per product. */
+  objectPositionDesktop: string;
+  objectPositionMobile: string;
 };
 
 /** Admin product-picker option shape. */
@@ -41,6 +63,11 @@ export type HeroPopupPickerOption = {
   name: string;
   slug: string;
   imageUrl: string;
+};
+
+export const EMPTY_CROP: ProductCrop = {
+  desktop: "",
+  mobile: "",
 };
 
 export const EMPTY_COPY: HeroPopupCopy = {

@@ -332,7 +332,13 @@ function BentoMosaic({
 
 /** A single image-led tile. Product name reads off a subtle gradient at
  *  the bottom of the image — keeps the tile editorial without making
- *  the popup feel like a list view. */
+ *  the popup feel like a list view.
+ *
+ *  Per-product object-position is applied via two CSS custom properties
+ *  (mobile / desktop) and the matching arbitrary-value Tailwind classes.
+ *  Same trick we use on the cinematic video hero, so the crop can
+ *  differ between viewports without media-queries in JS. Empty strings
+ *  fall back to the browser default of "center". */
 function BentoTile({
   product,
   locale,
@@ -346,6 +352,8 @@ function BentoTile({
   sizes: string;
   onSelect: () => void;
 }) {
+  const desktopPos = product.objectPositionDesktop?.trim() || "center";
+  const mobilePos = product.objectPositionMobile?.trim() || "center";
   return (
     <Link
       href={`/${locale}/shop/${product.slug}`}
@@ -359,7 +367,13 @@ function BentoTile({
             alt={product.name}
             fill
             sizes={sizes}
-            className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+            className="object-cover transition-transform duration-700 group-hover:scale-[1.04] [object-position:var(--yur-tile-pos-mobile)] md:[object-position:var(--yur-tile-pos-desktop)]"
+            style={
+              {
+                "--yur-tile-pos-desktop": desktopPos,
+                "--yur-tile-pos-mobile": mobilePos,
+              } as React.CSSProperties
+            }
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-[10px] uppercase tracking-label text-ink-mid">

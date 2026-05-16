@@ -29,7 +29,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import {
-  useActionState,
   useCallback,
   useMemo,
   useRef,
@@ -39,6 +38,7 @@ import {
 import {
   AlertCircle,
   Check,
+  Crop,
   GripVertical,
   Languages,
   Loader2,
@@ -54,8 +54,10 @@ import { cn } from "@/lib/utils";
 import {
   HERO_POPUP_FIELDS,
   type HeroPopupCopy,
+  type HeroPopupProductCard,
   type HeroPopupSettings,
   type HeroPopupPickerOption,
+  type ProductCropMap,
 } from "@/lib/queries/hero-popup-types";
 import {
   saveHeroPopupAction,
@@ -63,6 +65,8 @@ import {
   polishHeroPopupAction,
   type HeroPopupActionState,
 } from "@/app/admin/marketing/hero-popup/actions";
+import { FocalPointPicker } from "@/components/admin/marketing/focal-point-picker";
+import { HeroPopupPreview } from "@/components/admin/marketing/hero-popup-preview";
 
 const LOCALES: Locale[] = [Locale.EN, Locale.NL, Locale.FR, Locale.RU];
 const MIN_PRODUCTS = 3;
@@ -86,6 +90,18 @@ export function HeroPopupForm({
   const [copy, setCopy] = useState<CopyByLocale>(initial.copy);
   const [activeLocale, setActiveLocale] = useState<Locale>(Locale.EN);
 
+  // Per-product focal-point crops. Keyed by product id (NOT slot index)
+  // so reordering products doesn't strand a crop on the wrong tile.
+  // Lifted up so the live preview re-renders instantly as the admin
+  // drags a pin in the FocalPointPicker.
+  const [productCrops, setProductCrops] = useState<ProductCropMap>(
+    initial.productCrops ?? {},
+  );
+  // Which product card's crop picker is currently expanded. Only one
+  // open at a time — keeps the form compact (6 expanded pickers would
+  // make the page enormous). null = all collapsed.
+  const [expandedCropId, setExpandedCropId] = useState<string | null>(null);
+
   // Picker dropdown state — search filter for the "add product" widget.
   const [pickerQuery, setPickerQuery] = useState<string>("");
 
@@ -105,6 +121,19 @@ export function HeroPopupForm({
 
   const removePicked = (id: string) => {
     setPickedIds((prev) => prev.filter((x) => x !== id));
+    // Drop the crop for this product too — keeps state consistent with
+    // what the server-side prune would do on save, so the live preview
+    // doesn't keep painting a removed product's focal point.
+    setProductCrops((prev) => {
+      if (!(id in prev)) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    // If the crop editor was open for the product we just removed,
+    // close it — otherwise we'd render a picker pointing at a
+    // non-existent option.
+    setExpandedCropId((cur) => (cur === id ? null : cur));
   };
 
   const addPicked = (id: string) => {
@@ -229,6 +258,50 @@ export function HeroPopupForm({
       .slice(0, 8);
   }, [pickerOptions, pickedIds, pickerQuery]);
 
+  // ── live preview product cards ──────────────────────────────────────
+  // Build the same HeroPopupProductCard[] shape the public popup expects,
+  // entirely from current form state — so the preview re-renders the
+  // moment the admin reorders, swaps a product, or moves a crop pin.
+  const previewCards: HeroPopupProductCard[] = useMemo(() => {
+    return pickedIds
+      .map((id) => {
+        const o = optionsById.get(id);
+        if (!o) return null;
+        const crop = productCrops[id];
+        return {
+          id: o.id,
+          name: o.name,
+          slug: o.slug,
+          imageUrl: o.imageUrl,
+          objectPositionDesktop: crop?.desktop ?? "",
+          objectPositionMobile: crop?.mobile ?? "",
+        } satisfies HeroPopupProductCard;
+      })
+      .filter((c): c is HeroPopupProductCard => c !== null);
+  }, [pickedIds, optionsById, productCrops]);
+
+  // Update one product's crop in state. Wrapped in useCallback so the
+  // FocalPointPicker's onChange identity is stable — the picker fires
+  // its onChange from a useEffect that depends on the callback, so an
+  // identity churn there would loop.
+  const updateCrop = useCallback(
+    (id: string, desktop: string, mobile: string) => {
+      setProductCrops((prev) => {
+        const cur = prev[id];
+        if (cur?.desktop === desktop && cur?.mobile === mobile) return prev;
+        // Drop empty entries entirely so the JSON stays compact.
+        if (!desktop && !mobile) {
+          if (!cur) return prev;
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        }
+        return { ...prev, [id]: { desktop, mobile } };
+      });
+    },
+    [],
+  );
+
   return (
     <form action={saveHeroPopupAction} onSubmit={onSubmit} className="space-y-10">
       {/* hidden inputs that mirror the controlled state into FormData */}
@@ -239,6 +312,28 @@ export function HeroPopupForm({
         name="productIdsCsv"
         value={pickedIds.join(",")}
       />
+      {/* Per-product crops. One pair of hidden inputs per picked id —
+          the server action reads them by walking the picked list. We
+          render these from our own state (NOT from the FocalPointPicker's
+          hidden inputs) so the values stay correct even when the picker
+          is collapsed and unmounted. */}
+      {pickedIds.map((id) => {
+        const c = productCrops[id];
+        return (
+          <span key={`crop-${id}`}>
+            <input
+              type="hidden"
+              name={`crop.${id}.desktop`}
+              value={c?.desktop ?? ""}
+            />
+            <input
+              type="hidden"
+              name={`crop.${id}.mobile`}
+              value={c?.mobile ?? ""}
+            />
+          </span>
+        );
+      })}
       {LOCALES.map((loc) =>
         FIELD_KEYS.map((k) => (
           <input
@@ -249,6 +344,30 @@ export function HeroPopupForm({
           />
         )),
       )}
+
+      {/* ── live preview ─────────────────────────────────────────── */}
+      <section>
+        <header className="flex items-end justify-between gap-4">
+          <div>
+            <div className="eyebrow">Preview</div>
+            <h2 className="mt-1 font-display text-[20px] text-ink">
+              How the popup looks right now
+            </h2>
+            <p className="mt-1 max-w-xl text-[12px] text-ink-mid">
+              Updates as you reorder products, edit copy, or move crop
+              pins below. Currently showing{" "}
+              <strong className="font-medium text-ink">{activeLocale}</strong>{" "}
+              copy — change the locale tab further down to preview NL/FR/RU.
+            </p>
+          </div>
+        </header>
+        <div className="mt-4">
+          <HeroPopupPreview
+            copy={copy[activeLocale]}
+            products={previewCards}
+          />
+        </div>
+      </section>
 
       {/* ── enable + delay ───────────────────────────────────────── */}
       <section className="grid grid-cols-1 gap-6 border border-ink/10 bg-white/60 p-5 md:grid-cols-2">
@@ -369,6 +488,42 @@ export function HeroPopupForm({
                 <div className="absolute bottom-1 left-1 inline-flex h-5 w-5 items-center justify-center bg-ink text-[10px] font-mono text-rice">
                   {idx + 1}
                 </div>
+                {/* Per-product crop trigger — opens the FocalPointPicker
+                    panel below the grid for this product. A subtle ring
+                    on the card indicates which one is currently being
+                    edited, and a tiny dot signals when the crop is set
+                    to something other than the default centre. */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExpandedCropId((cur) => (cur === id ? null : id))
+                  }
+                  aria-label={
+                    expandedCropId === id ? "Close crop editor" : "Adjust crop"
+                  }
+                  aria-pressed={expandedCropId === id}
+                  className={cn(
+                    "absolute bottom-1 right-1 inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] uppercase tracking-label transition-colors",
+                    expandedCropId === id
+                      ? "bg-ink text-rice"
+                      : "bg-white/90 text-ink hover:bg-ink hover:text-rice",
+                  )}
+                >
+                  <Crop className="h-3 w-3" aria-hidden />
+                  Crop
+                  {productCrops[id] && (
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "ml-0.5 h-1.5 w-1.5 rounded-full",
+                        expandedCropId === id
+                          ? "bg-rice"
+                          : "bg-vermilion",
+                      )}
+                      title="Custom crop set"
+                    />
+                  )}
+                </button>
               </li>
             );
           })}
@@ -378,6 +533,67 @@ export function HeroPopupForm({
             </li>
           )}
         </ol>
+
+        {/* Per-product crop editor — appears below the grid only when
+            one of the Crop buttons is active. Single picker instance
+            keyed by product id so React re-mounts (and re-parses its
+            initial pin values) when the admin switches which product
+            is being cropped.
+
+            The picker fires onChange on every drag → updates our
+            controlled productCrops state → re-renders the live
+            preview at the top. Hidden inputs at the form root
+            serialise the canonical state into FormData. */}
+        {expandedCropId && (() => {
+          const op = optionsById.get(expandedCropId);
+          if (!op) return null;
+          const cur = productCrops[expandedCropId];
+          return (
+            <div
+              key={`crop-editor-${expandedCropId}`}
+              className="mt-5 border border-ink/15 bg-white/60 p-5"
+            >
+              <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-[10px] uppercase tracking-label text-ink-mid">
+                    Crop editor
+                  </div>
+                  <div className="mt-0.5 font-display text-[15px] text-ink">
+                    {op.name}
+                  </div>
+                  <p className="mt-1 max-w-md text-[11px] leading-relaxed text-ink-mid">
+                    Drag the pin on the image below to set what part of
+                    the photo stays visible inside each popup tile. One
+                    pin per viewport — desktop and mobile can differ.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setExpandedCropId(null)}
+                  className="inline-flex items-center gap-1.5 border border-ink/15 bg-white px-3 py-1.5 text-[11px] uppercase tracking-label text-ink hover:border-ink"
+                >
+                  <X className="h-3 w-3" />
+                  Close
+                </button>
+              </header>
+              <FocalPointPicker
+                key={expandedCropId}
+                imageUrl={op.imageUrl}
+                initialDesktop={cur?.desktop ?? ""}
+                initialMobile={cur?.mobile ?? ""}
+                // Empty names → the picker still renders its hidden
+                // inputs but they're harmless (we serialise from
+                // controlled state at the form root). Avoids collisions
+                // with the canonical crop.* names we own.
+                desktopFieldName={`__picker.${expandedCropId}.desktop`}
+                mobileFieldName={`__picker.${expandedCropId}.mobile`}
+                onChange={(desktop, mobile) =>
+                  updateCrop(expandedCropId, desktop, mobile)
+                }
+              />
+            </div>
+          );
+        })()}
 
         {/* searchable add row */}
         {!pickedAtCap && (

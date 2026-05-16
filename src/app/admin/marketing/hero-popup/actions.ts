@@ -31,6 +31,7 @@ import {
   writeHeroPopupSettings,
   type HeroPopupCopy,
   type HeroPopupSettings,
+  type ProductCropMap,
 } from "@/lib/queries/hero-popup";
 
 export type HeroPopupActionState = {
@@ -99,10 +100,29 @@ export async function saveHeroPopupAction(formData: FormData): Promise<void> {
     ),
   ).slice(0, 6);
 
+  // Crops live as N pairs of FormData fields named
+  //   crop.${id}.desktop, crop.${id}.mobile
+  // The admin form renders these as hidden inputs from its
+  // controlled state. We collect them by walking the saved id list
+  // (ignoring anything for ids that weren't actually picked) and
+  // capping each value at 60 chars (same as the read side).
+  const productCrops: ProductCropMap = {};
+  for (const id of ids) {
+    const desktop = String(formData.get(`crop.${id}.desktop`) ?? "")
+      .trim()
+      .slice(0, 60);
+    const mobile = String(formData.get(`crop.${id}.mobile`) ?? "")
+      .trim()
+      .slice(0, 60);
+    if (!desktop && !mobile) continue;
+    productCrops[id] = { desktop, mobile };
+  }
+
   const next: HeroPopupSettings = {
     enabled: top.enabled,
     delaySeconds: top.delaySeconds,
     productIds: ids,
+    productCrops,
     copy: {
       [Locale.EN]: parseCopyFromForm(formData, Locale.EN),
       [Locale.NL]: parseCopyFromForm(formData, Locale.NL),
