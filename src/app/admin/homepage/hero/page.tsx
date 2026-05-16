@@ -11,6 +11,7 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { requireCapability } from "@/lib/auth-roles";
 import { readHomeHeroSettings } from "@/lib/queries/home-hero";
+import { FocalPointPicker } from "@/components/admin/marketing/focal-point-picker";
 import { saveHomeHeroAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -123,6 +124,34 @@ export default async function AdminHeroVariantPage({
               placeholder="https://…/hero-poster.jpg"
               hint="Shown for first paint while the video downloads. Same dimensions as the video (1920×1080)."
             />
+
+            {/* Focal-point picker reuses the popups' picker, fed the
+                video POSTER as its editable canvas. Whatever crop the
+                admin sets is applied to the real <video> element on
+                the homepage via CSS object-position — so the
+                cinematic crop on mobile can centre on the part of the
+                frame an admin chooses (e.g. a face that lives in the
+                right third of a wide 1920×1080 shot). Falls back
+                gracefully when no poster has been set yet: the picker
+                shows its empty state but the hidden inputs still
+                submit so the saved focal points survive the form. */}
+            <div>
+              <div className="mb-2 text-[11px] uppercase tracking-label text-ink-mid">
+                Video focus point
+              </div>
+              <FocalPointPicker
+                imageUrl={cfg.videoPoster}
+                initialDesktop={cfg.videoObjectPositionDesktop}
+                initialMobile={cfg.videoObjectPositionMobile}
+                desktopFieldName="videoObjectPositionDesktop"
+                mobileFieldName="videoObjectPositionMobile"
+              />
+              <p className="mt-2 text-[11px] text-ink-mid">
+                Set a poster image above first — the picker uses it as
+                the editor canvas. The same crop coordinates are then
+                applied to the playing video on the homepage.
+              </p>
+            </div>
           </div>
         </div>
 

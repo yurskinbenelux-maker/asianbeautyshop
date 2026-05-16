@@ -24,10 +24,20 @@ export function HeroVideo({
   copy,
   videoUrl,
   poster,
+  objectPositionDesktop = "center",
+  objectPositionMobile = "center",
 }: {
   copy: HeroCopy;
   videoUrl: string;
   poster?: string;
+  /** Optional CSS object-position override for desktop / mobile. Lets an
+   *  admin shift the visible crop of the cinematic video so what's
+   *  perfect on PC (e.g. a face in the right third) stays visible on
+   *  mobile (where the wider video gets cropped to a much taller
+   *  letterbox). Both default to "center" — same crop the feature
+   *  shipped with. */
+  objectPositionDesktop?: string;
+  objectPositionMobile?: string;
 }) {
   const ref = useRef<HTMLVideoElement | null>(null);
 
@@ -63,7 +73,18 @@ export function HeroVideo({
         // eslint-disable-next-line jsx-a11y/media-has-caption
         <video
           ref={ref}
-          className="absolute inset-0 h-full w-full object-cover"
+          // Per-viewport object-position via two CSS custom properties
+          // (same pattern as the popups). The mobile value applies by
+          // default; the md: variant swaps in the desktop value. Falls
+          // back to "center" everywhere when the admin hasn't set a
+          // focal point.
+          className="absolute inset-0 h-full w-full object-cover [object-position:var(--yur-hero-vid-pos-mobile)] md:[object-position:var(--yur-hero-vid-pos-desktop)]"
+          style={
+            {
+              "--yur-hero-vid-pos-desktop": objectPositionDesktop || "center",
+              "--yur-hero-vid-pos-mobile": objectPositionMobile || "center",
+            } as React.CSSProperties
+          }
           src={videoUrl}
           poster={poster || undefined}
           autoPlay

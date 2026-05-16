@@ -26,6 +26,10 @@ const Schema = z.object({
   variant: z.enum(["typography", "video", "collage"]),
   videoUrl: z.string().trim().max(2000).optional().default(""),
   videoPoster: z.string().trim().max(2000).optional().default(""),
+  // CSS object-position values from the FocalPointPicker. Same shape as
+  // the popup picker fields — short strings, capped at 60 chars.
+  videoObjectPositionDesktop: z.string().trim().max(60).optional().default(""),
+  videoObjectPositionMobile: z.string().trim().max(60).optional().default(""),
   collage0: z.string().trim().max(2000).optional().default(""),
   collage1: z.string().trim().max(2000).optional().default(""),
   collage2: z.string().trim().max(2000).optional().default(""),
@@ -52,6 +56,10 @@ export async function saveHomeHeroAction(formData: FormData): Promise<void> {
     variant: parsed.variant,
     videoUrl: parsed.videoUrl,
     videoPoster: parsed.videoPoster,
+    videoObjectPositionDesktop:
+      parsed.videoObjectPositionDesktop || "center",
+    videoObjectPositionMobile:
+      parsed.videoObjectPositionMobile || "center",
     collageUrls: [parsed.collage0, parsed.collage1, parsed.collage2],
     colorBlockProducts,
   };

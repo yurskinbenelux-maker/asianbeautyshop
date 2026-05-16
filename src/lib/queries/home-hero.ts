@@ -32,6 +32,18 @@ export type HomeHeroSettings = {
   variant: HomeHeroVariant;
   videoUrl: string;
   videoPoster: string;
+  /** CSS `object-position` value applied to the cinematic <video> at
+   *  desktop breakpoints (md+). Defaults to "center" — same crop the
+   *  feature shipped with. An admin sets these via the focal-point
+   *  picker on /admin/homepage/hero (using the poster as the editor
+   *  canvas) so mobile crops can differ from the perfect desktop
+   *  composition.
+   *
+   *  Same shape as the popup positions — short CSS string, parsed by
+   *  the browser's native CSS engine. Invalid values silently render
+   *  as if "center". */
+  videoObjectPositionDesktop: string;
+  videoObjectPositionMobile: string;
   /** Legacy single-image fields. Kept for backwards compat — still
    *  consumed by the color-block hero when `colorBlockProducts` is empty. */
   collageUrls: [string, string, string];
@@ -52,6 +64,8 @@ export const HOME_HERO_DEFAULTS: HomeHeroSettings = {
   variant: "typography",
   videoUrl: "",
   videoPoster: "",
+  videoObjectPositionDesktop: "center",
+  videoObjectPositionMobile: "center",
   collageUrls: ["", "", ""],
   colorBlockProducts: [EMPTY_PRODUCT, EMPTY_PRODUCT, EMPTY_PRODUCT, EMPTY_PRODUCT, EMPTY_PRODUCT],
 };
@@ -100,6 +114,15 @@ export async function readHomeHeroSettings(): Promise<HomeHeroSettings> {
       variant: isVariant(v.variant) ? v.variant : "typography",
       videoUrl: asString(v.videoUrl),
       videoPoster: asString(v.videoPoster),
+      // Missing keys fall through to "center" — old Setting rows from
+      // before this feature shipped don't have these fields, so the
+      // empty-string fallback would render "center" anyway at the
+      // browser level. Setting it explicitly keeps the admin form's
+      // pre-fill consistent.
+      videoObjectPositionDesktop:
+        asString(v.videoObjectPositionDesktop) || "center",
+      videoObjectPositionMobile:
+        asString(v.videoObjectPositionMobile) || "center",
       collageUrls: [
         asString(rawCollage[0]),
         asString(rawCollage[1]),

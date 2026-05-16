@@ -37,6 +37,12 @@ type Props = {
   initialDesktop: string;
   /** Initial value to pre-fill the mobile pin (e.g. "center 65%"). */
   initialMobile: string;
+  /** Override the hidden-input names. Lets the same picker drive
+   *  different forms (popups use imageObjectPosition*, video hero uses
+   *  videoObjectPosition*, etc.). Defaults preserve the welcome/quiz
+   *  popup names so existing callers keep working unchanged. */
+  desktopFieldName?: string;
+  mobileFieldName?: string;
 };
 
 /** Internal pin coordinates as percentages 0..100. */
@@ -108,6 +114,8 @@ export function FocalPointPicker({
   imageUrl,
   initialDesktop,
   initialMobile,
+  desktopFieldName = "imageObjectPositionDesktop",
+  mobileFieldName = "imageObjectPositionMobile",
 }: Props) {
   const [desktop, setDesktop] = useState<Pin>(() =>
     parseObjectPosition(initialDesktop),
@@ -142,12 +150,12 @@ export function FocalPointPicker({
         picker.
         <input
           type="hidden"
-          name="imageObjectPositionDesktop"
+          name={desktopFieldName}
           value={formatObjectPosition(desktop)}
         />
         <input
           type="hidden"
-          name="imageObjectPositionMobile"
+          name={mobileFieldName}
           value={formatObjectPosition(mobile)}
         />
       </div>

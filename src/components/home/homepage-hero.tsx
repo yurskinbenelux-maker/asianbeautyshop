@@ -42,6 +42,8 @@ export async function HomepageHero({ copy }: { copy: HeroCopy }) {
           copy={copy}
           videoUrl={cfg.videoUrl}
           poster={cfg.videoPoster}
+          objectPositionDesktop={cfg.videoObjectPositionDesktop}
+          objectPositionMobile={cfg.videoObjectPositionMobile}
         />
       );
     case "collage":
