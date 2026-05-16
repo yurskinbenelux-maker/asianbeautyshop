@@ -360,6 +360,7 @@ export default async function ProductDetailPage({
                 basePriceEur={product.priceEur}
                 baseComparePriceEur={product.comparePriceEur}
                 volumeMl={product.volumeMl}
+                weightGrams={product.weightGrams}
                 currencyLocale={currencyLocale}
                 variants={variants}
                 customerEmail={customerEmail}

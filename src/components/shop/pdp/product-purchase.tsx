@@ -44,8 +44,14 @@ type Props = {
   /** Base product price — used when the product has no variants at all. */
   basePriceEur: number;
   baseComparePriceEur: number | null;
-  /** Optional volume label shown next to the price (e.g. "50 ml"). */
+  /** Net volume in millilitres — shown as a "Volume · 50 ml" line under
+   *  the price. Always rendered when set, regardless of whether the
+   *  product has variants. */
   volumeMl: number | null;
+  /** Net weight in grams — same render slot as volumeMl, used as a
+   *  fallback for solid products (powders, balms). When BOTH are set,
+   *  volumeMl wins. */
+  weightGrams: number | null;
   /** Currency formatting locale, e.g. "nl-BE". */
   currencyLocale: string;
   /** All variants for the product. Empty array = no variant selector. */
@@ -64,6 +70,7 @@ export function ProductPurchase({
   basePriceEur,
   baseComparePriceEur,
   volumeMl,
+  weightGrams,
   currencyLocale,
   variants,
   customerEmail,
@@ -148,22 +155,35 @@ export function ProductPurchase({
         <span className="font-display text-[28px] text-ink">
           {formatEur(priceEur, currencyLocale)}
         </span>
-        {volumeMl && !activeVariant && (
-          <span className="text-[12px] uppercase tracking-label text-ink-mid">
-            · {volumeMl} ml
-          </span>
-        )}
-        {/* Variant label intentionally NOT echoed next to the price —
-            the variant selector below already shows the active choice
-            with the same label, and duplicating it here turns into
-            visual noise (especially for SKU-style labels like "#23"). */}
       </div>
 
-      {/* ── variant selector (size / volume) ──────────────────── */}
+      {/* ── volume / weight label ──────────────────────────────
+          Always rendered (regardless of whether the product has
+          variants) when the admin has filled either Product.volumeMl
+          or Product.weightGrams. The variant selector below is for
+          TYPE — shade, scent, finish — and the volume/weight is a
+          separate, fixed property of the product itself. Liquids
+          (volumeMl) win when both are set; that's the more common
+          case in our catalogue. */}
+      {(volumeMl || weightGrams) && (
+        <p className="mt-3 text-[12px] uppercase tracking-label text-ink-mid">
+          {volumeMl
+            ? `${t("volume")} · ${volumeMl} ml`
+            : `${t("weight")} · ${weightGrams} g`}
+        </p>
+      )}
+
+      {/* ── variant selector (Type — shade / scent / finish) ───
+          The legend used to say "Size", but we have NEVER actually
+          used variants for physical size — they've always carried
+          shade / scent / finish (Dark / Medium / Light, #23 / #21,
+          etc.). Phase 1: just rename the heading. Phase 2 (later)
+          will add per-variant volume overrides when a product needs
+          to sell in TWO physical sizes. */}
       {variants.length > 1 && (
         <fieldset className="mt-8">
           <legend className="mb-3 text-[11px] uppercase tracking-label text-ink-mid">
-            {t("size_label")}
+            {t("type_label")}
           </legend>
           <div className="flex flex-wrap gap-2">
             {variants.map((v) => {

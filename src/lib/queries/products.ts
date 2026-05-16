@@ -1376,6 +1376,10 @@ export type ProductDetail = {
   originalPriceEur: number | null;
   discountPercent: number | null;
   volumeMl: number | null;
+  /** Net weight in grams. Same role as volumeMl but for solid products
+   *  (powders, balms, etc.). Both fields can be set; the PDP picks
+   *  volumeMl first, falls back to weightGrams. */
+  weightGrams: number | null;
   isFeatured: boolean;
   isBestseller: boolean;
   /** Includes slug + country so the PDP can render "Made in {brand-country}". */
@@ -1507,6 +1511,7 @@ export async function getProductBySlug({
     ...applyCardSale(p),
     comparePriceEur: p.comparePrice ? Number(p.comparePrice) : null,
     volumeMl: p.volumeMl,
+    weightGrams: p.weightGrams,
     isFeatured: p.isFeatured,
     isBestseller: p.isBestseller,
     brand: p.brand
