@@ -365,12 +365,25 @@ model ProductVariant {
   productId   String   @db.Uuid
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   sku         String   @unique
-  label       String   // "50 ml", "100 ml", "Travel size"
+  // The "Type" axis on the PDP — shade name, scent, finish, etc.
+  // (e.g. "Dark", "#23", "Original"). Used to be a Volume axis but
+  // every product we've shipped has used it for type/shade.
+  label       String
   price       Decimal? @db.Decimal(10, 2) // null = inherit from Product.price
   comparePrice Decimal? @db.Decimal(10, 2)
   stock       Int      @default(0)
   isDefault   Boolean  @default(false)
   sortOrder   Int      @default(0)
+  // Per-variant volume override (in ml). Null = inherit Product.volumeMl.
+  // When multiple variants on the same product have DIFFERENT non-null
+  // volumeMl values, the PDP renders a Volume selector alongside the
+  // Type selector (two-axis mode). Same field role as Product.volumeMl,
+  // just at variant grain — for the rare case of "same product in 30ml
+  // AND 50ml each in Dark/Medium/Light".
+  volumeMl    Int?
+  // Sendcloud uses this for the shipping quote (physical weight in
+  // grams). Kept as-is — semantic role is "package weight for the
+  // courier", separate from the customer-facing volumeMl above.
   weightGrams Int?
   barcode     String?
   createdAt   DateTime @default(now())

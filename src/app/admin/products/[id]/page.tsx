@@ -105,6 +105,7 @@ export default async function ProductEditPage({
           price: true,
           comparePrice: true,
           sortOrder: true,
+          volumeMl: true,
         },
       },
     },
@@ -481,6 +482,9 @@ export default async function ProductEditPage({
               comparePrice:
                 v.comparePrice === null ? "" : Number(v.comparePrice).toFixed(2),
               sortOrder: v.sortOrder,
+              // Phase 2 per-variant volume override. Blank string = inherit
+              // Product.volumeMl (legacy single-volume products).
+              volumeMl: v.volumeMl === null ? "" : String(v.volumeMl),
             }))}
             movements={movements}
           />

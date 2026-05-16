@@ -1478,6 +1478,21 @@ export async function adjustVariantStockAction(
 //     (deleting it would orphan order history). Otherwise hard-delete.
 // ─────────────────────────────────────────────────────────────────────────
 
+/** Shared parser for the optional per-variant volume override. Empty
+ *  string → null (inherit). Non-empty must be a positive whole number
+ *  ≤ 10 000 ml (10 L is comfortable upper bound for any cosmetic). */
+const optionalIntFromString = (max: number, label: string) =>
+  z
+    .string()
+    .trim()
+    .transform((v) => (v === "" ? null : Number.parseInt(v, 10)))
+    .refine(
+      (n) => n === null || (Number.isFinite(n) && n > 0 && n <= max),
+      {
+        message: `${label} must be a positive whole number up to ${max}, or blank.`,
+      },
+    );
+
 const VariantBaseSchema = z.object({
   label: z.string().trim().min(1, "Label is required").max(60),
   sku: z.string().trim().min(1, "SKU is required").max(64),
@@ -1497,6 +1512,10 @@ const VariantBaseSchema = z.object({
     .refine((n) => Number.isFinite(n) && n >= 0, {
       message: "Sort order must be 0 or a positive whole number",
     }),
+  // Phase 2 per-variant volume override. Blank = inherit Product.volumeMl.
+  // When variants on the same product carry DIFFERENT volumeMl values,
+  // the PDP renders a Volume selector + a narrower Type selector.
+  volumeMl: optionalIntFromString(10000, "Volume"),
 });
 
 const CreateVariantSchema = VariantBaseSchema.extend({
@@ -1537,6 +1556,7 @@ export async function createVariantAction(
     comparePrice: formData.get("comparePrice") ?? "",
     isDefault: formData.get("isDefault") === "on",
     sortOrder: formData.get("sortOrder") ?? "",
+    volumeMl: formData.get("volumeMl") ?? "",
     openingStock: formData.get("openingStock") ?? "",
   });
   if (!parsed.success) {
@@ -1595,6 +1615,7 @@ export async function createVariantAction(
           comparePrice: compareDec,
           isDefault: data.isDefault,
           sortOrder: data.sortOrder,
+          volumeMl: data.volumeMl,
           stock: 0,
         },
         select: { id: true, sku: true, label: true },
@@ -1659,6 +1680,7 @@ export async function updateVariantAction(
     comparePrice: formData.get("comparePrice") ?? "",
     isDefault: formData.get("isDefault") === "on",
     sortOrder: formData.get("sortOrder") ?? "",
+    volumeMl: formData.get("volumeMl") ?? "",
   });
   if (!parsed.success) {
     return {
@@ -1714,6 +1736,7 @@ export async function updateVariantAction(
           comparePrice: compareDec,
           isDefault: data.isDefault,
           sortOrder: data.sortOrder,
+          volumeMl: data.volumeMl,
         },
       });
     });

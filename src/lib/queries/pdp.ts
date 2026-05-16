@@ -25,6 +25,11 @@ export type PdpVariant = {
   isDefault: boolean;
   isInStock: boolean;
   sortOrder: number;
+  /** Phase 2 per-variant volume override (in ml). Null = inherit
+   *  Product.volumeMl. The PDP component groups variants by this
+   *  value: when more than one DISTINCT non-null volume exists
+   *  across the variant set, it renders a second selector row. */
+  volumeMl: number | null;
 };
 
 export async function getProductVariants({
@@ -57,6 +62,7 @@ export async function getProductVariants({
       isDefault: v.isDefault,
       isInStock: v.stock > 0,
       sortOrder: v.sortOrder,
+      volumeMl: v.volumeMl,
     };
   });
 }

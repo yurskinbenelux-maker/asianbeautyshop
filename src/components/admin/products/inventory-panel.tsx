@@ -56,6 +56,10 @@ type VariantRow = {
   price: string;
   comparePrice: string;
   sortOrder: number;
+  /** Per-variant volume override (Phase 2). Stored as a string so the
+   *  form input round-trips cleanly. Empty string = inherit
+   *  Product.volumeMl (the legacy single-volume case). */
+  volumeMl: string;
 };
 
 type Props = {
@@ -293,9 +297,9 @@ function NewVariantForm({
       </div>
       <details className="mt-4">
         <summary className="cursor-pointer text-[11px] uppercase tracking-label text-ink-mid hover:text-ink">
-          Advanced — compare price · default · sort order
+          Advanced — compare price · volume · default · sort order
         </summary>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Field
             label="Compare price (€)"
             name="comparePrice"
@@ -305,12 +309,20 @@ function NewVariantForm({
             hint="Strike-through 'was' price when on sale."
           />
           <Field
+            label="Volume (ml)"
+            name="volumeMl"
+            inputMode="numeric"
+            placeholder=""
+            errors={state.fieldErrors?.volumeMl}
+            hint="Only fill when THIS variant is a different size from the product's default. Blank = inherit."
+          />
+          <Field
             label="Sort order"
             name="sortOrder"
             inputMode="numeric"
             placeholder="0"
             errors={state.fieldErrors?.sortOrder}
-            hint="Lower = earlier in the size selector."
+            hint="Lower = earlier in the type selector."
           />
           <Toggle
             name="isDefault"
@@ -574,20 +586,26 @@ function EditVariantForm({
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         <Field
+          label="Volume (ml)"
+          name="volumeMl"
+          inputMode="numeric"
+          defaultValue={variant.volumeMl}
+          errors={state.fieldErrors?.volumeMl}
+          hint="Per-variant size. Blank = inherit. Fill ONLY when this variant is a different physical size from its siblings (e.g. 30ml + 50ml in same product) — that's what turns on the dual Volume+Type selector on the PDP."
+        />
+        <Field
           label="Sort order"
           name="sortOrder"
           inputMode="numeric"
           defaultValue={String(variant.sortOrder)}
           errors={state.fieldErrors?.sortOrder}
         />
-        <div className="sm:col-span-2">
-          <Toggle
-            name="isDefault"
-            label="Default variant"
-            sub="Pre-selected on the product page."
-            defaultChecked={variant.isDefault}
-          />
-        </div>
+        <Toggle
+          name="isDefault"
+          label="Default variant"
+          sub="Pre-selected on the product page."
+          defaultChecked={variant.isDefault}
+        />
       </div>
       <div className="flex items-center gap-4 border-t border-ink/10 pt-3">
         <SubmitButton idleLabel="Save variant" pendingLabel="Saving…" />

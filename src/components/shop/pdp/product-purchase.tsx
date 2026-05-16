@@ -105,6 +105,49 @@ export function ProductPurchase({
   const activeVariant =
     variants.find((v) => v.id === selectedVariantId) ?? null;
 
+  // ── Phase 2: two-axis (Volume + Type) detection ──────────────────
+  //
+  // A product qualifies for the two-axis layout when its variants
+  // carry MORE than one distinct non-null volumeMl. If every variant
+  // shares the same volume (or none have one set), we stay in the
+  // single-Type-selector layout from Phase 1.
+  //
+  // The selector logic:
+  //   · `availableVolumes` = sorted list of distinct volumeMl values
+  //   · The active volume = the selected variant's volumeMl (or the
+  //     first non-null when there's no selection yet)
+  //   · `variantsForActiveVolume` = filter to variants matching the
+  //     active volume → these are what Type buttons render
+  //   · Clicking a Volume button reselects to the first in-stock
+  //     variant at that size; clicking a Type button reselects
+  //     directly to that variant
+  //
+  // Cart payload doesn't change — only `variantId` ever leaves this
+  // component. Downstream code (cart action, Mollie, Sendcloud) sees
+  // a single variantId, same as before.
+  const distinctVolumes = Array.from(
+    new Set(
+      variants
+        .map((v) => v.volumeMl)
+        .filter((v): v is number => v !== null && v > 0),
+    ),
+  ).sort((a, b) => a - b);
+  const isTwoAxis = distinctVolumes.length > 1;
+  const activeVolume = activeVariant?.volumeMl ?? distinctVolumes[0] ?? null;
+  const variantsForActiveVolume = isTwoAxis
+    ? variants.filter((v) => v.volumeMl === activeVolume)
+    : variants;
+
+  const pickVolume = (ml: number) => {
+    // Reselect to the first in-stock variant at that volume; if none
+    // is in stock, fall back to the first one so the customer still
+    // gets a clear "out of stock" signal rather than nothing selected.
+    const matches = variants.filter((v) => v.volumeMl === ml);
+    if (matches.length === 0) return;
+    const inStock = matches.find((v) => v.isInStock);
+    setSelectedVariantId((inStock ?? matches[0]).id);
+  };
+
   const priceEur = activeVariant?.priceEur ?? basePriceEur;
   const compareEur = activeVariant?.comparePriceEur ?? baseComparePriceEur;
   const isInStock = activeVariant ? activeVariant.isInStock : true;
@@ -158,14 +201,13 @@ export function ProductPurchase({
       </div>
 
       {/* ── volume / weight label ──────────────────────────────
-          Always rendered (regardless of whether the product has
-          variants) when the admin has filled either Product.volumeMl
-          or Product.weightGrams. The variant selector below is for
-          TYPE — shade, scent, finish — and the volume/weight is a
-          separate, fixed property of the product itself. Liquids
-          (volumeMl) win when both are set; that's the more common
-          case in our catalogue. */}
-      {(volumeMl || weightGrams) && (
+          Single-volume products show the product-level volume/weight
+          as a static line here. In two-axis mode (multiple distinct
+          variant volumes) we SKIP this line and let the Volume
+          selector below carry the same information interactively —
+          otherwise the same "50 ml" appears twice (label + first
+          selector button). Liquids win when both are set. */}
+      {!isTwoAxis && (volumeMl || weightGrams) && (
         <p className="mt-3 text-[12px] uppercase tracking-label text-ink-mid">
           {volumeMl
             ? `${t("volume")} · ${volumeMl} ml`
@@ -173,20 +215,64 @@ export function ProductPurchase({
         </p>
       )}
 
-      {/* ── variant selector (Type — shade / scent / finish) ───
-          The legend used to say "Size", but we have NEVER actually
-          used variants for physical size — they've always carried
-          shade / scent / finish (Dark / Medium / Light, #23 / #21,
-          etc.). Phase 1: just rename the heading. Phase 2 (later)
-          will add per-variant volume overrides when a product needs
-          to sell in TWO physical sizes. */}
-      {variants.length > 1 && (
+      {/* ── Volume selector (Phase 2 — only when variants differ) ──
+          Renders ONLY when the product's variants carry more than
+          one distinct non-null volumeMl. Clicking a Volume button
+          reselects to the first in-stock variant at that size; the
+          Type selector below then narrows to variants matching the
+          new active volume. Cart still receives a single variantId
+          — this UI is purely client-side resolution of the (Volume,
+          Type) pair into one row. */}
+      {isTwoAxis && (
         <fieldset className="mt-8">
+          <legend className="mb-3 text-[11px] uppercase tracking-label text-ink-mid">
+            {t("volume")}
+          </legend>
+          <div className="flex flex-wrap gap-2">
+            {distinctVolumes.map((ml) => {
+              const active = ml === activeVolume;
+              // Disable a Volume button when EVERY variant at that
+              // size is out of stock — same UX as a stock-out Type
+              // button. We still allow clicking so the customer can
+              // confirm + see "Out of stock" message below.
+              const anyInStock = variants.some(
+                (v) => v.volumeMl === ml && v.isInStock,
+              );
+              return (
+                <button
+                  key={ml}
+                  type="button"
+                  onClick={() => pickVolume(ml)}
+                  aria-pressed={active}
+                  className={cn(
+                    "relative min-w-[80px] border px-4 py-2 text-[12px] uppercase tracking-label transition-colors",
+                    active
+                      ? "border-ink bg-ink text-rice"
+                      : "border-ink/20 bg-white text-ink hover:border-ink/40",
+                    !anyInStock &&
+                      "text-ink-mid line-through opacity-60",
+                  )}
+                >
+                  {ml} ml
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      )}
+
+      {/* ── Type selector (shade / scent / finish) ─────────────
+          In single-axis mode shows every variant. In two-axis mode
+          shows ONLY variants matching the active Volume — that's
+          what makes (Volume, Type) resolve cleanly to a single
+          variantId. */}
+      {variantsForActiveVolume.length > 1 && (
+        <fieldset className={isTwoAxis ? "mt-6" : "mt-8"}>
           <legend className="mb-3 text-[11px] uppercase tracking-label text-ink-mid">
             {t("type_label")}
           </legend>
           <div className="flex flex-wrap gap-2">
-            {variants.map((v) => {
+            {variantsForActiveVolume.map((v) => {
               const active = v.id === selectedVariantId;
               return (
                 <button
