@@ -30,6 +30,11 @@ const Schema = z.object({
   // the popup picker fields — short strings, capped at 60 chars.
   videoObjectPositionDesktop: z.string().trim().max(60).optional().default(""),
   videoObjectPositionMobile: z.string().trim().max(60).optional().default(""),
+  // Decimal seconds, bounded so an admin can't accidentally freeze the
+  // hero. The read side clamps too — this is belt-and-braces. Coerce
+  // from string because <input type="number"> still submits as text.
+  videoPosterHoldSeconds: z.coerce.number().min(0).max(30).optional().default(2.5),
+  videoPosterFadeSeconds: z.coerce.number().min(0).max(10).optional().default(0.7),
   collage0: z.string().trim().max(2000).optional().default(""),
   collage1: z.string().trim().max(2000).optional().default(""),
   collage2: z.string().trim().max(2000).optional().default(""),
@@ -60,6 +65,8 @@ export async function saveHomeHeroAction(formData: FormData): Promise<void> {
       parsed.videoObjectPositionDesktop || "center",
     videoObjectPositionMobile:
       parsed.videoObjectPositionMobile || "center",
+    videoPosterHoldSeconds: parsed.videoPosterHoldSeconds,
+    videoPosterFadeSeconds: parsed.videoPosterFadeSeconds,
     collageUrls: [parsed.collage0, parsed.collage1, parsed.collage2],
     colorBlockProducts,
   };

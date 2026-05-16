@@ -155,6 +155,38 @@ export default async function AdminHeroVariantPage({
                 the live hero either way.
               </p>
             </div>
+
+            {/* Cinematic intro timings — when both a video and a poster
+                are set, the poster stays visible for X seconds then
+                cross-fades to the playing video underneath. Two
+                editable durations let an admin tune the feel without
+                a code change. Defaults match the originally-shipped
+                constants (2.5s hold, 0.7s fade). 0 in either field
+                makes that stage instant. */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                label="Poster hold (seconds)"
+                name="videoPosterHoldSeconds"
+                type="number"
+                step="0.1"
+                min="0"
+                max="30"
+                defaultValue={String(cfg.videoPosterHoldSeconds)}
+                placeholder="2.5"
+                hint="How long the poster image stays fully visible before fading. Set 0 for an instant cut to video."
+              />
+              <Field
+                label="Poster fade (seconds)"
+                name="videoPosterFadeSeconds"
+                type="number"
+                step="0.1"
+                min="0"
+                max="10"
+                defaultValue={String(cfg.videoPosterFadeSeconds)}
+                placeholder="0.7"
+                hint="How long the dissolve takes. Lower = snappier, higher = more cinematic."
+              />
+            </div>
           </div>
         </div>
 

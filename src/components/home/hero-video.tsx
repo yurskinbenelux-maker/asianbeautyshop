@@ -20,14 +20,13 @@ import { Link } from "@/i18n/routing";
 import { ArrowRight } from "lucide-react";
 import type { HeroCopy } from "./hero-moon-jar";
 
-/** How long the poster stays fully visible before the cross-fade begins.
- *  Tuned for the cinematic "title-card" feel — long enough to read the
- *  headline and form a first impression, short enough that the visitor
- *  doesn't think the page is broken. Tweak here if it ever feels off. */
-const POSTER_HOLD_MS = 2500;
-/** How long the opacity → 0 transition takes. Matches the 700ms
- *  ease-out we use elsewhere for hero animations. */
-const POSTER_FADE_MS = 700;
+/** Fallback defaults if the admin hasn't dialled in custom timings.
+ *  Matches the values the feature originally shipped with — long enough
+ *  to read the headline, short enough that the visitor doesn't think
+ *  the page is broken. The admin can now override these from
+ *  /admin/homepage/hero. */
+const DEFAULT_POSTER_HOLD_MS = 2500;
+const DEFAULT_POSTER_FADE_MS = 700;
 
 export function HeroVideo({
   copy,
@@ -35,6 +34,8 @@ export function HeroVideo({
   poster,
   objectPositionDesktop = "center",
   objectPositionMobile = "center",
+  posterHoldMs = DEFAULT_POSTER_HOLD_MS,
+  posterFadeMs = DEFAULT_POSTER_FADE_MS,
 }: {
   copy: HeroCopy;
   videoUrl: string;
@@ -47,6 +48,12 @@ export function HeroVideo({
    *  shipped with. */
   objectPositionDesktop?: string;
   objectPositionMobile?: string;
+  /** Milliseconds the poster image stays at full opacity before the
+   *  cross-fade begins. Admin-editable via /admin/homepage/hero (stored
+   *  as decimal seconds, converted to ms at the wrapper). Default 2500. */
+  posterHoldMs?: number;
+  /** Milliseconds the poster → video opacity transition takes. Default 700. */
+  posterFadeMs?: number;
 }) {
   const ref = useRef<HTMLVideoElement | null>(null);
 
@@ -89,12 +96,16 @@ export function HeroVideo({
   // cleanup clears the timer if the visitor navigates away mid-hold.
   useEffect(() => {
     if (!showPoster) return;
+    // posterHoldMs of 0 = fade immediately on mount (effectively skips
+    // the intro). setTimeout with 0 still fires on the next tick so the
+    // initial render shows the poster for a frame — that's fine, browsers
+    // need the paint to wire up the CSS transition.
     const t = window.setTimeout(
       () => setPosterVisible(false),
-      POSTER_HOLD_MS,
+      Math.max(0, posterHoldMs),
     );
     return () => window.clearTimeout(t);
-  }, [showPoster]);
+  }, [showPoster, posterHoldMs]);
 
   return (
     <section
@@ -179,7 +190,7 @@ export function HeroVideo({
               // image is the ONLY background (no video set), it
               // never fades; otherwise it fades on the timer above.
               opacity: showPoster ? (posterVisible ? 1 : 0) : 1,
-              transition: `opacity ${POSTER_FADE_MS}ms ease-out`,
+              transition: `opacity ${Math.max(0, posterFadeMs)}ms ease-out`,
               // pointer-events:none so clicks pass through to anything
               // beneath the image during the brief fade window.
               pointerEvents: "none",

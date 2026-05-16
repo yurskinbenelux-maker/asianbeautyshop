@@ -44,6 +44,15 @@ export type HomeHeroSettings = {
    *  as if "center". */
   videoObjectPositionDesktop: string;
   videoObjectPositionMobile: string;
+  /** How many seconds the poster image stays fully visible before
+   *  cross-fading to the playing video underneath. Set to 0 to make
+   *  the fade immediate (effectively disabling the intro). Default 2.5.
+   *  Stored as a decimal number of seconds for friendlier admin UX —
+   *  HeroVideo converts to ms internally.  */
+  videoPosterHoldSeconds: number;
+  /** How many seconds the opacity transition takes when the poster
+   *  fades out. Default 0.7. Set to 0 for an instant cut (rare). */
+  videoPosterFadeSeconds: number;
   /** Legacy single-image fields. Kept for backwards compat — still
    *  consumed by the color-block hero when `colorBlockProducts` is empty. */
   collageUrls: [string, string, string];
@@ -66,12 +75,22 @@ export const HOME_HERO_DEFAULTS: HomeHeroSettings = {
   videoPoster: "",
   videoObjectPositionDesktop: "center",
   videoObjectPositionMobile: "center",
+  videoPosterHoldSeconds: 2.5,
+  videoPosterFadeSeconds: 0.7,
   collageUrls: ["", "", ""],
   colorBlockProducts: [EMPTY_PRODUCT, EMPTY_PRODUCT, EMPTY_PRODUCT, EMPTY_PRODUCT, EMPTY_PRODUCT],
 };
 
 function asString(v: unknown): string {
   return typeof v === "string" ? v : "";
+}
+
+/** Clamp a JSON value to a sane decimal-seconds range. Bounded at 0..max
+ *  so an admin can't paste 99999 by accident and freeze the hero. */
+function asSeconds(v: unknown, fallback: number, max = 30): number {
+  const n = typeof v === "number" ? v : Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(0, Math.min(max, n));
 }
 
 function isVariant(v: unknown): v is HomeHeroVariant {
@@ -123,6 +142,14 @@ export async function readHomeHeroSettings(): Promise<HomeHeroSettings> {
         asString(v.videoObjectPositionDesktop) || "center",
       videoObjectPositionMobile:
         asString(v.videoObjectPositionMobile) || "center",
+      videoPosterHoldSeconds: asSeconds(
+        v.videoPosterHoldSeconds,
+        HOME_HERO_DEFAULTS.videoPosterHoldSeconds,
+      ),
+      videoPosterFadeSeconds: asSeconds(
+        v.videoPosterFadeSeconds,
+        HOME_HERO_DEFAULTS.videoPosterFadeSeconds,
+      ),
       collageUrls: [
         asString(rawCollage[0]),
         asString(rawCollage[1]),

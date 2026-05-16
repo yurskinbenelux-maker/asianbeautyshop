@@ -44,6 +44,11 @@ export async function HomepageHero({ copy }: { copy: HeroCopy }) {
           poster={cfg.videoPoster}
           objectPositionDesktop={cfg.videoObjectPositionDesktop}
           objectPositionMobile={cfg.videoObjectPositionMobile}
+          // Admin stores poster timings in decimal seconds (friendlier
+          // UX); HeroVideo expects milliseconds for setTimeout / CSS
+          // transition. Convert here at the boundary.
+          posterHoldMs={Math.round(cfg.videoPosterHoldSeconds * 1000)}
+          posterFadeMs={Math.round(cfg.videoPosterFadeSeconds * 1000)}
         />
       );
     case "collage":
