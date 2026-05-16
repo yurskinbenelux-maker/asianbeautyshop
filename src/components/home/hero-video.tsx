@@ -15,10 +15,19 @@
 
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { ArrowRight } from "lucide-react";
 import type { HeroCopy } from "./hero-moon-jar";
+
+/** How long the poster stays fully visible before the cross-fade begins.
+ *  Tuned for the cinematic "title-card" feel — long enough to read the
+ *  headline and form a first impression, short enough that the visitor
+ *  doesn't think the page is broken. Tweak here if it ever feels off. */
+const POSTER_HOLD_MS = 2500;
+/** How long the opacity → 0 transition takes. Matches the 700ms
+ *  ease-out we use elsewhere for hero animations. */
+const POSTER_FADE_MS = 700;
 
 export function HeroVideo({
   copy,
@@ -40,6 +49,14 @@ export function HeroVideo({
   objectPositionMobile?: string;
 }) {
   const ref = useRef<HTMLVideoElement | null>(null);
+
+  // Whether the poster overlay is still visible. Starts true when we
+  // have BOTH a video AND a poster (so there's something to fade FROM
+  // and TO). After POSTER_HOLD_MS we flip to false, the CSS transition
+  // takes POSTER_FADE_MS to complete, and the video — which has been
+  // playing underneath the whole time — is revealed.
+  const showPoster = !!videoUrl && !!poster;
+  const [posterVisible, setPosterVisible] = useState(showPoster);
 
   useEffect(() => {
     const v = ref.current;
@@ -64,20 +81,36 @@ export function HeroVideo({
     }
   }, [videoUrl]);
 
+  // Fade the poster overlay out after the hold window. We use a plain
+  // setTimeout rather than waiting on `canplay`, because the visual
+  // intent is "hold the still frame for N ms", not "hold until the
+  // video can play" — the video has been buffering in the background
+  // the whole time so it's ready well before the fade kicks in. The
+  // cleanup clears the timer if the visitor navigates away mid-hold.
+  useEffect(() => {
+    if (!showPoster) return;
+    const t = window.setTimeout(
+      () => setPosterVisible(false),
+      POSTER_HOLD_MS,
+    );
+    return () => window.clearTimeout(t);
+  }, [showPoster]);
+
   return (
     <section
       className="relative h-[80vh] min-h-[560px] w-full overflow-hidden bg-ink"
       aria-labelledby="hero-headline"
     >
+      {/* Background layer 1: the actual hero video.
+          Renders whenever videoUrl is set — even while the poster is
+          overlaying on top — so by the time the poster fades the video
+          is already playing in sync with its own timeline. The
+          per-viewport object-position via two CSS custom properties
+          (same pattern as the popups) covers desktop vs mobile crops. */}
       {videoUrl ? (
         // eslint-disable-next-line jsx-a11y/media-has-caption
         <video
           ref={ref}
-          // Per-viewport object-position via two CSS custom properties
-          // (same pattern as the popups). The mobile value applies by
-          // default; the md: variant swaps in the desktop value. Falls
-          // back to "center" everywhere when the admin hasn't set a
-          // focal point.
           className="absolute inset-0 h-full w-full object-cover [object-position:var(--yur-hero-vid-pos-mobile)] md:[object-position:var(--yur-hero-vid-pos-desktop)]"
           style={
             {
@@ -86,7 +119,9 @@ export function HeroVideo({
             } as React.CSSProperties
           }
           src={videoUrl}
-          poster={poster || undefined}
+          // Drop the native poster attribute. We're rendering our own
+          // poster <img> on top so we control the fade-out — the
+          // browser's built-in poster has no transition.
           autoPlay
           muted
           loop
@@ -103,22 +138,58 @@ export function HeroVideo({
           // wakes up nearby.
           disableRemotePlayback
         />
-      ) : poster ? (
-        // F5: hero poster is the LCP candidate when the video isn't
-        // ready yet. fetchpriority="high" + eager loading + decoding
-        // async tells the browser to download this BEFORE non-critical
-        // assets (analytics, fonts, below-the-fold images).
+      ) : !poster ? (
+        // No video and no poster — solid ink gradient placeholder.
+        <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink/85 to-ink/95" />
+      ) : null}
+
+      {/* Background layer 2: the poster image overlay.
+          Two roles depending on what's configured:
+            · Both video + poster:  intentional intro held for
+              POSTER_HOLD_MS, then fades out over POSTER_FADE_MS to
+              reveal the video underneath. Eliminates the brief
+              poster→video flicker that reads as a glitch.
+            · Poster only (no video):  static hero, no fade. Stays at
+              opacity 1 forever.
+          Either way the typography overlay (next block) stays visible
+          throughout — it lives in its own absolute layer above this. */}
+      {poster && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={poster}
           alt=""
+          // F5: hero poster is the LCP candidate when the video isn't
+          // ready yet. fetchpriority="high" + eager loading + decoding
+          // async tells the browser to download this BEFORE non-critical
+          // assets (analytics, fonts, below-the-fold images).
           loading="eager"
           decoding="async"
           fetchPriority="high"
-          className="absolute inset-0 h-full w-full object-cover"
+          // Same object-position custom props as the video so the crop
+          // matches exactly — the visitor doesn't notice the transition
+          // because the framing is identical on both layers.
+          className="absolute inset-0 h-full w-full object-cover [object-position:var(--yur-hero-vid-pos-mobile)] md:[object-position:var(--yur-hero-vid-pos-desktop)]"
+          style={
+            {
+              "--yur-hero-vid-pos-desktop":
+                objectPositionDesktop || "center",
+              "--yur-hero-vid-pos-mobile":
+                objectPositionMobile || "center",
+              // Cross-fade — opacity drives the reveal. When the
+              // image is the ONLY background (no video set), it
+              // never fades; otherwise it fades on the timer above.
+              opacity: showPoster ? (posterVisible ? 1 : 0) : 1,
+              transition: `opacity ${POSTER_FADE_MS}ms ease-out`,
+              // pointer-events:none so clicks pass through to anything
+              // beneath the image during the brief fade window.
+              pointerEvents: "none",
+            } as React.CSSProperties
+          }
+          // Keep the image out of the accessibility tree once it's
+          // faded — screen readers shouldn't keep announcing a
+          // decorative hero image that's no longer visible.
+          aria-hidden={showPoster && !posterVisible ? true : undefined}
         />
-      ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink/85 to-ink/95" />
       )}
 
       {/* Dark gradient under the type so it stays legible regardless
