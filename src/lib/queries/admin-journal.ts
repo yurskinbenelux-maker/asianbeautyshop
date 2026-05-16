@@ -35,8 +35,16 @@ export type JournalDetail = {
   publishedAt: Date | null;
   /** Card thumbnail (4:5). Used on homepage teaser + /journal listing. */
   coverUrl: string | null;
+  /** Per-viewport CSS object-position for the card thumbnail. Null
+   *  means the admin hasn't set a focal point — render-side falls
+   *  through to "center". Same shape as on the JournalPost model. */
+  coverObjectPositionDesktop: string | null;
+  coverObjectPositionMobile: string | null;
   /** Article hero (16:9). Used at the top of /journal/[slug]. */
   heroUrl: string | null;
+  /** Per-viewport CSS object-position for the article hero. */
+  heroObjectPositionDesktop: string | null;
+  heroObjectPositionMobile: string | null;
   authorName: string | null;
   translations: Record<Locale, JournalTranslationInput>;
 };
@@ -100,7 +108,11 @@ export async function getAdminJournalPost(
     status: p.status,
     publishedAt: p.publishedAt,
     coverUrl: p.coverUrl,
+    coverObjectPositionDesktop: p.coverObjectPositionDesktop,
+    coverObjectPositionMobile: p.coverObjectPositionMobile,
     heroUrl: p.heroUrl,
+    heroObjectPositionDesktop: p.heroObjectPositionDesktop,
+    heroObjectPositionMobile: p.heroObjectPositionMobile,
     authorName: p.authorName,
     translations: byLocale,
   };

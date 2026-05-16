@@ -15,6 +15,12 @@ export type JournalTeaserCard = {
   title: string;
   excerpt: string | null;
   coverUrl: string | null;
+  /** Per-viewport CSS object-position for the 4:5 card thumbnail.
+   *  Null fallback → render side uses "center". Lets the journal
+   *  cards on /journal listing + homepage teaser pin a portrait
+   *  cover's focal point so faces / product crops aren't lost. */
+  coverObjectPositionDesktop: string | null;
+  coverObjectPositionMobile: string | null;
   authorName: string | null;
   publishedAt: Date;
 };
@@ -65,6 +71,8 @@ export async function getJournalTeasers(
       title: tr.title,
       excerpt: tr.excerpt,
       coverUrl: p.coverUrl,
+      coverObjectPositionDesktop: p.coverObjectPositionDesktop,
+      coverObjectPositionMobile: p.coverObjectPositionMobile,
       authorName: p.authorName,
       publishedAt: p.publishedAt,
     });
@@ -101,8 +109,15 @@ export type JournalPostDetail = {
   updatedAt: Date;
   /** Card thumbnail (4:5). Also used as OG fallback if hero is null. */
   coverUrl: string | null;
+  coverObjectPositionDesktop: string | null;
+  coverObjectPositionMobile: string | null;
   /** Article-page hero (16:9). Detail page does `heroUrl ?? coverUrl`. */
   heroUrl: string | null;
+  /** Per-viewport CSS object-position for the article hero image.
+   *  When the article falls back to coverUrl (heroUrl is null), the
+   *  detail-page renderer should use the cover's positions instead. */
+  heroObjectPositionDesktop: string | null;
+  heroObjectPositionMobile: string | null;
   authorName: string | null;
   title: string;
   excerpt: string | null;
@@ -155,7 +170,11 @@ export async function getJournalPostBySlug(
     publishedAt: post.publishedAt,
     updatedAt: post.updatedAt,
     coverUrl: post.coverUrl,
+    coverObjectPositionDesktop: post.coverObjectPositionDesktop,
+    coverObjectPositionMobile: post.coverObjectPositionMobile,
     heroUrl: post.heroUrl,
+    heroObjectPositionDesktop: post.heroObjectPositionDesktop,
+    heroObjectPositionMobile: post.heroObjectPositionMobile,
     authorName: post.authorName,
     title: primary.title,
     excerpt: primary.excerpt,

@@ -1711,10 +1711,22 @@ model JournalPost {
   // Card thumbnail. Rendered at 4:5 portrait on the homepage teaser and
   // /journal listing grid. Upload at ~1200×1500 for a clean 4:5 crop.
   coverUrl    String?
+  // CSS object-position values applied to the card thumbnail at
+  // desktop and mobile breakpoints. Lets an admin shift the focal
+  // point of a portrait photo so the customer-visible 4:5 crop
+  // centres on the right part. Nullable + defaults to NULL at the
+  // DB level; the render side falls through to "center" when missing.
+  coverObjectPositionDesktop String?
+  coverObjectPositionMobile  String?
   // Article hero — rendered full-width at 16:9 landscape at the top of
   // /journal/[slug]. Upload at ~1600×900. Falls back to `coverUrl` when
   // null so old articles keep rendering without admin intervention.
   heroUrl     String?
+  // Same per-viewport object-position knobs as cover, but for the
+  // article hero image. Particularly useful on mobile where the 16:9
+  // desktop hero may shrink to a much taller crop.
+  heroObjectPositionDesktop  String?
+  heroObjectPositionMobile   String?
   authorName  String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt

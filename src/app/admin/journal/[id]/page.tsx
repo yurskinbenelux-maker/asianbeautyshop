@@ -41,7 +41,11 @@ export default async function EditJournalPostPage({
           status: post.status,
           publishedAt: post.publishedAt,
           coverUrl: post.coverUrl,
+          coverObjectPositionDesktop: post.coverObjectPositionDesktop,
+          coverObjectPositionMobile: post.coverObjectPositionMobile,
           heroUrl: post.heroUrl,
+          heroObjectPositionDesktop: post.heroObjectPositionDesktop,
+          heroObjectPositionMobile: post.heroObjectPositionMobile,
           authorName: post.authorName,
           translations: post.translations,
         }}

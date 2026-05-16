@@ -74,12 +74,39 @@ const PostSchema = z.object({
     .max(2000)
     .optional()
     .default(""),
+  // Per-viewport object-position from the FocalPointPicker. Capped at
+  // 60 chars (same as the popup picker schemas). Empty string → render
+  // side treats as "center" so we never persist an empty CSS value.
+  coverObjectPositionDesktop: z
+    .string()
+    .trim()
+    .max(60)
+    .optional()
+    .default(""),
+  coverObjectPositionMobile: z
+    .string()
+    .trim()
+    .max(60)
+    .optional()
+    .default(""),
   // Article hero (16:9) — shown at the top of /journal/[slug]. Optional;
   // when blank the public detail page falls back to coverUrl.
   heroUrl: z
     .string()
     .trim()
     .max(2000)
+    .optional()
+    .default(""),
+  heroObjectPositionDesktop: z
+    .string()
+    .trim()
+    .max(60)
+    .optional()
+    .default(""),
+  heroObjectPositionMobile: z
+    .string()
+    .trim()
+    .max(60)
     .optional()
     .default(""),
   authorName: z.string().trim().max(120).optional().default(""),
@@ -217,7 +244,15 @@ export async function createJournalPostAction(
       status: data.status,
       publishedAt: publishedAtFor(data.status, data.publishedAt),
       coverUrl: data.coverUrl || null,
+      coverObjectPositionDesktop:
+        data.coverObjectPositionDesktop || null,
+      coverObjectPositionMobile:
+        data.coverObjectPositionMobile || null,
       heroUrl: data.heroUrl || null,
+      heroObjectPositionDesktop:
+        data.heroObjectPositionDesktop || null,
+      heroObjectPositionMobile:
+        data.heroObjectPositionMobile || null,
       authorName: data.authorName || null,
       translations: {
         create: (Object.keys(normalised) as Locale[])
@@ -282,7 +317,15 @@ export async function updateJournalPostAction(
         status: data.status,
         publishedAt: publishedAtFor(data.status, data.publishedAt),
         coverUrl: data.coverUrl || null,
+        coverObjectPositionDesktop:
+          data.coverObjectPositionDesktop || null,
+        coverObjectPositionMobile:
+          data.coverObjectPositionMobile || null,
         heroUrl: data.heroUrl || null,
+        heroObjectPositionDesktop:
+          data.heroObjectPositionDesktop || null,
+        heroObjectPositionMobile:
+          data.heroObjectPositionMobile || null,
         authorName: data.authorName || null,
       },
     });

@@ -85,6 +85,8 @@ export async function JournalTeaser({ locale, copy }: Props) {
               index={i}
               href={`/journal/${p.slug}`}
               coverUrl={p.coverUrl}
+              coverObjectPositionDesktop={p.coverObjectPositionDesktop}
+              coverObjectPositionMobile={p.coverObjectPositionMobile}
               eyebrow={p.authorName ?? copy.eyebrow}
               title={p.title}
               subline={dateFmt.format(p.publishedAt)}

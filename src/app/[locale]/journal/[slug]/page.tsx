@@ -172,7 +172,25 @@ export default async function JournalPostPage({ params }: Props) {
               loading="eager"
               decoding="async"
               fetchPriority="high"
-              className="aspect-[16/9] w-full bg-rice-dim object-contain"
+              // object-position from the admin focal-point picker. When
+              // heroUrl is set we use the hero's positions; when the
+              // article falls back to coverUrl (heroUrl null) we use
+              // the cover's positions instead so the focal point still
+              // tracks the actual image. Same CSS-variable + md:
+              // variant pattern as the popups + hero video.
+              className="aspect-[16/9] w-full bg-rice-dim object-contain [object-position:var(--yur-journal-hero-mobile)] md:[object-position:var(--yur-journal-hero-desktop)]"
+              style={
+                {
+                  "--yur-journal-hero-desktop":
+                    (post.heroUrl
+                      ? post.heroObjectPositionDesktop
+                      : post.coverObjectPositionDesktop) || "center",
+                  "--yur-journal-hero-mobile":
+                    (post.heroUrl
+                      ? post.heroObjectPositionMobile
+                      : post.coverObjectPositionMobile) || "center",
+                } as React.CSSProperties
+              }
             />
           </div>
         )}

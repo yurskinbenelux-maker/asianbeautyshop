@@ -21,6 +21,7 @@ import {
   StatusBanner,
 } from "@/components/admin/settings/settings-chrome";
 import { TranslateFromEnglishButton } from "@/components/admin/translate-button";
+import { FocalPointPicker } from "@/components/admin/marketing/focal-point-picker";
 import { setNativeInputValue } from "@/lib/admin/native-input";
 import { cn } from "@/lib/utils";
 
@@ -57,9 +58,20 @@ export type JournalFormInitial = {
   publishedAt: Date | null;
   /** Card thumbnail (4:5). Shows on /journal listing + homepage teaser. */
   coverUrl: string | null;
+  /** Per-viewport CSS object-position values applied to the cover
+   *  image. Lets an admin shift the focal point so the 4:5 crop
+   *  doesn't cut off the most important part of a portrait photo on
+   *  mobile. Both default to "center" when null. */
+  coverObjectPositionDesktop: string | null;
+  coverObjectPositionMobile: string | null;
   /** Article hero (16:9). Shows at top of /journal/[slug]. Optional —
    *  falls back to coverUrl when null. */
   heroUrl: string | null;
+  /** Same per-viewport focal-point knobs as cover, but for the
+   *  article hero image — particularly useful on mobile where the
+   *  16:9 desktop hero collapses to a much taller letterbox. */
+  heroObjectPositionDesktop: string | null;
+  heroObjectPositionMobile: string | null;
   authorName: string | null;
   translations: Record<Locale, Translation>;
 };
@@ -78,7 +90,11 @@ const EMPTY: JournalFormInitial = {
   status: "DRAFT",
   publishedAt: null,
   coverUrl: null,
+  coverObjectPositionDesktop: null,
+  coverObjectPositionMobile: null,
   heroUrl: null,
+  heroObjectPositionDesktop: null,
+  heroObjectPositionMobile: null,
   authorName: null,
   translations: {
     EN: EMPTY_TRANSLATION("EN"),
@@ -205,6 +221,25 @@ export function JournalForm({
         />
       </Field>
 
+      {/* Cover image focal-point picker. Reuses the same FocalPointPicker
+          driving the popups + hero video. Form-field names are
+          customised so the action sees coverObjectPosition* and not the
+          generic imageObjectPosition* names. Picker renders the empty
+          placeholder when no coverUrl is set yet — the hidden inputs
+          still submit so the saved focal-point survives. */}
+      <div>
+        <div className="mb-2 text-[11px] uppercase tracking-label text-ink-mid">
+          Card thumbnail focus point
+        </div>
+        <FocalPointPicker
+          imageUrl={data.coverUrl ?? ""}
+          initialDesktop={data.coverObjectPositionDesktop ?? "center"}
+          initialMobile={data.coverObjectPositionMobile ?? "center"}
+          desktopFieldName="coverObjectPositionDesktop"
+          mobileFieldName="coverObjectPositionMobile"
+        />
+      </div>
+
       <Field
         label="Article hero URL (16:9 landscape, optional)"
         hint="Shown full-width at the top of the article page. Upload at ~1600×900. Leave blank to reuse the card thumbnail."
@@ -218,6 +253,23 @@ export function JournalForm({
           maxLength={2000}
         />
       </Field>
+
+      {/* Article hero focal-point picker. Same component, distinct
+          field names. When heroUrl is blank the picker shows its
+          empty state (the article hero falls back to coverUrl, in
+          which case the cover's focal points are what matters). */}
+      <div>
+        <div className="mb-2 text-[11px] uppercase tracking-label text-ink-mid">
+          Article hero focus point
+        </div>
+        <FocalPointPicker
+          imageUrl={data.heroUrl ?? ""}
+          initialDesktop={data.heroObjectPositionDesktop ?? "center"}
+          initialMobile={data.heroObjectPositionMobile ?? "center"}
+          desktopFieldName="heroObjectPositionDesktop"
+          mobileFieldName="heroObjectPositionMobile"
+        />
+      </div>
 
       {/* per-locale copy */}
       <div className="space-y-3 border-t border-ink/10 pt-6">

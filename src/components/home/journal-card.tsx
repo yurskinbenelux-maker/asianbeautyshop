@@ -18,6 +18,11 @@ type Props = {
   index: number;
   href: string;
   coverUrl?: string | null;
+  /** CSS object-position values from the admin's focal-point picker.
+   *  Default null → component uses "center". Per-viewport CSS custom
+   *  properties + Tailwind md: variant swap between mobile/desktop. */
+  coverObjectPositionDesktop?: string | null;
+  coverObjectPositionMobile?: string | null;
   gradient?: string;
   eyebrow: string;
   title: string;
@@ -28,6 +33,8 @@ export function JournalCard({
   index,
   href,
   coverUrl,
+  coverObjectPositionDesktop,
+  coverObjectPositionMobile,
   gradient,
   eyebrow,
   title,
@@ -58,7 +65,23 @@ export function JournalCard({
           <img
             src={coverUrl}
             alt={title}
-            className="aspect-[4/5] w-full bg-rice-dim object-contain transition-opacity group-hover:opacity-90"
+            // object-position via CSS custom properties (same pattern
+            // as the popups + hero video). With object-contain the
+            // values shift WHERE the letterboxed image sits inside
+            // the 4:5 frame; if this ever switches back to
+            // object-cover the same values control the crop centre.
+            // Either way, "center" is the sensible default and the
+            // current card behaviour is unchanged for posts that
+            // haven't had a focal point set yet.
+            className="aspect-[4/5] w-full bg-rice-dim object-contain transition-opacity group-hover:opacity-90 [object-position:var(--yur-journal-cover-mobile)] md:[object-position:var(--yur-journal-cover-desktop)]"
+            style={
+              {
+                "--yur-journal-cover-desktop":
+                  coverObjectPositionDesktop || "center",
+                "--yur-journal-cover-mobile":
+                  coverObjectPositionMobile || "center",
+              } as React.CSSProperties
+            }
           />
         ) : (
           <div
