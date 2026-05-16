@@ -211,8 +211,28 @@ export function HeroVideo({
         className="absolute inset-0 bg-gradient-to-tr from-ink/75 via-ink/35 to-transparent"
       />
 
-      {/* Copy column */}
-      <div className="relative flex h-full flex-col justify-end pb-16 md:pb-24">
+      {/* Copy column.
+          During the poster intro we keep the headline + CTAs invisible so
+          the title-card moment reads as pure cinema — just the still
+          frame, no UI on top of it. The wrapper fades in on the same
+          timeline as the poster fade-out, with a touch of delay so the
+          text resolves *after* the video has started showing through.
+          When there's no poster intro (showPoster === false) the type is
+          always visible from first paint, same as before. */}
+      <div
+        className="relative flex h-full flex-col justify-end pb-16 md:pb-24"
+        style={{
+          opacity: showPoster && posterVisible ? 0 : 1,
+          // Same duration as the poster fade, slight delay so the text
+          // doesn't race the poster — feels like the type "arrives"
+          // along with the video underneath rather than crossfading
+          // simultaneously. Delay is half the fade duration, capped.
+          transition: `opacity ${Math.max(0, posterFadeMs)}ms ease-out ${Math.round(Math.max(0, posterFadeMs) / 2)}ms`,
+        }}
+        // Don't let assistive tech or clicks land on the hidden CTAs
+        // while the poster is still occluding everything.
+        aria-hidden={showPoster && posterVisible ? true : undefined}
+      >
         <div className="container max-w-3xl">
           <div className="text-[11px] uppercase tracking-label text-rice/70">
             {copy.eyebrow}
