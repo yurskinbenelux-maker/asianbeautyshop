@@ -36,8 +36,17 @@ yarn-error.log*
 next-env.d.ts
 
 # local-only artifacts that should never go to the repo
-# (data exports, design previews, throw-away CSVs)
+# (data exports, design previews, throw-away CSVs, one-off scripts,
+#  rebrand drafts, Lighthouse audits)
 welcome-popup-preview.html
 ingredients-*.csv
 ingredients-enriched-*.csv
+*-products-import.csv
+*-products-*-corrected*.csv
+audit-*.mjs
+lighthouse/
+*-rebrand-*/
 *.draft.html
+
+# npm leftover — project uses pnpm
+package-lock.json
