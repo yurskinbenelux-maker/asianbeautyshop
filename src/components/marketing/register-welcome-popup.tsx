@@ -29,7 +29,11 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+// NB: we render the popup image as a raw <img>, NOT next/image. Next
+// rewrites image URLs through /_next/image?url=…, which mismatches the
+// raw Supabase URL we preload from the layout <head>. That mismatch
+// silently doubled the request count and was the root cause of the
+// "image arrives 1-2s after the popup pops" delay Max reported.
 import type { WelcomePopupSettings } from "@/lib/queries/welcome-popup";
 import { markWelcomeFinished } from "@/lib/marketing/popup-coordinator";
 
@@ -96,6 +100,39 @@ export function RegisterWelcomePopup({
     );
     return () => window.clearTimeout(timer);
   }, [isSignedIn, pathname, config.enabled, config.delaySeconds]);
+
+  // PREFETCH + DECODE the popup image during idle time so the <img>
+  // paints instantly when the modal mounts. Without this, the chrome
+  // appears at the delay tick but the image arrives 1-2s later on
+  // mobile — the layout's <link rel="preload"> is fetchPriority="low"
+  // (to protect the hero LCP), which is fine on fast Wi-Fi but rarely
+  // finishes in time on 4G.
+  //
+  // What this does:
+  //   1. Creates a detached new Image() and sets its src — this kicks
+  //      off the fetch using the SAME raw Supabase URL the <img> below
+  //      will request, so when React mounts the <img> the browser sees
+  //      a cache hit and skips the network round-trip entirely.
+  //   2. Awaits .decode() so the decompressed bitmap is also in
+  //      memory. Without this the browser only decodes when the <img>
+  //      is attached to the DOM, which on slow CPUs adds another
+  //      ~100-300ms before paint.
+  //
+  // We gate on the same "would the popup actually open" conditions as
+  // the timer above, so we don't burn bandwidth prefetching on
+  // /checkout, /admin, etc. where the modal would never fire.
+  useEffect(() => {
+    if (!config.enabled) return;
+    if (isSignedIn) return;
+    if (!config.imageUrl.trim()) return;
+    if (SUPPRESSED_PATH_PATTERNS.some((re) => re.test(pathname))) return;
+    const img = new window.Image();
+    img.src = config.imageUrl;
+    // decode() is unsupported in Safari < 15 — silently fall back to
+    // the HTTP-cache-only win (still enough to drop the wait from
+    // ~2s to ~50ms on most mobile connections).
+    void img.decode?.().catch(() => {});
+  }, [config.enabled, isSignedIn, pathname, config.imageUrl]);
 
   function dismiss() {
     setOpen(false);
@@ -178,12 +215,19 @@ export function RegisterWelcomePopup({
                 between them via a media query in the inline <style>
                 below. The fallback is "center" everywhere — same as
                 the pre-feature behaviour. */}
-            <Image
+            {/* Raw <img> — matches the URL we preload from <head> and
+                the URL the prefetch+decode effect above warmed up.
+                eager + async + high so the browser still treats it as
+                a priority once the modal actually mounts; by then
+                it's almost always a cache hit anyway. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={config.imageUrl}
               alt={config.imageAlt}
-              fill
-              sizes="(max-width: 768px) 100vw, 410px"
-              className="object-cover [object-position:var(--yur-pop-pos-mobile)] md:[object-position:var(--yur-pop-pos-desktop)]"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+              className="absolute inset-0 h-full w-full object-cover [object-position:var(--yur-pop-pos-mobile)] md:[object-position:var(--yur-pop-pos-desktop)]"
               style={
                 {
                   "--yur-pop-pos-desktop":
@@ -192,7 +236,6 @@ export function RegisterWelcomePopup({
                     config.imageObjectPositionMobile || "center",
                 } as React.CSSProperties
               }
-              priority
             />
           </div>
         )}
