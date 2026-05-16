@@ -305,9 +305,13 @@ export function HeroPopupForm({
             <h2 className="mt-1 font-display text-[20px] text-ink">
               Pick {MIN_PRODUCTS}–{MAX_PRODUCTS} pieces
             </h2>
-            <p className="mt-1 text-[12px] text-ink-mid">
-              Drag the cards to reorder. The popup shows them left-to-right
-              in this exact sequence.
+            <p className="mt-1 max-w-xl text-[12px] text-ink-mid">
+              Drag the cards to reorder. The popup arranges them like a
+              magazine mosaic: positions <strong className="font-medium text-ink">1–2</strong>{" "}
+              are top squares, <strong className="font-medium text-ink">3</strong> is the
+              wide centre row, and <strong className="font-medium text-ink">4–6</strong>{" "}
+              fill the bottom row. Put the piece you most want clicked into
+              slot 3 — it gets the most visual weight.
             </p>
           </div>
           <div className="text-[11px] uppercase tracking-label text-ink-mid">
