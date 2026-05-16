@@ -32,6 +32,15 @@ export type HomeHeroSettings = {
   variant: HomeHeroVariant;
   videoUrl: string;
   videoPoster: string;
+  /** Optional mobile-specific assets. A 16:9 cinematic shoot rarely
+   *  works well on a portrait phone — it ends up letterboxed or with
+   *  the subject cropped. An admin can paste a separately framed video
+   *  (often a 9:16 portrait shoot of the same scene) and the public
+   *  hero swaps to it when `(max-width: 767px)` matches. Empty string
+   *  = fall back to the desktop video, so existing setups keep working
+   *  unchanged. The poster behaves the same way. */
+  videoUrlMobile: string;
+  videoPosterMobile: string;
   /** CSS `object-position` value applied to the cinematic <video> at
    *  desktop breakpoints (md+). Defaults to "center" — same crop the
    *  feature shipped with. An admin sets these via the focal-point
@@ -73,6 +82,8 @@ export const HOME_HERO_DEFAULTS: HomeHeroSettings = {
   variant: "typography",
   videoUrl: "",
   videoPoster: "",
+  videoUrlMobile: "",
+  videoPosterMobile: "",
   videoObjectPositionDesktop: "center",
   videoObjectPositionMobile: "center",
   videoPosterHoldSeconds: 2.5,
@@ -133,6 +144,11 @@ export async function readHomeHeroSettings(): Promise<HomeHeroSettings> {
       variant: isVariant(v.variant) ? v.variant : "typography",
       videoUrl: asString(v.videoUrl),
       videoPoster: asString(v.videoPoster),
+      // Mobile-specific assets — missing keys fall through to "" so
+      // old Setting rows continue to render the desktop video on all
+      // viewports (existing behaviour preserved).
+      videoUrlMobile: asString(v.videoUrlMobile),
+      videoPosterMobile: asString(v.videoPosterMobile),
       // Missing keys fall through to "center" — old Setting rows from
       // before this feature shipped don't have these fields, so the
       // empty-string fallback would render "center" anyway at the

@@ -32,6 +32,8 @@ export function HeroVideo({
   copy,
   videoUrl,
   poster,
+  videoUrlMobile,
+  posterMobile,
   objectPositionDesktop = "center",
   objectPositionMobile = "center",
   posterHoldMs = DEFAULT_POSTER_HOLD_MS,
@@ -40,6 +42,12 @@ export function HeroVideo({
   copy: HeroCopy;
   videoUrl: string;
   poster?: string;
+  /** Optional mobile-specific assets. When the viewport matches
+   *  `(max-width: 767px)` and these are set, the public hero swaps to
+   *  them. Both blank = fall back to the desktop URLs, which preserves
+   *  the original single-video behaviour. */
+  videoUrlMobile?: string;
+  posterMobile?: string;
   /** Optional CSS object-position override for desktop / mobile. Lets an
    *  admin shift the visible crop of the cinematic video so what's
    *  perfect on PC (e.g. a face in the right third) stays visible on
@@ -57,12 +65,47 @@ export function HeroVideo({
 }) {
   const ref = useRef<HTMLVideoElement | null>(null);
 
+  // Pick the right video + poster for the current viewport.
+  //
+  // Why client-side via matchMedia (vs. SSR with the right URL):
+  //   The server can't tell desktop from mobile reliably (User-Agent
+  //   sniffing is fragile). Lighthouse + most visitors arrive at the
+  //   desktop URLs first, then this useEffect runs after hydration
+  //   and swaps to mobile if needed. The poster overlay covers the
+  //   ~1-frame visual window where the wrong src might briefly be
+  //   loaded, so visitors never see a flicker.
+  //
+  // Why we don't just use CSS media queries with two <video> elements:
+  //   Some browsers still pre-fetch the metadata of `display: none`
+  //   videos. matchMedia lets us avoid that download entirely.
+  const [activeVideoUrl, setActiveVideoUrl] = useState(videoUrl);
+  const [activePoster, setActivePoster] = useState(poster);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = (isMobile: boolean) => {
+      // Each mobile slot falls back to its desktop sibling when blank,
+      // so partial setups (e.g. mobile video but no mobile poster) work
+      // sensibly without a separate "missing asset" path.
+      setActiveVideoUrl(
+        isMobile && videoUrlMobile?.trim() ? videoUrlMobile : videoUrl,
+      );
+      setActivePoster(
+        isMobile && posterMobile?.trim() ? posterMobile : poster,
+      );
+    };
+    apply(mq.matches);
+    const handler = (e: MediaQueryListEvent) => apply(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [videoUrl, videoUrlMobile, poster, posterMobile]);
+
   // Whether the poster overlay is still visible. Starts true when we
   // have BOTH a video AND a poster (so there's something to fade FROM
   // and TO). After POSTER_HOLD_MS we flip to false, the CSS transition
   // takes POSTER_FADE_MS to complete, and the video — which has been
   // playing underneath the whole time — is revealed.
-  const showPoster = !!videoUrl && !!poster;
+  const showPoster = !!activeVideoUrl && !!activePoster;
   const [posterVisible, setPosterVisible] = useState(showPoster);
 
   useEffect(() => {
@@ -86,7 +129,9 @@ export function HeroVideo({
       v.addEventListener("loadeddata", tryPlay, { once: true });
       return () => v.removeEventListener("loadeddata", tryPlay);
     }
-  }, [videoUrl]);
+    // activeVideoUrl as the dep (not videoUrl) so a viewport-driven
+    // src swap triggers a fresh play attempt.
+  }, [activeVideoUrl]);
 
   // Fade the poster overlay out after the hold window. We use a plain
   // setTimeout rather than waiting on `canplay`, because the visual
@@ -118,7 +163,7 @@ export function HeroVideo({
           is already playing in sync with its own timeline. The
           per-viewport object-position via two CSS custom properties
           (same pattern as the popups) covers desktop vs mobile crops. */}
-      {videoUrl ? (
+      {activeVideoUrl ? (
         // eslint-disable-next-line jsx-a11y/media-has-caption
         <video
           ref={ref}
@@ -129,7 +174,7 @@ export function HeroVideo({
               "--yur-hero-vid-pos-mobile": objectPositionMobile || "center",
             } as React.CSSProperties
           }
-          src={videoUrl}
+          src={activeVideoUrl}
           // Drop the native poster attribute. We're rendering our own
           // poster <img> on top so we control the fade-out — the
           // browser's built-in poster has no transition.
@@ -156,7 +201,7 @@ export function HeroVideo({
           // wakes up nearby.
           disableRemotePlayback
         />
-      ) : !poster ? (
+      ) : !activePoster ? (
         // No video and no poster — solid ink gradient placeholder.
         <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink/85 to-ink/95" />
       ) : null}
@@ -171,10 +216,10 @@ export function HeroVideo({
               opacity 1 forever.
           Either way the typography overlay (next block) stays visible
           throughout — it lives in its own absolute layer above this. */}
-      {poster && (
+      {activePoster && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={poster}
+          src={activePoster}
           alt=""
           // F5: hero poster is the LCP candidate when the video isn't
           // ready yet. fetchpriority="high" + eager loading + decoding

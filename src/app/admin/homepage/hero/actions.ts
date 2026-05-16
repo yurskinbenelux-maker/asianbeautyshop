@@ -26,6 +26,11 @@ const Schema = z.object({
   variant: z.enum(["typography", "video", "collage"]),
   videoUrl: z.string().trim().max(2000).optional().default(""),
   videoPoster: z.string().trim().max(2000).optional().default(""),
+  // Mobile-specific assets — same shape, swapped in client-side at
+  // (max-width: 767px). Blank values fall back to the desktop URLs
+  // at render time (see HeroVideo).
+  videoUrlMobile: z.string().trim().max(2000).optional().default(""),
+  videoPosterMobile: z.string().trim().max(2000).optional().default(""),
   // CSS object-position values from the FocalPointPicker. Same shape as
   // the popup picker fields — short strings, capped at 60 chars.
   videoObjectPositionDesktop: z.string().trim().max(60).optional().default(""),
@@ -61,6 +66,8 @@ export async function saveHomeHeroAction(formData: FormData): Promise<void> {
     variant: parsed.variant,
     videoUrl: parsed.videoUrl,
     videoPoster: parsed.videoPoster,
+    videoUrlMobile: parsed.videoUrlMobile,
+    videoPosterMobile: parsed.videoPosterMobile,
     videoObjectPositionDesktop:
       parsed.videoObjectPositionDesktop || "center",
     videoObjectPositionMobile:

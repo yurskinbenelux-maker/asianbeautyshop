@@ -42,6 +42,12 @@ export async function HomepageHero({ copy }: { copy: HeroCopy }) {
           copy={copy}
           videoUrl={cfg.videoUrl}
           poster={cfg.videoPoster}
+          // Mobile-specific assets. Each one is optional — blank values
+          // fall back to the desktop URLs inside HeroVideo, so partial
+          // setups (e.g. mobile video uploaded but no mobile poster yet)
+          // render sensibly without extra branches here.
+          videoUrlMobile={cfg.videoUrlMobile}
+          posterMobile={cfg.videoPosterMobile}
           objectPositionDesktop={cfg.videoObjectPositionDesktop}
           objectPositionMobile={cfg.videoObjectPositionMobile}
           // Admin stores poster timings in decimal seconds (friendlier

@@ -94,14 +94,15 @@ export default async function AdminHeroVariantPage({
           </div>
         </fieldset>
 
-        {/* ── video config ───────────────────────────────────────── */}
+        {/* ── desktop video config ────────────────────────────────── */}
         <div className="border-t border-ink/10 pt-6">
           <h2 className="font-display text-[16px] text-ink">
-            Cinematic video — only used when the Cinematic variant is selected
+            Cinematic video — desktop
           </h2>
           <p className="mt-1 text-[12px] text-ink-mid">
-            Recommended: H.264 mp4, 1920×1080, audio stripped, ≤ 8 MB.
-            Upload via{" "}
+            Shown to visitors on screens ≥ 768px wide. Recommended:
+            H.264 mp4, 1920×1080 (16:9 widescreen), audio stripped,
+            ≤ 8 MB. Upload via{" "}
             <Link
               href="/admin/media"
               className="text-ink underline decoration-vermilion underline-offset-2"
@@ -125,19 +126,14 @@ export default async function AdminHeroVariantPage({
               hint="Shown for first paint while the video downloads. Same dimensions as the video (1920×1080)."
             />
 
-            {/* Focal-point picker reuses the popups' picker, fed the
-                video POSTER as its editable canvas. Whatever crop the
-                admin sets is applied to the real <video> element on
-                the homepage via CSS object-position — so the
-                cinematic crop on mobile can centre on the part of the
-                frame an admin chooses (e.g. a face that lives in the
-                right third of a wide 1920×1080 shot). Falls back
-                gracefully when no poster has been set yet: the picker
-                shows its empty state but the hidden inputs still
-                submit so the saved focal points survive the form. */}
+            {/* Desktop-only focal-point picker. The picker uses the
+                poster as a static canvas if one's pasted, otherwise
+                falls back to the actual video. singleViewport="desktop"
+                hides the mobile pin / preview — mobile gets its own
+                picker further down (paired with the mobile video). */}
             <div>
               <div className="mb-2 text-[11px] uppercase tracking-label text-ink-mid">
-                Video focus point
+                Desktop video focus point
               </div>
               <FocalPointPicker
                 imageUrl={cfg.videoPoster}
@@ -146,6 +142,12 @@ export default async function AdminHeroVariantPage({
                 initialMobile={cfg.videoObjectPositionMobile}
                 desktopFieldName="videoObjectPositionDesktop"
                 mobileFieldName="videoObjectPositionMobile"
+                singleViewport="desktop"
+                // The cinematic hero renders at viewport-tall × full-width
+                // on desktop, so the preview should mirror that ratio.
+                // 16/9 is the source aspect; close enough to what
+                // visitors actually see on most laptop widths.
+                desktopAspect="aspect-[16/9]"
               />
               <p className="mt-2 text-[11px] text-ink-mid">
                 When a poster image is set above, the picker uses it as
@@ -186,6 +188,67 @@ export default async function AdminHeroVariantPage({
                 placeholder="0.7"
                 hint="How long the dissolve takes. Lower = snappier, higher = more cinematic."
               />
+            </div>
+          </div>
+        </div>
+
+        {/* ── mobile video config ─────────────────────────────────
+            Shown to visitors with viewports < 768px. Falls back to the
+            desktop video above when blank, so existing setups don't
+            change. A separate file is the right call when the desktop
+            shoot is widescreen — a portrait phone crops the most
+            important part out otherwise. */}
+        <div className="border-t border-ink/10 pt-6">
+          <h2 className="font-display text-[16px] text-ink">
+            Cinematic video — mobile (optional)
+          </h2>
+          <p className="mt-1 text-[12px] text-ink-mid">
+            Shown to visitors on screens &lt; 768px wide. Use a
+            separately framed clip (often 9:16 portrait) so the
+            subject stays centred on a phone. Leave both fields blank
+            to reuse the desktop video on mobile too — same crop as
+            before.
+          </p>
+          <div className="mt-4 space-y-4">
+            <Field
+              label="Mobile video URL"
+              name="videoUrlMobile"
+              defaultValue={cfg.videoUrlMobile}
+              placeholder="https://…/hero-mobile.mp4"
+              hint="Recommended: H.264 mp4, 1080×1920 (9:16 portrait), audio stripped, ≤ 6 MB."
+            />
+            <Field
+              label="Mobile poster image URL (optional)"
+              name="videoPosterMobile"
+              defaultValue={cfg.videoPosterMobile}
+              placeholder="https://…/hero-mobile-poster.jpg"
+              hint="Same first-paint behaviour as the desktop poster, sized for portrait phones (1080×1920)."
+            />
+
+            {/* Mobile-only focal-point picker. The picker shows just
+                one pin and one preview, sized to the portrait phone
+                aspect (9:16). Drag the pin while the mobile video
+                plays — the saved coordinate applies on the live
+                hero whenever (max-width: 767px) matches. */}
+            <div>
+              <div className="mb-2 text-[11px] uppercase tracking-label text-ink-mid">
+                Mobile video focus point
+              </div>
+              <FocalPointPicker
+                imageUrl={cfg.videoPosterMobile}
+                videoUrl={cfg.videoUrlMobile}
+                initialDesktop={cfg.videoObjectPositionDesktop}
+                initialMobile={cfg.videoObjectPositionMobile}
+                desktopFieldName="videoObjectPositionDesktop"
+                mobileFieldName="videoObjectPositionMobile"
+                singleViewport="mobile"
+                mobileAspect="aspect-[9/16]"
+              />
+              <p className="mt-2 text-[11px] text-ink-mid">
+                Picker only shows when a mobile video or poster URL is
+                pasted above. Drag the pin to choose what part of the
+                frame should sit in the centre of a phone viewport.
+              </p>
             </div>
           </div>
         </div>

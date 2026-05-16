@@ -56,6 +56,23 @@ type Props = {
    *  waiting for form submit). When omitted the picker behaves
    *  exactly as before — fully self-contained via hidden inputs. */
   onChange?: (desktop: string, mobile: string) => void;
+  /** Lock the picker to a single viewport. Hides the desktop/mobile
+   *  toggle, hides the OTHER viewport's preview, and only emits ONE
+   *  hidden input (the one matching the chosen viewport). Use for
+   *  pages where each picker drives a separate media asset — e.g.
+   *  the hero video page has separate desktop + mobile videos, each
+   *  with its own crop. Default undefined = original two-pin
+   *  behaviour. */
+  singleViewport?: "desktop" | "mobile";
+  /** Override the aspect ratio of the live crop preview thumbnails.
+   *  Defaults match the welcome/quiz popup slot dimensions:
+   *    desktopAspect = "aspect-[41/48]"   (popup desktop card)
+   *    mobileAspect  = "aspect-[360/176]" (popup mobile letterbox)
+   *  Callers can pass viewport-correct ratios (e.g. the cinematic
+   *  hero is 16:9 desktop and ~9:16 mobile) so the preview shows
+   *  exactly what visitors will actually see. */
+  desktopAspect?: string;
+  mobileAspect?: string;
 };
 
 /** Internal pin coordinates as percentages 0..100. */
@@ -131,7 +148,12 @@ export function FocalPointPicker({
   mobileFieldName = "imageObjectPositionMobile",
   videoUrl,
   onChange,
+  singleViewport,
+  desktopAspect = "aspect-[41/48]",
+  mobileAspect = "aspect-[360/176]",
 }: Props) {
+  const showDesktop = singleViewport !== "mobile";
+  const showMobile = singleViewport !== "desktop";
   // What we'll use as the editor canvas + the preview source. Image
   // wins when both are set because a still loads faster, doesn't drain
   // battery, and gives the admin a steady frame to pin on. Video is
@@ -150,8 +172,10 @@ export function FocalPointPicker({
   // Which viewport is currently being edited. Both stay visible at all
   // times (so the admin sees both previews) but only one pin is active
   // on the main image at a time — clicking the main image moves THAT pin.
+  // When `singleViewport` is set, this is locked to that viewport and
+  // the toggle isn't rendered.
   const [activeViewport, setActiveViewport] = useState<"desktop" | "mobile">(
-    "desktop",
+    singleViewport ?? "desktop",
   );
 
   // Re-parse when the image URL changes (rare, but if an admin pastes a
@@ -182,16 +206,20 @@ export function FocalPointPicker({
       <div className="border border-dashed border-ink/15 px-4 py-6 text-[12px] text-ink-mid">
         Upload or paste an image / video URL above to use the visual
         focal-point picker.
-        <input
-          type="hidden"
-          name={desktopFieldName}
-          value={formatObjectPosition(desktop)}
-        />
-        <input
-          type="hidden"
-          name={mobileFieldName}
-          value={formatObjectPosition(mobile)}
-        />
+        {showDesktop && (
+          <input
+            type="hidden"
+            name={desktopFieldName}
+            value={formatObjectPosition(desktop)}
+          />
+        )}
+        {showMobile && (
+          <input
+            type="hidden"
+            name={mobileFieldName}
+            value={formatObjectPosition(mobile)}
+          />
+        )}
       </div>
     );
   }
@@ -205,45 +233,55 @@ export function FocalPointPicker({
           come from the props so different forms (welcome popup, quiz
           popup, video hero, per-product crops in the hero popup, …)
           can all share this picker by passing their own field names.
-          Defaults match the original Phase 1 popup field names so
-          existing callers keep working unchanged. */}
-      <input
-        type="hidden"
-        name={desktopFieldName}
-        value={formatObjectPosition(desktop)}
-      />
-      <input
-        type="hidden"
-        name={mobileFieldName}
-        value={formatObjectPosition(mobile)}
-      />
+          In singleViewport mode only the chosen viewport's input is
+          emitted so the form action doesn't see a stale pair. */}
+      {showDesktop && (
+        <input
+          type="hidden"
+          name={desktopFieldName}
+          value={formatObjectPosition(desktop)}
+        />
+      )}
+      {showMobile && (
+        <input
+          type="hidden"
+          name={mobileFieldName}
+          value={formatObjectPosition(mobile)}
+        />
+      )}
 
       <div className="flex items-center gap-2 text-[11px] uppercase tracking-label text-ink-mid">
-        <span>Editing:</span>
-        <button
-          type="button"
-          onClick={() => setActiveViewport("desktop")}
-          className={
-            activeViewport === "desktop"
-              ? "bg-ink px-2 py-1 text-rice"
-              : "border border-ink/20 px-2 py-1 hover:bg-ink/5"
-          }
-          aria-pressed={activeViewport === "desktop"}
-        >
-          Desktop
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveViewport("mobile")}
-          className={
-            activeViewport === "mobile"
-              ? "bg-ink px-2 py-1 text-rice"
-              : "border border-ink/20 px-2 py-1 hover:bg-ink/5"
-          }
-          aria-pressed={activeViewport === "mobile"}
-        >
-          Mobile
-        </button>
+        <span>{singleViewport ? "Viewport:" : "Editing:"}</span>
+        {showDesktop && (
+          <button
+            type="button"
+            onClick={() => setActiveViewport("desktop")}
+            disabled={!!singleViewport}
+            className={
+              activeViewport === "desktop"
+                ? "bg-ink px-2 py-1 text-rice"
+                : "border border-ink/20 px-2 py-1 hover:bg-ink/5"
+            }
+            aria-pressed={activeViewport === "desktop"}
+          >
+            Desktop
+          </button>
+        )}
+        {showMobile && (
+          <button
+            type="button"
+            onClick={() => setActiveViewport("mobile")}
+            disabled={!!singleViewport}
+            className={
+              activeViewport === "mobile"
+                ? "bg-ink px-2 py-1 text-rice"
+                : "border border-ink/20 px-2 py-1 hover:bg-ink/5"
+            }
+            aria-pressed={activeViewport === "mobile"}
+          >
+            Mobile
+          </button>
+        )}
         <span className="ml-auto tabular-nums text-ink-mid/70">
           {formatObjectPosition(activePin)}
         </span>
@@ -259,35 +297,46 @@ export function FocalPointPicker({
         onChange={setActivePin}
       />
 
-      {/* Live crop previews — both viewports shown side by side so the
-          admin sees how each pin position affects the actual customer
-          view. Aspect ratios match what the popup renders at:
-            · Desktop popup image: ~410 wide × 480 tall → 41/48
-            · Mobile popup image:   full width × h-44 (176)
-              At 360 wide that's 360/176 ≈ 2.05/1
-          We render the previews at fixed display widths (180px / 220px)
-          so they fit on a typical admin form column. */}
-      <div className="grid grid-cols-2 gap-4 pt-2">
-        <CropPreview
-          label="Desktop preview"
-          mediaUrl={mediaUrl}
-          isVideo={usingVideo}
-          pin={desktop}
-          aspectClass="aspect-[41/48]"
-        />
-        <CropPreview
-          label="Mobile preview"
-          mediaUrl={mediaUrl}
-          isVideo={usingVideo}
-          pin={mobile}
-          aspectClass="aspect-[360/176]"
-        />
+      {/* Live crop previews — viewports shown side by side (or a single
+          one in singleViewport mode) so the admin sees how each pin
+          affects the actual customer view. Aspect ratios come from the
+          caller via desktopAspect / mobileAspect props (default to the
+          popup slot dimensions). */}
+      <div
+        className={
+          showDesktop && showMobile
+            ? "grid grid-cols-2 gap-4 pt-2"
+            : "pt-2"
+        }
+      >
+        {showDesktop && (
+          <CropPreview
+            label={
+              singleViewport === "desktop" ? "Crop preview" : "Desktop preview"
+            }
+            mediaUrl={mediaUrl}
+            isVideo={usingVideo}
+            pin={desktop}
+            aspectClass={desktopAspect}
+          />
+        )}
+        {showMobile && (
+          <CropPreview
+            label={
+              singleViewport === "mobile" ? "Crop preview" : "Mobile preview"
+            }
+            mediaUrl={mediaUrl}
+            isVideo={usingVideo}
+            pin={mobile}
+            aspectClass={mobileAspect}
+          />
+        )}
       </div>
 
       <p className="text-[11px] leading-relaxed text-ink-mid">
-        Click the image above to set the focal point, or drag the pin.
-        Switch between Desktop and Mobile to set each viewport independently.
-        The two previews below show exactly what customers see.
+        {singleViewport
+          ? "Click the image above to set the focal point, or drag the pin. The preview shows exactly what visitors will see."
+          : "Click the image above to set the focal point, or drag the pin. Switch between Desktop and Mobile to set each viewport independently. The two previews below show exactly what customers see."}
       </p>
     </div>
   );
