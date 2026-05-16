@@ -165,9 +165,6 @@ export default async function LocaleLayout({ children, params }: Props) {
   setRequestLocale(locale);
   const messages = await getMessages();
 
-  // Seed the cart provider with the current server-side cart (if any).
-  // peekCartSummary is a pure read — it won't create a cart for a
-  // first-time visitor, so static pages don't all get a Cart row written.
   const prismaLocale =
     locale === "nl"
       ? Locale.NL
@@ -176,39 +173,55 @@ export default async function LocaleLayout({ children, params }: Props) {
         : locale === "ru"
           ? Locale.RU
           : Locale.EN;
-  const initialCart = await peekCartSummary({ locale: prismaLocale });
 
-  // Read the consent cookie so we can hide the banner immediately for
-  // returning visitors — no flash of "we use cookies" on every page view.
-  const consent = await readConsentCookie();
-
-  // Whether the visitor is already a registered customer. The on-load
-  // welcome popup uses this flag to suppress itself for signed-in
-  // accounts (no point dangling a "create account" CTA at someone who
-  // already has one). getCurrentUser is cheap — reads the Supabase
-  // session cookie and looks up the matching Prisma User by email.
-  const currentUser = await getCurrentUser();
-  const isSignedIn = currentUser !== null;
-
-  // Fetch the mega-menu data once at the layout level — the SHOP
-  // hover panel + mobile drawer accordion both consume it. Layout is
-  // the cheapest level to fetch from (one set of DB reads per request
-  // rather than one per page). Returns the category TREE (parents +
-  // their non-empty children) plus the brand list. Empty categories
-  // and brands with zero published products are already filtered out
-  // inside getShopMegaMenuData.
-  const shopMenu = await getShopMegaMenuData(locale);
-
-  // Marketing popup configs + promo percentages — an admin edits at
-  // /admin/marketing. All three are read in parallel so the layout
-  // doesn't pay three round-trips. The quiz reward % from `promo`
-  // drives the "−X%" chip under the Skin Quiz nav item.
-  const [welcomePopup, quizPopup, promo, heroPopup] = await Promise.all([
+  // PERF — one big parallel fetch instead of 5 sequential awaits.
+  // The layout sits on every public + customer route, so reducing
+  // its TTFB by ~300-400ms cascades directly into LCP / FCP on every
+  // page. Each Supabase round-trip from Hostinger Node is 80-150ms;
+  // running them sequentially used to burn ~500ms of pure waiting
+  // before the first byte left the server. Lighthouse mobile flagged
+  // this as "Document request latency: 0" — the score-0 audit.
+  //
+  // Things that CAN run in parallel here:
+  //   · peekCartSummary       — pure read, no side effects
+  //   · readConsentCookie     — cookie-only, no DB
+  //   · getCurrentUser        — Supabase auth lookup
+  //   · getShopMegaMenuData   — Prisma categories + brands
+  //   · readWelcomePopupSettings, readQuizPopupSettings,
+  //     readPromoSettings, readHeroPopupSettings — all independent
+  //   · readSetting("shipping") — independent
+  //
+  // Things that must STAY sequential:
+  //   · getHeroPopupProductCards(heroPopup, …)  — depends on the
+  //     heroPopup config to know which product ids to hydrate
+  //   · resolveHeroPopupCopy(heroPopup, …)      — same dependency
+  //
+  // Note: each fetch resolves independently inside the Promise.all,
+  // so if one is slow it only delays itself — the others have
+  // already returned by then. With Prisma's connection pool this is
+  // safe: each query gets its own connection, no head-of-line block.
+  const [
+    initialCart,
+    consent,
+    currentUser,
+    shopMenu,
+    welcomePopup,
+    quizPopup,
+    promo,
+    heroPopup,
+    shippingSettings,
+  ] = await Promise.all([
+    peekCartSummary({ locale: prismaLocale }),
+    readConsentCookie(),
+    getCurrentUser(),
+    getShopMegaMenuData(locale),
     readWelcomePopupSettings(),
     readQuizPopupSettings(),
     readPromoSettings(),
     readHeroPopupSettings(),
+    readSetting("shipping"),
   ]);
+  const isSignedIn = currentUser !== null;
 
   // Hydrate hero-popup product cards using the page's Prisma locale, so
   // the popup speaks the visitor's language. Hero popup is the only one
@@ -238,9 +251,8 @@ export default async function LocaleLayout({ children, params }: Props) {
   // Free-shipping threshold — surfaced as a progress indicator inside
   // the cart drawer so customers see "€X to go for free shipping"
   // every time they add an item, and as the headline value in the
-  // sitewide announcement banner. Reads an admin's admin override (or
-  // default €50) at request time.
-  const shippingSettings = await readSetting("shipping");
+  // sitewide announcement banner. shippingSettings was already
+  // fetched as part of the parallel block above.
   const freeShippingThresholdEur =
     shippingSettings.freeThresholdCents / 100;
 
