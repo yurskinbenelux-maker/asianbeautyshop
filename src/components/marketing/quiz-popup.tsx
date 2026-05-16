@@ -23,7 +23,11 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+// Raw <img>, not next/image — same reason as register-welcome-popup:
+// next/image rewrites the src through /_next/image?url=…, mismatching
+// the raw URL we preload in the layout <head> AND the JS prefetch
+// below. With raw <img> all three (head preload, JS prefetch, render)
+// hit the same URL → cache hit → instant paint.
 import type { QuizPopupSettings } from "@/lib/queries/quiz-popup";
 import { awaitHeroFinished } from "@/lib/marketing/popup-coordinator";
 
@@ -86,6 +90,31 @@ export function QuizPopup({ config }: { config: QuizPopupSettings }) {
       if (timer !== undefined) window.clearTimeout(timer);
     };
   }, [pathname, config.enabled, config.delaySecondsAfterWelcome]);
+
+  // PREFETCH + DECODE the popup image during idle time so the <img>
+  // paints instantly when the modal mounts. Same trick as the
+  // welcome popup — without this, the modal chrome appears at the
+  // delay tick (welcome finished + ~30s default) but the image
+  // arrives 1-2s later on mobile because the layout's <link
+  // rel="preload"> is fetchPriority="low" to protect the hero LCP.
+  //
+  // Steps:
+  //   1. new Image().src kicks off the fetch with the SAME raw URL
+  //      the <img> below will request → cache hit when React mounts.
+  //   2. await .decode() so the decompressed bitmap is also in
+  //      memory and paint is a single screen blit.
+  //
+  // Gated on the open conditions so we don't burn bandwidth
+  // prefetching on /quiz or /checkout where the modal would never
+  // fire anyway.
+  useEffect(() => {
+    if (!config.enabled) return;
+    if (!config.imageUrl.trim()) return;
+    if (SUPPRESSED_PATH_PATTERNS.some((re) => re.test(pathname))) return;
+    const img = new window.Image();
+    img.src = config.imageUrl;
+    void img.decode?.().catch(() => {});
+  }, [config.enabled, pathname, config.imageUrl]);
 
   function dismiss() {
     setOpen(false);
@@ -152,12 +181,17 @@ export function QuizPopup({ config }: { config: QuizPopupSettings }) {
             {/* Per-viewport object-position — see register-welcome-popup
                 for the rationale. Two CSS variables, mobile applied by
                 default and desktop swapped in via md: variant. */}
-            <Image
+            {/* Raw <img> so the URL matches the head preload + the JS
+                prefetch above. By the time this mounts it's a cache
+                hit, no network round-trip. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={config.imageUrl}
               alt={config.imageAlt}
-              fill
-              sizes="(max-width: 768px) 100vw, 410px"
-              className="object-cover [object-position:var(--yur-pop-pos-mobile)] md:[object-position:var(--yur-pop-pos-desktop)]"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+              className="absolute inset-0 h-full w-full object-cover [object-position:var(--yur-pop-pos-mobile)] md:[object-position:var(--yur-pop-pos-desktop)]"
               style={
                 {
                   "--yur-pop-pos-desktop":
@@ -166,7 +200,6 @@ export function QuizPopup({ config }: { config: QuizPopupSettings }) {
                     config.imageObjectPositionMobile || "center",
                 } as React.CSSProperties
               }
-              priority
             />
           </div>
         )}

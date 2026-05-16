@@ -49,7 +49,11 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+// Raw <img> for the bento tiles, NOT next/image. next/image rewrites
+// src through /_next/image?url=…, which doesn't match the raw Supabase
+// URL we preload from the layout <head> for the first card. The bento
+// has up to 6 product images — using raw <img> + a JS prefetch of all
+// six on mount means cache-hit paint when the modal fires (3s+ later).
 import { X } from "lucide-react";
 
 import {
@@ -131,6 +135,35 @@ export function HeroPopup({
       if (timerId !== undefined) window.clearTimeout(timerId);
     };
   }, [enabled, products.length, pathname, delaySeconds]);
+
+  // PREFETCH + DECODE every product image as soon as the component
+  // mounts (well before the welcome+delay chain fires). Same fix as
+  // the welcome popup, just multiplied across up to 6 tiles. Without
+  // this the bento appears at the delay tick but each tile pops in
+  // 1-2s later on mobile as its image arrives over the wire.
+  //
+  // Why we don't just sprinkle priority="high" on next/image: the
+  // tiles render as raw <img> (see import comment above) so the head
+  // preload, this JS prefetch, and the rendered <img> all hit the
+  // same URL → cache hit, no double-fetch.
+  //
+  // Gated on the same open conditions as the timer above so we don't
+  // waste bandwidth prefetching 6 images on /admin or /checkout where
+  // the popup will never fire.
+  useEffect(() => {
+    if (!enabled) return;
+    if (products.length < 3) return;
+    if (SUPPRESSED_PATH_PATTERNS.some((re) => re.test(pathname))) return;
+    if (!HOMEPAGE_PATTERN.test(pathname)) return;
+    for (const product of products) {
+      if (!product.imageUrl) continue;
+      const img = new window.Image();
+      img.src = product.imageUrl;
+      // decode() is unsupported in Safari < 15 — silently fall back
+      // to the HTTP-cache-only win.
+      void img.decode?.().catch(() => {});
+    }
+  }, [enabled, products, pathname]);
 
   function dismiss() {
     setOpen(false);
@@ -362,12 +395,22 @@ function BentoTile({
     >
       <div className={`relative ${aspect}`}>
         {product.imageUrl ? (
-          <Image
+          // Raw <img> — matches the URL the parent component prefetched
+          // on mount, so this is almost always a cache hit by the time
+          // the modal opens. `sizes` is no longer meaningful here
+          // (raw img doesn't honour it the way next/image does), but
+          // the layout's CSS already constrains the rendered size.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={product.imageUrl}
             alt={product.name}
-            fill
-            sizes={sizes}
-            className="object-cover transition-transform duration-700 group-hover:scale-[1.04] [object-position:var(--yur-tile-pos-mobile)] md:[object-position:var(--yur-tile-pos-desktop)]"
+            loading="eager"
+            decoding="async"
+            // Suppress the unused-vars lint without dropping the prop
+            // from the function signature — `sizes` is still a useful
+            // documentation hint about the intended render width.
+            data-sizes={sizes}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04] [object-position:var(--yur-tile-pos-mobile)] md:[object-position:var(--yur-tile-pos-desktop)]"
             style={
               {
                 "--yur-tile-pos-desktop": desktopPos,
