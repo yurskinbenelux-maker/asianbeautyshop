@@ -408,13 +408,26 @@ function Field({
   defaultValue,
   placeholder,
   hint,
+  type = "text",
+  step,
+  min,
+  max,
 }: {
   label: string;
   name: string;
   defaultValue?: string;
   placeholder?: string;
   hint?: string;
+  /** Defaults to "text". Pass "number" for numeric inputs (e.g. the
+   *  poster timing fields). When `type === "number"`, the maxLength
+   *  attribute is dropped because it doesn't apply to numeric inputs
+   *  and React warns about it. */
+  type?: "text" | "number" | "url" | "email";
+  step?: string;
+  min?: string;
+  max?: string;
 }) {
+  const isNumber = type === "number";
   return (
     <label className="block">
       <span className="mb-1 block text-[11px] uppercase tracking-label text-ink-mid">
@@ -422,10 +435,17 @@ function Field({
       </span>
       <input
         name={name}
+        type={type}
+        step={step}
+        min={min}
+        max={max}
         defaultValue={defaultValue ?? ""}
         placeholder={placeholder}
         className="w-full border border-ink/15 bg-white px-3 py-2 text-[13px] text-ink placeholder:text-ink-mid/60 focus:border-ink focus:outline-none"
-        maxLength={2000}
+        // maxLength is meaningless on number inputs and triggers a
+        // React DOM warning. Keep the 2000-char cap on text-like
+        // inputs (URLs, etc.).
+        maxLength={isNumber ? undefined : 2000}
       />
       {hint && (
         <span className="mt-1 block text-[11px] leading-relaxed text-ink-mid">
