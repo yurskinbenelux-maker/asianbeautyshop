@@ -107,8 +107,15 @@ export function GoogleTagManager({ initialConsent }: Props) {
 
   return (
     <>
-      {/* ── 1. Consent defaults + initial state ───────────────────── */}
-      <Script id="yur-gtm-consent-init" strategy="afterInteractive">
+      {/* ── 1. Consent defaults + initial state ─────────────────────
+          strategy="lazyOnload" — fires after the page has fully
+          loaded (window load event + browser idle). Used to be
+          "afterInteractive", which put the ~50-150KB GTM container
+          on the LCP critical path and contributed to a 5.3s mobile
+          LCP. Deferring buys back ~1-1.5s of LCP on slow phones
+          without changing what tags actually fire — the consent
+          default still runs BEFORE the loader thanks to JSX order. */}
+      <Script id="yur-gtm-consent-init" strategy="lazyOnload">
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
@@ -126,7 +133,7 @@ export function GoogleTagManager({ initialConsent }: Props) {
       </Script>
 
       {/* ── 2. GTM loader (Google's official snippet, just inlined) ── */}
-      <Script id="yur-gtm-loader" strategy="afterInteractive">
+      <Script id="yur-gtm-loader" strategy="lazyOnload">
         {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='${GTM_GATEWAY_URL}/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM_ID}');`}
       </Script>
     </>
