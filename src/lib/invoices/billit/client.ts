@@ -134,13 +134,17 @@ export async function billitFetch<TResponse = unknown>(
 
 /**
  * Tiny health-check call. Used by /admin/billit to show the connection
- * status before we trust the push pipeline. We hit /v1/account because
- * it's cheap, authenticated, and returns the configured party — so a 200
- * proves both the key works AND the PartyID matches a real company.
+ * status before we trust the push pipeline.
  *
- * Returns the raw response body so the admin UI can render the company
- * name + VAT number for sanity check ("yes, this is K'Elmus, not the
- * wrong company by accident").
+ * We hit POST /v1/account/sequences with Consume=false — the "peek at
+ * next invoice number" endpoint. It's:
+ *   · documented and stable (per docs.billit.be/docs/how-can-i-retrieve-the-next-sequence)
+ *   · authenticated — proves both PartyID + Key are correct
+ *   · side-effect free with Consume=false (doesn't burn a number)
+ *   · cheap (no DB write on Billit's side)
+ *
+ * Returns the raw response body so the admin UI could surface the next
+ * invoice number for sanity check ("yes, Billit is tracking from N+1").
  */
 export async function billitPing(): Promise<
   | { ok: true; environment: string; body: unknown }
@@ -151,13 +155,22 @@ export async function billitPing(): Promise<
     return { ok: false, error: "billit/env: config not set" };
   }
   try {
-    const body = await billitFetch("GET", "/v1/account", undefined, {
-      configOverride: cfg,
-    });
+    const body = await billitFetch(
+      "POST",
+      "/v1/account/sequences",
+      { SequenceType: "Income-Invoice", Consume: false },
+      { configOverride: cfg },
+    );
     return { ok: true, environment: cfg.environment, body };
   } catch (e) {
     if (e instanceof BillitError) {
-      return { ok: false, error: `${e.message} · body=${JSON.stringify(e.body)}` };
+      // Truncate the body so an HTML error page doesn't render as a wall
+      // of escaped markup in the admin banner.
+      const bodyPreview =
+        typeof e.body === "string"
+          ? e.body.slice(0, 200)
+          : JSON.stringify(e.body).slice(0, 200);
+      return { ok: false, error: `${e.message} · ${bodyPreview}` };
     }
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
