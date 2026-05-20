@@ -37,6 +37,7 @@ import {
   FileSpreadsheet,
   Sparkles,
   Megaphone,
+  Banknote,
 } from "lucide-react";
 import type {
   AdminCapability,
@@ -73,6 +74,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { href: "/admin/quiz-tester", label: "Quiz tester",   icon: Sparkles,         cap: "products.view" },
   { href: "/admin/orders",      label: "Orders",        icon: ShoppingBag,      cap: "orders.view", badgeKey: "ordersAwaitingShipment" },
   { href: "/admin/invoices",    label: "Invoices",      icon: FileSpreadsheet,  cap: "orders.view" },
+  { href: "/admin/billit",      label: "Billit",        icon: Banknote,         cap: "billit.view" },
   { href: "/admin/returns",     label: "Returns",       icon: RotateCcw,        cap: "returns.view", badgeKey: "returnsAwaitingRefund" },
   { href: "/admin/customers",   label: "Customers",     icon: Users,            cap: "customers.view" },
   { href: "/admin/coupons",     label: "Coupons",       icon: BadgePercent,     cap: "coupons.edit" },

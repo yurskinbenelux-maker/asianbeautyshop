@@ -57,7 +57,12 @@ export type AdminCapability =
   | "audit.view"
   // A-Beauty Club loyalty config — money-coded (an admin tweaks pts/€, redemption
   // costs, milestone bonuses), so OWNER-only by default.
-  | "loyalty.edit";
+  | "loyalty.edit"
+  // Billit accountant mirror — surfaces every invoice + credit-note push
+  // status. OWNER-only because the page exposes BTW totals (financial)
+  // and the retry button reaches into K'Elmus' accounting platform.
+  | "billit.view"
+  | "billit.retry";
 
 // ─── capability matrix ───────────────────────────────────────────────────
 //
@@ -78,6 +83,7 @@ export const CAPS: Record<AdminRole, Set<AdminCapability>> = {
     "coupons.edit", "giftcards.view", "giftcards.manage",
     "emails.send", "redirects.edit", "audit.view",
     "loyalty.edit",
+    "billit.view", "billit.retry",
   ]),
   EDITOR: new Set<AdminCapability>([
     "products.view", "products.edit",
