@@ -53,12 +53,15 @@ export async function retryBillitPushAction(
 }
 
 function friendlyOk(result: Extract<PushResult, { ok: true }>): string {
-  if (result.status === "pushed") {
-    return `Pushed to Billit (id ${result.billitInvoiceId.slice(0, 8)}…)`;
+  // Check "skipped" first so TS narrows cleanly: the "pushed" / "already_pushed"
+  // variants share one PushResult shape (combined string-literal status), and
+  // ruling them out individually doesn't always narrow the union back to the
+  // remaining "skipped" variant in strict mode.
+  if (result.status === "skipped") {
+    return `Skipped: ${result.reason}`;
   }
   if (result.status === "already_pushed") {
     return "Already pushed previously — no change.";
   }
-  // status === "skipped"
-  return `Skipped: ${result.reason}`;
+  return `Pushed to Billit (id ${result.billitInvoiceId.slice(0, 8)}…)`;
 }
