@@ -24,6 +24,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { INVOICES_BUCKET, supabaseAdmin } from "@/lib/supabase/admin";
+import { pushInvoiceToBillit } from "./billit/push";
 import { reserveNextInvoiceNumber } from "./numbering";
 import {
   renderInvoicePdf,
@@ -284,6 +285,28 @@ export async function issueInvoiceForOrder(
       data: { invoiceUrl: pdfPath },
     });
     return invoice;
+  });
+
+  // Step 8 — mirror the invoice into K'Elmus' Billit account (accountant's
+  // view of the books). Fire-and-forget on purpose:
+  //   · The customer's order confirmation email shouldn't wait on a
+  //     third-party API. Billit's typical latency is sub-second but we
+  //     don't want to couple two unrelated SLAs.
+  //   · pushInvoiceToBillit() persists every outcome (success / mismatch /
+  //     failure) onto the Invoice row itself (billitPushedAt,
+  //     billitInvoiceId, billitErrorMessage, billitSnapshot). So if the
+  //     promise rejects or the process dies mid-push, the daily
+  //     reconciliation cron catches the row on its next sweep.
+  //   · No-op silently when BILLIT_* env vars are missing — local dev
+  //     stays clean, sandbox-only setups stay sandbox-only.
+  // The .catch() is belt-and-braces for truly unexpected throws (e.g.
+  // process kill before the helper's own persistence ran). Helper-internal
+  // errors are already swallowed and turned into billitErrorMessage rows.
+  void pushInvoiceToBillit(created.id).catch((e) => {
+    console.error(
+      `[billit] unhandled push error for invoice ${created.id}:`,
+      e,
+    );
   });
 
   return {

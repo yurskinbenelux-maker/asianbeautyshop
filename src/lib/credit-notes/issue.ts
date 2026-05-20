@@ -41,6 +41,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getMollie } from "@/lib/mollie/client";
 import { INVOICES_BUCKET, supabaseAdmin } from "@/lib/supabase/admin";
+import { pushCreditNoteToBillit } from "@/lib/invoices/billit/push";
 import { reserveNextCreditNoteNumber } from "./numbering";
 import {
   renderCreditNotePdf,
@@ -497,6 +498,21 @@ export async function issueRefundAndCreditNote(
     );
   }
 
+  // ── 7.5 Mirror the credit note into Billit (accountant's books) ────
+  // Fire-and-forget for the same reasons as the invoice path: customer
+  // experience must never depend on Billit being reachable. The push
+  // helper persists status on the CreditNote row (billitPushedAt /
+  // billitErrorMessage) so the daily reconciliation cron catches
+  // anything that didn't land. If PDF mint above failed, the push will
+  // see pdfPath=null and return "skipped" — retry cron picks it up
+  // once the PDF is re-rendered.
+  void pushCreditNoteToBillit(creditNoteId).catch((err) => {
+    console.error(
+      `[billit] unhandled push error for credit note ${creditNoteId}:`,
+      err,
+    );
+  });
+
   // ── 8. Reverse loyalty points (A6) ─────────────────────────────────
   // Best-effort, same posture as the PDF mint: a loyalty hiccup must
   // never roll back the refund. Issued AFTER the CN write (vs inside
@@ -931,6 +947,15 @@ export async function issueCancellationRefundAndCreditNote(
     );
   }
 
+  // ── 6.5 Mirror the credit note into Billit (accountant's books) ────
+  // See the refund-path twin for the design notes — same posture here.
+  void pushCreditNoteToBillit(creditNoteId).catch((err) => {
+    console.error(
+      `[billit] unhandled push error for credit note ${creditNoteId}:`,
+      err,
+    );
+  });
+
   // ── 7. Reverse loyalty points (best-effort) ────────────────────────
   // Pass null for returnId since this isn't return-tied — the loyalty
   // reverser's idempotency check on (orderId, REVERSED_REFUND) still
@@ -1146,6 +1171,18 @@ export async function mintCreditNotePdf(
   await prisma.creditNote.update({
     where: { id: cn.id },
     data: { pdfPath },
+  });
+
+  // PDF just landed. If the issuance-time push skipped because pdfPath
+  // was null (the common case — issuance fires push before/at the same
+  // time as PDF mint), re-fire now that the PDF is ready. The push
+  // helper's already-pushed check makes a duplicate call a cheap no-op,
+  // so re-firing here is harmless when issuance-time push succeeded.
+  void pushCreditNoteToBillit(cn.id).catch((err) => {
+    console.error(
+      `[billit] unhandled post-mint push error for credit note ${cn.id}:`,
+      err,
+    );
   });
 
   return {
