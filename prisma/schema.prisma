@@ -865,6 +865,35 @@ model Invoice {
 
   createdAt         DateTime @default(now())
 
+  // ────────── Billit mirror (accountant's books) ─────────────────────
+  // After this row is created + the PDF uploaded, the issuance pipeline
+  // pushes a copy to K'Elmus' Billit account (sandbox or production
+  // depending on env vars). All six fields below are populated only by
+  // the Billit pipeline — they never affect the customer-facing invoice
+  // and are NULL on rows issued before the integration shipped.
+  //
+  //   billitPushedAt      — set when Billit acknowledged the push
+  //                          (POST 2xx + reconciliation check passed).
+  //   billitInvoiceId     — Billit's own UUID for the order; lets the
+  //                          admin UI deep-link into MyBillit.
+  //   billitSnapshot      — full Billit response body kept as JSON so
+  //                          we can audit what landed in their books
+  //                          without re-querying.
+  //   billitErrorMessage  — last error string from a failed push. Null
+  //                          once a retry succeeds.
+  //   billitLastAttemptAt — when the last push attempt was made
+  //                          (success OR failure). Used by the retry
+  //                          cron to space out retries.
+  //   billitAttemptCount  — total attempts incl. successes. Caps the
+  //                          retry loop so a permanently-broken invoice
+  //                          doesn't churn forever.
+  billitPushedAt      DateTime?
+  billitInvoiceId     String?
+  billitSnapshot      Json?
+  billitErrorMessage  String?
+  billitLastAttemptAt DateTime?
+  billitAttemptCount  Int       @default(0)
+
   // Several credit notes can attach to one invoice (partial refund issued
   // first, full refund later, or a goodwill correction on top). Cascade
   // delete is intentional: if an invoice is removed (which only happens
@@ -875,6 +904,8 @@ model Invoice {
   @@index([year, sequence])
   @@index([destinationCountry, issuedAt])
   @@index([issuedAt])
+  // Lets the reconciliation cron find unpushed/failed rows cheaply.
+  @@index([billitPushedAt])
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -951,6 +982,18 @@ model CreditNote {
 
   createdAt         DateTime @default(now())
 
+  // ────────── Billit mirror (accountant's books) ─────────────────────
+  // Symmetric to Invoice — every credit note we issue gets shadowed into
+  // K'Elmus' Billit account via Billit's OrderType=CreditNote endpoint
+  // with LinkedOrderNumber referencing the parent invoice. See the
+  // matching block on Invoice for field-by-field semantics.
+  billitPushedAt      DateTime?
+  billitInvoiceId     String?
+  billitSnapshot      Json?
+  billitErrorMessage  String?
+  billitLastAttemptAt DateTime?
+  billitAttemptCount  Int       @default(0)
+
   // Per-line breakdown (G9). Populated at issuance from the originating
   // ReturnItems; total of items.lineTotalInclVat equals the credit
   // note's grandTotal (less shippingTotal). When admin refunds less
@@ -968,6 +1011,8 @@ model CreditNote {
   @@index([returnId])
   @@index([destinationCountry, issuedAt])
   @@index([issuedAt])
+  // Mirrors the Invoice index — lets the cron sweep unpushed CNs cheaply.
+  @@index([billitPushedAt])
 }
 
 // Frozen-at-issue per-line snapshot — same shape as OrderItem for
