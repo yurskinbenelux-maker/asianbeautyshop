@@ -22,7 +22,7 @@
 
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
@@ -42,6 +42,7 @@ import {
   CouponField,
   type AppliedCoupon,
 } from "@/components/checkout/coupon-field";
+import { trackInitiateCheckout } from "@/lib/analytics/meta-pixel";
 
 // ────────── props ───────────────────────────────────────────────────────
 
@@ -77,7 +78,8 @@ export function CheckoutClient({
 }) {
   const t = useTranslations("checkout");
   const currencyLocale = priceLocale(locale);
-
+  const hasTrackedInitiateCheckout = useRef(false);
+  
   // ── local state ────────────────────────────────────────────────────
   // The only reason we keep a shallow local state for country/subtotal is
   // so the Order Summary can update its shipping-free/flat-rate line and
@@ -165,12 +167,27 @@ export function CheckoutClient({
   // Fall back to the server's first-render totals only when nothing
   // could possibly have changed since SSR. As soon as the customer
   // touches country, gift cards, OR a coupon, prefer the live preview.
-  const totals: PricingResult =
+   const totals: PricingResult =
     country === (defaultAddress?.country ?? "BE") &&
     giftCardBalanceEur === 0 &&
     appliedCoupon === null
       ? initialTotals
       : previewTotals;
+
+  // Meta Pixel: InitiateCheckout — fires once when the checkout page loads.
+  useEffect(() => {
+    if (hasTrackedInitiateCheckout.current) return;
+    if (cart.items.length === 0) return;
+
+    hasTrackedInitiateCheckout.current = true;
+
+    trackInitiateCheckout({
+      value: initialTotals.grandTotalEur,
+      currency: cart.currency,
+      contentIds: cart.items.map((item) => item.productId),
+      numItems: cart.itemCount,
+    });
+  }, [cart, initialTotals.grandTotalEur]);
 
   // ── submit ─────────────────────────────────────────────────────────
 
