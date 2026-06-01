@@ -12,14 +12,32 @@ declare global {
   }
 }
 
+function waitForFbqAndTrack(
+  eventName: string,
+  params?: Record<string, unknown>,
+  attempt = 0,
+) {
+  if (typeof window === "undefined") return;
+
+  if (typeof window.fbq === "function") {
+    window.fbq("track", eventName, params);
+    return;
+  }
+
+  // Pixel script can load slightly after React effects.
+  // Retry for ~5 seconds max.
+  if (attempt < 25) {
+    window.setTimeout(() => {
+      waitForFbqAndTrack(eventName, params, attempt + 1);
+    }, 200);
+  }
+}
+
 export function trackMetaPixelEvent(
   eventName: string,
   params?: Record<string, unknown>,
 ) {
-  if (typeof window === "undefined") return;
-  if (typeof window.fbq !== "function") return;
-
-  window.fbq("track", eventName, params);
+  waitForFbqAndTrack(eventName, params);
 }
 
 export function trackViewContent(product: MetaPixelProduct) {
