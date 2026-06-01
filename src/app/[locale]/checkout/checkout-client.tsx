@@ -167,7 +167,7 @@ export function CheckoutClient({
   // Fall back to the server's first-render totals only when nothing
   // could possibly have changed since SSR. As soon as the customer
   // touches country, gift cards, OR a coupon, prefer the live preview.
-  const totals: PricingResult =
+    const totals: PricingResult =
     country === (defaultAddress?.country ?? "BE") &&
     giftCardBalanceEur === 0 &&
     appliedCoupon === null
