@@ -24,6 +24,7 @@ import { syncByPublicNumber } from "@/lib/checkout/sync-mollie";
 import { Link } from "@/i18n/routing";
 import { Check, Clock } from "lucide-react";
 import { PurchaseTracker } from "@/components/analytics/purchase-tracker";
+import { MetaPurchaseTracker } from "@/components/analytics/meta-purchase-tracker";
 import { RetryPaymentButton } from "@/components/account/retry-payment-button";
 
 type Props = {
@@ -91,6 +92,7 @@ export default async function CheckoutSuccessPage({
           skuSnapshot: true,
           product: {
             select: {
+              id: true,
               // Note: Product itself has no `slug` — slugs live on
               // ProductTranslation (per-locale). For GA4 item_id we use
               // the OrderItem's skuSnapshot instead, which is stable and
@@ -150,12 +152,27 @@ export default async function CheckoutSuccessPage({
       }
     : null;
 
+  const metaPurchasePayload = paid
+    ? {
+        orderId: order.publicNumber,
+        value: grandTotalEur,
+        currency: order.currency || "EUR",
+        contentIds: order.items
+          .map((item) => item.product?.id)
+          .filter((id): id is string => Boolean(id)),
+        numItems: order.items.reduce((sum, item) => sum + item.quantity, 0),
+      }
+    : null;
+  
   return (
     <section className="mx-auto max-w-2xl px-6 pb-24 pt-20 text-center md:px-10">
       {/* GA4 + Google Ads conversion. Renders only when the order is
           confirmed PAID; the component itself is a render-null sink that
           fires `dataLayer.push({event: 'purchase', ...})` once on mount. */}
       {purchasePayload ? <PurchaseTracker {...purchasePayload} /> : null}
+      {metaPurchasePayload ? (
+        <MetaPurchaseTracker purchase={metaPurchasePayload} />
+      ) : null}
       <div
         aria-hidden
         className={
