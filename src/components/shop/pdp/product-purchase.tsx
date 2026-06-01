@@ -22,6 +22,7 @@ import { useCart } from "@/components/cart/cart-provider";
 import { cn, formatEur } from "@/lib/utils";
 import type { PdpVariant } from "@/lib/queries/pdp";
 import { BackInStockForm } from "./back-in-stock-form";
+import { trackAddToCart } from "@/lib/analytics/meta-pixel";
 
 /** URL locale ("en") → Prisma Locale enum ("EN"). Defensive — falls back
  *  to EN if the runtime ever surfaces something we don't recognise. */
@@ -158,7 +159,7 @@ export function ProductPurchase({
     activeVariant.isInStock &&
     activeVariant.stock <= 5;
 
-  const onAdd = () => {
+    const onAdd = () => {
     if (!isInStock) return;
     setIsAdding(true);
     startTransition(async () => {
@@ -168,6 +169,15 @@ export function ProductPurchase({
           variantId: activeVariant?.id ?? null,
           quantity: 1,
         });
+
+        trackAddToCart({
+          id: productId,
+          name: activeVariant?.label ?? sku,
+          price: priceEur,
+          currency: "EUR",
+          category: undefined,
+        });
+
         setJustAdded(true);
         toast.success(tCart("added_toast"));
         window.setTimeout(() => setJustAdded(false), 2000);
@@ -185,7 +195,7 @@ export function ProductPurchase({
       variantId: activeVariant?.id,
     });
   };
-
+  
   return (
     <div>
       {/* ── price row ──────────────────────────────────────────── */}
