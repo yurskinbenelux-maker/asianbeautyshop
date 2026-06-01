@@ -23,6 +23,7 @@
 import { notFound } from "next/navigation";
 import { maybeRedirect } from "@/lib/redirects/maybe-redirect";
 import type { Metadata } from "next";
+import { MetaViewContent } from "@/components/analytics/meta-view-content";
 
 // PDPs cache for 5 minutes — product copy / pricing / reviews
 // shouldn't change minute-to-minute, and edits in /admin/products
@@ -234,14 +235,25 @@ export default async function ProductDetailPage({
   });
 
   return (
-    <LocaleAlternatesProvider alternates={localeAlternates}>
-      {/*
-        JSON-LD is a search signal — we don't want Google indexing preview
-        URLs, so we skip the LD payload entirely when in preview mode. The
-        browser still renders the page normally.
-      */}
-      {!previewMode && <JsonLd data={productLdPayload} />}
-      <article className="pb-24">
+  <LocaleAlternatesProvider alternates={localeAlternates}>
+    {/*
+      JSON-LD is a search signal — we don't want Google indexing preview
+      URLs, so we skip the LD payload entirely when in preview mode. The
+      browser still renders the page normally.
+    */}
+    {!previewMode && <JsonLd data={productLdPayload} />}
+
+    {/* Meta Pixel: ViewContent — fires when a customer opens this PDP */}
+    <MetaViewContent
+      product={{
+        id: product.id,
+        name: product.name,
+        price: product.priceEur,
+        currency: "EUR",
+        category: product.primaryCategoryName ?? undefined,
+      }}
+    />
+    <article className="pb-24">
         {/* ── preview banner (admin only) ────────────────────────── */}
         {previewMode && (
           <div className="bg-ink text-white">
