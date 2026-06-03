@@ -36,6 +36,14 @@ import { SortSelect } from "@/components/shop/sort-select";
 import { ShopFiltersShell } from "@/components/shop/shop-filters-shell";
 import { ShopInfiniteGrid } from "@/components/shop/shop-infinite-grid";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import { JsonLd } from "@/components/seo/json-ld";
+import {
+  breadcrumbHomeLabel,
+  breadcrumbListJsonLd,
+  collectionPageJsonLd,
+  productItemListJsonLd,
+  siteOrigin,
+} from "@/lib/seo/json-ld";
 
 // Mirror /shop so the two surfaces load comparably fast.
 const PAGE_SIZE = 24;
@@ -150,8 +158,34 @@ export default async function CategoryLandingPage({
   // pattern to /shop so the scroll-preservation contract holds.
   const resetKey = JSON.stringify({ sort, ...filterArgs });
 
+  const origin = siteOrigin();
+  const shopUrl = `${origin}/${locale}/shop`;
+  const categoryUrl = `${origin}/${locale}/shop/category/${category.slug}`;
+  const pageDescription =
+    category.seoDescription || stripHtml(category.description);
+  const breadcrumbLd = breadcrumbListJsonLd([
+    { name: breadcrumbHomeLabel(locale), url: `${origin}/${locale}` },
+    { name: t("eyebrow"), url: shopUrl },
+    { name: category.name, url: categoryUrl },
+  ]);
+  const collectionLd = collectionPageJsonLd({
+    name: category.name,
+    description: pageDescription,
+    url: categoryUrl,
+  });
+  const itemListLd = productItemListJsonLd(
+    items.map((p) => ({
+      name: p.name,
+      url: `${origin}/${locale}/shop/${p.slug}`,
+      image: p.imageUrl,
+    })),
+  );
+  const listingLd = [breadcrumbLd, collectionLd, ...(items.length > 0 ? [itemListLd] : [])];
+
   return (
-    <section className="container py-20 md:py-28">
+    <>
+      <JsonLd data={listingLd} />
+      <section className="container py-20 md:py-28">
       {/* ── editorial hero ─────────────────────────────────────────── */}
       <div className="max-w-2xl">
         <div className="eyebrow">{t("eyebrow")}</div>
@@ -205,6 +239,7 @@ export default async function CategoryLandingPage({
         )}
       </div>
     </section>
+    </>
   );
 }
 

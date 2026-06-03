@@ -12,8 +12,9 @@
 //     ship the global search, the `potentialAction` below points at it).
 //   · Product      — makes PDPs eligible for rich results (price, rating,
 //     availability cards) in search.
-//   · BreadcrumbList — mirrors the visible Shop → Category → Product trail
-//     on PDPs for Google breadcrumb rich results.
+//   · BreadcrumbList — mirrors visible breadcrumb trails on PDPs and shop
+//     listing pages for Google breadcrumb rich results.
+//   · CollectionPage + ItemList — shop / category listing pages.
 //
 // Every helper returns the object. The <JsonLd> React component below
 // handles the stringify + script-tag dance. Never hand-write the <script>
@@ -192,6 +193,60 @@ export function breadcrumbListJsonLd(items: BreadcrumbListJsonLdItem[]) {
       position: index + 1,
       name: item.name,
       item: item.url,
+    })),
+  };
+}
+
+/** Localised "Home" label for listing-page breadcrumb JSON-LD. */
+export function breadcrumbHomeLabel(locale: string): string {
+  switch (locale) {
+    case "nl":
+      return "Home";
+    case "fr":
+      return "Accueil";
+    case "ru":
+      return "Главная";
+    default:
+      return "Home";
+  }
+}
+
+// ─── CollectionPage ──────────────────────────────────────────────────
+export function collectionPageJsonLd({
+  name,
+  description,
+  url,
+}: {
+  name: string;
+  description?: string | null;
+  url: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name,
+    description: description ?? undefined,
+    url,
+  };
+}
+
+// ─── ItemList (shop grid) ────────────────────────────────────────────
+export type ProductItemListJsonLdItem = {
+  name: string;
+  url: string;
+  image?: string | null;
+};
+
+export function productItemListJsonLd(items: ProductItemListJsonLdItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      url: item.url,
+      ...(item.image ? { image: item.image } : {}),
     })),
   };
 }

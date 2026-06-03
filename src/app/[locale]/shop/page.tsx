@@ -28,6 +28,14 @@ import { ShopFiltersShell } from "@/components/shop/shop-filters-shell";
 import { ShopInfiniteGrid } from "@/components/shop/shop-infinite-grid";
 import { RecentlyViewedRail } from "@/components/shop/recently-viewed-rail";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import { JsonLd } from "@/components/seo/json-ld";
+import {
+  breadcrumbHomeLabel,
+  breadcrumbListJsonLd,
+  collectionPageJsonLd,
+  productItemListJsonLd,
+  siteOrigin,
+} from "@/lib/seo/json-ld";
 
 // ISR caching — Next.js re-renders this page at most every 5 minutes.
 // Visitors arriving within that window get the cached HTML. Admin
@@ -120,7 +128,10 @@ export default async function ShopPage({ params, searchParams }: Props) {
   const minPriceEur = parsePrice(sp.minPrice);
   const maxPriceEur = parsePrice(sp.maxPrice);
 
-  const t = await getTranslations("shop");
+  const [t, tSeo] = await Promise.all([
+    getTranslations("shop"),
+    getTranslations({ locale, namespace: "seo" }),
+  ]);
 
   // Collect every filter arg in one object — shared by the server-side
   // listing query AND by the infinite-scroll client (which forwards it
@@ -161,8 +172,32 @@ export default async function ShopPage({ params, searchParams }: Props) {
   // (tiny object) and idempotent.
   const resetKey = JSON.stringify({ sort, ...filterArgs });
 
+  const origin = siteOrigin();
+  const shopUrl = `${origin}/${locale}/shop`;
+  const pageTitle = tSeo("shop.title") || t("title");
+  const pageDescription = tSeo("shop.description") || t("lede");
+  const breadcrumbLd = breadcrumbListJsonLd([
+    { name: breadcrumbHomeLabel(locale), url: `${origin}/${locale}` },
+    { name: t("eyebrow"), url: shopUrl },
+  ]);
+  const collectionLd = collectionPageJsonLd({
+    name: pageTitle,
+    description: pageDescription,
+    url: shopUrl,
+  });
+  const itemListLd = productItemListJsonLd(
+    items.map((p) => ({
+      name: p.name,
+      url: `${origin}/${locale}/shop/${p.slug}`,
+      image: p.imageUrl,
+    })),
+  );
+  const listingLd = [breadcrumbLd, collectionLd, ...(items.length > 0 ? [itemListLd] : [])];
+
   return (
-    <section className="container py-20 md:py-28">
+    <>
+      <JsonLd data={listingLd} />
+      <section className="container py-20 md:py-28">
       {/* ── header ────────────────────────────────────────────── */}
       <div className="max-w-xl">
         <div className="eyebrow">{t("eyebrow")}</div>
@@ -250,5 +285,6 @@ export default async function ShopPage({ params, searchParams }: Props) {
       {/* ── recently viewed (client-only; hidden when empty) ───── */}
       <RecentlyViewedRail />
     </section>
+    </>
   );
 }
