@@ -147,7 +147,9 @@ export function buildPageMetadataPerLocale({
       description,
       url,
       locale: ogLocale(locale),
-      type: ogType === "product" ? "website" : ogType,
+      // Next.js OpenGraph generator has no `product` case (it throws).
+      // PDPs pass ogType: "product" and emit <meta property="og:type"> on the page.
+      ...(ogType !== "product" ? { type: ogType } : {}),
       images: ogImage ? [{ url: ogImage }] : undefined,
     },
     twitter: {

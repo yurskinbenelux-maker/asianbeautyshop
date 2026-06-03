@@ -258,6 +258,12 @@ export default async function ProductDetailPage({
       browser still renders the page normally.
     */}
     {!previewMode && <JsonLd data={productLdPayload} />}
+    {/*
+      Next Metadata API coerces og:type "product" → "website" (no product
+      case in Next's OpenGraph generator). Inline property meta is the
+      supported workaround for og:type=product on PDPs.
+    */}
+    {!previewMode && <meta property="og:type" content="product" />}
 
     {/* Meta Pixel: ViewContent — fires when a customer opens this PDP */}
     <MetaViewContent
