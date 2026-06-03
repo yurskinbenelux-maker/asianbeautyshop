@@ -64,7 +64,7 @@ import { ProductDetailsPanel } from "@/components/shop/pdp/product-details-panel
 import { BestsellerCard } from "@/components/home/bestseller-card";
 import { LocaleAlternatesProvider } from "@/components/layout/locale-alternates";
 import { JsonLd } from "@/components/seo/json-ld";
-import { productJsonLd, siteOrigin } from "@/lib/seo/json-ld";
+import { breadcrumbListJsonLd, productJsonLd, siteOrigin } from "@/lib/seo/json-ld";
 import { buildPageMetadataPerLocale } from "@/lib/seo/metadata";
 import {
   productSeoDescription,
@@ -250,6 +250,22 @@ export default async function ProductDetailPage({
     },
   });
 
+  const origin = siteOrigin();
+  const breadcrumbLdItems = [
+    { name: t("breadcrumb_shop"), url: `${origin}/${locale}/shop` },
+  ];
+  if (product.primaryCategoryName && product.primaryCategorySlug) {
+    breadcrumbLdItems.push({
+      name: product.primaryCategoryName,
+      url: `${origin}/${locale}/shop/category/${product.primaryCategorySlug}`,
+    });
+  }
+  breadcrumbLdItems.push({
+    name: product.name,
+    url: `${origin}/${locale}/shop/${product.slug}`,
+  });
+  const breadcrumbLdPayload = breadcrumbListJsonLd(breadcrumbLdItems);
+
   return (
   <LocaleAlternatesProvider alternates={localeAlternates}>
     {/*
@@ -258,6 +274,7 @@ export default async function ProductDetailPage({
       browser still renders the page normally.
     */}
     {!previewMode && <JsonLd data={productLdPayload} />}
+    {!previewMode && <JsonLd data={breadcrumbLdPayload} />}
     {/*
       Next Metadata API coerces og:type "product" → "website" (no product
       case in Next's OpenGraph generator). Inline property meta is the

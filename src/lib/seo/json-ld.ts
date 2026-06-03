@@ -12,6 +12,8 @@
 //     ship the global search, the `potentialAction` below points at it).
 //   · Product      — makes PDPs eligible for rich results (price, rating,
 //     availability cards) in search.
+//   · BreadcrumbList — mirrors the visible Shop → Category → Product trail
+//     on PDPs for Google breadcrumb rich results.
 //
 // Every helper returns the object. The <JsonLd> React component below
 // handles the stringify + script-tag dance. Never hand-write the <script>
@@ -171,4 +173,25 @@ export function productJsonLd(p: ProductJsonLdInput) {
   }
 
   return obj;
+}
+
+// ─── BreadcrumbList ──────────────────────────────────────────────────
+// Mirrors the visible PDP breadcrumb (Shop → Category → Product). Each
+// item must already be an absolute URL — callers compose with siteOrigin().
+export type BreadcrumbListJsonLdItem = {
+  name: string;
+  url: string;
+};
+
+export function breadcrumbListJsonLd(items: BreadcrumbListJsonLdItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
 }
