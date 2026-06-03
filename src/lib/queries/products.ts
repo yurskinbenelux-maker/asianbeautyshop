@@ -1388,6 +1388,8 @@ export type ProductDetail = {
   name: string;
   slug: string;
   tagline: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
   descriptionHtml: string;
   howToUseHtml: string | null;
   warningsText: string | null;
@@ -1520,6 +1522,8 @@ export async function getProductBySlug({
     name: renderTr.name,
     slug: renderTr.slug,
     tagline: renderTr.shortDescription,
+    seoTitle: renderTr.seoTitle,
+    seoDescription: renderTr.seoDescription,
     descriptionHtml: renderTr.description,
     howToUseHtml: renderTr.howToUse,
     warningsText: renderTr.warnings,

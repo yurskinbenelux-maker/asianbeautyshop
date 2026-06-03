@@ -24,7 +24,10 @@ import { routing } from "@/i18n/routing";
 /** Site origin — e.g. https://asianbeautyshop.eu. Normalised without
  *  trailing slash so callers can safely concatenate "/foo". */
 export function siteOrigin(): string {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    process.env.NEXT_PUBLIC_SITE_ORIGIN ??
+    "https://asianbeautyshop.eu";
   return raw.replace(/\/+$/, "");
 }
 

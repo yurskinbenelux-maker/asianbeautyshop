@@ -66,6 +66,11 @@ import { LocaleAlternatesProvider } from "@/components/layout/locale-alternates"
 import { JsonLd } from "@/components/seo/json-ld";
 import { productJsonLd, siteOrigin } from "@/lib/seo/json-ld";
 import { buildPageMetadataPerLocale } from "@/lib/seo/metadata";
+import {
+  productSeoDescription,
+  productSeoTitle,
+  productStructuredDescription,
+} from "@/lib/seo/product-metadata";
 import { Locale as PrismaLocale } from "@prisma/client";
 import { isAdminEmail, getCurrentUser } from "@/lib/auth";
 
@@ -104,14 +109,21 @@ export async function generateMetadata({
     if (!perLocaleTail[loc]) perLocaleTail[loc] = `/shop/${enSlug}`;
   }
 
-  return buildPageMetadataPerLocale({
-    locale,
-    perLocaleTail,
-    title: p.name,
-    description: p.tagline ?? undefined,
-    ogImage: p.images[0]?.url ?? null,
-    ogType: "product",
-  });
+  const title = productSeoTitle(locale, p.name, p.seoTitle);
+  const description = productSeoDescription(locale, p.name, p.seoDescription);
+
+  return {
+    ...buildPageMetadataPerLocale({
+      locale,
+      perLocaleTail,
+      title,
+      description,
+      ogImage: p.images[0]?.url ?? null,
+      ogType: "product",
+    }),
+    // Full titles include branding; avoid the layout title template suffix.
+    title: { absolute: title },
+  };
 }
 
 export default async function ProductDetailPage({
@@ -220,7 +232,11 @@ export default async function ProductDetailPage({
     : variants.some((v) => v.stock > 0);
   const productLdPayload = productJsonLd({
     name: product.name,
-    description: product.tagline,
+    description: productStructuredDescription(
+      product.seoDescription,
+      product.tagline,
+      product.descriptionHtml,
+    ),
     sku: product.sku,
     brandName: product.brand?.name ?? null,
     priceEur: product.priceEur,
