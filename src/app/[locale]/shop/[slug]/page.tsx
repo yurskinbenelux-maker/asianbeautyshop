@@ -138,13 +138,10 @@ export default async function ProductDetailPage({
   // products by guessing the query param. We only unlock when both:
   //   (a) the URL requested ?preview=1, and
   //   (b) the viewer is signed-in with an admin-allowlisted email.
-  // Pull the current user once — used for (a) admin preview mode and
-  // (b) prefilling the customer email on the BackInStockForm so signed-in
-  // visitors can subscribe with one tap instead of retyping their address.
+  // Pull the current user once — admin preview gate only (no PII in HTML).
   const isPreviewRequest = preview === "1" || preview === "true";
   const currentUser = await getCurrentUser();
   const previewMode = isPreviewRequest && isAdminEmail(currentUser?.email);
-  const customerEmail = currentUser?.email ?? null;
 
   const product = await getProductBySlug({
     locale,
@@ -414,7 +411,6 @@ export default async function ProductDetailPage({
                 weightGrams={product.weightGrams}
                 currencyLocale={currencyLocale}
                 variants={variants}
-                customerEmail={customerEmail}
               />
             )}
 

@@ -186,7 +186,7 @@
     "back_in_stock_email_label": "Ваш e-mail",
     "back_in_stock_email_placeholder": "you@email.com",
     "back_in_stock_helper": "Одно письмо, адрес никому не передаётся.",
-    "back_in_stock_helper_signed_in": "Мы напишем на {email}, как только товар вернётся.",
+    "back_in_stock_helper_signed_in": "Мы напишем на e-mail вашего аккаунта, как только товар вернётся.",
     "back_in_stock_submitting": "Сохраняем…",
     "back_in_stock_thanks": "Готово — мы напишем, когда товар вернётся.",
     "back_in_stock_already_subscribed": "Вы уже подписаны.",

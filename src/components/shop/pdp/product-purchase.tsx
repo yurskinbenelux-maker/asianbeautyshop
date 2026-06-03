@@ -57,12 +57,6 @@ type Props = {
   currencyLocale: string;
   /** All variants for the product. Empty array = no variant selector. */
   variants: PdpVariant[];
-  /**
-   * Signed-in customer's email. Passed straight through to BackInStockForm
-   * so logged-in users can subscribe to a back-in-stock notification with
-   * a single tap, instead of retyping their email.
-   */
-  customerEmail?: string | null;
 };
 
 export function ProductPurchase({
@@ -74,7 +68,6 @@ export function ProductPurchase({
   weightGrams,
   currencyLocale,
   variants,
-  customerEmail,
 }: Props) {
   const t = useTranslations("product");
   const tCart = useTranslations("cart");
@@ -370,7 +363,6 @@ export function ProductPurchase({
           <BackInStockForm
             variantId={activeVariant.id}
             locale={prismaLocale}
-            customerEmail={customerEmail}
           />
         ) : (
           // Defensive: no variant + out of stock shouldn't occur (no

@@ -8,16 +8,21 @@
 //
 // Server action is subscribeBackInStockAction (idempotent on
 // (email, variantId) — re-submitting is a no-op success).
+//
+// Signed-in customers: no email in SSR/RSC/HTML. The browser checks
+// the Supabase session client-side; the server action reads the email
+// from the session cookie when the form omits it.
 // ─────────────────────────────────────────────────────────────────────────
 
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { Locale } from "@prisma/client";
 import { Bell, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   subscribeBackInStockAction,
   type SubscribeResult,
@@ -32,21 +37,27 @@ type Props = {
   /** Customer's locale (uppercase Prisma enum value). Used to localise the
    *  back-in-stock email when it eventually fires. */
   locale: Locale;
-  /**
-   * Signed-in customer's email. When present we hide the input field and
-   * render a one-tap "Notify me" button with a quiet disclaimer naming
-   * the email we'll send to. Mobile UX win — no fumbling with the
-   * keyboard when the form already knows who you are.
-   */
-  customerEmail?: string | null;
 };
 
-export function BackInStockForm({ variantId, locale, customerEmail }: Props) {
+export function BackInStockForm({ variantId, locale }: Props) {
   const t = useTranslations("product");
   const [state, formAction] = useActionState(
     subscribeBackInStockAction,
     INITIAL_STATE,
   );
+  /** null = still checking session; true/false = guest vs signed-in */
+  const [isSignedIn, setIsSignedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createSupabaseBrowserClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!cancelled) setIsSignedIn(!!user?.email);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // After a successful submit show the confirmation in place of the form.
   if (state?.ok) {
@@ -65,15 +76,14 @@ export function BackInStockForm({ variantId, locale, customerEmail }: Props) {
     );
   }
 
-  // Signed-in path: skip the email input entirely. The button is the
-  // only thing the customer needs to tap. Server reads the email from
-  // the hidden field below.
-  if (customerEmail) {
+  // Signed-in path: one-tap notify — email never rendered in HTML/RSC.
+  // While session is loading, fall through to the guest layout (same
+  // height) so the block doesn't jump when auth resolves.
+  if (isSignedIn === true) {
     return (
       <form action={formAction} className="space-y-2">
         <input type="hidden" name="variantId" value={variantId} />
         <input type="hidden" name="locale" value={locale} />
-        <input type="hidden" name="email" value={customerEmail} />
         <SubmitButton fullWidth />
         {state?.ok === false && (
           <p className="text-[12px] text-vermilion" role="alert">
@@ -81,13 +91,13 @@ export function BackInStockForm({ variantId, locale, customerEmail }: Props) {
           </p>
         )}
         <p className="text-[11px] leading-relaxed text-ink-mid">
-          {t("back_in_stock_helper_signed_in", { email: customerEmail })}
+          {t("back_in_stock_helper_signed_in")}
         </p>
       </form>
     );
   }
 
-  // Guest path: classic email + button row.
+  // Guest path (or brief loading state): classic email + button row.
   return (
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="variantId" value={variantId} />

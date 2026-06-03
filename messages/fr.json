@@ -186,7 +186,7 @@
     "back_in_stock_email_label": "Votre e-mail",
     "back_in_stock_email_placeholder": "vous@email.fr",
     "back_in_stock_helper": "Un seul e-mail, votre adresse n'est jamais partagée.",
-    "back_in_stock_helper_signed_in": "Nous préviendrons {email} dès le retour en stock.",
+    "back_in_stock_helper_signed_in": "Nous vous préviendrons à l'adresse e-mail de votre compte dès le retour en stock.",
     "back_in_stock_submitting": "Enregistrement…",
     "back_in_stock_thanks": "C'est noté — on vous écrit dès le retour.",
     "back_in_stock_already_subscribed": "Vous êtes déjà inscrit.",

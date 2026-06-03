@@ -14,6 +14,7 @@
 
 import { z } from "zod";
 import { Locale, Prisma } from "@prisma/client";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export type SubscribeResult =
@@ -22,7 +23,14 @@ export type SubscribeResult =
 
 const SubscribeSchema = z.object({
   variantId: z.string().uuid(),
-  email: z.string().trim().toLowerCase().email(),
+  /** Omitted for signed-in customers — resolved from the session below. */
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email()
+    .optional()
+    .or(z.literal("")),
   locale: z.nativeEnum(Locale),
 });
 
@@ -52,7 +60,18 @@ export async function subscribeBackInStockAction(
     };
   }
 
-  const { variantId, email, locale } = parsed.data;
+  const { variantId, locale } = parsed.data;
+  let email = parsed.data.email ?? "";
+  if (!email) {
+    const user = await getCurrentUser();
+    email = user?.email?.trim().toLowerCase() ?? "";
+  }
+  if (!email || !z.string().email().safeParse(email).success) {
+    return {
+      ok: false,
+      message: "Please enter a valid email address.",
+    };
+  }
 
   // Belt-and-braces: confirm the variant exists and isn't archived.
   const variant = await prisma.productVariant.findUnique({

@@ -186,7 +186,7 @@
     "back_in_stock_email_label": "Je e-mailadres",
     "back_in_stock_email_placeholder": "jij@email.nl",
     "back_in_stock_helper": "Eén bericht, en we delen je adres met niemand.",
-    "back_in_stock_helper_signed_in": "We sturen een bericht naar {email} zodra het terug op voorraad is.",
+    "back_in_stock_helper_signed_in": "We sturen een bericht naar het e-mailadres op je account zodra het terug op voorraad is.",
     "back_in_stock_submitting": "Bezig…",
     "back_in_stock_thanks": "Genoteerd — we mailen zodra het terug is.",
     "back_in_stock_already_subscribed": "Je staat al op de lijst.",
