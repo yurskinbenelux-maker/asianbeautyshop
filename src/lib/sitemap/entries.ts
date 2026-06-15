@@ -1,4 +1,3 @@
-import type { MetadataRoute } from "next";
 import { Locale } from "@prisma/client";
 
 import { routing } from "@/i18n/routing";
@@ -13,9 +12,24 @@ import { getAllSitemapIngredientSlugs } from "@/lib/queries/ingredients";
 import { LEGAL_PAGE_KEYS } from "@/lib/queries/pages";
 import { latestSitemapDate } from "@/lib/sitemap/dates";
 
-export const revalidate = 3600;
-
 const LOCALES = routing.locales;
+
+export type SitemapChangeFrequency =
+  | "always"
+  | "hourly"
+  | "daily"
+  | "weekly"
+  | "monthly"
+  | "yearly"
+  | "never";
+
+export type SitemapEntry = {
+  loc: string;
+  lastModified: Date;
+  changeFrequency?: SitemapChangeFrequency;
+  priority?: number;
+  alternates?: Record<string, string>;
+};
 
 function getOrigin(): string {
   const raw =
@@ -36,7 +50,8 @@ function sameTailAlternates(
     alternates[locale] = `${origin}/${locale}${tail}`;
   }
 
-  alternates["x-default"] = `${origin}/${routing.defaultLocale}${tail}`;
+  alternates["x-default"] =
+    `${origin}/${routing.defaultLocale}${tail}`;
 
   return alternates;
 }
@@ -67,15 +82,15 @@ function productSitemapLastmod(
   );
 }
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export async function buildSitemapEntries(): Promise<SitemapEntry[]> {
   const origin = getOrigin();
   const now = new Date();
-  const entries: MetadataRoute.Sitemap = [];
+  const entries: SitemapEntry[] = [];
 
   const staticRoutes: Array<{
     tail: string;
     priority: number;
-    changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
+    changeFrequency: SitemapChangeFrequency;
   }> = [
     { tail: "", priority: 1.0, changeFrequency: "daily" },
     { tail: "/shop", priority: 0.9, changeFrequency: "daily" },
@@ -96,13 +111,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const locale of LOCALES) {
       entries.push({
-        url: `${origin}/${locale}${route.tail}`,
+        loc: `${origin}/${locale}${route.tail}`,
         lastModified: now,
         changeFrequency: route.changeFrequency,
         priority: route.priority,
-        alternates: {
-          languages: alternates,
-        },
+        alternates,
       });
     }
   }
@@ -113,13 +126,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const locale of LOCALES) {
       entries.push({
-        url: `${origin}/${locale}${tail}`,
+        loc: `${origin}/${locale}${tail}`,
         lastModified: now,
         changeFrequency: "monthly",
         priority: 0.3,
-        alternates: {
-          languages: alternates,
-        },
+        alternates,
       });
     }
   }
@@ -132,13 +143,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const locale of LOCALES) {
       entries.push({
-        url: `${origin}/${locale}${tail}`,
+        loc: `${origin}/${locale}${tail}`,
         lastModified: category.updatedAt,
         changeFrequency: "weekly",
         priority: 0.7,
-        alternates: {
-          languages: alternates,
-        },
+        alternates,
       });
     }
   }
@@ -151,13 +160,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const locale of LOCALES) {
       entries.push({
-        url: `${origin}/${locale}${tail}`,
+        loc: `${origin}/${locale}${tail}`,
         lastModified: brand.updatedAt,
         changeFrequency: "weekly",
         priority: 0.7,
-        alternates: {
-          languages: alternates,
-        },
+        alternates,
       });
     }
   }
@@ -187,13 +194,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const locale of LOCALES) {
       entries.push({
-        url: `${origin}/${locale}/shop/${slugFor[locale]}`,
+        loc: `${origin}/${locale}/shop/${slugFor[locale]}`,
         lastModified: productSitemapLastmod(product, locale),
         changeFrequency: "weekly",
         priority: 0.8,
-        alternates: {
-          languages: alternates,
-        },
+        alternates,
       });
     }
   }
@@ -222,13 +227,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const locale of LOCALES) {
       entries.push({
-        url: `${origin}/${locale}/journal/${slugFor[locale]}`,
+        loc: `${origin}/${locale}/journal/${slugFor[locale]}`,
         lastModified: post.updatedAt,
         changeFrequency: "monthly",
         priority: 0.5,
-        alternates: {
-          languages: alternates,
-        },
+        alternates,
       });
     }
   }
@@ -241,13 +244,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const locale of LOCALES) {
       entries.push({
-        url: `${origin}/${locale}${tail}`,
+        loc: `${origin}/${locale}${tail}`,
         lastModified: ingredient.updatedAt,
         changeFrequency: "monthly",
         priority: 0.5,
-        alternates: {
-          languages: alternates,
-        },
+        alternates,
       });
     }
   }
