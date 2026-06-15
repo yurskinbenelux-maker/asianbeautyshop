@@ -9,7 +9,7 @@
 
 import { Locale, ProductKind, ProductStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { latestSitemapDate } from "@/lib/sitemap/lastmod";
+import { latestSitemapDate } from "@/lib/sitemap/dates";
 
 /** URL locale ("en") → Prisma enum (Locale.EN). */
 export function toPrismaLocale(locale: string): Locale {

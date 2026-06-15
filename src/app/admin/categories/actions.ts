@@ -17,7 +17,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Locale, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { revalidateSitemap } from "@/lib/sitemap/lastmod";
+import { revalidateSitemap } from "@/lib/sitemap/revalidate";
 import { requireAdmin } from "@/lib/auth";
 import { PRODUCT_MEDIA_BUCKET, supabaseAdmin } from "@/lib/supabase/admin";
 import { ALL_LOCALES } from "@/lib/queries/admin-taxonomies";

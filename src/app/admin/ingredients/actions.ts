@@ -19,7 +19,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Locale } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { revalidateSitemap } from "@/lib/sitemap/lastmod";
+import { revalidateSitemap } from "@/lib/sitemap/revalidate";
 import { requireCapability } from "@/lib/auth-roles";
 import { isSlugTaken } from "@/lib/queries/admin-ingredients";
 

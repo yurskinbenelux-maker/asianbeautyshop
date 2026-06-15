@@ -1,5 +1,7 @@
+import "server-only";
+
 import { prisma } from "@/lib/prisma";
-import { revalidateSitemap } from "./lastmod";
+import { revalidateSitemap } from "./revalidate";
 
 /** Bump Product.updatedAt so PDP sitemap lastmod reflects content edits. */
 export async function touchProductSitemapLastmod(productId: string) {
