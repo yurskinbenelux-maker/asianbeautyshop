@@ -6,10 +6,12 @@ import {
   getAllActiveBrandSlugs,
   getAllActiveCategorySlugs,
   getAllPublishedProductSlugs,
+  type ProductSitemapEntry,
 } from "@/lib/queries/products";
 import { getAllPublishedJournalSlugs } from "@/lib/queries/journal";
 import { getAllSitemapIngredientSlugs } from "@/lib/queries/ingredients";
 import { LEGAL_PAGE_KEYS } from "@/lib/queries/pages";
+import { latestSitemapDate } from "@/lib/sitemap/dates";
 
 export const revalidate = 3600;
 
@@ -48,6 +50,21 @@ function toPrismaLocale(urlLocale: string): Locale {
       ru: Locale.RU,
     } as const
   )[urlLocale] ?? Locale.EN;
+}
+
+function productSitemapLastmod(
+  product: ProductSitemapEntry,
+  urlLocale: string,
+): Date {
+  const prismaLocale = toPrismaLocale(urlLocale);
+  const translationUpdatedAt = product.updatedAtByLocale[prismaLocale];
+
+  return latestSitemapDate(
+    product.productUpdatedAt,
+    translationUpdatedAt,
+    product.mediaUpdatedAt,
+    product.variantUpdatedAt,
+  );
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -171,7 +188,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const locale of LOCALES) {
       entries.push({
         url: `${origin}/${locale}/shop/${slugFor[locale]}`,
-        lastModified: product.updatedAt,
+        lastModified: productSitemapLastmod(product, locale),
         changeFrequency: "weekly",
         priority: 0.8,
         alternates: {

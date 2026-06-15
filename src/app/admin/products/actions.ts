@@ -374,7 +374,7 @@ export async function updateTranslation(
     throw err;
   }
 
-  await touchProductSitemapLastmod(productId);
+  await touchProductSitemapLastmod(productId, locale);
 
   // If the slug changed, drop a 301 so the old URL still lands its visitor
   // on the renamed product. Fire-and-forget — failure shouldn't block the

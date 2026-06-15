@@ -355,6 +355,8 @@ model ProductTranslation {
   warnings         String?  // plain text or simple HTML
   seoTitle         String?
   seoDescription   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   @@unique([productId, locale])
   @@unique([locale, slug])
   @@index([locale])
@@ -462,6 +464,7 @@ model Media {
   isPrimary  Boolean   @default(false)
   sortOrder  Int       @default(0)
   createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   banners    Banner[]
 

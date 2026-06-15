@@ -1795,7 +1795,14 @@ export async function searchProducts({
 
 export type ProductSitemapEntry = {
   id: string;
-  updatedAt: Date;
+  /** Product row timestamp — fallback when a locale has no translation. */
+  productUpdatedAt: Date;
+  /** Latest Media.updatedAt for this product (alt / image changes). */
+  mediaUpdatedAt: Date | null;
+  /** Latest ProductVariant.updatedAt (stock / price axis on PDP). */
+  variantUpdatedAt: Date | null;
+  /** Per-locale translation content timestamp (SEO, slug, description…). */
+  updatedAtByLocale: Partial<Record<Locale, Date>>;
   slugByLocale: Partial<Record<Locale, string>>;
 };
 
@@ -1807,19 +1814,34 @@ export async function getAllPublishedProductSlugs(): Promise<
     select: {
       id: true,
       updatedAt: true,
-      translations: { select: { locale: true, slug: true } },
+      translations: {
+        select: { locale: true, slug: true, updatedAt: true },
+      },
       variants: { select: { updatedAt: true } },
+      media: { select: { updatedAt: true } },
     },
     orderBy: { updatedAt: "desc" },
   });
 
   return products.map((p) => {
     const slugByLocale: Partial<Record<Locale, string>> = {};
-    for (const t of p.translations) slugByLocale[t.locale] = t.slug;
+    const updatedAtByLocale: Partial<Record<Locale, Date>> = {};
+    for (const t of p.translations) {
+      slugByLocale[t.locale] = t.slug;
+      updatedAtByLocale[t.locale] = t.updatedAt;
+    }
+
+    const mediaDates = p.media.map((m) => m.updatedAt);
     const variantDates = p.variants.map((v) => v.updatedAt);
+
     return {
       id: p.id,
-      updatedAt: latestSitemapDate(p.updatedAt, ...variantDates),
+      productUpdatedAt: p.updatedAt,
+      mediaUpdatedAt:
+        mediaDates.length > 0 ? latestSitemapDate(...mediaDates) : null,
+      variantUpdatedAt:
+        variantDates.length > 0 ? latestSitemapDate(...variantDates) : null,
+      updatedAtByLocale,
       slugByLocale,
     };
   });
