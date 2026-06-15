@@ -13,6 +13,7 @@ import { z } from "zod";
 import { MediaKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { touchProductSitemapLastmod } from "@/lib/sitemap/touch";
 import { PRODUCT_MEDIA_BUCKET, supabaseAdmin } from "@/lib/supabase/admin";
 
 export type ActionState = {
@@ -125,10 +126,14 @@ export async function updateMediaAltAction(
     };
   }
 
-  await prisma.media.update({
+  const media = await prisma.media.update({
     where: { id: parsed.data.id },
     data: { alt: parsed.data.alt || null },
+    select: { productId: true },
   });
+  if (media.productId) {
+    await touchProductSitemapLastmod(media.productId);
+  }
 
   refresh();
   return OK_SAVED;
@@ -447,6 +452,8 @@ export async function linkMediaToProductAction(
   // last op so we can echo it back (handy for selecting the row in UI).
   const txResults = await prisma.$transaction([...ops, createOp]);
   const created = txResults[txResults.length - 1] as { id: string };
+
+  await touchProductSitemapLastmod(productId);
 
   refresh();
   revalidatePath(`/admin/products/${productId}`);

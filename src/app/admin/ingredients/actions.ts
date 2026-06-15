@@ -19,6 +19,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Locale } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { revalidateSitemap } from "@/lib/sitemap/lastmod";
 import { requireCapability } from "@/lib/auth-roles";
 import { isSlugTaken } from "@/lib/queries/admin-ingredients";
 
@@ -42,6 +43,7 @@ function refresh(id?: string) {
   if (id) revalidatePath(`/admin/ingredients/${id}`);
   // Public index + any PDP — ingredients appear on product pages.
   revalidatePath("/", "layout");
+  revalidateSitemap();
 }
 
 // ──────── helpers ───────────────────────────────────────────────────────

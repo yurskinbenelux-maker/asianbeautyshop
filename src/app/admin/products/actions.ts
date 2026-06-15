@@ -25,6 +25,7 @@ import {
   ProductStatus,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { touchProductSitemapLastmod } from "@/lib/sitemap/touch";
 import { requireAdmin } from "@/lib/auth";
 import { PRODUCT_LINES } from "@/lib/queries/products";
 import {
@@ -372,6 +373,8 @@ export async function updateTranslation(
     }
     throw err;
   }
+
+  await touchProductSitemapLastmod(productId);
 
   // If the slug changed, drop a 301 so the old URL still lands its visitor
   // on the renamed product. Fire-and-forget — failure shouldn't block the
@@ -888,6 +891,8 @@ export async function uploadProductMedia(
     },
   });
 
+  await touchProductSitemapLastmod(productId);
+
   revalidatePath(`/admin/products/${productId}`);
   revalidatePath("/", "layout");
   return { ok: true, message: "Uploaded." };
@@ -930,6 +935,8 @@ export async function deleteProductMedia(mediaId: string) {
     }
   }
 
+  await touchProductSitemapLastmod(media.productId);
+
   revalidatePath(`/admin/products/${media.productId}`);
   revalidatePath("/", "layout");
 }
@@ -954,6 +961,8 @@ export async function setPrimaryMedia(mediaId: string) {
       data: { isPrimary: true },
     }),
   ]);
+
+  await touchProductSitemapLastmod(media.productId);
 
   revalidatePath(`/admin/products/${media.productId}`);
   revalidatePath("/", "layout");

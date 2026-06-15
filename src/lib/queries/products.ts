@@ -9,6 +9,7 @@
 
 import { Locale, ProductKind, ProductStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { latestSitemapDate } from "@/lib/sitemap/lastmod";
 
 /** URL locale ("en") → Prisma enum (Locale.EN). */
 export function toPrismaLocale(locale: string): Locale {
@@ -1807,6 +1808,7 @@ export async function getAllPublishedProductSlugs(): Promise<
       id: true,
       updatedAt: true,
       translations: { select: { locale: true, slug: true } },
+      variants: { select: { updatedAt: true } },
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -1814,7 +1816,12 @@ export async function getAllPublishedProductSlugs(): Promise<
   return products.map((p) => {
     const slugByLocale: Partial<Record<Locale, string>> = {};
     for (const t of p.translations) slugByLocale[t.locale] = t.slug;
-    return { id: p.id, updatedAt: p.updatedAt, slugByLocale };
+    const variantDates = p.variants.map((v) => v.updatedAt);
+    return {
+      id: p.id,
+      updatedAt: latestSitemapDate(p.updatedAt, ...variantDates),
+      slugByLocale,
+    };
   });
 }
 
