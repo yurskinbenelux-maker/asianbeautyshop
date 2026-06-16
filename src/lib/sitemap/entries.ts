@@ -11,10 +11,6 @@ import { getAllSitemapIngredientSlugs } from "@/lib/queries/ingredients";
 import { LEGAL_PAGE_KEYS } from "@/lib/queries/pages";
 import { latestSitemapDate } from "@/lib/sitemap/dates";
 import {
-  getBrandsSitemapMaxLastmod,
-  getCategoriesSitemapMaxLastmod,
-  getIngredientsSitemapMaxLastmod,
-  getPagesSitemapMaxLastmod,
   getProductsSitemapMaxLastmod,
 } from "@/lib/sitemap/index-lastmod";
 import { getSitemapOrigin } from "@/lib/sitemap/origin";
@@ -178,41 +174,14 @@ export async function buildProductSitemapEntries(): Promise<SitemapEntry[]> {
 /** Child sitemap list for /sitemap.xml index — index only, no page URLs. */
 export async function buildSitemapIndexEntries(): Promise<SitemapIndexEntry[]> {
   const origin = getSitemapOrigin();
+  const productsLastmod = await getProductsSitemapMaxLastmod();
 
-  const [
-    pagesLastmod,
-    productsLastmod,
-    categoriesLastmod,
-    brandsLastmod,
-    ingredientsLastmod,
-  ] = await Promise.all([
-    Promise.resolve(getPagesSitemapMaxLastmod()),
-    getProductsSitemapMaxLastmod(),
-    getCategoriesSitemapMaxLastmod(),
-    getBrandsSitemapMaxLastmod(),
-    getIngredientsSitemapMaxLastmod(),
-  ]);
-
+  // GSC debug: products-only index. Add sitemap-pages.xml, then categories,
+  // brands, ingredients one at a time — test each in GSC before expanding.
   return [
-    {
-      loc: `${origin}/sitemap-pages.xml`,
-      lastModified: pagesLastmod,
-    },
     {
       loc: `${origin}/sitemap-products.xml`,
       lastModified: productsLastmod,
-    },
-    {
-      loc: `${origin}/sitemap-categories.xml`,
-      lastModified: categoriesLastmod,
-    },
-    {
-      loc: `${origin}/sitemap-brands.xml`,
-      lastModified: brandsLastmod,
-    },
-    {
-      loc: `${origin}/sitemap-ingredients.xml`,
-      lastModified: ingredientsLastmod,
     },
   ];
 }
