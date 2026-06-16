@@ -1,16 +1,11 @@
-import { buildSitemapEntries } from "@/lib/sitemap/entries";
-import { buildSitemapXml } from "@/lib/sitemap/xml";
+import { buildSitemapIndexEntries } from "@/lib/sitemap/entries";
+import { SITEMAP_REVALIDATE_SECONDS, sitemapXmlResponse } from "@/lib/sitemap/response";
+import { buildSitemapIndexXml } from "@/lib/sitemap/xml";
 
-export const revalidate = 3600;
+export const revalidate = SITEMAP_REVALIDATE_SECONDS;
 
 export async function GET() {
-  const entries = await buildSitemapEntries();
-  const xml = buildSitemapXml(entries);
-
-  return new Response(xml, {
-    headers: {
-      "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=0, must-revalidate",
-    },
-  });
+  const entries = await buildSitemapIndexEntries();
+  const xml = buildSitemapIndexXml(entries);
+  return sitemapXmlResponse(xml);
 }

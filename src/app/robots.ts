@@ -44,7 +44,7 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: [`${origin}/sitemap.xml`, `${origin}/sitemap-products.xml`],
+    sitemap: `${origin}/sitemap.xml`,
     host: origin,
   };
 }

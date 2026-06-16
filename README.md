@@ -85,17 +85,17 @@ The `main` branch on GitHub is wired to Hostinger via auto-deploy. Every push to
 2. Runs `pnpm install --frozen-lockfile && pnpm prisma generate && pnpm build`
 3. Restarts the Node process
 
+`pnpm build` runs `prisma migrate deploy` before `next build`, so new migrations in `prisma/migrations/*` are applied to production automatically during deploy.
+
 Typical build time: 3–4 minutes. Watch logs in **hPanel → Websites → asianbeautyshop.eu → Deployments**.
 
-### Database migrations
+### Database migrations (manual fallback)
 
-When a commit adds files under `prisma/migrations/*`, the migration must be applied to the production DB manually — Hostinger's build does **not** run `prisma migrate deploy` automatically. From your terminal:
+If a deploy ever ships before migrations run (or you need to apply one without a full build), from your terminal:
 
 ```bash
 pnpm prisma migrate deploy
 ```
-
-(The command reads `DATABASE_URL` from `.env`.) If you forget, the deploy ships but routes that read the new columns will 500 until the migration is applied. Running it again later is a no-op.
 
 ---
 

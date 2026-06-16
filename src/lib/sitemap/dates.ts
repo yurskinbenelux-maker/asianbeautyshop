@@ -8,3 +8,8 @@ export function latestSitemapDate(
   }
   return latest;
 }
+
+export function maxSitemapLastmod(dates: Date[]): Date {
+  if (dates.length === 0) return new Date(0);
+  return latestSitemapDate(...dates);
+}

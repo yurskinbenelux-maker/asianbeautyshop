@@ -1,32 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Strict sitemap.xml builder — explicit escaping + validation for Google.
-// Next.js MetadataRoute.Sitemap serialisation is bypassed so every URL and
-// hreflang alternate is XML-safe and query-param URLs never slip through.
+// Sitemap XML builders — simple urlsets (loc + lastmod) and sitemap index.
+// No hreflang in XML; Google accepted the product-only format in GSC.
 // ─────────────────────────────────────────────────────────────────────────
 
-import type { SitemapEntry } from "./entries";
+import type { SitemapEntry, SitemapIndexEntry } from "./entries";
 
 const SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9";
-const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
-/** Disallow search/filter pagination URLs and any non-canonical query strings. */
-const BLOCKED_QUERY_KEYS = new Set([
-  "category",
-  "concern",
-  "brand",
-  "skinType",
-  "sort",
-  "page",
-  "q",
-  "search",
-]);
-
-/**
- * Public indexable paths only — no /account, /search, /checkout, /api, etc.
- * Query strings are rejected separately in isCleanCanonicalSitemapUrl().
- */
-const ALLOWED_PATH =
-  /^\/(en|nl|fr|ru)(?:\/(?:shop(?:\/(?:category|brand)\/[^/]+|\/[^/]+)?|sale|new|brands|ingredients(?:\/[^/]+)?|journal(?:\/[^/]+)?|quiz|rituals|faq|shipping|contact|legal\/[^/]+))?$/;
+export type UrlValidator = (url: string, origin: string) => boolean;
 
 export function escapeXml(value: string): string {
   return value
@@ -44,126 +25,66 @@ export function formatSitemapLastmod(date: Date): string {
   return date.toISOString();
 }
 
-const PRODUCT_ONLY_PATH =
+function parseCanonicalUrl(url: string, expectedOrigin: string) {
+  if (!url?.trim()) return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+
+  const origin = expectedOrigin.replace(/\/+$/, "");
+  if (parsed.origin !== origin) return null;
+  if (parsed.username || parsed.password) return null;
+  if (parsed.hash) return null;
+  if (parsed.search) return null;
+
+  return { parsed, path: decodeURIComponent(parsed.pathname) };
+}
+
+const PAGES_PATH =
+  /^\/(en|nl|fr|ru)(?:\/(?:shop|sale|new|brands|ingredients|journal|quiz|rituals|faq|shipping|contact|legal\/[^/]+))?$/;
+
+const PRODUCT_PATH =
   /^\/(en|nl|fr|ru)\/shop\/(?!category\/|brand\/)[^/]+$/;
 
-export function isCleanProductSitemapUrl(
+const CATEGORY_PATH = /^\/(en|nl|fr|ru)\/shop\/category\/[^/]+$/;
+
+const BRAND_PATH = /^\/(en|nl|fr|ru)\/shop\/brand\/[^/]+$/;
+
+const INGREDIENT_PATH = /^\/(en|nl|fr|ru)\/ingredients\/[^/]+$/;
+
+function matchesPath(
   url: string,
-  expectedOrigin: string,
+  origin: string,
+  pattern: RegExp,
 ): boolean {
-  if (!url || typeof url !== "string") return false;
-
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    return false;
-  }
-
-  const origin = expectedOrigin.replace(/\/+$/, "");
-  if (parsed.origin !== origin) return false;
-  if (parsed.username || parsed.password) return false;
-  if (parsed.hash) return false;
-  if (parsed.search) return false;
-
-  const path = decodeURIComponent(parsed.pathname);
-  return PRODUCT_ONLY_PATH.test(path);
+  const parsed = parseCanonicalUrl(url, origin);
+  if (!parsed) return false;
+  return pattern.test(parsed.path);
 }
 
-export function isCleanCanonicalSitemapUrl(
-  url: string,
-  expectedOrigin: string,
-): boolean {
-  if (!url || typeof url !== "string") return false;
+export const isCleanPagesSitemapUrl: UrlValidator = (url, origin) =>
+  matchesPath(url, origin, PAGES_PATH);
 
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    return false;
-  }
+export const isCleanProductSitemapUrl: UrlValidator = (url, origin) =>
+  matchesPath(url, origin, PRODUCT_PATH);
 
-  const origin = expectedOrigin.replace(/\/+$/, "");
-  if (parsed.origin !== origin) return false;
-  if (parsed.username || parsed.password) return false;
-  if (parsed.hash) return false;
+export const isCleanCategorySitemapUrl: UrlValidator = (url, origin) =>
+  matchesPath(url, origin, CATEGORY_PATH);
 
-  for (const key of parsed.searchParams.keys()) {
-    if (BLOCKED_QUERY_KEYS.has(key)) return false;
-    // Reject any query string — sitemap URLs must be canonical paths only.
-    return false;
-  }
+export const isCleanBrandSitemapUrl: UrlValidator = (url, origin) =>
+  matchesPath(url, origin, BRAND_PATH);
 
-  const path = decodeURIComponent(parsed.pathname);
-  if (!ALLOWED_PATH.test(path)) return false;
+export const isCleanIngredientSitemapUrl: UrlValidator = (url, origin) =>
+  matchesPath(url, origin, INGREDIENT_PATH);
 
-  return true;
-}
-
-function formatPriority(priority: number | undefined): string | null {
-  if (priority === undefined) return null;
-  const clamped = Math.min(1, Math.max(0, priority));
-  return clamped.toFixed(1);
-}
-
-export function buildSitemapXml(entries: SitemapEntry[]): string {
-  const origin = entries[0]?.loc
-    ? new URL(entries[0].loc).origin
-    : "https://asianbeautyshop.eu";
-
-  const lines: string[] = [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    `<urlset xmlns="${SITEMAP_NS}" xmlns:xhtml="${XHTML_NS}">`,
-  ];
-
-  const seenLocs = new Set<string>();
-
-  for (const entry of entries) {
-    if (!entry.loc?.trim()) continue;
-    if (!isCleanCanonicalSitemapUrl(entry.loc, origin)) continue;
-    if (seenLocs.has(entry.loc)) continue;
-    seenLocs.add(entry.loc);
-
-    lines.push("  <url>");
-    lines.push(`    <loc>${escapeXml(entry.loc)}</loc>`);
-
-    if (entry.alternates) {
-      for (const [hreflang, href] of Object.entries(entry.alternates)) {
-        if (!href?.trim()) continue;
-        if (!isCleanCanonicalSitemapUrl(href, origin)) continue;
-        lines.push(
-          `    <xhtml:link rel="alternate" hreflang="${escapeXml(hreflang)}" href="${escapeXml(href)}" />`,
-        );
-      }
-    }
-
-    lines.push(
-      `    <lastmod>${escapeXml(formatSitemapLastmod(entry.lastModified))}</lastmod>`,
-    );
-
-    if (entry.changeFrequency) {
-      lines.push(
-        `    <changefreq>${escapeXml(entry.changeFrequency)}</changefreq>`,
-      );
-    }
-
-    const priority = formatPriority(entry.priority);
-    if (priority !== null) {
-      lines.push(`    <priority>${priority}</priority>`);
-    }
-
-    lines.push("  </url>");
-  }
-
-  lines.push("</urlset>");
-  const xml = `${lines.join("\n")}\n`;
-
-  assertValidSitemapXml(xml);
-  return xml;
-}
-
-/** Minimal sitemap — loc + lastmod only, no hreflang (for GSC debugging). */
-export function buildSimpleSitemapXml(entries: SitemapEntry[]): string {
+export function buildUrlsetXml(
+  entries: SitemapEntry[],
+  isValidUrl: UrlValidator,
+): string {
   const origin = entries[0]?.loc
     ? new URL(entries[0].loc).origin
     : "https://asianbeautyshop.eu";
@@ -177,7 +98,7 @@ export function buildSimpleSitemapXml(entries: SitemapEntry[]): string {
 
   for (const entry of entries) {
     if (!entry.loc?.trim()) continue;
-    if (!isCleanProductSitemapUrl(entry.loc, origin)) continue;
+    if (!isValidUrl(entry.loc, origin)) continue;
     if (seenLocs.has(entry.loc)) continue;
     seenLocs.add(entry.loc);
 
@@ -192,27 +113,47 @@ export function buildSimpleSitemapXml(entries: SitemapEntry[]): string {
   lines.push("</urlset>");
   const xml = `${lines.join("\n")}\n`;
 
-  assertValidSimpleSitemapXml(xml);
+  assertValidUrlsetXml(xml);
   return xml;
 }
 
-/** Runtime guard — mirrors what xmllint checks before we ship the response. */
-export function assertValidSimpleSitemapXml(xml: string): void {
+export function buildSitemapIndexXml(entries: SitemapIndexEntry[]): string {
+  const lines: string[] = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    `<sitemapindex xmlns="${SITEMAP_NS}">`,
+  ];
+
+  for (const entry of entries) {
+    if (!entry.loc?.trim()) continue;
+    lines.push("  <sitemap>");
+    lines.push(`    <loc>${escapeXml(entry.loc)}</loc>`);
+    lines.push(
+      `    <lastmod>${escapeXml(formatSitemapLastmod(entry.lastModified))}</lastmod>`,
+    );
+    lines.push("  </sitemap>");
+  }
+
+  lines.push("</sitemapindex>");
+  const xml = `${lines.join("\n")}\n`;
+
+  assertValidSitemapIndexXml(xml);
+  return xml;
+}
+
+export function assertValidUrlsetXml(xml: string): void {
   if (!xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')) {
     throw new Error("Sitemap XML: missing UTF-8 declaration");
   }
 
-  if (!xml.includes(`xmlns="${SITEMAP_NS}"`)) {
-    throw new Error("Sitemap XML: wrong urlset namespace (must be http://)");
+  if (!xml.includes(`<urlset xmlns="${SITEMAP_NS}">`)) {
+    throw new Error("Sitemap XML: missing urlset namespace");
   }
 
-  if (xml.includes("xmlns:xhtml")) {
-    throw new Error("Sitemap XML: simple sitemap must not include xhtml namespace");
+  if (xml.includes("xmlns:xhtml") || xml.includes("xhtml:link")) {
+    throw new Error("Sitemap XML: urlset must not include hreflang");
   }
 
-  if (/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-fA-F]+;)/.test(xml)) {
-    throw new Error("Sitemap XML: unescaped ampersand");
-  }
+  assertNoInvalidXmlCharacters(xml);
 
   const urlBlocks = xml.match(/<url>[\s\S]*?<\/url>/g) ?? [];
   if (urlBlocks.length === 0) {
@@ -228,45 +169,38 @@ export function assertValidSimpleSitemapXml(xml: string): void {
     }
     if (block.includes("?")) {
       throw new Error("Sitemap XML: query string in url entry");
-    }
-    if (block.includes("xhtml:link")) {
-      throw new Error("Sitemap XML: simple sitemap must not include hreflang");
     }
   }
 }
 
-/** Runtime guard for the main sitemap (with hreflang). */
-export function assertValidSitemapXml(xml: string): void {
+export function assertValidSitemapIndexXml(xml: string): void {
   if (!xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')) {
-    throw new Error("Sitemap XML: missing UTF-8 declaration");
+    throw new Error("Sitemap index: missing UTF-8 declaration");
   }
 
-  if (!xml.includes(`xmlns="${SITEMAP_NS}"`)) {
-    throw new Error("Sitemap XML: wrong urlset namespace (must be http://)");
+  if (!xml.includes(`<sitemapindex xmlns="${SITEMAP_NS}">`)) {
+    throw new Error("Sitemap index: missing sitemapindex namespace");
   }
 
-  if (!xml.includes(`xmlns:xhtml="${XHTML_NS}"`)) {
-    throw new Error("Sitemap XML: missing xhtml namespace");
+  assertNoInvalidXmlCharacters(xml);
+
+  const blocks = xml.match(/<sitemap>[\s\S]*?<\/sitemap>/g) ?? [];
+  if (blocks.length === 0) {
+    throw new Error("Sitemap index: no sitemap entries");
   }
 
-  if (/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-fA-F]+;)/.test(xml)) {
-    throw new Error("Sitemap XML: unescaped ampersand");
-  }
-
-  const urlBlocks = xml.match(/<url>[\s\S]*?<\/url>/g) ?? [];
-  if (urlBlocks.length === 0) {
-    throw new Error("Sitemap XML: no url entries");
-  }
-
-  for (const block of urlBlocks) {
+  for (const block of blocks) {
     if (!/<loc>[^<]+<\/loc>/.test(block)) {
-      throw new Error("Sitemap XML: url entry missing loc");
+      throw new Error("Sitemap index: entry missing loc");
     }
     if (!/<lastmod>[^<]+<\/lastmod>/.test(block)) {
-      throw new Error("Sitemap XML: url entry missing lastmod");
+      throw new Error("Sitemap index: entry missing lastmod");
     }
-    if (block.includes("?")) {
-      throw new Error("Sitemap XML: query string in url entry");
-    }
+  }
+}
+
+function assertNoInvalidXmlCharacters(xml: string): void {
+  if (/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-fA-F]+;)/.test(xml)) {
+    throw new Error("Sitemap XML: unescaped ampersand");
   }
 }

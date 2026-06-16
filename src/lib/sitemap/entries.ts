@@ -7,54 +7,22 @@ import {
   getAllPublishedProductSlugs,
   type ProductSitemapEntry,
 } from "@/lib/queries/products";
-import { getAllPublishedJournalSlugs } from "@/lib/queries/journal";
 import { getAllSitemapIngredientSlugs } from "@/lib/queries/ingredients";
 import { LEGAL_PAGE_KEYS } from "@/lib/queries/pages";
-import { latestSitemapDate } from "@/lib/sitemap/dates";
+import { latestSitemapDate, maxSitemapLastmod } from "@/lib/sitemap/dates";
+import { getSitemapOrigin } from "@/lib/sitemap/origin";
 
 const LOCALES = routing.locales;
-
-export type SitemapChangeFrequency =
-  | "always"
-  | "hourly"
-  | "daily"
-  | "weekly"
-  | "monthly"
-  | "yearly"
-  | "never";
 
 export type SitemapEntry = {
   loc: string;
   lastModified: Date;
-  changeFrequency?: SitemapChangeFrequency;
-  priority?: number;
-  alternates?: Record<string, string>;
 };
 
-function getOrigin(): string {
-  const raw =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.NEXT_PUBLIC_SITE_ORIGIN ??
-    "https://asianbeautyshop.eu";
-
-  return raw.replace(/\/+$/, "");
-}
-
-function sameTailAlternates(
-  origin: string,
-  tail: string,
-): Record<string, string> {
-  const alternates: Record<string, string> = {};
-
-  for (const locale of LOCALES) {
-    alternates[locale] = `${origin}/${locale}${tail}`;
-  }
-
-  alternates["x-default"] =
-    `${origin}/${routing.defaultLocale}${tail}`;
-
-  return alternates;
-}
+export type SitemapIndexEntry = {
+  loc: string;
+  lastModified: Date;
+};
 
 function toPrismaLocale(urlLocale: string): Locale {
   return (
@@ -82,173 +50,41 @@ function productSitemapLastmod(
   );
 }
 
-export async function buildSitemapEntries(): Promise<SitemapEntry[]> {
-  const origin = getOrigin();
+/** Static listing pages + legal — no PDPs, categories, brands, or ingredient detail. */
+export async function buildPagesSitemapEntries(): Promise<SitemapEntry[]> {
+  const origin = getSitemapOrigin();
   const now = new Date();
   const entries: SitemapEntry[] = [];
 
-  const staticRoutes: Array<{
-    tail: string;
-    priority: number;
-    changeFrequency: SitemapChangeFrequency;
-  }> = [
-    { tail: "", priority: 1.0, changeFrequency: "daily" },
-    { tail: "/shop", priority: 0.9, changeFrequency: "daily" },
-    { tail: "/sale", priority: 0.7, changeFrequency: "daily" },
-    { tail: "/new", priority: 0.7, changeFrequency: "daily" },
-    { tail: "/brands", priority: 0.6, changeFrequency: "weekly" },
-    { tail: "/ingredients", priority: 0.6, changeFrequency: "weekly" },
-    { tail: "/journal", priority: 0.6, changeFrequency: "weekly" },
-    { tail: "/quiz", priority: 0.6, changeFrequency: "monthly" },
-    { tail: "/rituals", priority: 0.5, changeFrequency: "monthly" },
-    { tail: "/faq", priority: 0.4, changeFrequency: "monthly" },
-    { tail: "/shipping", priority: 0.4, changeFrequency: "monthly" },
-    { tail: "/contact", priority: 0.4, changeFrequency: "yearly" },
+  const staticTails = [
+    "",
+    "/shop",
+    "/sale",
+    "/new",
+    "/brands",
+    "/ingredients",
+    "/journal",
+    "/quiz",
+    "/rituals",
+    "/faq",
+    "/shipping",
+    "/contact",
   ];
 
-  for (const route of staticRoutes) {
-    const alternates = sameTailAlternates(origin, route.tail);
-
+  for (const tail of staticTails) {
     for (const locale of LOCALES) {
       entries.push({
-        loc: `${origin}/${locale}${route.tail}`,
+        loc: `${origin}/${locale}${tail}`,
         lastModified: now,
-        changeFrequency: route.changeFrequency,
-        priority: route.priority,
-        alternates,
       });
     }
   }
 
   for (const key of LEGAL_PAGE_KEYS) {
-    const tail = `/legal/${key}`;
-    const alternates = sameTailAlternates(origin, tail);
-
     for (const locale of LOCALES) {
       entries.push({
-        loc: `${origin}/${locale}${tail}`,
+        loc: `${origin}/${locale}/legal/${key}`,
         lastModified: now,
-        changeFrequency: "monthly",
-        priority: 0.3,
-        alternates,
-      });
-    }
-  }
-
-  const categories = await getAllActiveCategorySlugs();
-
-  for (const category of categories) {
-    const tail = `/shop/category/${category.slug}`;
-    const alternates = sameTailAlternates(origin, tail);
-
-    for (const locale of LOCALES) {
-      entries.push({
-        loc: `${origin}/${locale}${tail}`,
-        lastModified: category.updatedAt,
-        changeFrequency: "weekly",
-        priority: 0.7,
-        alternates,
-      });
-    }
-  }
-
-  const brands = await getAllActiveBrandSlugs();
-
-  for (const brand of brands) {
-    const tail = `/shop/brand/${brand.slug}`;
-    const alternates = sameTailAlternates(origin, tail);
-
-    for (const locale of LOCALES) {
-      entries.push({
-        loc: `${origin}/${locale}${tail}`,
-        lastModified: brand.updatedAt,
-        changeFrequency: "weekly",
-        priority: 0.7,
-        alternates,
-      });
-    }
-  }
-
-  const products = await getAllPublishedProductSlugs();
-
-  for (const product of products) {
-    const enSlug = product.slugByLocale[Locale.EN];
-
-    if (!enSlug) continue;
-
-    const slugFor: Record<string, string> = {};
-
-    for (const locale of LOCALES) {
-      slugFor[locale] =
-        product.slugByLocale[toPrismaLocale(locale)] ?? enSlug;
-    }
-
-    const alternates: Record<string, string> = {};
-
-    for (const locale of LOCALES) {
-      alternates[locale] = `${origin}/${locale}/shop/${slugFor[locale]}`;
-    }
-
-    alternates["x-default"] =
-      `${origin}/${routing.defaultLocale}/shop/${slugFor[routing.defaultLocale]}`;
-
-    for (const locale of LOCALES) {
-      entries.push({
-        loc: `${origin}/${locale}/shop/${slugFor[locale]}`,
-        lastModified: productSitemapLastmod(product, locale),
-        changeFrequency: "weekly",
-        priority: 0.8,
-        alternates,
-      });
-    }
-  }
-
-  const posts = await getAllPublishedJournalSlugs();
-
-  for (const post of posts) {
-    const enSlug = post.slugByLocale[Locale.EN];
-
-    if (!enSlug) continue;
-
-    const slugFor: Record<string, string> = {};
-
-    for (const locale of LOCALES) {
-      slugFor[locale] = post.slugByLocale[toPrismaLocale(locale)] ?? enSlug;
-    }
-
-    const alternates: Record<string, string> = {};
-
-    for (const locale of LOCALES) {
-      alternates[locale] = `${origin}/${locale}/journal/${slugFor[locale]}`;
-    }
-
-    alternates["x-default"] =
-      `${origin}/${routing.defaultLocale}/journal/${slugFor[routing.defaultLocale]}`;
-
-    for (const locale of LOCALES) {
-      entries.push({
-        loc: `${origin}/${locale}/journal/${slugFor[locale]}`,
-        lastModified: post.updatedAt,
-        changeFrequency: "monthly",
-        priority: 0.5,
-        alternates,
-      });
-    }
-  }
-
-  const ingredients = await getAllSitemapIngredientSlugs();
-
-  for (const ingredient of ingredients) {
-    const tail = `/ingredients/${ingredient.slug}`;
-    const alternates = sameTailAlternates(origin, tail);
-
-    for (const locale of LOCALES) {
-      entries.push({
-        loc: `${origin}/${locale}${tail}`,
-        lastModified: ingredient.updatedAt,
-        changeFrequency: "monthly",
-        priority: 0.5,
-        alternates,
       });
     }
   }
@@ -256,9 +92,60 @@ export async function buildSitemapEntries(): Promise<SitemapEntry[]> {
   return entries;
 }
 
-/** Published product PDP URLs only — one entry per locale, no hreflang. */
+export async function buildCategorySitemapEntries(): Promise<SitemapEntry[]> {
+  const origin = getSitemapOrigin();
+  const entries: SitemapEntry[] = [];
+  const categories = await getAllActiveCategorySlugs();
+
+  for (const category of categories) {
+    for (const locale of LOCALES) {
+      entries.push({
+        loc: `${origin}/${locale}/shop/category/${category.slug}`,
+        lastModified: category.updatedAt,
+      });
+    }
+  }
+
+  return entries;
+}
+
+export async function buildBrandSitemapEntries(): Promise<SitemapEntry[]> {
+  const origin = getSitemapOrigin();
+  const entries: SitemapEntry[] = [];
+  const brands = await getAllActiveBrandSlugs();
+
+  for (const brand of brands) {
+    for (const locale of LOCALES) {
+      entries.push({
+        loc: `${origin}/${locale}/shop/brand/${brand.slug}`,
+        lastModified: brand.updatedAt,
+      });
+    }
+  }
+
+  return entries;
+}
+
+export async function buildIngredientSitemapEntries(): Promise<SitemapEntry[]> {
+  const origin = getSitemapOrigin();
+  const entries: SitemapEntry[] = [];
+  const ingredients = await getAllSitemapIngredientSlugs();
+
+  for (const ingredient of ingredients) {
+    for (const locale of LOCALES) {
+      entries.push({
+        loc: `${origin}/${locale}/ingredients/${ingredient.slug}`,
+        lastModified: ingredient.updatedAt,
+      });
+    }
+  }
+
+  return entries;
+}
+
+/** Published product PDP URLs — one entry per locale. */
 export async function buildProductSitemapEntries(): Promise<SitemapEntry[]> {
-  const origin = getOrigin();
+  const origin = getSitemapOrigin();
   const entries: SitemapEntry[] = [];
   const products = await getAllPublishedProductSlugs();
 
@@ -279,4 +166,40 @@ export async function buildProductSitemapEntries(): Promise<SitemapEntry[]> {
   }
 
   return entries;
+}
+
+/** Child sitemap list for /sitemap.xml index. */
+export async function buildSitemapIndexEntries(): Promise<SitemapIndexEntry[]> {
+  const origin = getSitemapOrigin();
+
+  const [pages, products, categories, brands, ingredients] = await Promise.all([
+    buildPagesSitemapEntries(),
+    buildProductSitemapEntries(),
+    buildCategorySitemapEntries(),
+    buildBrandSitemapEntries(),
+    buildIngredientSitemapEntries(),
+  ]);
+
+  return [
+    {
+      loc: `${origin}/sitemap-pages.xml`,
+      lastModified: maxSitemapLastmod(pages.map((e) => e.lastModified)),
+    },
+    {
+      loc: `${origin}/sitemap-products.xml`,
+      lastModified: maxSitemapLastmod(products.map((e) => e.lastModified)),
+    },
+    {
+      loc: `${origin}/sitemap-categories.xml`,
+      lastModified: maxSitemapLastmod(categories.map((e) => e.lastModified)),
+    },
+    {
+      loc: `${origin}/sitemap-brands.xml`,
+      lastModified: maxSitemapLastmod(brands.map((e) => e.lastModified)),
+    },
+    {
+      loc: `${origin}/sitemap-ingredients.xml`,
+      lastModified: maxSitemapLastmod(ingredients.map((e) => e.lastModified)),
+    },
+  ];
 }

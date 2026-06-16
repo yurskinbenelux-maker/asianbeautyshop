@@ -1,13 +1,13 @@
-import { buildProductSitemapEntries } from "@/lib/sitemap/entries";
+import { buildIngredientSitemapEntries } from "@/lib/sitemap/entries";
 import { SITEMAP_REVALIDATE_SECONDS } from "@/lib/sitemap/response";
 import { serveUrlsetSitemap } from "@/lib/sitemap/serve";
-import { isCleanProductSitemapUrl } from "@/lib/sitemap/xml";
+import { isCleanIngredientSitemapUrl } from "@/lib/sitemap/xml";
 
 export const revalidate = SITEMAP_REVALIDATE_SECONDS;
 
 export async function GET() {
   return serveUrlsetSitemap(
-    buildProductSitemapEntries,
-    isCleanProductSitemapUrl,
+    buildIngredientSitemapEntries,
+    isCleanIngredientSitemapUrl,
   );
 }
