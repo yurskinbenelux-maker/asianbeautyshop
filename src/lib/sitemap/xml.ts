@@ -44,6 +44,32 @@ export function formatSitemapLastmod(date: Date): string {
   return date.toISOString();
 }
 
+const PRODUCT_ONLY_PATH =
+  /^\/(en|nl|fr|ru)\/shop\/(?!category\/|brand\/)[^/]+$/;
+
+export function isCleanProductSitemapUrl(
+  url: string,
+  expectedOrigin: string,
+): boolean {
+  if (!url || typeof url !== "string") return false;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+
+  const origin = expectedOrigin.replace(/\/+$/, "");
+  if (parsed.origin !== origin) return false;
+  if (parsed.username || parsed.password) return false;
+  if (parsed.hash) return false;
+  if (parsed.search) return false;
+
+  const path = decodeURIComponent(parsed.pathname);
+  return PRODUCT_ONLY_PATH.test(path);
+}
+
 export function isCleanCanonicalSitemapUrl(
   url: string,
   expectedOrigin: string,
@@ -136,7 +162,80 @@ export function buildSitemapXml(entries: SitemapEntry[]): string {
   return xml;
 }
 
+/** Minimal sitemap — loc + lastmod only, no hreflang (for GSC debugging). */
+export function buildSimpleSitemapXml(entries: SitemapEntry[]): string {
+  const origin = entries[0]?.loc
+    ? new URL(entries[0].loc).origin
+    : "https://asianbeautyshop.eu";
+
+  const lines: string[] = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    `<urlset xmlns="${SITEMAP_NS}">`,
+  ];
+
+  const seenLocs = new Set<string>();
+
+  for (const entry of entries) {
+    if (!entry.loc?.trim()) continue;
+    if (!isCleanProductSitemapUrl(entry.loc, origin)) continue;
+    if (seenLocs.has(entry.loc)) continue;
+    seenLocs.add(entry.loc);
+
+    lines.push("  <url>");
+    lines.push(`    <loc>${escapeXml(entry.loc)}</loc>`);
+    lines.push(
+      `    <lastmod>${escapeXml(formatSitemapLastmod(entry.lastModified))}</lastmod>`,
+    );
+    lines.push("  </url>");
+  }
+
+  lines.push("</urlset>");
+  const xml = `${lines.join("\n")}\n`;
+
+  assertValidSimpleSitemapXml(xml);
+  return xml;
+}
+
 /** Runtime guard — mirrors what xmllint checks before we ship the response. */
+export function assertValidSimpleSitemapXml(xml: string): void {
+  if (!xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')) {
+    throw new Error("Sitemap XML: missing UTF-8 declaration");
+  }
+
+  if (!xml.includes(`xmlns="${SITEMAP_NS}"`)) {
+    throw new Error("Sitemap XML: wrong urlset namespace (must be http://)");
+  }
+
+  if (xml.includes("xmlns:xhtml")) {
+    throw new Error("Sitemap XML: simple sitemap must not include xhtml namespace");
+  }
+
+  if (/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-fA-F]+;)/.test(xml)) {
+    throw new Error("Sitemap XML: unescaped ampersand");
+  }
+
+  const urlBlocks = xml.match(/<url>[\s\S]*?<\/url>/g) ?? [];
+  if (urlBlocks.length === 0) {
+    throw new Error("Sitemap XML: no url entries");
+  }
+
+  for (const block of urlBlocks) {
+    if (!/<loc>[^<]+<\/loc>/.test(block)) {
+      throw new Error("Sitemap XML: url entry missing loc");
+    }
+    if (!/<lastmod>[^<]+<\/lastmod>/.test(block)) {
+      throw new Error("Sitemap XML: url entry missing lastmod");
+    }
+    if (block.includes("?")) {
+      throw new Error("Sitemap XML: query string in url entry");
+    }
+    if (block.includes("xhtml:link")) {
+      throw new Error("Sitemap XML: simple sitemap must not include hreflang");
+    }
+  }
+}
+
+/** Runtime guard for the main sitemap (with hreflang). */
 export function assertValidSitemapXml(xml: string): void {
   if (!xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')) {
     throw new Error("Sitemap XML: missing UTF-8 declaration");

@@ -255,3 +255,28 @@ export async function buildSitemapEntries(): Promise<SitemapEntry[]> {
 
   return entries;
 }
+
+/** Published product PDP URLs only — one entry per locale, no hreflang. */
+export async function buildProductSitemapEntries(): Promise<SitemapEntry[]> {
+  const origin = getOrigin();
+  const entries: SitemapEntry[] = [];
+  const products = await getAllPublishedProductSlugs();
+
+  for (const product of products) {
+    const enSlug = product.slugByLocale[Locale.EN];
+    if (!enSlug) continue;
+
+    for (const locale of LOCALES) {
+      const prismaLocale = toPrismaLocale(locale);
+      const slug = product.slugByLocale[prismaLocale] ?? enSlug;
+      if (!slug?.trim()) continue;
+
+      entries.push({
+        loc: `${origin}/${locale}/shop/${slug}`,
+        lastModified: productSitemapLastmod(product, locale),
+      });
+    }
+  }
+
+  return entries;
+}
