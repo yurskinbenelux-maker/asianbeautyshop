@@ -1,7 +1,5 @@
 import { serveSitemapIndex } from "@/lib/sitemap/serve-index";
 
-// Always render at request time — never ship a stale prerendered urlset from an
-// older build. Child sitemaps keep ISR (revalidate = 3600); the index is tiny.
 export const dynamic = "force-dynamic";
 
 export async function GET() {

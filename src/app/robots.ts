@@ -7,8 +7,8 @@
 //   · disallow /api (server-only; responses are not content)
 //   · disallow password flows (/forgot-password, /reset-password) — they
 //     contain no indexable content and appear under every locale prefix
-//   · point at the sitemap at the canonical origin so the crawler can
-//     discover product URLs without having to guess locale prefixes
+//   · point crawlers at sitemap-index.xml (fresh GSC URL) and the working
+//     product urlset; /sitemap.xml is kept alive but not relied on
 //
 // The disallow paths use `*` prefixes so they match under every locale —
 // e.g. /en/account, /nl/admin, /fr/forgot-password, etc.
@@ -44,7 +44,7 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: `${origin}/sitemap.xml`,
+    sitemap: [`${origin}/sitemap-index.xml`, `${origin}/sitemap-products.xml`],
     host: origin,
   };
 }

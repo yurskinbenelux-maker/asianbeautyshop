@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 const SITEMAP_PATHS = [
   "/sitemap.xml",
+  "/sitemap-index.xml",
   "/sitemap-pages.xml",
   "/sitemap-products.xml",
   "/sitemap-categories.xml",
