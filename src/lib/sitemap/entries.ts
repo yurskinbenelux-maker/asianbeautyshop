@@ -9,7 +9,14 @@ import {
 } from "@/lib/queries/products";
 import { getAllSitemapIngredientSlugs } from "@/lib/queries/ingredients";
 import { LEGAL_PAGE_KEYS } from "@/lib/queries/pages";
-import { latestSitemapDate, maxSitemapLastmod } from "@/lib/sitemap/dates";
+import { latestSitemapDate } from "@/lib/sitemap/dates";
+import {
+  getBrandsSitemapMaxLastmod,
+  getCategoriesSitemapMaxLastmod,
+  getIngredientsSitemapMaxLastmod,
+  getPagesSitemapMaxLastmod,
+  getProductsSitemapMaxLastmod,
+} from "@/lib/sitemap/index-lastmod";
 import { getSitemapOrigin } from "@/lib/sitemap/origin";
 
 const LOCALES = routing.locales;
@@ -168,38 +175,44 @@ export async function buildProductSitemapEntries(): Promise<SitemapEntry[]> {
   return entries;
 }
 
-/** Child sitemap list for /sitemap.xml index. */
+/** Child sitemap list for /sitemap.xml index — index only, no page URLs. */
 export async function buildSitemapIndexEntries(): Promise<SitemapIndexEntry[]> {
   const origin = getSitemapOrigin();
 
-  const [pages, products, categories, brands, ingredients] = await Promise.all([
-    buildPagesSitemapEntries(),
-    buildProductSitemapEntries(),
-    buildCategorySitemapEntries(),
-    buildBrandSitemapEntries(),
-    buildIngredientSitemapEntries(),
+  const [
+    pagesLastmod,
+    productsLastmod,
+    categoriesLastmod,
+    brandsLastmod,
+    ingredientsLastmod,
+  ] = await Promise.all([
+    Promise.resolve(getPagesSitemapMaxLastmod()),
+    getProductsSitemapMaxLastmod(),
+    getCategoriesSitemapMaxLastmod(),
+    getBrandsSitemapMaxLastmod(),
+    getIngredientsSitemapMaxLastmod(),
   ]);
 
   return [
     {
       loc: `${origin}/sitemap-pages.xml`,
-      lastModified: maxSitemapLastmod(pages.map((e) => e.lastModified)),
+      lastModified: pagesLastmod,
     },
     {
       loc: `${origin}/sitemap-products.xml`,
-      lastModified: maxSitemapLastmod(products.map((e) => e.lastModified)),
+      lastModified: productsLastmod,
     },
     {
       loc: `${origin}/sitemap-categories.xml`,
-      lastModified: maxSitemapLastmod(categories.map((e) => e.lastModified)),
+      lastModified: categoriesLastmod,
     },
     {
       loc: `${origin}/sitemap-brands.xml`,
-      lastModified: maxSitemapLastmod(brands.map((e) => e.lastModified)),
+      lastModified: brandsLastmod,
     },
     {
       loc: `${origin}/sitemap-ingredients.xml`,
-      lastModified: maxSitemapLastmod(ingredients.map((e) => e.lastModified)),
+      lastModified: ingredientsLastmod,
     },
   ];
 }

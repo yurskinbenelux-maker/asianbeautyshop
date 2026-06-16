@@ -50,3 +50,6 @@ lighthouse/
 
 # npm leftover — project uses pnpm
 package-lock.json
+
+# local sitemap dumps (never deploy a static urlset over the dynamic route)
+/sitemap.xml

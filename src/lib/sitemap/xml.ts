@@ -182,6 +182,14 @@ export function assertValidSitemapIndexXml(xml: string): void {
     throw new Error("Sitemap index: missing sitemapindex namespace");
   }
 
+  if (xml.includes("<urlset") || xml.includes("<url>")) {
+    throw new Error("Sitemap index: must not contain urlset or url entries");
+  }
+
+  if (xml.includes("xmlns:xhtml") || xml.includes("xhtml:link")) {
+    throw new Error("Sitemap index: must not include hreflang");
+  }
+
   assertNoInvalidXmlCharacters(xml);
 
   const blocks = xml.match(/<sitemap>[\s\S]*?<\/sitemap>/g) ?? [];
